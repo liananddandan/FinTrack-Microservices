@@ -1,0 +1,51 @@
+name: .NET 9 CI
+
+on:
+  push:
+    branches:
+      - main
+      - feature/identity-service
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+
+    services:
+      mysql:
+        image: mysql:8.0
+        env:
+          MYSQL_ROOT_PASSWORD: root123
+          MYSQL_DATABASE: testdb
+          MYSQL_USER: testuser
+          MYSQL_PASSWORD: testpass
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="mysqladmin ping -h localhost"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=5
+
+    env:
+      ConnectionStrings__DefaultConnection: "server=127.0.0.1;port=3306;database=testdb;uid=testuser;pwd=testpass"
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup .NET SDK 9.0.300
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 9.0.300
+
+      - name: Restore dependencies
+        run: dotnet restore
+
+      - name: Build solution
+        run: dotnet build --no-restore
+
+      - name: Run tests
+        run: dotnet test --no-build --verbosity normal
