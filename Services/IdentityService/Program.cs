@@ -1,11 +1,11 @@
-using DotNetCore.CAP;
 using IdentityService.Domain.Entities;
 using IdentityService.Infrastructure.Persistence;
+using IdentityService.Middlewares;
+using IdentityService.Services;
+using IdentityService.Services.Interfaces;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Scalar.AspNetCore;
-using SharedKernel.Events;
-using SharedKernel.Topics;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -39,22 +39,17 @@ builder.Services.AddMediatR(configuration =>
 builder.Services.AddOpenApi();
 builder.Services.AddControllers();
 
+builder.Services.Scan(scan => scan
+    .FromAssemblyOf<Program>() // 你也可以换成 typeof(Program) 或任何所在程序集的类型
+    .AddClasses(classes => classes.InNamespaces(
+        "IdentityService.Services",
+        "IdentityService.Repositories"))
+    .AsMatchingInterface() // 如 UserService -> IUserService
+    .WithScopedLifetime());
+builder.Services.AddScoped<IUserDomainService, UserService>();
+builder.Services.AddScoped<IUserAppService, UserService>();
+
 var app = builder.Build();
-
-app.Lifetime.ApplicationStarted.Register(async () =>
-{
-    using var scope = app.Services.CreateScope();
-    var publisher = scope.ServiceProvider.GetRequiredService<ICapPublisher>();
-
-    await publisher.PublishAsync(CapTopics.EmailSend, new EmailSendRequestedEvent
-    {
-        From = "test@test.com",
-        To = "test@example.com",
-        Subject = "RabbitMQ test",
-        Body = "This is just a test."
-    });
-});
-
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
@@ -63,8 +58,8 @@ if (app.Environment.IsDevelopment())
     app.MapScalarApiReference();
 }
 
-app.UseHttpsRedirection();
-
+app.UseMiddleware<GlobalExceptionMiddleware>();
+app.UseRouting();
 app.MapControllers();
 
 app.Run();

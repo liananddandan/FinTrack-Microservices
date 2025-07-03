@@ -1,3 +1,4 @@
+using IdentityService.Common.Results;
 using IdentityService.DTOs;
 using MediatR;
 
@@ -7,4 +8,4 @@ public record RegisterTenantCommand(
     string TenantName,
     string AdminName,
     string AdminEmail
-    ) : IRequest<RegisterTenantResult>;
+    ) : IRequest<ServiceResult<RegisterTenantResult>>;

@@ -4,7 +4,8 @@ namespace IdentityService.Events;
 
 public record TenantRegisteredEvent(
     long TenantId, 
-    Guid PublicTenantId, 
+    Guid TenantPublicId,
     long AdminUserId, 
+    string AdminUserName,
     string AdminEmail,
     string TempPassword) : INotification;

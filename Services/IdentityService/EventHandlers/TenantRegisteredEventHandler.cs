@@ -1,13 +1,50 @@
+using DotNetCore.CAP;
+using IdentityService.Common.Status;
 using IdentityService.Events;
+using IdentityService.Services.Interfaces;
 using MediatR;
+using SharedKernel.Common.Exceptions;
+using SharedKernel.Events;
+using SharedKernel.Topics;
 
 namespace IdentityService.EventHandlers;
 
-public class TenantRegisteredEventHandler : INotificationHandler<TenantRegisteredEvent>
+public class TenantRegisteredEventHandler(IUserAppService userService,
+    IUserVerificationService userVerificationService,
+    ICapPublisher capPublisher)
+    : INotificationHandler<TenantRegisteredEvent>
 {
-    public Task Handle(TenantRegisteredEvent notification, CancellationToken cancellationToken)
+    public async Task Handle(TenantRegisteredEvent tenantRegisteredEvent, CancellationToken cancellationToken)
     {
-        // todo: finish tenant register event
-        throw new NotImplementedException();
+        var getUserResult = await userService.GetUserByIdAsync(tenantRegisteredEvent.AdminUserId.ToString());
+        if (getUserResult.Data == null)
+        {
+            throw new UserNotFoundException("Admin user not found");
+        }
+        
+        var tokenResult = await userVerificationService.GenerateTokenAsync(getUserResult.Data, TokenPurpose.EmailConfirmation, cancellationToken);
+        if (tokenResult.Data == null)
+        {
+            throw new TokenGenerateException("Generate token failed");
+        }
+        
+        var confirmUrl = $"https://localhost:5001/api/account/confirm?token={tokenResult.Data}&userId={getUserResult.Data.Id}";
+        
+        await capPublisher.PublishAsync(CapTopics.EmailSend, new EmailSendRequestedEvent
+        {
+            To = getUserResult.Data.Email!,
+            Subject = $"Please confirm your email",
+            Body = GetEmailVerificationBody(confirmUrl)
+        }, new Dictionary<string, string?>(), cancellationToken);
+        
+    }
+    
+    private static string GetEmailVerificationBody(string confirmUrl)
+    {
+        return $"""
+                Welcome！Please click the link below to verify your Email address：<br/>
+                <a href="{confirmUrl}">Verify Email</a><br/>
+                If you do not request this，please ignore this email.
+                """;
     }
 }
