@@ -3,7 +3,7 @@ using FluentAssertions;
 using IdentityService.CommandHandlers;
 using IdentityService.Commands;
 using IdentityService.Common.Results;
-using IdentityService.DTOs;
+using IdentityService.Common.DTOs;
 using IdentityService.Services.Interfaces;
 using IdentityService.Tests.Attributes;
 using Moq;

@@ -1,8 +1,8 @@
 using System.Security.Cryptography;
 using IdentityService.Commands;
+using IdentityService.Common.DTOs;
 using IdentityService.Common.Results;
 using IdentityService.Domain.Entities;
-using IdentityService.DTOs;
 using IdentityService.Events;
 using IdentityService.Infrastructure.Persistence;
 using IdentityService.Services.Interfaces;

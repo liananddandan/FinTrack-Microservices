@@ -1,4 +1,3 @@
-using System.Net;
 using AutoFixture.Xunit2;
 using FluentAssertions;
 using IdentityService.Common.Results;
@@ -9,16 +8,14 @@ using IdentityService.Tests.Attributes;
 using Microsoft.AspNetCore.Identity;
 using Moq;
 using SharedKernel.Common.Exceptions;
-using Xunit.Abstractions;
 
 namespace IdentityService.Tests.Services;
 
-public class UserServiceTests(ITestOutputHelper testOutputHelper)
+public class UserServiceTests
 {
     [Theory, AutoMoqData]
     public async Task CreateUserInnerAsync_ShouldReturnUser_WhenCreateSuccess(
         [Frozen] Mock<UserManager<ApplicationUser>> userManagerMock,
-        [Frozen] Mock<RoleManager<ApplicationRole>> roleManagerMock,
         UserService sut,
         string userName,
         string userEmail,
@@ -28,7 +25,7 @@ public class UserServiceTests(ITestOutputHelper testOutputHelper)
         long expectedUserId = 1001;
         userManagerMock.Setup(usm =>
                 usm.CreateAsync(It.IsAny<ApplicationUser>(), It.IsAny<string>()))
-            .Callback<ApplicationUser, string>((user, pwd) =>
+            .Callback<ApplicationUser, string>((user, _) =>
             {
                 user.Id = expectedUserId;
             })
@@ -50,7 +47,6 @@ public class UserServiceTests(ITestOutputHelper testOutputHelper)
     [Theory, AutoMoqData]
     public async Task CreateUserInnerAsync_ShouldThrowException_WhenCreateFail(
         [Frozen]Mock<UserManager<ApplicationUser>> userManagerMock,
-        [Frozen] Mock<RoleManager<ApplicationRole>> roleManagerMock,
         UserService sut,
         string userName,
         string userEmail,
@@ -76,7 +72,6 @@ public class UserServiceTests(ITestOutputHelper testOutputHelper)
     [Theory, AutoMoqData]
     public async Task CreateRoleInnerAsync_ShouldReturnAlreadyExist_WhenRoleExisted(
         [Frozen] Mock<RoleManager<ApplicationRole>> roleManagerMock,
-        [Frozen] Mock<UserManager<ApplicationUser>> userManagerMock,
         UserService sut,
         string roleName)
     {
@@ -94,7 +89,6 @@ public class UserServiceTests(ITestOutputHelper testOutputHelper)
     [Theory, AutoMoqData]
     public async Task CreateRoleInnterAsync_ShouldReturnSuccess_WhenRoleNotExistAndCreateSuccess(
         [Frozen] Mock<RoleManager<ApplicationRole>> roleManagerMock,
-        [Frozen] Mock<UserManager<ApplicationUser>> userManagerMock,
         UserService sut,
         string roleName)
     {
@@ -113,7 +107,6 @@ public class UserServiceTests(ITestOutputHelper testOutputHelper)
     [Theory, AutoMoqData]
     public async Task CreateRoleInnterAsync_ShouldReturnFail_WhenRoleNotExistAndCreateFailed(
         [Frozen] Mock<RoleManager<ApplicationRole>> roleManagerMock,
-        [Frozen] Mock<UserManager<ApplicationUser>> userManagerMock,
         UserService sut,
         string roleName,
         IdentityError[] expectedErrors)
@@ -133,7 +126,6 @@ public class UserServiceTests(ITestOutputHelper testOutputHelper)
     [Theory, AutoMoqData]
     public async Task AddUserToRoleInnerAsync_ShouldReturnRoleNotExist_WhenRoleNotExisted(
         [Frozen] Mock<RoleManager<ApplicationRole>> roleManagerMock,
-        [Frozen] Mock<UserManager<ApplicationUser>> userManagerMock,
         UserService sut,
         string roleName,
         ApplicationUser user)
@@ -195,7 +187,6 @@ public class UserServiceTests(ITestOutputHelper testOutputHelper)
     [Theory, AutoMoqData]
     public async Task GetUserByIdAsync_ShouldReturnSuccess_WhenFindUser(
         [Frozen] Mock<UserManager<ApplicationUser>> userManagerMock,
-        [Frozen] Mock<RoleManager<ApplicationRole>> roleManagerMock,
         UserService sut,
         string userId)
     {
@@ -227,7 +218,6 @@ public class UserServiceTests(ITestOutputHelper testOutputHelper)
     [Theory, AutoMoqData]
     public async Task GetUserByIdAsync_ShouldReturnFail_WhenNotFindUser(
         [Frozen] Mock<UserManager<ApplicationUser>> userManagerMock,
-        [Frozen] Mock<RoleManager<ApplicationRole>> roleManagerMock,
         UserService sut,
         string userId)
     {

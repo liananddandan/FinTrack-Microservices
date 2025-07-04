@@ -20,8 +20,6 @@ public class TenantRegisteredEventHandlerTests
     [Theory, AutoMoqData]
     public async Task Handler_ShouldThrowException_WhenUserNotGetById(
         [Frozen] Mock<IUserAppService> userAppService,
-        [Frozen] Mock<IUserVerificationService> userVerificationService,
-        [Frozen] Mock<ICapPublisher> capPublisher,
         TenantRegisteredEventHandler sut,
         TenantRegisteredEvent tenantRegisteredEvent)
     {
@@ -46,7 +44,6 @@ public class TenantRegisteredEventHandlerTests
     public async Task Handler_ShouldThrowException_WhenGenerateTokenFailed(
         [Frozen] Mock<IUserAppService> userAppService,
         [Frozen] Mock<IUserVerificationService> userVerificationService,
-        [Frozen] Mock<ICapPublisher> capPublisher,
         TenantRegisteredEventHandler sut,
         TenantRegisteredEvent tenantRegisteredEvent,
         ApplicationUser user)

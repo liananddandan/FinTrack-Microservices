@@ -3,7 +3,7 @@ using FluentAssertions;
 using IdentityService.Common.Results;
 using IdentityService.Common.Status;
 using IdentityService.Domain.Entities;
-using IdentityService.DTOs;
+using IdentityService.Common.DTOs;
 using IdentityService.Events;
 using IdentityService.Repositories.Interfaces;
 using IdentityService.Services;
@@ -21,9 +21,7 @@ public class TenantServiceTests
     [Theory, AutoMoqData]
     public async Task RegisterTenantAsync_ShouldThrowException_WhenCreateUserFailed(
         [Frozen] Mock<IUnitOfWork> unitOfWorkMock,
-        [Frozen] Mock<ITenantRepo> tenantRepoMock,
         [Frozen] Mock<IUserDomainService> userDomainServiceMock,
-        [Frozen] Mock<IMediator> mediatorMock,
         TenantService sut,
         string tenantName,
         string adminName, 
@@ -49,9 +47,7 @@ public class TenantServiceTests
     [Theory, AutoMoqData]
     public async Task RegisterTenantAsync_ShouldReturnFail_WhenCreateRoleFailed(
         [Frozen] Mock<IUnitOfWork> unitOfWorkMock,
-        [Frozen] Mock<ITenantRepo> tenantRepoMock,
         [Frozen] Mock<IUserDomainService> userDomainServiceMock,
-        [Frozen] Mock<IMediator> mediatorMock,
         TenantService sut,
         string tenantName,
         string adminName, 
@@ -77,9 +73,7 @@ public class TenantServiceTests
     [Theory, AutoMoqData]
     public async Task RegisterTenantAsync_ShouldReturnFail_WhenAddUserToRoleFailed(
         [Frozen] Mock<IUnitOfWork> unitOfWorkMock,
-        [Frozen] Mock<ITenantRepo> tenantRepoMock,
         [Frozen] Mock<IUserDomainService> userDomainServiceMock,
-        [Frozen] Mock<IMediator> mediatorMock,
         TenantService sut,
         string tenantName,
         string adminName, 
@@ -121,7 +115,6 @@ public class TenantServiceTests
     [Theory, AutoMoqData]
     public async Task RegisterTenantAsync_ShouldReturnTrue_WhenRegisterSuccess(
         [Frozen] Mock<IUnitOfWork> unitOfWorkMock,
-        [Frozen] Mock<ITenantRepo> tenantRepoMock,
         [Frozen] Mock<IUserDomainService> userDomainServiceMock,
         [Frozen] Mock<IMediator> mediatorMock,
         TenantService sut,

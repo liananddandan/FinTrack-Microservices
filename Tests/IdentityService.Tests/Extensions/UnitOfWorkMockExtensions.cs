@@ -9,7 +9,7 @@ public static class UnitOfWorkMockExtensions
         this Mock<IUnitOfWork> unitOfWorkMock)
     {
         unitOfWorkMock.Setup(uow =>
-                uow.WithTransactionAsync<T>(
+                uow.WithTransactionAsync(
                     It.IsAny<Func<Task<T>>>(),
                     It.IsAny<CancellationToken>()))
             .Returns<Func<Task<T>>, CancellationToken>(async (func, _) => await func());

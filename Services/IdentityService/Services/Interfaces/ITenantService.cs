@@ -1,5 +1,5 @@
+using IdentityService.Common.DTOs;
 using IdentityService.Common.Results;
-using IdentityService.DTOs;
 
 namespace IdentityService.Services.Interfaces;
 

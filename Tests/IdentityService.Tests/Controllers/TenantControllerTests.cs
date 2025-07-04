@@ -1,15 +1,13 @@
 using System.Net.Http.Json;
 using FluentAssertions;
 using IdentityService.Commands;
-using Xunit.Abstractions;
+using IdentityService.Common.Results;
 
 namespace IdentityService.Tests.Controllers;
 
-public class TenantControllerTests(IdentityWebApplicationFactory<Program> factory,
-    ITestOutputHelper testOutputHelper) : IClassFixture<IdentityWebApplicationFactory<Program>>
+public class TenantControllerTests(IdentityWebApplicationFactory<Program> factory) : IClassFixture<IdentityWebApplicationFactory<Program>>
 {
     private readonly HttpClient _client = factory.CreateClient();
-    private readonly ITestOutputHelper _output = testOutputHelper;
 
     [Fact]
     public async Task RegisterTenant_ShouldReturnSuccess()
@@ -25,10 +23,9 @@ public class TenantControllerTests(IdentityWebApplicationFactory<Program> factor
         var response = await _client.PostAsJsonAsync("/api/tenant/register", command);
         
         // Assert
-        string responseBody = await response.Content.ReadAsStringAsync();
-        _output.WriteLine("Response: " + responseBody);
         response.EnsureSuccessStatusCode();
         var content = await response.Content.ReadAsStringAsync();
-        _output.WriteLine(content);
+        content.Should().Contain(ResultCodes.Tenant.RegisterTenantSuccess);
+        content.Should().Contain(command.AdminEmail);
     }
 }

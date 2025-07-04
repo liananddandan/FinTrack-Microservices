@@ -1,4 +1,4 @@
-namespace IdentityService.DTOs;
+namespace IdentityService.Common.DTOs;
 
 public record RegisterTenantResult(
     Guid PublicTenantId,

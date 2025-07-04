@@ -1,7 +1,7 @@
+using IdentityService.Common.DTOs;
 using IdentityService.Common.Results;
 using IdentityService.Common.Status;
 using IdentityService.Domain.Entities;
-using IdentityService.DTOs;
 using IdentityService.Events;
 using IdentityService.Repositories.Interfaces;
 using IdentityService.Services.Interfaces;
