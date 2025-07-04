@@ -68,7 +68,8 @@ jobs:
           dotnet ef database update \
             --project Services/IdentityService/IdentityService.csproj \
             --startup-project Services/IdentityService/IdentityService.csproj \
-            --context IdentityService.Infrastructure.Persistence.ApplicationIdentityDbContext
-          
+            --context IdentityService.Infrastructure.Persistence.ApplicationIdentityDbContext \
+            -- --connectionString "server=127.0.0.1;port=3307;database=identity_test;user=root;password=123456"
+      
       - name: Run tests
         run: dotnet test --no-build --verbosity normal
