@@ -34,6 +34,12 @@ jobs:
         with:
           dotnet-version: 9.0.300
           
+      - name: Install dotnet-ef tool
+        run: dotnet tool install --global dotnet-ef
+
+      - name: Add dotnet tools to PATH
+        run: echo "$HOME/.dotnet/tools" >> $GITHUB_PATH
+          
       - name: Wait for MySQL to be healthy
         run: |
           for i in {1..30}; do
