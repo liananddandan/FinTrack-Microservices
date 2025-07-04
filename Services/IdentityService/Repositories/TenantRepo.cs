@@ -9,6 +9,5 @@ public class TenantRepo(ApplicationIdentityDbContext dbContext) : ITenantRepo
     public async Task AddTenantAsync(Tenant tenant, CancellationToken cancellationToken = default)
     {
         await dbContext.AddAsync(tenant, cancellationToken);
-        await dbContext.SaveChangesAsync(cancellationToken);
     }
 }

@@ -8,4 +8,6 @@ public interface IUnitOfWork
     
     Task WithTransactionAsync(Func<Task> action, CancellationToken cancellationToken = default);
     Task<T> WithTransactionAsync<T>(Func<Task<T>> action, CancellationToken cancellationToken = default);
+    Task SaveChangesAsync(CancellationToken cancellationToken = default);
+
 }

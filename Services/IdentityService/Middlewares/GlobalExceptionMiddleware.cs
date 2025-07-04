@@ -18,8 +18,8 @@ public class GlobalExceptionMiddleware(RequestDelegate next, ILogger<GlobalExcep
             httpContext.Response.ContentType = "application/json";
             
             int statusCode = (int)HttpStatusCode.InternalServerError;
-            string code = "InternalServerError";
-            string message = "Internal Server Error";
+            string code = "GlobalExceptionMiddleware: InternalServerError";
+            string message = ex.Message;
 
             if (ex is BaseAppException appException)
             {

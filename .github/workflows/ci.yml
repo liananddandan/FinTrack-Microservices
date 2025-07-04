@@ -17,21 +17,14 @@ jobs:
       mysql:
         image: mysql:8.0
         env:
-          MYSQL_ROOT_PASSWORD: root123
-          MYSQL_DATABASE: testdb
-          MYSQL_USER: testuser
-          MYSQL_PASSWORD: testpass
+          MYSQL_ROOT_PASSWORD: 123456
         ports:
-          - 3306:3306
+          - 3307:3306
         options: >-
           --health-cmd="mysqladmin ping -h localhost"
           --health-interval=10s
           --health-timeout=5s
           --health-retries=5
-
-    env:
-      ConnectionStrings__DefaultConnection: "server=127.0.0.1;port=3306;database=testdb;uid=testuser;pwd=testpass"
-
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -40,12 +33,36 @@ jobs:
         uses: actions/setup-dotnet@v4
         with:
           dotnet-version: 9.0.300
+          
+      - name: Wait for MySQL to be healthy
+        run: |
+          for i in {1..30}; do
+            if mysqladmin ping -h 127.0.0.1 -P 3307 -uroot -p123456 --silent; then
+              echo "MySQL is up!"
+              break
+            fi
+            echo "Waiting for MySQL..."
+            sleep 2
+          done
 
       - name: Restore dependencies
         run: dotnet restore
 
       - name: Build solution
         run: dotnet build --no-restore
-
+        
+      - name: Create required databases
+        run: |
+          mysql -h 127.0.0.1 -P 3307 -uroot -p123456 -e "
+            CREATE DATABASE IF NOT EXISTS identity_test;
+          "
+          
+      - name: Apply EF Core migration to identity_test
+        run: |
+          dotnet ef database update \
+            --project Services/IdentityService/IdentityService.csproj \
+            --startup-project Services/IdentityService/IdentityService.csproj \
+            --context IdentityService.Infrastructure.Persistence.ApplicationIdentityDbContext
+          
       - name: Run tests
         run: dotnet test --no-build --verbosity normal

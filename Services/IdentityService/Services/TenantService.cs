@@ -32,7 +32,7 @@ public class TenantService(
                     Name = tenantName
                 };
                 await tenantRepo.AddTenantAsync(tenant, cancellationToken);
-
+                await unitOfWork.SaveChangesAsync(cancellationToken); 
                 // 2. create admin account
                 var (user, randomPassword) = await userService
                     .CreateUserOrThrowInnerAsync(adminName, adminEmail, tenant.Id, cancellationToken);
@@ -66,7 +66,8 @@ public class TenantService(
         }
         catch (Exception ex)
         {
-            return ServiceResult<RegisterTenantResult>.Fail(ResultCodes.Tenant.RegisterTenantException, ex.Message);
+            return ServiceResult<RegisterTenantResult>.Fail(ResultCodes.Tenant.RegisterTenantException, 
+                ex.InnerException != null ? ex.InnerException.Message : ex.Message);
         }
     }
 }

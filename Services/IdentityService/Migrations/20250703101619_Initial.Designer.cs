@@ -12,8 +12,8 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace IdentityService.Migrations
 {
     [DbContext(typeof(ApplicationIdentityDbContext))]
-    [Migration("20250627000235_InitialUserAndTenant")]
-    partial class InitialUserAndTenant
+    [Migration("20250703101619_Initial")]
+    partial class Initial
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -118,9 +118,6 @@ namespace IdentityService.Migrations
                     b.Property<long>("TenantId")
                         .HasColumnType("bigint");
 
-                    b.Property<long>("TenantId1")
-                        .HasColumnType("bigint");
-
                     b.Property<bool>("TwoFactorEnabled")
                         .HasColumnType("tinyint(1)");
 
@@ -145,8 +142,6 @@ namespace IdentityService.Migrations
                         .IsUnique();
 
                     b.HasIndex("TenantId");
-
-                    b.HasIndex("TenantId1");
 
                     b.HasIndex("UserName")
                         .IsUnique();
@@ -292,16 +287,10 @@ namespace IdentityService.Migrations
 
             modelBuilder.Entity("IdentityService.Domain.Entities.ApplicationUser", b =>
                 {
-                    b.HasOne("IdentityService.Domain.Entities.Tenant", null)
+                    b.HasOne("IdentityService.Domain.Entities.Tenant", "Tenant")
                         .WithMany()
                         .HasForeignKey("TenantId")
                         .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.HasOne("IdentityService.Domain.Entities.Tenant", "Tenant")
-                        .WithMany()
-                        .HasForeignKey("TenantId1")
-                        .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
                     b.Navigation("Tenant");

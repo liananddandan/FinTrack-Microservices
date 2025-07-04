@@ -2,6 +2,7 @@ using System.Security.Cryptography;
 using IdentityService.Common.Results;
 using IdentityService.Common.Status;
 using IdentityService.Domain.Entities;
+using IdentityService.Infrastructure.Persistence;
 using IdentityService.Services.Interfaces;
 using Microsoft.AspNetCore.Identity;
 using SharedKernel.Common.Exceptions;
@@ -56,10 +57,29 @@ public class UserService(UserManager<ApplicationUser> userManager,
     private string GenerateSecurePassword()
     {
         const int length = 12;
-        const string valid = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890!@#$%^&*()";
-        return new string(Enumerable.Range(0, length)
-            .Select(_ => valid[RandomNumberGenerator.GetInt32(valid.Length)]).ToArray());
+        const string lower = "abcdefghijklmnopqrstuvwxyz";
+        const string upper = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+        const string digits = "1234567890";
+        const string specials = "!@#$%^&*()";
+
+        var all = lower + upper + digits + specials;
+        var randomChars = new List<char>
+        {
+            lower[RandomNumberGenerator.GetInt32(lower.Length)],
+            upper[RandomNumberGenerator.GetInt32(upper.Length)],
+            digits[RandomNumberGenerator.GetInt32(digits.Length)],
+            specials[RandomNumberGenerator.GetInt32(specials.Length)]
+        };
+
+        while (randomChars.Count < length)
+        {
+            randomChars.Add(all[RandomNumberGenerator.GetInt32(all.Length)]);
+        }
+
+        // 洗牌
+        return new string(randomChars.OrderBy(_ => RandomNumberGenerator.GetInt32(100)).ToArray());
     }
+
 
     public async Task<ServiceResult<ApplicationUser>> GetUserByIdAsync(string id)
     {

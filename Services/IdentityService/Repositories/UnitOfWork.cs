@@ -6,7 +6,7 @@ using Microsoft.VisualBasic;
 
 namespace IdentityService.Repositories;
 
-public class EfUnitOfWork(ApplicationIdentityDbContext dbContext) : IUnitOfWork
+public class UnitOfWork(ApplicationIdentityDbContext dbContext) : IUnitOfWork
 {
     private IDbContextTransaction? _transaction;
     
@@ -45,6 +45,7 @@ public class EfUnitOfWork(ApplicationIdentityDbContext dbContext) : IUnitOfWork
         try
         {
             await action();
+            await dbContext.SaveChangesAsync(cancellationToken);
             await CommitTransactionAsync(cancellationToken);
         }
         catch
@@ -60,6 +61,7 @@ public class EfUnitOfWork(ApplicationIdentityDbContext dbContext) : IUnitOfWork
         try
         {
             var result = await action();
+            await dbContext.SaveChangesAsync(cancellationToken);
             await CommitTransactionAsync(cancellationToken);
             return result;
         }
@@ -68,5 +70,10 @@ public class EfUnitOfWork(ApplicationIdentityDbContext dbContext) : IUnitOfWork
             await RollbackTransactionAsync(cancellationToken);
             throw;
         }
+    }
+    
+    public async Task SaveChangesAsync(CancellationToken cancellationToken = default)
+    {
+        await dbContext.SaveChangesAsync(cancellationToken);
     }
 }

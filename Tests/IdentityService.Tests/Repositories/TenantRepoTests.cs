@@ -32,6 +32,7 @@ public class TenantRepoTests
         
         // Act
         await repo.AddTenantAsync(tenant, CancellationToken.None);
+        await dbContext.SaveChangesAsync(CancellationToken.None);
         
         // Assert
         var result = await dbContext.Tenants.SingleOrDefaultAsync(t => t.Id == tenant.Id, CancellationToken.None);

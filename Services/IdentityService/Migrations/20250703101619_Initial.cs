@@ -7,7 +7,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 namespace IdentityService.Migrations
 {
     /// <inheritdoc />
-    public partial class InitialUserAndTenant : Migration
+    public partial class Initial : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -85,7 +85,6 @@ namespace IdentityService.Migrations
                         .Annotation("MySql:ValueGenerationStrategy", MySqlValueGenerationStrategy.IdentityColumn),
                     PublicId = table.Column<Guid>(type: "char(36)", nullable: false, collation: "ascii_general_ci"),
                     TenantId = table.Column<long>(type: "bigint", nullable: false),
-                    TenantId1 = table.Column<long>(type: "bigint", nullable: false),
                     Created = table.Column<DateTime>(type: "datetime(6)", nullable: false),
                     IsDeleted = table.Column<bool>(type: "tinyint(1)", nullable: false),
                     DeletedAt = table.Column<DateTime>(type: "datetime(6)", nullable: true),
@@ -121,12 +120,6 @@ namespace IdentityService.Migrations
                         principalTable: "Tenants",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Restrict);
-                    table.ForeignKey(
-                        name: "FK_AspNetUsers_Tenants_TenantId1",
-                        column: x => x.TenantId1,
-                        principalTable: "Tenants",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
                 })
                 .Annotation("MySql:CharSet", "utf8mb4");
 
@@ -274,11 +267,6 @@ namespace IdentityService.Migrations
                 name: "IX_AspNetUsers_TenantId",
                 table: "AspNetUsers",
                 column: "TenantId");
-
-            migrationBuilder.CreateIndex(
-                name: "IX_AspNetUsers_TenantId1",
-                table: "AspNetUsers",
-                column: "TenantId1");
 
             migrationBuilder.CreateIndex(
                 name: "IX_AspNetUsers_UserName",

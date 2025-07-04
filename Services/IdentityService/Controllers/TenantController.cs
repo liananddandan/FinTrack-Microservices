@@ -7,7 +7,7 @@ namespace IdentityService.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
-public class TenantsController(IMediator mediator) : ControllerBase
+public class TenantController(IMediator mediator) : ControllerBase
 {
     [HttpPost("register")]
     public async Task<IActionResult> RegisterAsync(RegisterTenantCommand command)

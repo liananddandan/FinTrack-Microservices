@@ -16,7 +16,7 @@ public class UserConfiguration : IEntityTypeConfiguration<ApplicationUser>
         builder.HasIndex(u => u.Email).IsUnique();
         builder.Property(u => u.UserName).IsRequired();
         builder.HasIndex(u => u.UserName).IsUnique();
-        builder.HasOne<Tenant>()
+        builder.HasOne(u => u.Tenant)
             .WithMany()
             .HasForeignKey(u => u.TenantId)
             .OnDelete(DeleteBehavior.Restrict);

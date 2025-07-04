@@ -41,6 +41,8 @@
     &lt;TestId&gt;xUnit::634E2A0D-EE3E-4F9F-9F60-D97B140815D8::net9.0::IdentityService.Tests.EventHandlers.TenantRegisteredEventHandlerTests.Handler_ShouldThrowException_WhenGenerateTokenFailed&lt;/TestId&gt;
     &lt;TestId&gt;xUnit::634E2A0D-EE3E-4F9F-9F60-D97B140815D8::net9.0::IdentityService.Tests.EventHandlers.TenantRegisteredEventHandlerTests.Handler_ShouldSuccess_WhenEverythingIsOk&lt;/TestId&gt;
     &lt;TestId&gt;xUnit::634E2A0D-EE3E-4F9F-9F60-D97B140815D8::net9.0::IdentityService.Tests.CommandHandlers.RegisterTenantCommandHandlerTests.Handle_ShouldReturnResult_FromService&lt;/TestId&gt;
+    &lt;TestId&gt;xUnit::634E2A0D-EE3E-4F9F-9F60-D97B140815D8::net9.0::IdentityService.Tests.Controllers.TenantControllerTests.RegisterTenant_ShouldReturnSuccess&lt;/TestId&gt;
+    &lt;TestId&gt;xUnit::634E2A0D-EE3E-4F9F-9F60-D97B140815D8::net9.0::IdentityService.Tests.Controllers.TenantControllerTests&lt;/TestId&gt;
   &lt;/TestAncestor&gt;
 &lt;/SessionState&gt;</s:String>
 	</wpf:ResourceDictionary>
