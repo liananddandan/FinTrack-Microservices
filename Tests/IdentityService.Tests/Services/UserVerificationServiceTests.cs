@@ -22,8 +22,7 @@ public class UserVerificationServiceTests
         var expectedToken = "mock-token";
         userManagerMock
             .Setup(x
-                => x.GenerateUserTokenAsync(user, TokenOptions.DefaultProvider, 
-                    TokenPurpose.EmailConfirmation.ToIdentityString()))
+                => x.GenerateEmailConfirmationTokenAsync(user))
             .ReturnsAsync(expectedToken);
         
         // Action
@@ -35,7 +34,7 @@ public class UserVerificationServiceTests
         result.Code.Should().BeEquivalentTo(ResultCodes.Token.VerifyTokenGenerateSuccess);
         result.Message.Should().BeEquivalentTo("Verify token generation success.");
         userManagerMock.Verify(userManager => 
-            userManager.GenerateUserTokenAsync(user, TokenOptions.DefaultProvider, It.IsAny<string>()), 
+            userManager.GenerateEmailConfirmationTokenAsync(user), 
             Times.Once);
     }
 
@@ -47,8 +46,7 @@ public class UserVerificationServiceTests
     {
         // Arrange
         userManagerMock.Setup(userManager =>
-                userManager.GenerateUserTokenAsync(user, TokenOptions.DefaultProvider,
-                    TokenPurpose.EmailConfirmation.ToIdentityString()))
+                userManager.GenerateEmailConfirmationTokenAsync(user))
             .ReturnsAsync(string.Empty);
         
         // Act
@@ -58,8 +56,29 @@ public class UserVerificationServiceTests
         result.Data.Should().BeNull();
         result.Code.Should().BeEquivalentTo(ResultCodes.Token.VerifyTokenGenerateFailed);
         result.Message.Should().BeEquivalentTo("Verify token generation failed.");
-        userManagerMock.Verify(u => u.GenerateUserTokenAsync(user, TokenOptions.DefaultProvider, It.IsAny<string>()),
+        userManagerMock.Verify(u
+                => u.GenerateEmailConfirmationTokenAsync(user),
             Times.Once);
+    }
+    
+    [Theory, AutoMoqData]
+    public async Task GenerateTokenAsync_ShouldReturnNull_WhenTypeInvalid(
+        [Frozen] Mock<UserManager<ApplicationUser>> userManagerMock,
+        ApplicationUser user,
+        UserVerificationService sut)
+    {
+        // Arrange
+        
+        // Act
+        var result = await sut.GenerateTokenAsync(user, TokenPurpose.InvalidType, CancellationToken.None);
+        
+        // Assert
+        result.Data.Should().BeNull();
+        result.Code.Should().BeEquivalentTo(ResultCodes.Token.VerifyTokenGenerateFailed);
+        result.Message.Should().BeEquivalentTo("Verify token generation failed.");
+        userManagerMock.Verify(u
+                => u.GenerateEmailConfirmationTokenAsync(user),
+            Times.Never);
     }
 
     [Theory, AutoMoqData]
@@ -71,17 +90,16 @@ public class UserVerificationServiceTests
     {
         // Arrange
         userManagerMock.Setup(userManager =>
-                userManager.VerifyUserTokenAsync(user, TokenOptions.DefaultProvider,
-                    token, It.IsAny<string>()))
-            .ReturnsAsync(true);
+                userManager.ConfirmEmailAsync(user, token))
+            .ReturnsAsync(IdentityResult.Success);
         
         // Action
         var result = await sut.ValidateTokenAsync(user, token, TokenPurpose.EmailConfirmation, CancellationToken.None);
         
         // Assert
         result.Data.Should().BeTrue();
-        result.Code.Should().BeEquivalentTo(ResultCodes.Token.VerifyTokenProcessFinished);
-        result.Message.Should().BeEquivalentTo("Verify token process finished.");
+        result.Code.Should().BeEquivalentTo(ResultCodes.Token.VerifyTokenSuccess);
+        result.Message.Should().BeEquivalentTo("Token Verification Successful.");
     }
 
     [Theory, AutoMoqData]
@@ -89,19 +107,37 @@ public class UserVerificationServiceTests
         [Frozen] Mock<UserManager<ApplicationUser>> userManagerMock,
         ApplicationUser user,
         string token,
-        UserVerificationService sut)
+        UserVerificationService sut,
+        IdentityError identityError)
     {
         // Arrange
         userManagerMock.Setup(userManager 
-            => userManager.VerifyUserTokenAsync(user, TokenOptions.DefaultProvider, token, It.IsAny<string>()))
-            .ReturnsAsync(false);
+            => userManager.ConfirmEmailAsync(user, token))
+            .ReturnsAsync(IdentityResult.Failed(identityError));
         
         // Act
         var result = await sut.ValidateTokenAsync(user, token, TokenPurpose.EmailConfirmation, CancellationToken.None);
         
         // Assert
         result.Data.Should().BeFalse();
-        result.Code.Should().BeEquivalentTo(ResultCodes.Token.VerifyTokenProcessFinished);
-        result.Message.Should().BeEquivalentTo("Verify token process finished.");
+        result.Code.Should().BeEquivalentTo(ResultCodes.Token.VerifyTokenFailed);
     }
+    
+    [Theory, AutoMoqData]
+    public async Task ValidateTokenAsync_ShouldReturnFail_WhenTypeInvalid(
+        ApplicationUser user,
+        string token,
+        UserVerificationService sut)
+    {
+        // Arrange
+        
+        // Act
+        var result = await sut.ValidateTokenAsync(user, token, TokenPurpose.InvalidType, CancellationToken.None);
+        
+        // Assert
+        result.Data.Should().BeFalse();
+        result.Code.Should().BeEquivalentTo(ResultCodes.Token.VerifyTokenGenerateInvalidTokenType);
+        result.Message.Should().BeEquivalentTo("Token Type is not supported.");
+    }
+    
 }

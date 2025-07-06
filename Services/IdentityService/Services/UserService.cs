@@ -1,16 +1,19 @@
 using System.Security.Cryptography;
+using IdentityService.Common.DTOs;
 using IdentityService.Common.Results;
 using IdentityService.Common.Status;
 using IdentityService.Domain.Entities;
-using IdentityService.Infrastructure.Persistence;
 using IdentityService.Services.Interfaces;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.EntityFrameworkCore;
 using SharedKernel.Common.Exceptions;
+using SharedKernel.Common.Results;
 
 namespace IdentityService.Services;
 
 public class UserService(UserManager<ApplicationUser> userManager,
-    RoleManager<ApplicationRole> roleManager) : IUserDomainService, IUserAppService
+    RoleManager<ApplicationRole> roleManager,
+    IUserVerificationService userVerificationService) : IUserDomainService, IUserAppService
 {
     public async Task<(ApplicationUser, string)> CreateUserOrThrowInnerAsync(string userName, string userEmail,
         long tenantId, CancellationToken cancellationToken = default)
@@ -76,7 +79,7 @@ public class UserService(UserManager<ApplicationUser> userManager,
             randomChars.Add(all[RandomNumberGenerator.GetInt32(all.Length)]);
         }
 
-        // 洗牌
+        // Shuttle
         return new string(randomChars.OrderBy(_ => RandomNumberGenerator.GetInt32(100)).ToArray());
     }
 
@@ -87,5 +90,31 @@ public class UserService(UserManager<ApplicationUser> userManager,
         return result == null 
             ? ServiceResult<ApplicationUser>.Fail(ResultCodes.User.UserNotFound, "User Not Found")
             : ServiceResult<ApplicationUser>.Ok(result, ResultCodes.User.UserGetByIdSuccess, "User Found By Id");
+    }
+
+    public async Task<ServiceResult<ConfirmAccountEmailResult>> ConfirmAccountEmailAsync(string userPublicId, string token, CancellationToken cancellationToken = default)
+    {
+        if (!Guid.TryParse(userPublicId, out var publicUserId))
+        {
+            return ServiceResult<ConfirmAccountEmailResult>.Fail(ResultCodes.User.UserInvalidPublicid, "Invalid PublicId");
+        }
+
+        var user = await userManager.Users.FirstOrDefaultAsync(u => u.PublicId == publicUserId, cancellationToken);
+
+        if (user == null)
+        {
+            return ServiceResult<ConfirmAccountEmailResult>.Fail(ResultCodes.User.UserNotFound, "User Not Found");
+        }
+        
+        var verificationResult = await userVerificationService.ValidateTokenAsync(user, token, TokenPurpose.EmailConfirmation, cancellationToken);
+        if (verificationResult.Success)
+        {
+            var result = new ConfirmAccountEmailResult(user.PublicId, true);
+            return ServiceResult<ConfirmAccountEmailResult>.Ok(result, ResultCodes.User.UserEmailVerificationSuccess, "User Email Verification Success");
+        }
+        else
+        {
+            return ServiceResult<ConfirmAccountEmailResult>.Fail(ResultCodes.User.UserEmailVerificationFailed, "User Email Verification Failed");
+        }
     }
 }

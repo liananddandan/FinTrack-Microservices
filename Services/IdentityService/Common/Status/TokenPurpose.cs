@@ -2,5 +2,7 @@ namespace IdentityService.Common.Status;
 
 public enum TokenPurpose
 {
-    EmailConfirmation
+    EmailConfirmation,
+    [Obsolete("only use for testing purposes")]
+    InvalidType
 }

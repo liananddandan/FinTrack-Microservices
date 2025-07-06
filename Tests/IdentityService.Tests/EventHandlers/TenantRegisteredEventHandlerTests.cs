@@ -10,6 +10,7 @@ using IdentityService.Services.Interfaces;
 using IdentityService.Tests.Attributes;
 using Moq;
 using SharedKernel.Common.Exceptions;
+using SharedKernel.Common.Results;
 using SharedKernel.Events;
 using SharedKernel.Topics;
 

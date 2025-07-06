@@ -4,10 +4,14 @@ using IdentityService.Common.Results;
 using IdentityService.Common.Status;
 using IdentityService.Domain.Entities;
 using IdentityService.Services;
+using IdentityService.Services.Interfaces;
 using IdentityService.Tests.Attributes;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.EntityFrameworkCore;
+using MockQueryable;
 using Moq;
 using SharedKernel.Common.Exceptions;
+using SharedKernel.Common.Results;
 
 namespace IdentityService.Tests.Services;
 
@@ -232,5 +236,94 @@ public class UserServiceTests
         result.Data.Should().BeNull();
         result.Code.Should().BeEquivalentTo(ResultCodes.User.UserNotFound);
         result.Message.Should().BeEquivalentTo("User Not Found");
+    }
+    
+    [Theory, AutoMoqData]
+    public async Task ConfirmAccountAsync_ShouldReturnPublicInvalid_WhenPublicInvalid(
+        UserService sut,
+        string userId
+    )
+    {
+        // Arrange
+        
+        // Act
+        var result = await sut.ConfirmAccountEmailAsync(userId, It.IsAny<string>(), CancellationToken.None);
+        
+        // Assert
+        result.Data.Should().BeNull();
+        result.Code.Should().BeEquivalentTo(ResultCodes.User.UserInvalidPublicid);
+    }
+
+    [Theory, AutoMoqData]
+    public async Task ConfirmAccountAsync_ShouldReturnUserNotFound_WhenUserNotExist(
+        [Frozen] Mock<UserManager<ApplicationUser>> userManagerMock,
+        UserService sut
+        )
+    {
+        // Arrange
+        var users = new List<ApplicationUser>().AsQueryable();
+        var mockUsers = users.BuildMock();
+        userManagerMock.Setup(x => x.Users).Returns(mockUsers);
+        var publicId = Guid.NewGuid().ToString();
+        
+        // Act
+        var result = await sut.ConfirmAccountEmailAsync(publicId, It.IsAny<string>(), CancellationToken.None);
+        
+        // Assert
+        result.Data.Should().BeNull();
+        result.Code.Should().BeEquivalentTo(ResultCodes.User.UserNotFound);
+        result.Message.Should().BeEquivalentTo("User Not Found");
+    }
+    
+    [Theory, AutoMoqData]
+    public async Task ConfirmAccountAsync_ShouldReturnFail_WhenTokenVerifyFailed(
+        [Frozen] Mock<UserManager<ApplicationUser>> userManagerMock,
+        [Frozen] Mock<IUserVerificationService> userVerificationServiceMock,
+        UserService sut,
+        string token,
+        ApplicationUser user
+    )
+    {
+        // Arrange
+        var users = new List<ApplicationUser>(){user}.AsQueryable();
+        var mockUsers = users.BuildMock();
+        userManagerMock.Setup(x => x.Users).Returns(mockUsers);
+       
+        userVerificationServiceMock.Setup(uv => 
+            uv.ValidateTokenAsync(user, token, TokenPurpose.EmailConfirmation, CancellationToken.None))
+            .ReturnsAsync(ServiceResult<bool>.Fail( It.IsAny<string>(), It.IsAny<string>()));
+        
+        // Act
+        var result = await sut.ConfirmAccountEmailAsync(user.PublicId.ToString(), token, CancellationToken.None);
+        
+        // Assert
+        result.Data.Should().BeNull();
+        result.Code.Should().BeEquivalentTo(ResultCodes.User.UserEmailVerificationFailed);
+        result.Message.Should().BeEquivalentTo("User Email Verification Failed");
+    }
+    
+    [Theory, AutoMoqData]
+    public async Task ConfirmAccountAsync_ShouldReturnSuccess_WhenTokenVerifySucceeded(
+        [Frozen] Mock<UserManager<ApplicationUser>> userManagerMock,
+        [Frozen] Mock<IUserVerificationService> userVerificationServiceMock,
+        UserService sut,
+        string token,
+        ApplicationUser user)
+    {
+        // Arrange
+        var users = new List<ApplicationUser>(){user}.AsQueryable();
+        var mockUsers = users.BuildMock();
+        userManagerMock.Setup(x => x.Users).Returns(mockUsers);
+        userVerificationServiceMock.Setup(uv => 
+                uv.ValidateTokenAsync(user, token, TokenPurpose.EmailConfirmation, CancellationToken.None))
+            .ReturnsAsync(ServiceResult<bool>.Ok(It.IsAny<bool>(), It.IsAny<string>(), It.IsAny<string>()));
+        
+        // Act
+        var result = await sut.ConfirmAccountEmailAsync(user.PublicId.ToString(), token, CancellationToken.None);
+        
+        // Assert
+        result.Data.Should().NotBeNull();
+        result.Code.Should().BeEquivalentTo(ResultCodes.User.UserEmailVerificationSuccess);
+        result.Message.Should().BeEquivalentTo("User Email Verification Success");
     }
 }

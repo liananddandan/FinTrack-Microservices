@@ -10,18 +10,19 @@ using SharedKernel.Common.Results;
 
 namespace IdentityService.Tests.CommandHandlers;
 
-public class RegisterTenantCommandHandlerTests
+public class ConfirmAccountEmailCommandHandlerTests
 {
     [Theory, AutoMoqData]
     public async Task Handle_ShouldReturnResult_FromService(
-        [Frozen] Mock<IUserAppService> userAppService,
-        ConfirmAccountEmailCommandHandler sut,
-        ConfirmAccountEmailCommand command,
-        ConfirmAccountEmailResult result)
+        [Frozen] Mock<ITenantService> tenantServiceMock,
+        RegisterTenantCommandHandler sut,
+        RegisterTenantCommand command,
+        RegisterTenantResult result)
     {
-        userAppService.Setup(x => x.ConfirmAccountEmailAsync(
-                command.UserPublicId, command.Token, CancellationToken.None))
-            .ReturnsAsync(ServiceResult<ConfirmAccountEmailResult>.Ok(result, "Confirm Account", "Confirm Account"));
+        tenantServiceMock.Setup(x => x.RegisterTenantAsync(
+                command.TenantName, command.AdminName, command.AdminEmail, 
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(ServiceResult<RegisterTenantResult>.Ok(result, "registerTenant", "registerTenant"));
 
         var actual = await sut.Handle(command, CancellationToken.None);
 

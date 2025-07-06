@@ -6,6 +6,7 @@ using IdentityService.Events;
 using IdentityService.Repositories.Interfaces;
 using IdentityService.Services.Interfaces;
 using MediatR;
+using SharedKernel.Common.Results;
 
 namespace IdentityService.Services;
 

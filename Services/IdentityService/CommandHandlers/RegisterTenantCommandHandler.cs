@@ -1,13 +1,9 @@
 using System.Security.Cryptography;
 using IdentityService.Commands;
 using IdentityService.Common.DTOs;
-using IdentityService.Common.Results;
-using IdentityService.Domain.Entities;
-using IdentityService.Events;
-using IdentityService.Infrastructure.Persistence;
 using IdentityService.Services.Interfaces;
 using MediatR;
-using Microsoft.AspNetCore.Identity;
+using SharedKernel.Common.Results;
 
 namespace IdentityService.CommandHandlers;
 

@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Mvc;
+using SharedKernel.Common.Results;
 
 namespace IdentityService.Common.Results;
 

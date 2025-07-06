@@ -1,4 +1,4 @@
-namespace IdentityService.Common.Results;
+namespace SharedKernel.Common.Results;
 
 public class ServiceResult<T>
 {

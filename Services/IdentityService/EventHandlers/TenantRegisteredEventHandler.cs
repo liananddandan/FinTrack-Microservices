@@ -1,3 +1,4 @@
+using System.Web;
 using DotNetCore.CAP;
 using IdentityService.Common.Status;
 using IdentityService.Events;
@@ -27,14 +28,16 @@ public class TenantRegisteredEventHandler(IUserAppService userService,
         {
             throw new TokenGenerateException("Generate token failed");
         }
-        
-        var confirmUrl = $"https://localhost:5001/api/account/confirm?token={tokenResult.Data}&userId={getUserResult.Data.Id}";
+        var encodedToken = Uri.EscapeDataString(tokenResult.Data);
+        var encodedUserId = Uri.EscapeDataString(getUserResult.Data.PublicId.ToString());
+        var confirmUrl = $"https://localhost:5001/api/account/confirm-email?token={encodedToken}&userId={encodedUserId}";
         
         await capPublisher.PublishAsync(CapTopics.EmailSend, new EmailSendRequestedEvent
         {
             To = getUserResult.Data.Email!,
             Subject = $"Please confirm your email",
-            Body = GetEmailVerificationBody(confirmUrl)
+            Body = GetEmailVerificationBody(confirmUrl),
+            IsHtml = true
         }, new Dictionary<string, string?>(), cancellationToken);
         
     }

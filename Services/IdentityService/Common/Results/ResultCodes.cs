@@ -17,7 +17,9 @@ public static class ResultCodes
     {
         // Generate token failed 100 002 001
         public static string VerifyTokenGenerateFailed = "100002001";
-        public static string VerifyTokenProcessFinished = "100002998";
+        public static string VerifyTokenGenerateInvalidTokenType = "100002002";
+        public static string VerifyTokenFailed = "100002003";
+        public static string VerifyTokenSuccess = "100002998";
         public static string VerifyTokenGenerateSuccess = "100002999";
     }
 
@@ -25,7 +27,10 @@ public static class ResultCodes
     {
         // user faild 100 003 001
         public static string UserNotFound = "100003001";
+        public static string UserEmailVerificationFailed = "100003002";
+        public static string UserInvalidPublicid = "100003003";
         
+        public static string UserEmailVerificationSuccess = "100003998";
         public static string UserGetByIdSuccess = "100003999";
     }
 

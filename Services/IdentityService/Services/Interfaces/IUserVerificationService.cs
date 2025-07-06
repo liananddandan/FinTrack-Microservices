@@ -1,6 +1,6 @@
-using IdentityService.Common.Results;
 using IdentityService.Common.Status;
 using IdentityService.Domain.Entities;
+using SharedKernel.Common.Results;
 
 namespace IdentityService.Services.Interfaces;
 

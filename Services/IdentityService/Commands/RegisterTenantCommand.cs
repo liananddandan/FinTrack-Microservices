@@ -1,6 +1,6 @@
 using IdentityService.Common.DTOs;
-using IdentityService.Common.Results;
 using MediatR;
+using SharedKernel.Common.Results;
 
 namespace IdentityService.Commands;
 

@@ -13,6 +13,7 @@ using IdentityService.Tests.Extensions;
 using MediatR;
 using Moq;
 using SharedKernel.Common.Exceptions;
+using SharedKernel.Common.Results;
 
 namespace IdentityService.Tests.Services;
 
