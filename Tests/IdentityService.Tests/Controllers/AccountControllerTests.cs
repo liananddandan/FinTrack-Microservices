@@ -10,12 +10,13 @@ using Microsoft.Extensions.DependencyInjection;
 using Moq;
 using SharedKernel.Events;
 using SharedKernel.Topics;
+using Xunit.Abstractions;
 
 namespace IdentityService.Tests.Controllers;
 
-public class AccountControllerTests(IdentityWebApplicationFactory<Program> factory) : IClassFixture<IdentityWebApplicationFactory<Program>>
+public class AccountControllerTests(IdentityWebApplicationFactory<Program> factory,
+    ITestOutputHelper outputHelper) : IClassFixture<IdentityWebApplicationFactory<Program>>
 {
-
     [Theory, AutoMoqData]
     public async Task ConfirmAccountEmailAsync_ShouldReturnResult(
         [Frozen] Mock<ICapPublisher> capPublisherMock)
@@ -44,7 +45,7 @@ public class AccountControllerTests(IdentityWebApplicationFactory<Program> facto
             });
         }).CreateClient();
 
-        var registerTenantCommand = new RegisterTenantCommand("TestTenantName", "TestAdminName", "TestAdmin@Test.com");
+        var registerTenantCommand = new RegisterTenantCommand("TestTenantName_ConfirmEmail", "TestAdminName_ConfirmEmail", "TestAdmin_ConfirmEmail@Test.com");
         var registerTenantResponse = await client.PostAsJsonAsync("api/tenant/register", registerTenantCommand);
         registerTenantResponse.EnsureSuccessStatusCode();
         capturedEmail.Should().NotBeNull();

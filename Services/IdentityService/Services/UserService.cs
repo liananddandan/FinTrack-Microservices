@@ -38,7 +38,7 @@ public class UserService(UserManager<ApplicationUser> userManager,
 
     public async Task<RoleStatus> CreateRoleInnerAsync(string roleName, CancellationToken cancellationToken = default)
     {
-        if (await roleManager.RoleExistsAsync(roleName))
+        if (await roleManager.RoleExistsAsync(roleName.ToUpperInvariant()))
         {
             return RoleStatus.RoleAlreadyExist;
         }

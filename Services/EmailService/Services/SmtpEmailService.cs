@@ -17,7 +17,7 @@ public class SmtpEmailService(
         logger.LogInformation($"Received email event: To={emailEvent.To}, Subject={emailEvent.Subject})");
         
         var message = new MimeMessage();
-        message.From.Add(new MailboxAddress("FinTrack", _smtpOptions.User));
+        message.From.Add(new MailboxAddress("FinTrack", "no-reply@fintrack.com"));
         var toName = string.IsNullOrWhiteSpace(emailEvent.ToName) ? emailEvent.To : emailEvent.ToName;
         message.To.Add(new MailboxAddress(toName, emailEvent.To));
         message.Subject = emailEvent.Subject;
@@ -25,7 +25,7 @@ public class SmtpEmailService(
             ? new TextPart("html") { Text = emailEvent.Body }
             : new TextPart("plain") { Text = emailEvent.Body };
         using var client = new SmtpClient();
-        await client.ConnectAsync(_smtpOptions.Host, _smtpOptions.Port, MailKit.Security.SecureSocketOptions.StartTls);
+        await client.ConnectAsync(_smtpOptions.Host, _smtpOptions.Port, MailKit.Security.SecureSocketOptions.None);
         await client.AuthenticateAsync(_smtpOptions.User, _smtpOptions.Password);
         await client.SendAsync(message);
         await client.DisconnectAsync(true);

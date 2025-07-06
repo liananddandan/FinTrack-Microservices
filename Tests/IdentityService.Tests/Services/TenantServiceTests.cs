@@ -57,7 +57,7 @@ public class TenantServiceTests
         // Arrange
         unitOfWorkMock.SetupExecuteWithTransaction<ServiceResult<RegisterTenantResult>>();
         
-        var roleName = "Admin";
+        var roleName = $"Admin_{tenantName}";
         userDomainServiceMock.Setup(u
                 => u.CreateRoleInnerAsync(roleName, It.IsAny<CancellationToken>()))
             .ReturnsAsync(RoleStatus.CreateFailed);
@@ -96,7 +96,7 @@ public class TenantServiceTests
                     It.IsAny<string>(), It.IsAny<long>(), 
                     It.IsAny<CancellationToken>()))
             .ReturnsAsync((user, randomPassword));
-        var roleName = "Admin";
+        var roleName = $"Admin_{tenantName}";
         userDomainServiceMock.Setup(u
                 => u.CreateRoleInnerAsync(roleName, It.IsAny<CancellationToken>()))
             .ReturnsAsync(RoleStatus.CreateSuccess);

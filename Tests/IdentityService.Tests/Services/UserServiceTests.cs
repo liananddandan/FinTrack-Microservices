@@ -80,7 +80,7 @@ public class UserServiceTests
         string roleName)
     {
         // Arrange
-        roleManagerMock.Setup(roleManager => roleManager.RoleExistsAsync(roleName))
+        roleManagerMock.Setup(roleManager => roleManager.RoleExistsAsync(roleName.ToUpperInvariant()))
             .ReturnsAsync(true);
         
         // Act

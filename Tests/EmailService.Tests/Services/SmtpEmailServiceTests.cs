@@ -14,10 +14,10 @@ public class SmtpEmailServiceTests
     {
         var smtpOptions = new SmtpOptions
         {
-            Host="sandbox.smtp.mailtrap.io",
-            Port=2525,
-            User="813ab4f5a7c0eb",
-            Password="ac67007935ef36"
+            Host= "localhost",
+            Port= 1025,
+            User= "",
+            Password= ""
         };
         var optionsMock = new Mock<IOptions<SmtpOptions>>();
         optionsMock.Setup(o => o.Value).Returns(smtpOptions);

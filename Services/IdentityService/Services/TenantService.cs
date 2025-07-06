@@ -39,7 +39,7 @@ public class TenantService(
                     .CreateUserOrThrowInnerAsync(adminName, adminEmail, tenant.Id, cancellationToken);
 
                 // 3. create admin role
-                var roleName = "Admin";
+                var roleName = $"Admin_{tenantName}";
                 var createStatus = await userService.CreateRoleInnerAsync(roleName, cancellationToken);
                 if (createStatus == RoleStatus.CreateFailed)
                 {
