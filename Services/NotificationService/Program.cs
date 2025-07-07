@@ -1,9 +1,9 @@
 using DotNetCore.CAP;
-using EmailService.Handlers;
-using EmailService.Infrastructure.Persistence;
-using EmailService.Options;
-using EmailService.Services;
 using Microsoft.EntityFrameworkCore;
+using NotificationService.Handlers;
+using NotificationService.Infrastructure.Persistence;
+using NotificationService.Options;
+using NotificationService.Services;
 using Scalar.AspNetCore;
 
 var builder = WebApplication.CreateBuilder(args);

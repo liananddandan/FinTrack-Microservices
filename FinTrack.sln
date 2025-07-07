@@ -10,11 +10,11 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Shared", "Shared", "{4F52FD
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SharedKernel", "Shared\SharedKernel\SharedKernel.csproj", "{26FCA3B2-DEAD-44C7-9F37-FC233CC0BAEE}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "EmailService", "Services\EmailService\EmailService.csproj", "{4D05B0BD-8626-4278-9291-D7106A37518E}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "NotificationService", "Services\NotificationService\NotificationService.csproj", "{4D05B0BD-8626-4278-9291-D7106A37518E}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Tests", "Tests", "{0AB3BF05-4346-4AA6-1389-037BE0695223}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "EmailService.Tests", "Tests\EmailService.Tests\EmailService.Tests.csproj", "{AF11EA61-0F3E-4A44-9EC4-95B27AF31D11}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "NotificationService.Tests", "Tests\NotificationService.Tests\NotificationService.Tests.csproj", "{AF11EA61-0F3E-4A44-9EC4-95B27AF31D11}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "IdentityService.Tests", "Tests\IdentityService.Tests\IdentityService.Tests.csproj", "{634E2A0D-EE3E-4F9F-9F60-D97B140815D8}"
 EndProject

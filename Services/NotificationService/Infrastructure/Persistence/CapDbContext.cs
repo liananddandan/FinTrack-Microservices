@@ -1,6 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 
-namespace EmailService.Infrastructure.Persistence;
+namespace NotificationService.Infrastructure.Persistence;
 
 public class CapDbContext : DbContext
 {

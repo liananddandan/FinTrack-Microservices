@@ -1,4 +1,4 @@
-namespace EmailService.Options;
+namespace NotificationService.Options;
 
 public class SmtpOptions
 {

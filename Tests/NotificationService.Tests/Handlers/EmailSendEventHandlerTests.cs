@@ -1,9 +1,9 @@
-using EmailService.Handlers;
-using EmailService.Services;
+using NotificationService.Handlers;
+using NotificationService.Services;
 using Moq;
 using SharedKernel.Events;
 
-namespace EmailService.Tests.Handlers;
+namespace NotificationService.Tests.Handlers;
 
 public class EmailSendEventHandlerTests
 {

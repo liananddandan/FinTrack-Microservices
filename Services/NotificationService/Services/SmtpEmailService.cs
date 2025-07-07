@@ -1,10 +1,10 @@
-using EmailService.Options;
 using MailKit.Net.Smtp;
 using Microsoft.Extensions.Options;
 using MimeKit;
+using NotificationService.Options;
 using SharedKernel.Events;
 
-namespace EmailService.Services;
+namespace NotificationService.Services;
 
 public class SmtpEmailService(
     IOptions<SmtpOptions> smtpOptions,

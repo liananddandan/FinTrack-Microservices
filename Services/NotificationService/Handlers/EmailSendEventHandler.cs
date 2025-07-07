@@ -1,13 +1,9 @@
 using DotNetCore.CAP;
-using EmailService.Options;
-using EmailService.Services;
-using MailKit.Net.Smtp;
-using Microsoft.Extensions.Options;
-using MimeKit;
+using NotificationService.Services;
 using SharedKernel.Events;
 using SharedKernel.Topics;
 
-namespace EmailService.Handlers;
+namespace NotificationService.Handlers;
 
 public class EmailSendEventHandler(IEmailService emailService) : ICapSubscribe
 {

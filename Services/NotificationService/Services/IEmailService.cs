@@ -1,6 +1,6 @@
 using SharedKernel.Events;
 
-namespace EmailService.Services;
+namespace NotificationService.Services;
 
 public interface IEmailService
 {

@@ -30,7 +30,7 @@ public class TenantRegisteredEventHandler(IUserAppService userService,
         }
         var encodedToken = Uri.EscapeDataString(tokenResult.Data);
         var encodedUserId = Uri.EscapeDataString(getUserResult.Data.PublicId.ToString());
-        var confirmUrl = $"https://localhost:5001/api/account/confirm-email?token={encodedToken}&userId={encodedUserId}";
+        var confirmUrl = $"http://localhost:5100/api/account/confirm-email?token={encodedToken}&userId={encodedUserId}";
         
         await capPublisher.PublishAsync(CapTopics.EmailSend, new EmailSendRequestedEvent
         {

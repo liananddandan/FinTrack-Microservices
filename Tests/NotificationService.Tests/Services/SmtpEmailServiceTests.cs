@@ -1,11 +1,11 @@
-using EmailService.Options;
-using EmailService.Services;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Moq;
+using NotificationService.Options;
+using NotificationService.Services;
 using SharedKernel.Events;
 
-namespace EmailService.Tests.Services;
+namespace NotificationService.Tests.Services;
 
 public class SmtpEmailServiceTests
 {
