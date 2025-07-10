@@ -19,4 +19,11 @@ public class AccountController(IMediator mediator)
         var result = await mediator.Send(request);
         return result.ToActionResult();
     }
+
+    [HttpPost("login")]
+    public async Task<IActionResult> UserLoginAsync(UserLoginCommand request)
+    {
+        var result = await mediator.Send(request);
+        return result.ToActionResult();
+    }
 }

@@ -1,19 +1,16 @@
 using System.Security.Cryptography;
-using IdentityService.Common.DTOs;
-using IdentityService.Common.Results;
 using IdentityService.Common.Status;
 using IdentityService.Domain.Entities;
 using IdentityService.Services.Interfaces;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using SharedKernel.Common.Exceptions;
-using SharedKernel.Common.Results;
 
 namespace IdentityService.Services;
 
-public class UserService(UserManager<ApplicationUser> userManager,
-    RoleManager<ApplicationRole> roleManager,
-    IUserVerificationService userVerificationService) : IUserDomainService, IUserAppService
+public class UserDomainService(
+    UserManager<ApplicationUser> userManager,
+    RoleManager<ApplicationRole> roleManager) : IUserDomainService
 {
     public async Task<(ApplicationUser, string)> CreateUserOrThrowInnerAsync(string userName, string userEmail,
         long tenantId, CancellationToken cancellationToken = default)
@@ -42,19 +39,41 @@ public class UserService(UserManager<ApplicationUser> userManager,
         {
             return RoleStatus.RoleAlreadyExist;
         }
-        
+
         var result = await roleManager.CreateAsync(new ApplicationRole() { Name = roleName });
         return result.Succeeded ? RoleStatus.CreateSuccess : RoleStatus.CreateFailed;
     }
 
-    public async Task<RoleStatus> AddUserToRoleInnerAsync(ApplicationUser user, string roleName, CancellationToken cancellationToken = default)
+    public async Task<RoleStatus> AddUserToRoleInnerAsync(ApplicationUser user, string roleName,
+        CancellationToken cancellationToken = default)
     {
         if (!await roleManager.RoleExistsAsync(roleName))
         {
             return RoleStatus.RoleNotExist;
         }
+
         var result = await userManager.AddToRoleAsync(user, roleName);
         return result.Succeeded ? RoleStatus.AddRoleToUserSuccess : RoleStatus.AddRoleToUserFailed;
+    }
+
+    public async Task<ApplicationUser?> GetUserByPublicIdInnerAsync(string userPublicId,
+        CancellationToken cancellationToken = default)
+    {
+        if (!Guid.TryParse(userPublicId, out var uPublicId))
+        {
+            return null;
+        }
+
+        var user = await userManager.Users.Include(u => u.Tenant)
+            .Where(u => u.PublicId == uPublicId)
+            .FirstOrDefaultAsync(cancellationToken);
+        return user;
+    }
+
+    public async Task<string?> GetRoleInnerAsync(ApplicationUser user, CancellationToken cancellationToken = default)
+    {
+        var roles = await userManager.GetRolesAsync(user);
+        return roles.FirstOrDefault();
     }
 
     private string GenerateSecurePassword()
@@ -81,40 +100,5 @@ public class UserService(UserManager<ApplicationUser> userManager,
 
         // Shuttle
         return new string(randomChars.OrderBy(_ => RandomNumberGenerator.GetInt32(100)).ToArray());
-    }
-
-
-    public async Task<ServiceResult<ApplicationUser>> GetUserByIdAsync(string id)
-    {
-        var result = await userManager.FindByIdAsync(id);
-        return result == null 
-            ? ServiceResult<ApplicationUser>.Fail(ResultCodes.User.UserNotFound, "User Not Found")
-            : ServiceResult<ApplicationUser>.Ok(result, ResultCodes.User.UserGetByIdSuccess, "User Found By Id");
-    }
-
-    public async Task<ServiceResult<ConfirmAccountEmailResult>> ConfirmAccountEmailAsync(string userPublicId, string token, CancellationToken cancellationToken = default)
-    {
-        if (!Guid.TryParse(userPublicId, out var publicUserId))
-        {
-            return ServiceResult<ConfirmAccountEmailResult>.Fail(ResultCodes.User.UserInvalidPublicid, "Invalid PublicId");
-        }
-
-        var user = await userManager.Users.FirstOrDefaultAsync(u => u.PublicId == publicUserId, cancellationToken);
-
-        if (user == null)
-        {
-            return ServiceResult<ConfirmAccountEmailResult>.Fail(ResultCodes.User.UserNotFound, "User Not Found");
-        }
-        
-        var verificationResult = await userVerificationService.ValidateTokenAsync(user, token, TokenPurpose.EmailConfirmation, cancellationToken);
-        if (verificationResult.Success)
-        {
-            var result = new ConfirmAccountEmailResult(user.PublicId, true);
-            return ServiceResult<ConfirmAccountEmailResult>.Ok(result, ResultCodes.User.UserEmailVerificationSuccess, "User Email Verification Success");
-        }
-        else
-        {
-            return ServiceResult<ConfirmAccountEmailResult>.Fail(ResultCodes.User.UserEmailVerificationFailed, "User Email Verification Failed");
-        }
     }
 }

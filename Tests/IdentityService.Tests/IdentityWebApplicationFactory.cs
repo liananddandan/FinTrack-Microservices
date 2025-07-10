@@ -1,5 +1,8 @@
+using IdentityService.Domain.Entities;
 using IdentityService.Infrastructure.Persistence;
+using IdentityService.Tests.Seeds;
 using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
@@ -32,7 +35,9 @@ public class IdentityWebApplicationFactory<TProgram> : WebApplicationFactory<TPr
                     var db = scope.ServiceProvider.GetRequiredService<ApplicationIdentityDbContext>();
                     db.Database.EnsureDeleted();
                     db.Database.Migrate();
-
+                    var userManager = scope.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();
+                    var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<ApplicationRole>>();
+                    UsersSeed.InitialAllDataAsync(db, userManager, roleManager).GetAwaiter().GetResult();
                     _dbInitialized = true;
                 }
             }

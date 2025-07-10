@@ -20,5 +20,6 @@ public class UserConfiguration : IEntityTypeConfiguration<ApplicationUser>
             .WithMany()
             .HasForeignKey(u => u.TenantId)
             .OnDelete(DeleteBehavior.Restrict);
+        builder.Property(u => u.IsFirstLogin).HasDefaultValue(true);
     }
 }

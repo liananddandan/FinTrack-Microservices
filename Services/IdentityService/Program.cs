@@ -1,13 +1,41 @@
+using System.Text;
+using IdentityService.Common.Options;
 using IdentityService.Domain.Entities;
 using IdentityService.Infrastructure.Persistence;
 using IdentityService.Middlewares;
 using IdentityService.Services;
 using IdentityService.Services.Interfaces;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.IdentityModel.Tokens;
 using Scalar.AspNetCore;
 
 var builder = WebApplication.CreateBuilder(args);
+
+builder.Services.Configure<JwtOptions>(
+    builder.Configuration.GetSection("JwtSettings"));
+
+builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+    .AddJwtBearer(options =>
+    {
+        var jwtTokenOptions = builder.Configuration.GetSection("JwtSettings").Get<JwtOptions>();
+        options.RequireHttpsMetadata = false;
+        options.SaveToken = true;
+        options.TokenValidationParameters = new TokenValidationParameters()
+        {
+            ValidateIssuer = true,
+            ValidIssuer = jwtTokenOptions!.Issuer,
+            ValidateIssuerSigningKey = true,
+            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtTokenOptions.Secret)),
+            ValidateAudience = true,
+            ValidAudience = jwtTokenOptions.Audience,
+            ValidateLifetime = true,
+            ClockSkew = TimeSpan.Zero
+        };
+    });
+
+builder.Services.AddAuthorization();
 
 builder.Services.AddDbContext<ApplicationIdentityDbContext>(options =>
 {
@@ -46,8 +74,6 @@ builder.Services.Scan(scan => scan
         "IdentityService.Repositories"))
     .AsMatchingInterface() // 如 UserService -> IUserService
     .WithScopedLifetime());
-builder.Services.AddScoped<IUserDomainService, UserService>();
-builder.Services.AddScoped<IUserAppService, UserService>();
 
 var app = builder.Build();
 
@@ -60,8 +86,9 @@ if (app.Environment.IsDevelopment())
 
 app.UseMiddleware<GlobalExceptionMiddleware>();
 app.UseRouting();
+app.UseAuthentication();
+app.UseAuthorization();
 app.MapControllers();
 
 app.Run();
-
 public partial class Program { }
