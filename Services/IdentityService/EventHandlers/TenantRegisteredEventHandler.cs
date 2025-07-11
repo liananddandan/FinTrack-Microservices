@@ -36,17 +36,18 @@ public class TenantRegisteredEventHandler(IUserAppService userService,
         {
             To = getUserResult.Data.Email!,
             Subject = $"Please confirm your email",
-            Body = GetEmailVerificationBody(confirmUrl),
+            Body = GetEmailVerificationBody(confirmUrl, tenantRegisteredEvent.TempPassword),
             IsHtml = true
         }, new Dictionary<string, string?>(), cancellationToken);
         
     }
     
-    private static string GetEmailVerificationBody(string confirmUrl)
+    private static string GetEmailVerificationBody(string confirmUrl, string password)
     {
         return $"""
                 Welcome！Please click the link below to verify your Email address：<br/>
                 <a href="{confirmUrl}">Verify Email</a><br/>
+                your password is <b>{password}</b><br/>
                 If you do not request this，please ignore this email.
                 """;
     }

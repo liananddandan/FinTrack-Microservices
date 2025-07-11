@@ -1,6 +1,7 @@
 using System.Security.Cryptography;
 using IdentityService.Common.Status;
 using IdentityService.Domain.Entities;
+using IdentityService.Repositories.Interfaces;
 using IdentityService.Services.Interfaces;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
@@ -10,7 +11,9 @@ namespace IdentityService.Services;
 
 public class UserDomainService(
     UserManager<ApplicationUser> userManager,
-    RoleManager<ApplicationRole> roleManager) : IUserDomainService
+    RoleManager<ApplicationRole> roleManager,
+    ILogger<UserDomainService> logger,
+    IApplicationUserRepo userRepo) : IUserDomainService
 {
     public async Task<(ApplicationUser, string)> CreateUserOrThrowInnerAsync(string userName, string userEmail,
         long tenantId, CancellationToken cancellationToken = default)
@@ -74,6 +77,29 @@ public class UserDomainService(
     {
         var roles = await userManager.GetRolesAsync(user);
         return roles.FirstOrDefault();
+    }
+
+    public async Task<bool> ChangePasswordInnerAsync(ApplicationUser user, string oldPassword, string newPassword,
+        CancellationToken cancellationToken = default)
+    {
+        var changePasswordResult = await userManager.ChangePasswordAsync(user, oldPassword, newPassword);
+        if (!changePasswordResult.Succeeded)
+        {
+            logger.LogError($"ChangePasswordInner failed: {string.Join(", ", changePasswordResult.Errors)}");
+        }
+        return changePasswordResult.Succeeded;
+    }
+
+    public async Task<ApplicationUser?> GetUserByEmailInnerAsync(string userEmail, CancellationToken cancellationToken = default)
+    {
+        return await userManager.FindByEmailAsync(userEmail);
+    }
+
+    public Task ChangeFirstLoginStateInnerAsync(ApplicationUser user, CancellationToken cancellationToken = default)
+    {
+        userRepo.ChangeFirstLoginStatus(user, cancellationToken);
+        userRepo.IncreaseJwtVersion(user, cancellationToken);
+        return Task.CompletedTask;
     }
 
     private string GenerateSecurePassword()

@@ -8,6 +8,7 @@ using Microsoft.AspNetCore.Identity;
 using MockQueryable;
 using Moq;
 using SharedKernel.Common.Exceptions;
+using SharedKernel.Common.Results;
 
 namespace IdentityService.Tests.Services;
 
@@ -277,5 +278,46 @@ public class UserDomainServiceTests
         result.Should().NotBeNull();
         result.PublicId.Should().Be(expectedGuid);
         result.Tenant.Should().Be(null);
+    }
+
+    [Theory, AutoMoqData]
+    public async Task ChangePasswordInnerAsync_ShouldReturnResult(
+        [Frozen] Mock<UserManager<ApplicationUser>> userManagerMock,
+        UserDomainService sut,
+        string oldPassword,
+        string newPassword,
+        ApplicationUser user)
+    {
+        // Arrange
+        userManagerMock.Setup(um => um.ChangePasswordAsync(user, oldPassword, newPassword))
+            .ReturnsAsync(IdentityResult.Success);
+        
+        // Act
+        var result = await sut.ChangePasswordInnerAsync(user, oldPassword, newPassword);
+        
+        // Assert
+        result.Should().BeTrue();
+    }
+
+    [Theory, AutoMoqData]
+    public async Task GetUserByEmailInnerAsync_ShouldReturnUser_WhenUserExist(
+        [Frozen] Mock<UserManager<ApplicationUser>> userManagerMock,
+        ApplicationUser user,
+        UserDomainService sut)
+    {
+        userManagerMock.Setup(um => um.FindByEmailAsync(user.Email!)).ReturnsAsync(user);
+        var result = await sut.GetUserByEmailInnerAsync(user.Email!);
+        result.Should().NotBeNull();
+    }
+    
+    [Theory, AutoMoqData]
+    public async Task GetUserByEmailInnerAsync_ShouldReturnNull_WhenUserNotExist(
+        [Frozen] Mock<UserManager<ApplicationUser>> userManagerMock,
+        ApplicationUser user,
+        UserDomainService sut)
+    {
+        userManagerMock.Setup(um => um.FindByEmailAsync(user.Email!)).ReturnsAsync(null as ApplicationUser);
+        var result = await sut.GetUserByEmailInnerAsync(user.Email!);
+        result.Should().BeNull();
     }
 }

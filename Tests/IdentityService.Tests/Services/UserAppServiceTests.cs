@@ -4,9 +4,11 @@ using IdentityService.Common.DTOs;
 using IdentityService.Common.Results;
 using IdentityService.Common.Status;
 using IdentityService.Domain.Entities;
+using IdentityService.Repositories.Interfaces;
 using IdentityService.Services;
 using IdentityService.Services.Interfaces;
 using IdentityService.Tests.Attributes;
+using IdentityService.Tests.Extensions;
 using Microsoft.AspNetCore.Identity;
 using MockQueryable;
 using Moq;
@@ -296,7 +298,6 @@ public class UserAppServiceTests
             EmailConfirmed = true,
             Tenant = tenant
         };
-        var roles = new List<string>(){"Admin_TestTenant"};
         var users = new List<ApplicationUser>(){user}.AsQueryable();
         var mockUsers = users.BuildMock();
         userManagerMock.Setup(x => x.Users).Returns(mockUsers);
@@ -338,7 +339,6 @@ public class UserAppServiceTests
             Tenant = tenant,
             IsFirstLogin = false
         };
-        var roles = new List<string>(){"Admin_TestTenant"};
         var users = new List<ApplicationUser>(){user}.AsQueryable();
         var mockUsers = users.BuildMock();
         userManagerMock.Setup(x => x.Users).Returns(mockUsers);
@@ -357,5 +357,79 @@ public class UserAppServiceTests
         result.Success.Should().BeTrue();
         result.Data.Should().NotBeNull();
         result.Code.Should().BeEquivalentTo(ResultCodes.User.UserLoginSuccess);
+    }
+
+    [Theory, AutoMoqData]
+    public async Task SetUserPasswordAsync_ShouldReturnFalse_WhenUserNotFound(
+        [Frozen] Mock<IUserDomainService> userDomainServiceMock,
+        UserAppService sut,
+        string userPublicId,
+        string jwtVersion,
+        string oldPassword,
+        string newPassword)
+    {
+        // Arrange
+        userDomainServiceMock.Setup(uds => uds.GetUserByPublicIdInnerAsync(userPublicId, CancellationToken.None))
+            .ReturnsAsync(null as ApplicationUser);
+        
+        // Act
+        var result = await sut.SetUserPasswordAsync(userPublicId, jwtVersion, oldPassword, newPassword);
+        
+        // Assert
+        result.Success.Should().BeFalse();
+        result.Code.Should().BeEquivalentTo(ResultCodes.User.UserNotFound);
+    }
+    
+    [Theory, AutoMoqData]
+    public async Task SetUserPasswordAsync_ShouldReturnFalse_WhenJwtVersionMismatch(
+        [Frozen] Mock<IUserDomainService> userDomainServiceMock,
+        UserAppService sut,
+        string userPublicId,
+        string oldPassword,
+        string newPassword)
+    {
+        // Arrange
+        string jwtVersion = "1";
+        var user = new ApplicationUser()
+        {
+            JwtVersion = 3
+        };
+        userDomainServiceMock.Setup(uds => uds.GetUserByPublicIdInnerAsync(userPublicId, CancellationToken.None))
+            .ReturnsAsync(user);
+        
+        // Act
+        var result = await sut.SetUserPasswordAsync(userPublicId, jwtVersion, oldPassword, newPassword);
+        
+        // Assert
+        result.Success.Should().BeFalse();
+        result.Code.Should().BeEquivalentTo(ResultCodes.Token.JwtTokenVersionInvalid);
+    }
+    
+    [Theory, AutoMoqData]
+    public async Task SetUserPasswordAsync_ShouldReturnTrue_WhenChangePasswordSuccess(
+        [Frozen] Mock<IUserDomainService> userDomainServiceMock,
+        [Frozen] Mock<IUnitOfWork> unitOfWorkMock,
+        UserAppService sut,
+        string userPublicId,
+        string oldPassword,
+        string newPassword)
+    {
+        // Arrange
+        unitOfWorkMock.SetupExecuteWithTransaction<bool>();
+        string jwtVersion = "3";
+        var user = new ApplicationUser()
+        {
+            JwtVersion = 3
+        };
+        userDomainServiceMock.Setup(uds => uds.GetUserByPublicIdInnerAsync(userPublicId, CancellationToken.None))
+            .ReturnsAsync(user);
+        userDomainServiceMock.Setup(uds => uds.ChangePasswordInnerAsync(user, oldPassword, newPassword, CancellationToken.None))
+            .ReturnsAsync(true);
+        
+        // Act
+        var result = await sut.SetUserPasswordAsync(userPublicId, jwtVersion, oldPassword, newPassword);
+        
+        // Assert
+        result.Success.Should().BeTrue();
     }
 }

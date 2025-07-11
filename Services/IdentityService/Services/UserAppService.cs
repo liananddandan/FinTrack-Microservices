@@ -3,6 +3,7 @@ using IdentityService.Common.Results;
 using IdentityService.Common.Status;
 using IdentityService.Domain.Entities;
 using IdentityService.Events;
+using IdentityService.Repositories.Interfaces;
 using IdentityService.Services.Interfaces;
 using MediatR;
 using Microsoft.AspNetCore.Identity;
@@ -15,7 +16,8 @@ public class UserAppService(UserManager<ApplicationUser> userManager,
     IUserVerificationService userVerificationService,
     IUserDomainService userDomainService,
     IMediator mediator,
-    IJwtTokenService jwtTokenService) : IUserAppService
+    IJwtTokenService jwtTokenService,
+    IUnitOfWork unitOfWork) : IUserAppService
 {
         public async Task<ServiceResult<ApplicationUser>> GetUserByIdAsync(string id)
     {
@@ -123,5 +125,35 @@ public class UserAppService(UserManager<ApplicationUser> userManager,
         userLoginResult.TokenPair = jwtTokenPair.Data;
         return ServiceResult<UserLoginResult>
             .Ok(userLoginResult, ResultCodes.User.UserLoginSuccess, "User Login Success.");
+    }
+
+    public async Task<ServiceResult<bool>> SetUserPasswordAsync(string userPublicId, string jwtVersion, 
+        string oldPassword, string newPassword, CancellationToken cancellationToken = default)
+    {
+        var user = await userDomainService.GetUserByPublicIdInnerAsync(userPublicId, cancellationToken);
+        if (user == null)
+        {
+            return ServiceResult<bool>.Fail(ResultCodes.User.UserNotFound, "User Not Found");
+        }
+
+        if (long.TryParse(jwtVersion, out var version) && version != user.JwtVersion)
+        {
+            return ServiceResult<bool>.Fail(ResultCodes.Token.JwtTokenVersionInvalid, "Token Version Invalid");
+        }
+
+        var transactionResult = await unitOfWork.WithTransactionAsync<bool>(async () =>
+        {
+            var changePasswordResult = await userDomainService
+                .ChangePasswordInnerAsync(user, oldPassword, newPassword, cancellationToken);
+            if (!changePasswordResult)
+            {
+                return changePasswordResult;
+            }
+            await userDomainService.ChangeFirstLoginStateInnerAsync(user, cancellationToken);
+            return changePasswordResult;
+        }, cancellationToken);
+        return transactionResult
+            ? ServiceResult<bool>.Ok(true, ResultCodes.User.UserChangePasswordSuccess, "User Change Password Success")
+            : ServiceResult<bool>.Fail(ResultCodes.User.UserChangePasswordFailed, "User Change Password Failed");
     }
 }

@@ -1,6 +1,7 @@
 using System.Text;
 using IdentityService.Common.Options;
 using IdentityService.Domain.Entities;
+using IdentityService.Filters;
 using IdentityService.Infrastructure.Persistence;
 using IdentityService.Middlewares;
 using IdentityService.Services;
@@ -65,7 +66,10 @@ builder.Services.AddMediatR(configuration =>
 // Add services to the container.
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
 builder.Services.AddOpenApi();
-builder.Services.AddControllers();
+builder.Services.AddControllers(options =>
+{
+    options.Filters.Add<GlobalJwtTokenValidationFilter>();
+});
 
 builder.Services.Scan(scan => scan
     .FromAssemblyOf<Program>() // 你也可以换成 typeof(Program) 或任何所在程序集的类型

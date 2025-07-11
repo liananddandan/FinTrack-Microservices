@@ -1,8 +1,9 @@
+using IdentityService.Common.Results;
 using Microsoft.AspNetCore.Mvc;
 using SharedKernel.Common.DTOs;
 using SharedKernel.Common.Results;
 
-namespace IdentityService.Common.Results;
+namespace IdentityService.Common.Extensions;
 
 public static class ServiceResultExtensions
 {

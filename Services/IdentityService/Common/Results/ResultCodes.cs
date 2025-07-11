@@ -27,6 +27,10 @@ public static class ResultCodes
         public const string RefreshJwtTokenFailedVersionInvalid = "100002009";
         public const string RefreshJwtTokenFailedRoleInvalid = "100002010";
         public const string JwtTokenInvalidForParse = "100002011";
+        public const string JwtTokenVersionInvalid = "100002012";
+        public const string JwtTokenClaimMissing = "100002013";
+        public const string JwtTokenParseFailed = "100002014";
+        public const string JwtTokenExpired = "100002015";
         public const string JwtTokenParseSuccess = "100002994";
         public const string RefreshJwtTokenSuccess = "100002995";
         public const string GenerateJwtTokenPairSuccess = "100002996";
@@ -44,7 +48,9 @@ public static class ResultCodes
         public const string UserEmailNotVerified = "100003004";
         public const string UserEmailOrPasswordInvalid = "100003005";
         public const string UserCouldNotFindRole = "100003006";
+        public const string UserChangePasswordFailed = "100003007";
         
+        public const string UserChangePasswordSuccess = "100003995";
         public const string UserLoginSuccess = "100003996";
         public const string UserLoginSuccessButFirstLogin = "100003997";
         public const string UserEmailVerificationSuccess = "100003998";

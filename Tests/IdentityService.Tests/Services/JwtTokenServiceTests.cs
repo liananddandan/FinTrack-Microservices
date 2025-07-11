@@ -491,4 +491,90 @@ public class JwtTokenServiceTests
         result.Data.RefreshToken.Should().NotBeNullOrEmpty();
         result.Code.Should().BeEquivalentTo(ResultCodes.Token.RefreshJwtTokenSuccess);
     }
+
+    [Theory, AutoMoqData]
+    public async Task ParseJwtTokenAsync_ShouldReturnFail_WhenTokenIsInvalid(
+        JwtTokenService sut)
+    {
+        string invalidToken = "invalid_token";
+        var result = await sut.ParseJwtTokenAsync(invalidToken);
+        result.Success.Should().BeFalse();
+        result.Data.Should().BeNull();
+        result.Code.Should().BeEquivalentTo(ResultCodes.Token.JwtTokenInvalidForParse);
+    }
+    
+    [Theory, AutoMoqData]
+    public async Task ParseJwtTokenAsync_ShouldReturnFail_WhenClaimIsInvalid(
+        [Frozen] Mock<IOptions<JwtOptions>> jwtOptionsMock,
+        JwtTokenService sut)
+    {
+        var jwtOptions = new JwtOptions()
+        {
+            Secret = "this-is-secret-very-long-token-value-and-long-token-value",
+            Audience = "Audience",
+            Issuer = "Issuer",
+            AccessTokenExpirationMinutes = 60,
+            RefreshTokenExpirationDays = 7,
+            FirstLoginChangePasswordExpirationMinutes = 10
+        };
+        jwtOptionsMock.Setup(j => j.Value).Returns(jwtOptions);
+        var jwtClaimSource = new JwtClaimSource()
+        {
+            UserPublicId = new Guid("00000000-0000-0000-0000-000000000001").ToString(),
+            JwtVersion = "",
+            TenantPublicId = new Guid("00000000-0000-0000-0000-000000000002").ToString(),
+            UserRoleInTenant = "Role_test"
+        };
+        var jwtToken = await sut.GenerateJwtTokenAsync(jwtClaimSource, JwtTokenType.AccessToken);
+        jwtToken.Should().NotBeNull();
+        jwtToken.Data.Should().NotBeNullOrEmpty();
+        
+        // Act
+        var result = await sut.ParseJwtTokenAsync(jwtToken.Data);
+        
+        // Assert
+        result.Success.Should().BeFalse();
+        result.Data.Should().BeNull();
+        result.Code.Should().BeEquivalentTo(ResultCodes.Token.JwtTokenClaimMissing);
+    }
+    
+    [Theory, AutoMoqData]
+    public async Task ParseJwtTokenAsync_ShouldReturnSuccess_WhenTokenValid(
+        [Frozen] Mock<IOptions<JwtOptions>> jwtOptionsMock,
+        JwtTokenService sut)
+    {
+        var jwtOptions = new JwtOptions()
+        {
+            Secret = "this-is-secret-very-long-token-value-and-long-token-value",
+            Audience = "Audience",
+            Issuer = "Issuer",
+            AccessTokenExpirationMinutes = 60,
+            RefreshTokenExpirationDays = 7,
+            FirstLoginChangePasswordExpirationMinutes = 10
+        };
+        jwtOptionsMock.Setup(j => j.Value).Returns(jwtOptions);
+        var jwtClaimSource = new JwtClaimSource()
+        {
+            UserPublicId = new Guid("00000000-0000-0000-0000-000000000001").ToString(),
+            JwtVersion = "1",
+            TenantPublicId = new Guid("00000000-0000-0000-0000-000000000002").ToString(),
+            UserRoleInTenant = "Role_test"
+        };
+        var jwtToken = await sut.GenerateJwtTokenAsync(jwtClaimSource, JwtTokenType.AccessToken);
+        jwtToken.Should().NotBeNull();
+        jwtToken.Data.Should().NotBeNullOrEmpty();
+        
+        // Act
+        var result = await sut.ParseJwtTokenAsync(jwtToken.Data);
+        
+        // Assert
+        result.Success.Should().BeTrue();
+        result.Code.Should().BeEquivalentTo(ResultCodes.Token.JwtTokenParseSuccess);
+        result.Data.Should().NotBeNull();
+        result.Data.UserPublicId.Should().BeEquivalentTo(jwtClaimSource.UserPublicId);
+        result.Data.JwtVersion.Should().BeEquivalentTo(jwtClaimSource.JwtVersion);
+        result.Data.TenantPublicId.Should().BeEquivalentTo(jwtClaimSource.TenantPublicId);
+        result.Data.UserRoleInTenant.Should().BeEquivalentTo(jwtClaimSource.UserRoleInTenant);
+        result.Data.TokenType.Should().Be(JwtTokenType.AccessToken);
+    }
 }

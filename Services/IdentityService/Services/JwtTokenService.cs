@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
@@ -21,13 +22,13 @@ public class JwtTokenService(IUserDomainService userService, IOptions<JwtOptions
         switch (type)
         {
             case JwtTokenType.AccessToken:
-                claims.Add(new Claim(JwtTokenCustomKeys.AccessTokenTypeKey, JwtTokenCustomKeys.AccessTokenTypeValue));
+                claims.Add(new Claim(JwtTokenCustomKeys.TokenType, JwtTokenCustomKeys.AccessTokenTypeValue));
                 break;
             case JwtTokenType.RefreshToken:
-                claims.Add(new Claim(JwtTokenCustomKeys.RefreshTokenTypeKey, JwtTokenCustomKeys.RefreshTokenTypeValue));
+                claims.Add(new Claim(JwtTokenCustomKeys.TokenType, JwtTokenCustomKeys.RefreshTokenTypeValue));
                 break;
             case JwtTokenType.FirstLoginToken:
-                claims.Add(new Claim(JwtTokenCustomKeys.FirstLoginTokenKey, JwtTokenCustomKeys.FirstLoginTokenValue));
+                claims.Add(new Claim(JwtTokenCustomKeys.TokenType, JwtTokenCustomKeys.FirstLoginTokenValue));
                 break;
         }
 
@@ -38,21 +39,21 @@ public class JwtTokenService(IUserDomainService userService, IOptions<JwtOptions
     public Task<ServiceResult<JwtTokenPair>> GenerateJwtTokenPairAsync(JwtClaimSource jwtClaimSource)
     {
         var jwtTokenPair = GenerateJwtTokenPairInner(jwtClaimSource);
-        return Task.FromResult(ServiceResult<JwtTokenPair>.Ok(jwtTokenPair, 
+        return Task.FromResult(ServiceResult<JwtTokenPair>.Ok(jwtTokenPair,
             ResultCodes.Token.GenerateJwtTokenPairSuccess,
             "Generate Jwt Token Pair Success"));
     }
 
     public async Task<ServiceResult<JwtTokenPair>> RefreshJwtTokenPairAsync(string oldRefreshToken)
     {
-        var principalResult = GetPrincipalFromTokenInner(oldRefreshToken);
+        var (principalResult, resultCode) = GetPrincipalFromTokenInner(oldRefreshToken);
         if (principalResult is null)
         {
             return ServiceResult<JwtTokenPair>.Fail(ResultCodes.Token.RefreshJwtTokenFailedTokenInvalid,
                 "Invalid refresh token.");
         }
 
-        var tokenType = principalResult.FindFirst(JwtTokenCustomKeys.RefreshTokenTypeKey)?.Value;
+        var tokenType = principalResult.FindFirst(JwtTokenCustomKeys.TokenType)?.Value;
         if (!JwtTokenCustomKeys.RefreshTokenTypeValue.Equals(tokenType))
         {
             return ServiceResult<JwtTokenPair>.Fail(ResultCodes.Token.RefreshJwtTokenFailedTokenTypeInvalid,
@@ -82,8 +83,8 @@ public class JwtTokenService(IUserDomainService userService, IOptions<JwtOptions
                 "Invalid refresh token version.");
         }
 
-        if (!Guid.TryParse(tenantPublicId, out var tPublicId) 
-            || user.Tenant == null 
+        if (!Guid.TryParse(tenantPublicId, out var tPublicId)
+            || user.Tenant == null
             || !user.Tenant.PublicId.Equals(tPublicId))
         {
             return ServiceResult<JwtTokenPair>.Fail(ResultCodes.Token.RefreshJwtTokenFailedClaimTenantIdInvalid,
@@ -112,11 +113,57 @@ public class JwtTokenService(IUserDomainService userService, IOptions<JwtOptions
 
     public Task<ServiceResult<ClaimsPrincipal?>> GetPrincipalFromTokenAsync(string token)
     {
-        var result = GetPrincipalFromTokenInner(token);
-        var serviceResult = result == null 
-            ? ServiceResult<ClaimsPrincipal?>.Fail(ResultCodes.Token.JwtTokenInvalidForParse, "Token Could not be parsed.")
-            : ServiceResult<ClaimsPrincipal?>.Ok(result, ResultCodes.Token.JwtTokenParseSuccess, "Token parsed successfully.");
+        var (result, resultCode) = GetPrincipalFromTokenInner(token);
+        var serviceResult = result == null
+            ? ServiceResult<ClaimsPrincipal?>.Fail(resultCode,
+                "Token Could not be parsed.")
+            : ServiceResult<ClaimsPrincipal?>.Ok(result, resultCode,
+                "Token parsed successfully.");
         return Task.FromResult(serviceResult);
+    }
+
+    public Task<ServiceResult<JwtParseResult>> ParseJwtTokenAsync(string token)
+    {
+        var (principalResult, resultCode) = GetPrincipalFromTokenInner(token);
+        if (principalResult is null)
+        {
+            return Task.FromResult(ServiceResult<JwtParseResult>.Fail(resultCode,
+                "Token could not be parsed."));
+        }
+
+        var userPublicId = principalResult.FindFirst(JwtTokenCustomKeys.UserPublicIdKey)?.Value;
+        var tenantPublicId = principalResult.FindFirst(JwtTokenCustomKeys.TenantPublicIdKey)?.Value;
+        var jwtVersion = principalResult.FindFirst(JwtTokenCustomKeys.JwtVersionKey)?.Value;
+        var userRoleInTenant = principalResult.FindFirst(JwtTokenCustomKeys.UserRoleInTenant)?.Value;
+        var tokenType = principalResult.FindFirst(JwtTokenCustomKeys.TokenType)?.Value;
+        
+        if (string.IsNullOrEmpty(userPublicId) 
+            || string.IsNullOrEmpty(tenantPublicId) 
+            || string.IsNullOrEmpty(jwtVersion) 
+            || string.IsNullOrEmpty(userRoleInTenant)
+            || string.IsNullOrEmpty(tokenType))
+        {
+            return Task.FromResult(ServiceResult<JwtParseResult>
+                .Fail(ResultCodes.Token.JwtTokenClaimMissing, "Jwt claims are missing."));
+        }
+
+        var type = tokenType switch
+        {
+            JwtTokenCustomKeys.AccessTokenTypeValue => JwtTokenType.AccessToken,
+            JwtTokenCustomKeys.RefreshTokenTypeValue => JwtTokenType.RefreshToken,
+            JwtTokenCustomKeys.FirstLoginTokenValue => JwtTokenType.FirstLoginToken,
+            _ => throw new ArgumentOutOfRangeException(nameof(tokenType), $"Unknow token type{tokenType}.")
+        };
+        var jwtParseResult = new JwtParseResult()
+            {
+                JwtVersion = jwtVersion,
+                UserPublicId = userPublicId,
+                TenantPublicId = tenantPublicId,
+                UserRoleInTenant = userRoleInTenant,
+                TokenType = type
+            };
+        return Task.FromResult(ServiceResult<JwtParseResult>.Ok(jwtParseResult, 
+            ResultCodes.Token.JwtTokenParseSuccess, "Jwt Claim parsed successfully."));
     }
 
     private JwtTokenPair GenerateJwtTokenPairInner(JwtClaimSource jwtClaimSource)
@@ -124,12 +171,12 @@ public class JwtTokenService(IUserDomainService userService, IOptions<JwtOptions
         var baseClaims = GetBaseClaims(jwtClaimSource);
         var accessTokenClaims = new List<Claim>(baseClaims)
         {
-            new (JwtTokenCustomKeys.AccessTokenTypeKey, JwtTokenCustomKeys.AccessTokenTypeValue)
+            new(JwtTokenCustomKeys.TokenType, JwtTokenCustomKeys.AccessTokenTypeValue)
         };
 
         var refreshTokenClaims = new List<Claim>(baseClaims)
         {
-            new (JwtTokenCustomKeys.RefreshTokenTypeKey, JwtTokenCustomKeys.RefreshTokenTypeValue)
+            new(JwtTokenCustomKeys.TokenType, JwtTokenCustomKeys.RefreshTokenTypeValue)
         };
         var accessToken = GenerateJwtTokenInner(accessTokenClaims, JwtTokenType.AccessToken);
         var refreshToken = GenerateJwtTokenInner(refreshTokenClaims, JwtTokenType.RefreshToken);
@@ -141,14 +188,14 @@ public class JwtTokenService(IUserDomainService userService, IOptions<JwtOptions
         return jwtTokenPair;
     }
 
-    private ClaimsPrincipal? GetPrincipalFromTokenInner(string token)
+    private (ClaimsPrincipal?, string) GetPrincipalFromTokenInner(string token)
     {
         var tokenHandler = new JwtSecurityTokenHandler();
         var validationParameters = new TokenValidationParameters
         {
             ValidateIssuer = false,
             ValidateAudience = false,
-            ValidateLifetime = false,
+            ValidateLifetime = true,
             ValidateIssuerSigningKey = true,
             IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtOptions.Value.Secret))
         };
@@ -159,14 +206,22 @@ public class JwtTokenService(IUserDomainService userService, IOptions<JwtOptions
                 && jwtSecurityToken.Header.Alg.Equals(SecurityAlgorithms.HmacSha256,
                     StringComparison.InvariantCultureIgnoreCase))
             {
-                return principal;
+                return (principal, ResultCodes.Token.JwtTokenParseSuccess);
             }
 
-            return null;
+            return (null, ResultCodes.Token.JwtTokenParseFailed);
+        }
+        catch (SecurityTokenExpiredException)
+        {
+            return (null, ResultCodes.Token.JwtTokenExpired);
+        }
+        catch (SecurityTokenException)
+        {
+            return (null, ResultCodes.Token.JwtTokenInvalidForParse);
         }
         catch
         {
-            return null;
+            return (null, ResultCodes.Token.JwtTokenInvalidForParse);
         }
     }
 
@@ -174,17 +229,23 @@ public class JwtTokenService(IUserDomainService userService, IOptions<JwtOptions
     {
         var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtOptions.Value.Secret));
         var credentials = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
+        var expire = type switch
+        {
+            JwtTokenType.AccessToken => DateTime.UtcNow.AddMinutes(jwtOptions.Value.AccessTokenExpirationMinutes),
+            JwtTokenType.RefreshToken => DateTime.UtcNow.AddDays(jwtOptions.Value.RefreshTokenExpirationDays),
+            JwtTokenType.FirstLoginToken => DateTime.UtcNow.AddMinutes(jwtOptions.Value
+                .FirstLoginChangePasswordExpirationMinutes),
+            _ => throw new ArgumentOutOfRangeException(nameof(type), "Unsupported token type")
+        };
 
         var token = new JwtSecurityToken(
             jwtOptions.Value.Issuer,
             jwtOptions.Value.Audience,
             claims,
             DateTime.UtcNow,
-            (type == JwtTokenType.AccessToken)
-                ? DateTime.UtcNow.AddMinutes(jwtOptions.Value.AccessTokenExpirationMinutes) 
-                : DateTime.UtcNow.AddDays(jwtOptions.Value.RefreshTokenExpirationDays),
+            expire,
             credentials
-            );
+        );
         return new JwtSecurityTokenHandler().WriteToken(token);
     }
 

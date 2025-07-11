@@ -1,11 +1,18 @@
+using System.Net.Http.Headers;
 using System.Net.Http.Json;
 using System.Text.RegularExpressions;
 using AutoFixture.Xunit2;
 using DotNetCore.CAP;
 using FluentAssertions;
 using IdentityService.Commands;
+using IdentityService.Common.DTOs;
 using IdentityService.Common.Results;
+using IdentityService.Common.Status;
+using IdentityService.Infrastructure.Persistence;
+using IdentityService.Services;
+using IdentityService.Services.Interfaces;
 using IdentityService.Tests.Attributes;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Moq;
 using SharedKernel.Events;
@@ -136,5 +143,48 @@ public class AccountControllerTests(
         content.Should().Contain(ResultCodes.User.UserLoginSuccessButFirstLogin);
         capturedEmail.Should().NotBeNull();
         capturedEmail.Body.Should().Contain("Please click the link below to reset your password");
+    }
+
+    [Fact]
+    public async Task UserFirstTimeChangePasswordAsync_ShouldReturnSuccess_WhenUserAllGood()
+    {
+        // Arrange
+        using var scope = factory.Services.CreateScope();
+        var jwtTokenService = scope.ServiceProvider.GetRequiredService<IJwtTokenService>();
+        var userDomainService = scope.ServiceProvider.GetRequiredService<IUserDomainService>();
+        var user = await userDomainService.GetUserByEmailInnerAsync("testUserForChangePassword@test.com");
+        user.Should().NotBeNull();
+        var jwtClaimSource = new JwtClaimSource()
+        {
+            UserPublicId = user.PublicId.ToString(),
+            JwtVersion = user.JwtVersion.ToString(),
+            TenantPublicId = Guid.NewGuid().ToString(),
+            UserRoleInTenant = "ChangePasswordTestRole"
+        };
+        var tokenResult = await jwtTokenService.GenerateJwtTokenAsync(jwtClaimSource, JwtTokenType.FirstLoginToken);
+        tokenResult.Success.Should().BeTrue();
+        tokenResult.Data.Should().NotBeNull();
+        var userOldPassword = "TestUserForChangePassword0@";
+        var userNewPassword = "TestUserForChangePassword1@";
+        var reqeust = new ChangePasswordRequest
+        {
+            OldPassword = userOldPassword,
+            NewPassword = userNewPassword
+        };
+        var client = factory.CreateClient();
+        client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", tokenResult.Data);
+
+        // Act
+        var result = await client.PostAsJsonAsync("api/account/set-password", reqeust);
+        
+        // Assert
+        result.EnsureSuccessStatusCode();
+        var dbContext = scope.ServiceProvider.GetRequiredService<ApplicationIdentityDbContext>();
+        var userAfter = await dbContext.Users
+            .AsNoTracking()
+            .FirstOrDefaultAsync(u => u.Email == "testUserForChangePassword@test.com");
+        userAfter.Should().NotBeNull();
+        userAfter.IsFirstLogin.Should().BeFalse();
+        userAfter.JwtVersion.Should().BeGreaterThan(user.JwtVersion);
     }
 }
