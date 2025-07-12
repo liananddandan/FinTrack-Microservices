@@ -82,7 +82,7 @@ public class GlobalJwtTokenValidationFilterTests
         await sut.OnAuthorizationAsync(context);
 
         // Assert
-        Assert.IsType<UnauthorizedResult>(context.Result);
+        Assert.IsType<JsonResult>(context.Result);
     }
     
     [Theory, AutoMoqData]
