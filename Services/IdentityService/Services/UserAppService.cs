@@ -129,15 +129,19 @@ public class UserAppService(UserManager<ApplicationUser> userManager,
     }
 
     public async Task<ServiceResult<bool>> SetUserPasswordAsync(string userPublicId, string jwtVersion, 
-        string oldPassword, string newPassword, CancellationToken cancellationToken = default)
+        string oldPassword, string newPassword, bool reset, CancellationToken cancellationToken = default)
     {
         var userCheckResult = await GetUserByPublicIdAndCheckJwtVersionAsync(userPublicId, jwtVersion, cancellationToken);
         if (!userCheckResult.Success)
         {
             return ServiceResult<bool>.Fail(userCheckResult.Code!, userCheckResult.Message!);
         }
-
         var user = userCheckResult.Data!;
+        if (reset && user.IsFirstLogin)
+        {
+            return ServiceResult<bool>.Fail(ResultCodes.User.UserResetPasswordBeforeSetPasswordFailed, "User Reset Password Before Set Password Failed");
+        }
+
         var transactionResult = await unitOfWork.WithTransactionAsync<bool>(async () =>
         {
             var changePasswordResult = await userDomainService
@@ -146,12 +150,19 @@ public class UserAppService(UserManager<ApplicationUser> userManager,
             {
                 return changePasswordResult;
             }
-            await userDomainService.ChangeFirstLoginStateInnerAsync(user, cancellationToken);
+
+            if (!reset)
+            {
+                await userDomainService.ChangeFirstLoginStateInnerAsync(user, cancellationToken);
+            }
+
+            await userDomainService.IncreaseUserJwtVersionInnerAsync(user, cancellationToken);
+
             return changePasswordResult;
         }, cancellationToken);
         return transactionResult
             ? ServiceResult<bool>.Ok(true, ResultCodes.User.UserChangePasswordSuccess, "User Change Password Success")
-            : ServiceResult<bool>.Fail(ResultCodes.User.UserChangePasswordFailed, "User Change Password Failed");
+            : ServiceResult<bool>.Fail(ResultCodes.User.UserSetPasswordFailed, "User Change Password Failed");
     }
 
     public async Task<ServiceResult<JwtTokenPair>> RefreshUserTokenPairAsync(string userPublicId, string jwtVersion, CancellationToken cancellationToken = default)

@@ -1,4 +1,6 @@
+using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
+using System.Text;
 using AutoFixture.Xunit2;
 using FluentAssertions;
 using IdentityService.Common.DTOs;
@@ -10,6 +12,7 @@ using IdentityService.Services;
 using IdentityService.Services.Interfaces;
 using IdentityService.Tests.Attributes;
 using Microsoft.Extensions.Options;
+using Microsoft.IdentityModel.Tokens;
 using Moq;
 
 namespace IdentityService.Tests.Services;
@@ -75,8 +78,8 @@ public class JwtTokenServiceTests
 
     [Theory, AutoMoqData]
     public async Task GetPrincipalFromTokenAsync_ShouldReturnNull_WhenTokenInvalid(
-        JwtTokenService sut,
         [Frozen] Mock<IOptions<JwtOptions>> jwtOptionsMock,
+        JwtTokenService sut,
         string jwtToken)
     {
         // Arrange
@@ -97,11 +100,47 @@ public class JwtTokenServiceTests
         result.Data.Should().BeNull();
         result.Code.Should().BeEquivalentTo(ResultCodes.Token.JwtTokenInvalidForParse);
     }
+    
+    [Theory, AutoMoqData]
+    public async Task GetPrincipalFromTokenAsync_ShouldReturnNull_WhenTokenExpired(
+        [Frozen] Mock<IOptions<JwtOptions>> jwtOptionsMock,
+        JwtTokenService sut)
+    {
+        // Arrange
+        var jwtOptions = new JwtOptions()
+        {
+            Secret = "this-is-secret-very-long-token-value-and-long-token-value",
+            Audience = "Audience",
+            Issuer = "Issuer",
+            AccessTokenExpirationMinutes = 15,
+            RefreshTokenExpirationDays = 7
+        };
+        jwtOptionsMock.Setup(j => j.Value).Returns(jwtOptions);
+        var claims = new List<Claim>();
+        claims.Add(new Claim("Name", "Test"));
+        var token = new JwtSecurityToken(
+            claims: claims,
+            notBefore: DateTime.UtcNow.AddMinutes(-10),
+            expires: DateTime.UtcNow.AddMinutes(-5),
+            signingCredentials: new SigningCredentials(
+                new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtOptions.Secret)), 
+                SecurityAlgorithms.HmacSha256));
+
+        var tokenString = new JwtSecurityTokenHandler().WriteToken(token);
+        
+
+        // Act
+        var result = await sut.GetPrincipalFromTokenAsync(tokenString);
+
+        // Assert
+        result.Data.Should().BeNull();
+        result.Code.Should().BeEquivalentTo(ResultCodes.Token.JwtTokenExpired);
+    }
 
     [Theory, AutoMoqData]
     public async Task GetPrincipalFromTokenAsync_ShouldReturnPrincipal_WhenTokenValid(
-        JwtTokenService sut,
-        [Frozen] Mock<IOptions<JwtOptions>> jwtOptionsMock)
+        [Frozen] Mock<IOptions<JwtOptions>> jwtOptionsMock,
+        JwtTokenService sut)
     {
         // Arrange
         var jwtOptions = new JwtOptions()

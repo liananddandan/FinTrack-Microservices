@@ -3,8 +3,9 @@ using SharedKernel.Common.Results;
 
 namespace IdentityService.Commands;
 
-public record ChangeUserPasswordCommand(
+public record SetUserPasswordCommand(
     string UserPublicId, 
     string JwtVersion, 
     string OldPassword, 
-    string NewPassword) : IRequest<ServiceResult<bool>>;
+    string NewPassword,
+    bool Reset) : IRequest<ServiceResult<bool>>;

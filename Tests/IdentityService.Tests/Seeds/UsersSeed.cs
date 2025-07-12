@@ -12,7 +12,7 @@ public class UsersSeed
     {
         await SeedAddLoginTestUser(dbContext, userManager, roleManager);
         await SeedAddFirstLoginTestUser(dbContext, userManager, roleManager);
-        await SeedAddChangePasswordTestUser(dbContext, userManager, roleManager);
+        await SeedAddSetPasswordTestUser(dbContext, userManager, roleManager);
         await SeedAddRefreshJwtTokenTestUser(dbContext, userManager, roleManager);
     }
 
@@ -78,7 +78,7 @@ public class UsersSeed
         await userManager.AddToRoleAsync(createdUser, roleName);
     }
 
-    private static async Task SeedAddChangePasswordTestUser(ApplicationIdentityDbContext dbContext,
+    private static async Task SeedAddSetPasswordTestUser(ApplicationIdentityDbContext dbContext,
         UserManager<ApplicationUser> userManager, RoleManager<ApplicationRole> roleManager)
     {
         var tenant = new Tenant() { Name = "TenantForChangePasswordTest" };
@@ -98,6 +98,36 @@ public class UsersSeed
         };
         
         var createResult = await userManager.CreateAsync(user, "TestUserForChangePassword0@");
+        if (!createResult.Succeeded)
+            throw new Exception("User creation failed: " + string.Join(",", createResult.Errors.Select(e => e.Description)));
+
+        var createdUser = await userManager.FindByEmailAsync(user.Email);
+        if (createdUser == null)
+            throw new Exception("User not found after creation.");
+
+        await userManager.AddToRoleAsync(createdUser, roleName);
+    }
+    
+    private static async Task SeedAddResetPasswordTestUser(ApplicationIdentityDbContext dbContext,
+        UserManager<ApplicationUser> userManager, RoleManager<ApplicationRole> roleManager)
+    {
+        var tenant = new Tenant() { Name = "TenantForResetPasswordTest" };
+        dbContext.Tenants.Add(tenant);
+        
+        var roleName = $"Admin_{tenant.Name}";
+        await roleManager.CreateAsync(new ApplicationRole() { Name = roleName });
+        
+        var user = new ApplicationUser
+        {
+            UserName = "TestUserForResetPassword",
+            Email = "testUserForResetPassword@test.com",
+            EmailConfirmed = true,
+            IsFirstLogin = false,
+            TenantId = tenant.Id,
+            SecurityStamp = Guid.NewGuid().ToString(),
+        };
+        
+        var createResult = await userManager.CreateAsync(user, "TestUserForResetPassword0@");
         if (!createResult.Succeeded)
             throw new Exception("User creation failed: " + string.Join(",", createResult.Errors.Select(e => e.Description)));
 

@@ -373,7 +373,7 @@ public class UserAppServiceTests
             .ReturnsAsync(null as ApplicationUser);
         
         // Act
-        var result = await sut.SetUserPasswordAsync(userPublicId, jwtVersion, oldPassword, newPassword);
+        var result = await sut.SetUserPasswordAsync(userPublicId, jwtVersion, oldPassword, newPassword, false);
         
         // Assert
         result.Success.Should().BeFalse();
@@ -398,7 +398,7 @@ public class UserAppServiceTests
             .ReturnsAsync(user);
         
         // Act
-        var result = await sut.SetUserPasswordAsync(userPublicId, jwtVersion, oldPassword, newPassword);
+        var result = await sut.SetUserPasswordAsync(userPublicId, jwtVersion, oldPassword, newPassword, false);
         
         // Assert
         result.Success.Should().BeFalse();
@@ -423,7 +423,7 @@ public class UserAppServiceTests
             .ReturnsAsync(user);
         
         // Act
-        var result = await sut.SetUserPasswordAsync(userPublicId, jwtVersion, oldPassword, newPassword);
+        var result = await sut.SetUserPasswordAsync(userPublicId, jwtVersion, oldPassword, newPassword, false);
         
         // Assert
         result.Success.Should().BeFalse();
@@ -431,7 +431,73 @@ public class UserAppServiceTests
     }
     
     [Theory, AutoMoqData]
-    public async Task SetUserPasswordAsync_ShouldReturnTrue_WhenChangePasswordSuccess(
+    public async Task SetUserPasswordAsync_ShouldReturnFail_WhenChangePasswordWithoutSet(
+        [Frozen] Mock<IUserDomainService> userDomainServiceMock,
+        [Frozen] Mock<IUnitOfWork> unitOfWorkMock,
+        UserAppService sut,
+        string userPublicId,
+        string oldPassword,
+        string newPassword)
+    {
+        // Arrange
+        unitOfWorkMock.SetupExecuteWithTransaction<bool>();
+        string jwtVersion = "3";
+        var user = new ApplicationUser()
+        {
+            JwtVersion = 3,
+            IsFirstLogin = true
+        };
+        userDomainServiceMock.Setup(uds => uds.GetUserByPublicIdIncludeTenantAsync(userPublicId, CancellationToken.None))
+            .ReturnsAsync(user);
+        userDomainServiceMock.Setup(uds => uds.ChangePasswordInnerAsync(user, oldPassword, newPassword, CancellationToken.None))
+            .ReturnsAsync(true);
+        
+        // Act
+        var result = await sut.SetUserPasswordAsync(userPublicId, jwtVersion, 
+            oldPassword, newPassword, true);
+        
+        // Assert
+        result.Success.Should().BeFalse();
+        result.Data.Should().BeFalse();
+        result.Code.Should().BeEquivalentTo(ResultCodes.User.UserResetPasswordBeforeSetPasswordFailed);
+    }
+    
+    [Theory, AutoMoqData]
+    public async Task SetUserPasswordAsync_ShouldReturnSuccess_WhenResetPasswordSuccess(
+        [Frozen] Mock<IUserDomainService> userDomainServiceMock,
+        [Frozen] Mock<IUnitOfWork> unitOfWorkMock,
+        UserAppService sut,
+        string userPublicId,
+        string oldPassword,
+        string newPassword)
+    {
+        // Arrange
+        unitOfWorkMock.SetupExecuteWithTransaction<bool>();
+        string jwtVersion = "3";
+        var user = new ApplicationUser()
+        {
+            JwtVersion = 3,
+            IsFirstLogin = false
+        };
+        userDomainServiceMock
+            .Setup(uds => uds.GetUserByPublicIdIncludeTenantAsync(userPublicId, CancellationToken.None))
+            .ReturnsAsync(user);
+        userDomainServiceMock
+            .Setup(uds => uds.ChangePasswordInnerAsync(user, oldPassword, newPassword, CancellationToken.None))
+            .ReturnsAsync(true);
+        
+        // Act
+        var result = await sut.SetUserPasswordAsync(userPublicId, jwtVersion, 
+            oldPassword, newPassword, true);
+        
+        // Assert
+        result.Success.Should().BeTrue();
+        userDomainServiceMock.Verify(uds => uds.ChangeFirstLoginStateInnerAsync(user, CancellationToken.None), Times.Never);
+        userDomainServiceMock.Verify(uds => uds.IncreaseUserJwtVersionInnerAsync(user, CancellationToken.None), Times.Once);
+    }
+    
+    [Theory, AutoMoqData]
+    public async Task SetUserPasswordAsync_ShouldReturnTrue_WhenSetPasswordSuccess(
         [Frozen] Mock<IUserDomainService> userDomainServiceMock,
         [Frozen] Mock<IUnitOfWork> unitOfWorkMock,
         UserAppService sut,
@@ -452,10 +518,12 @@ public class UserAppServiceTests
             .ReturnsAsync(true);
         
         // Act
-        var result = await sut.SetUserPasswordAsync(userPublicId, jwtVersion, oldPassword, newPassword);
+        var result = await sut.SetUserPasswordAsync(userPublicId, jwtVersion, oldPassword, newPassword, false);
         
         // Assert
         result.Success.Should().BeTrue();
+        userDomainServiceMock.Verify(uds => uds.ChangeFirstLoginStateInnerAsync(user, CancellationToken.None), Times.Once);
+        userDomainServiceMock.Verify(uds => uds.IncreaseUserJwtVersionInnerAsync(user, CancellationToken.None), Times.Once);
     }
     
     [Theory, AutoMoqData]

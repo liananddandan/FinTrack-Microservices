@@ -98,6 +98,11 @@ public class UserDomainService(
     public Task ChangeFirstLoginStateInnerAsync(ApplicationUser user, CancellationToken cancellationToken = default)
     {
         userRepo.ChangeFirstLoginStatus(user, cancellationToken);
+        return Task.CompletedTask;
+    }
+
+    public Task IncreaseUserJwtVersionInnerAsync(ApplicationUser user, CancellationToken cancellationToken = default)
+    {
         userRepo.IncreaseJwtVersion(user, cancellationToken);
         return Task.CompletedTask;
     }

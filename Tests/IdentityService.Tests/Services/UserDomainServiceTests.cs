@@ -2,6 +2,7 @@ using AutoFixture.Xunit2;
 using FluentAssertions;
 using IdentityService.Common.Status;
 using IdentityService.Domain.Entities;
+using IdentityService.Repositories.Interfaces;
 using IdentityService.Services;
 using IdentityService.Tests.Attributes;
 using Microsoft.AspNetCore.Identity;
@@ -319,5 +320,31 @@ public class UserDomainServiceTests
         userManagerMock.Setup(um => um.FindByEmailAsync(user.Email!)).ReturnsAsync(null as ApplicationUser);
         var result = await sut.GetUserByEmailInnerAsync(user.Email!);
         result.Should().BeNull();
+    }
+    
+    [Theory, AutoMoqData]
+    public async Task ChangeFirstLoginStateInnerAsync_Should_Invoke_Repo_Method(
+        [Frozen] Mock<IApplicationUserRepo> userRepoMock,
+        ApplicationUser user,
+        UserDomainService service)
+    {
+        // Act
+        await service.ChangeFirstLoginStateInnerAsync(user);
+
+        // Assert
+        userRepoMock.Verify(r => r.ChangeFirstLoginStatus(user, It.IsAny<CancellationToken>()), Times.Once);
+    }
+    
+    [Theory, AutoMoqData]
+    public async Task IncreaseUserJwtVersionInnerAsync_Should_Invoke_Repo_Method(
+        [Frozen] Mock<IApplicationUserRepo> userRepoMock,
+        ApplicationUser user,
+        UserDomainService service)
+    {
+        // Act
+        await service.IncreaseUserJwtVersionInnerAsync(user);
+
+        // Assert
+        userRepoMock.Verify(r => r.IncreaseJwtVersion(user, It.IsAny<CancellationToken>()), Times.Once);
     }
 }

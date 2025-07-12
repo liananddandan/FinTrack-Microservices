@@ -15,12 +15,21 @@ public class ChangeUserPasswordCommandhandlerTests
     [Theory, AutoMoqData]
     public async Task Handle_ShouldReturnResult_WhenRequestArrived(
         [Frozen] Mock<IUserAppService> userAppServiceMock,
-        ChangeUserPasswordCommandHandler sut,
-        ChangeUserPasswordCommand command)
+        SetUserPasswordCommandHandler sut)
     {
         // Arrange
-        userAppServiceMock.Setup(uas => uas.SetUserPasswordAsync(
-            command.UserPublicId, command.JwtVersion, command.OldPassword, command.NewPassword, CancellationToken.None))
+        var command = new SetUserPasswordCommand(
+            Guid.NewGuid().ToString(),
+            "1",
+            "NewPassword",
+            "OldPassword",
+            true
+        );
+
+    userAppServiceMock.Setup(uas => uas.SetUserPasswordAsync(
+            command.UserPublicId, command.JwtVersion, 
+            command.OldPassword, command.NewPassword, 
+            command.Reset, CancellationToken.None))
             .ReturnsAsync(ServiceResult<bool>.Ok(true, "Change password successfully.", "Change password successfully."));
         
         // Act

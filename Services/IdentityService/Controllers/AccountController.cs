@@ -6,6 +6,7 @@ using IdentityService.Common.Results;
 using IdentityService.Common.Status;
 using IdentityService.Filters.Attributes;
 using MediatR;
+using Microsoft.AspNetCore.Identity.Data;
 using Microsoft.AspNetCore.Mvc;
 
 namespace IdentityService.Controllers;
@@ -43,8 +44,23 @@ public class AccountController(IMediator mediator) : ControllerBase
             return Unauthorized("Request without valid token");
         }
 
-        var command = new ChangeUserPasswordCommand(jwtParseResult.UserPublicId,
-            jwtParseResult.JwtVersion, request.OldPassword, request.NewPassword);
+        var command = new SetUserPasswordCommand(jwtParseResult.UserPublicId,
+            jwtParseResult.JwtVersion,request.OldPassword, request.NewPassword, false);
+        var result = await mediator.Send(command);
+        return result.ToActionResult();
+    }
+
+    [HttpPost("reset-password")]
+    [RequireTokenType(JwtTokenType.AccessToken)]
+    public async Task<IActionResult> UserResetPasswordAsync(ChangePasswordRequest request)
+    {
+        var jwtParseResult = HttpContext.GetHttpHeaderJwtParseResult();
+        if (jwtParseResult == null)
+        {
+            return Unauthorized("Request without valid token");
+        }
+        var command = new SetUserPasswordCommand(jwtParseResult.UserPublicId, jwtParseResult.JwtVersion, 
+            request.OldPassword, request.NewPassword, true);
         var result = await mediator.Send(command);
         return result.ToActionResult();
     }
@@ -62,4 +78,5 @@ public class AccountController(IMediator mediator) : ControllerBase
         var result = await mediator.Send(command);
         return result.ToActionResult();
     }
+    
 }
