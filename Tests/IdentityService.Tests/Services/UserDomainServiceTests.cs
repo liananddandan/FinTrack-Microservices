@@ -193,7 +193,7 @@ public class UserDomainServiceTests
         // Arrange
         
         // Act
-        var user = await sut.GetUserByPublicIdInnerAsync(userPublicid);
+        var user = await sut.GetUserByPublicIdIncludeTenantAsync(userPublicid);
         
         // Assert
         user.Should().BeNull();
@@ -217,7 +217,7 @@ public class UserDomainServiceTests
         userManagerMock.Setup(x => x.Users).Returns(mockUsers);
         
         // Act
-        var result = await sut.GetUserByPublicIdInnerAsync(expectedGuid.ToString());
+        var result = await sut.GetUserByPublicIdIncludeTenantAsync(expectedGuid.ToString());
         
         // Assert
         result.Should().BeNull();
@@ -245,7 +245,7 @@ public class UserDomainServiceTests
         userManagerMock.Setup(x => x.Users).Returns(mockUsers);
         
         // Act
-        var result = await sut.GetUserByPublicIdInnerAsync(expectedGuid.ToString());
+        var result = await sut.GetUserByPublicIdIncludeTenantAsync(expectedGuid.ToString());
         
         // Assert
         result.Should().NotBeNull();
@@ -272,7 +272,7 @@ public class UserDomainServiceTests
         userManagerMock.Setup(x => x.Users).Returns(mockUsers);
         
         // Act
-        var result = await sut.GetUserByPublicIdInnerAsync(expectedGuid.ToString());
+        var result = await sut.GetUserByPublicIdIncludeTenantAsync(expectedGuid.ToString());
         
         // Assert
         result.Should().NotBeNull();

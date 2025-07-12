@@ -86,6 +86,26 @@ public class GlobalJwtTokenValidationFilterTests
     }
     
     [Theory, AutoMoqData]
+    public async Task OnAuthorizationAsync_ShouldReturnUnAuthorization_WhenTokenParsedResultIsNull(
+        [Frozen] Mock<IJwtTokenService> jwtTokenServiceMock,
+        JwtParseResult jwtParseResult,
+        GlobalJwtTokenValidationFilter sut)
+    {
+        // Arrange
+        jwtParseResult.TokenType = JwtTokenType.AccessToken;
+        var context = CreateAuthorizationFilterContext(new RequireTokenTypeAttribute(JwtTokenType.FirstLoginToken));
+        context.HttpContext.Request.Headers.Authorization = "Bearer WrongTypeToken";
+        jwtTokenServiceMock.Setup(jts => jts.ParseJwtTokenAsync("WrongTypeToken"))
+            .ReturnsAsync(ServiceResult<JwtParseResult>.Ok(null,"wrong token type", "wrong token type"));
+        
+        // Act
+        await sut.OnAuthorizationAsync(context);
+
+        // Assert
+        Assert.IsType<UnauthorizedResult>(context.Result);
+    }
+    
+    [Theory, AutoMoqData]
     public async Task OnAuthorizationAsync_ShouldReturnForbidResult_WhenTokenTypeIsInvalid(
         [Frozen] Mock<IJwtTokenService> jwtTokenServiceMock,
         JwtParseResult jwtParseResult,

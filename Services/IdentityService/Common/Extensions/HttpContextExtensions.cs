@@ -4,7 +4,7 @@ namespace IdentityService.Common.Extensions;
 
 public static class HttpContextExtensions
 {
-    public static JwtParseResult? GetJwtParseResult(this HttpContext httpContext)
+    public static JwtParseResult? GetHttpHeaderJwtParseResult(this HttpContext httpContext)
     {
         return httpContext.Items["JwtParseResult"] as JwtParseResult;
     }

@@ -98,6 +98,14 @@
     &lt;TestId&gt;xUnit::634E2A0D-EE3E-4F9F-9F60-D97B140815D8::net9.0::IdentityService.Tests.Controllers.AccountControllerTests.UserFirstTimeChangePasswordAsync_ShouldReturnSuccess_WhenUserAllGood&lt;/TestId&gt;
     &lt;TestId&gt;xUnit::634E2A0D-EE3E-4F9F-9F60-D97B140815D8::net9.0::IdentityService.Tests.Repositories.ApplicationUserRepoTests.ChangeFirstLoginStatus_ShouldChangeStatus&lt;/TestId&gt;
     &lt;TestId&gt;xUnit::634E2A0D-EE3E-4F9F-9F60-D97B140815D8::net9.0::IdentityService.Tests.Repositories.ApplicationUserRepoTests.IncreaseJwtVersion_ShouldPlusOne&lt;/TestId&gt;
+    &lt;TestId&gt;xUnit::634E2A0D-EE3E-4F9F-9F60-D97B140815D8::net9.0::IdentityService.Tests.CommandHandlers.RefreshUserJwtTokenCommandHandlerTests.Handle_ShouldReturnResultFromService&lt;/TestId&gt;
+    &lt;TestId&gt;xUnit::634E2A0D-EE3E-4F9F-9F60-D97B140815D8::net9.0::IdentityService.Tests.Filters.GlobalJwtTokenValidationFilterTests.OnAuthorizationAsync_ShouldReturnUnAuthorization_WhenTokenParsedResultIsNull&lt;/TestId&gt;
+    &lt;TestId&gt;xUnit::634E2A0D-EE3E-4F9F-9F60-D97B140815D8::net9.0::IdentityService.Tests.Services.UserAppServiceTests.RefreshUserTokenPairAsync_ShouldReturnFail_WhenUserIdWrong&lt;/TestId&gt;
+    &lt;TestId&gt;xUnit::634E2A0D-EE3E-4F9F-9F60-D97B140815D8::net9.0::IdentityService.Tests.Services.UserAppServiceTests.RefreshUserTokenPairAsync_ShouldReturnFail_WhenJwtVersionMismatch&lt;/TestId&gt;
+    &lt;TestId&gt;xUnit::634E2A0D-EE3E-4F9F-9F60-D97B140815D8::net9.0::IdentityService.Tests.Services.UserAppServiceTests.SetUserPasswordAsync_ShouldReturnFalse_WhenJwtVersionParseToLongFail&lt;/TestId&gt;
+    &lt;TestId&gt;xUnit::634E2A0D-EE3E-4F9F-9F60-D97B140815D8::net9.0::IdentityService.Tests.Services.UserAppServiceTests.RefreshUserTokenPairAsync_ShouldReturnFail_WhenUserNoRole&lt;/TestId&gt;
+    &lt;TestId&gt;xUnit::634E2A0D-EE3E-4F9F-9F60-D97B140815D8::net9.0::IdentityService.Tests.Services.UserAppServiceTests.RefreshUserTokenPairAsync_ShouldReturnSuccess_WhenGenerateSuccess&lt;/TestId&gt;
+    &lt;TestId&gt;xUnit::634E2A0D-EE3E-4F9F-9F60-D97B140815D8::net9.0::IdentityService.Tests.Controllers.AccountControllerTests.RefreshUserJwtTokenAsync_ShouldReturnSuccess_WhenRefreshTokenIsCorrect&lt;/TestId&gt;
   &lt;/TestAncestor&gt;
 &lt;/SessionState&gt;</s:String>
 	<s:String x:Key="/Default/Environment/UnitTesting/UnitTestSessionStore/Sessions/=c2432f41_002D9fe2_002D4d89_002Db88c_002D917b6de3a090/@EntryIndexedValue">&lt;SessionState ContinuousTestingMode="0" Name="ConfirmAccountEmailAsync_ShouldReturnResult #2" xmlns="urn:schemas-jetbrains-com:jetbrains-ut-session"&gt;

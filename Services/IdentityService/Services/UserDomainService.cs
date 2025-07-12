@@ -59,7 +59,7 @@ public class UserDomainService(
         return result.Succeeded ? RoleStatus.AddRoleToUserSuccess : RoleStatus.AddRoleToUserFailed;
     }
 
-    public async Task<ApplicationUser?> GetUserByPublicIdInnerAsync(string userPublicId,
+    public async Task<ApplicationUser?> GetUserByPublicIdIncludeTenantAsync(string userPublicId,
         CancellationToken cancellationToken = default)
     {
         if (!Guid.TryParse(userPublicId, out var uPublicId))

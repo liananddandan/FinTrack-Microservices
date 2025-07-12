@@ -256,7 +256,7 @@ public class JwtTokenServiceTests
         var jwtToken = await sut.GenerateJwtTokenAsync(jwtClaimSource, JwtTokenType.RefreshToken);
         jwtToken.Data.Should().NotBeNull();
         userDomainServiceMock.Setup(us
-                => us.GetUserByPublicIdInnerAsync(jwtClaimSource.UserPublicId, It.IsAny<CancellationToken>()))
+                => us.GetUserByPublicIdIncludeTenantAsync(jwtClaimSource.UserPublicId, It.IsAny<CancellationToken>()))
             .ReturnsAsync(null as ApplicationUser);
 
         // Act
@@ -310,7 +310,7 @@ public class JwtTokenServiceTests
             JwtVersion = 3
         };
         userDomainServiceMock.Setup(us
-                => us.GetUserByPublicIdInnerAsync(jwtClaimSource.UserPublicId, It.IsAny<CancellationToken>()))
+                => us.GetUserByPublicIdIncludeTenantAsync(jwtClaimSource.UserPublicId, It.IsAny<CancellationToken>()))
             .ReturnsAsync(user);
 
         // Act
@@ -364,7 +364,7 @@ public class JwtTokenServiceTests
             JwtVersion = 3
         };
         userDomainServiceMock.Setup(us
-                => us.GetUserByPublicIdInnerAsync(jwtClaimSource.UserPublicId, It.IsAny<CancellationToken>()))
+                => us.GetUserByPublicIdIncludeTenantAsync(jwtClaimSource.UserPublicId, It.IsAny<CancellationToken>()))
             .ReturnsAsync(user);
 
         // Act
@@ -418,7 +418,7 @@ public class JwtTokenServiceTests
             JwtVersion = 3
         };
         userDomainServiceMock.Setup(us
-                => us.GetUserByPublicIdInnerAsync(jwtClaimSource.UserPublicId, It.IsAny<CancellationToken>()))
+                => us.GetUserByPublicIdIncludeTenantAsync(jwtClaimSource.UserPublicId, It.IsAny<CancellationToken>()))
             .ReturnsAsync(user);
 
         userDomainServiceMock.Setup(us
@@ -476,7 +476,7 @@ public class JwtTokenServiceTests
             JwtVersion = 3
         };
         userDomainServiceMock.Setup(us
-                => us.GetUserByPublicIdInnerAsync(jwtClaimSource.UserPublicId, It.IsAny<CancellationToken>()))
+                => us.GetUserByPublicIdIncludeTenantAsync(jwtClaimSource.UserPublicId, It.IsAny<CancellationToken>()))
             .ReturnsAsync(user);
         userDomainServiceMock.Setup(us
                 => us.GetRoleInnerAsync(user, It.IsAny<CancellationToken>()))

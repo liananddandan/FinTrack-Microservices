@@ -39,13 +39,19 @@ public class GlobalJwtTokenValidationFilter(IJwtTokenService jwtTokenService) : 
             };
             return;
         }
-        
+
+        if (result.Data == null)
+        {
+            context.Result = new UnauthorizedResult();
+            return;
+        }
+
         var requiredType =
             context.ActionDescriptor.EndpointMetadata
                 .OfType<RequireTokenTypeAttribute>().FirstOrDefault()?
                 .TokenType ?? JwtTokenType.AccessToken;
         
-        if (result.Data!.TokenType != requiredType)
+        if (result.Data.TokenType != requiredType)
         {
             context.Result = new ForbidResult();
             return;

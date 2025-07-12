@@ -369,7 +369,7 @@ public class UserAppServiceTests
         string newPassword)
     {
         // Arrange
-        userDomainServiceMock.Setup(uds => uds.GetUserByPublicIdInnerAsync(userPublicId, CancellationToken.None))
+        userDomainServiceMock.Setup(uds => uds.GetUserByPublicIdIncludeTenantAsync(userPublicId, CancellationToken.None))
             .ReturnsAsync(null as ApplicationUser);
         
         // Act
@@ -378,6 +378,31 @@ public class UserAppServiceTests
         // Assert
         result.Success.Should().BeFalse();
         result.Code.Should().BeEquivalentTo(ResultCodes.User.UserNotFound);
+    }
+    
+    [Theory, AutoMoqData]
+    public async Task SetUserPasswordAsync_ShouldReturnFalse_WhenJwtVersionParseToLongFail(
+        [Frozen] Mock<IUserDomainService> userDomainServiceMock,
+        UserAppService sut,
+        string userPublicId,
+        string oldPassword,
+        string newPassword)
+    {
+        // Arrange
+        string jwtVersion = "sss";
+        var user = new ApplicationUser()
+        {
+            JwtVersion = 3
+        };
+        userDomainServiceMock.Setup(uds => uds.GetUserByPublicIdIncludeTenantAsync(userPublicId, CancellationToken.None))
+            .ReturnsAsync(user);
+        
+        // Act
+        var result = await sut.SetUserPasswordAsync(userPublicId, jwtVersion, oldPassword, newPassword);
+        
+        // Assert
+        result.Success.Should().BeFalse();
+        result.Code.Should().BeEquivalentTo(ResultCodes.Token.JwtTokenVersionInvalid);
     }
     
     [Theory, AutoMoqData]
@@ -394,7 +419,7 @@ public class UserAppServiceTests
         {
             JwtVersion = 3
         };
-        userDomainServiceMock.Setup(uds => uds.GetUserByPublicIdInnerAsync(userPublicId, CancellationToken.None))
+        userDomainServiceMock.Setup(uds => uds.GetUserByPublicIdIncludeTenantAsync(userPublicId, CancellationToken.None))
             .ReturnsAsync(user);
         
         // Act
@@ -421,7 +446,7 @@ public class UserAppServiceTests
         {
             JwtVersion = 3
         };
-        userDomainServiceMock.Setup(uds => uds.GetUserByPublicIdInnerAsync(userPublicId, CancellationToken.None))
+        userDomainServiceMock.Setup(uds => uds.GetUserByPublicIdIncludeTenantAsync(userPublicId, CancellationToken.None))
             .ReturnsAsync(user);
         userDomainServiceMock.Setup(uds => uds.ChangePasswordInnerAsync(user, oldPassword, newPassword, CancellationToken.None))
             .ReturnsAsync(true);
@@ -431,5 +456,124 @@ public class UserAppServiceTests
         
         // Assert
         result.Success.Should().BeTrue();
+    }
+    
+    [Theory, AutoMoqData]
+    public async Task RefreshUserTokenPairAsync_ShouldReturnFail_WhenUserIdWrong(
+        [Frozen] Mock<IUserDomainService> userDomainServiceMock,
+        UserAppService sut,
+        string userPublicId,
+        string jwtVersion)
+    {
+        // Arrange
+        userDomainServiceMock
+            .Setup(uds => uds.GetUserByPublicIdIncludeTenantAsync(userPublicId, CancellationToken.None))
+            .ReturnsAsync((ApplicationUser?)null);
+        
+        // Act
+        var result = await sut.RefreshUserTokenPairAsync(userPublicId, jwtVersion, CancellationToken.None);
+
+        // Assert
+        result.Success.Should().BeFalse();
+        result.Code.Should().BeEquivalentTo(ResultCodes.User.UserNotFound);
+    }
+    
+    [Theory, AutoMoqData]
+    public async Task RefreshUserTokenPairAsync_ShouldReturnFail_WhenJwtVersionInvalid(
+        [Frozen] Mock<IUserDomainService> userDomainServiceMock,
+        UserAppService sut,
+        string userPublicId,
+        string jwtVersion,
+        ApplicationUser user)
+    {
+        // Arrange
+        userDomainServiceMock
+            .Setup(uds => uds.GetUserByPublicIdIncludeTenantAsync(userPublicId, CancellationToken.None))
+            .ReturnsAsync(user);
+        
+        // Act
+        var result = await sut.RefreshUserTokenPairAsync(userPublicId, jwtVersion, CancellationToken.None);
+
+        // Assert
+        result.Success.Should().BeFalse();
+        result.Code.Should().BeEquivalentTo(ResultCodes.Token.JwtTokenVersionInvalid);
+    }
+    
+    [Theory, AutoMoqData]
+    public async Task RefreshUserTokenPairAsync_ShouldReturnFail_WhenJwtVersionMismatch(
+        [Frozen] Mock<IUserDomainService> userDomainServiceMock,
+        UserAppService sut,
+        string userPublicId,
+        ApplicationUser user)
+    {
+        // Arrange
+        string jwtVersion = "1";
+        user.JwtVersion = 3;
+        userDomainServiceMock
+            .Setup(uds => uds.GetUserByPublicIdIncludeTenantAsync(userPublicId, CancellationToken.None))
+            .ReturnsAsync(user);
+        
+        // Act
+        var result = await sut.RefreshUserTokenPairAsync(userPublicId, jwtVersion, CancellationToken.None);
+
+        // Assert
+        result.Success.Should().BeFalse();
+        result.Code.Should().BeEquivalentTo(ResultCodes.Token.JwtTokenVersionInvalid);
+    }
+    
+    [Theory, AutoMoqData]
+    public async Task RefreshUserTokenPairAsync_ShouldReturnFail_WhenUserNoRole(
+        [Frozen] Mock<IUserDomainService> userDomainServiceMock,
+        UserAppService sut,
+        string userPublicId,
+        ApplicationUser user)
+    {
+        // Arrange
+        var jwtVersion = "1";
+        user.JwtVersion = 1;
+        userDomainServiceMock
+            .Setup(uds => uds.GetUserByPublicIdIncludeTenantAsync(userPublicId, CancellationToken.None))
+            .ReturnsAsync(user);
+        userDomainServiceMock
+            .Setup(uds => uds.GetRoleInnerAsync(user, CancellationToken.None))
+            .ReturnsAsync((string?)null);
+        
+        // Act
+        var result = await sut.RefreshUserTokenPairAsync(userPublicId, jwtVersion, CancellationToken.None);
+
+        // Assert
+        result.Success.Should().BeFalse();
+        result.Code.Should().BeEquivalentTo(ResultCodes.User.UserCouldNotFindRole);
+    }
+    
+    [Theory, AutoMoqData]
+    public async Task RefreshUserTokenPairAsync_ShouldReturnSuccess_WhenGenerateSuccess(
+        [Frozen] Mock<IUserDomainService> userDomainServiceMock,
+        [Frozen] Mock<IJwtTokenService> jwtTokenServiceMock,
+        UserAppService sut,
+        string userPublicId,
+        ApplicationUser user,
+        JwtTokenPair jwtTokenPair
+        )
+    {
+        // Arrange
+        var jwtVersion = "1";
+        user.JwtVersion = 1;
+        userDomainServiceMock
+            .Setup(uds => uds.GetUserByPublicIdIncludeTenantAsync(userPublicId, CancellationToken.None))
+            .ReturnsAsync(user);
+        userDomainServiceMock
+            .Setup(uds => uds.GetRoleInnerAsync(user, CancellationToken.None))
+            .ReturnsAsync("Admin_test");
+        jwtTokenServiceMock
+            .Setup(jts => jts.GenerateJwtTokenPairAsync(It.IsAny<JwtClaimSource>()))
+            .ReturnsAsync(ServiceResult<JwtTokenPair>.Ok(jwtTokenPair, "jwt token"));
+        
+        // Act
+        var result = await sut.RefreshUserTokenPairAsync(userPublicId, jwtVersion, CancellationToken.None);
+
+        // Assert
+        result.Success.Should().BeTrue();
+        result.Code.Should().BeEquivalentTo(ResultCodes.User.UserRefreshTokenSuccess);
     }
 }

@@ -8,6 +8,7 @@ using IdentityService.Services.Interfaces;
 using MediatR;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using SharedKernel.Common.DTOs.Auth;
 using SharedKernel.Common.Results;
 
 namespace IdentityService.Services;
@@ -130,17 +131,13 @@ public class UserAppService(UserManager<ApplicationUser> userManager,
     public async Task<ServiceResult<bool>> SetUserPasswordAsync(string userPublicId, string jwtVersion, 
         string oldPassword, string newPassword, CancellationToken cancellationToken = default)
     {
-        var user = await userDomainService.GetUserByPublicIdInnerAsync(userPublicId, cancellationToken);
-        if (user == null)
+        var userCheckResult = await GetUserByPublicIdAndCheckJwtVersionAsync(userPublicId, jwtVersion, cancellationToken);
+        if (!userCheckResult.Success)
         {
-            return ServiceResult<bool>.Fail(ResultCodes.User.UserNotFound, "User Not Found");
+            return ServiceResult<bool>.Fail(userCheckResult.Code!, userCheckResult.Message!);
         }
 
-        if (long.TryParse(jwtVersion, out var version) && version != user.JwtVersion)
-        {
-            return ServiceResult<bool>.Fail(ResultCodes.Token.JwtTokenVersionInvalid, "Token Version Invalid");
-        }
-
+        var user = userCheckResult.Data!;
         var transactionResult = await unitOfWork.WithTransactionAsync<bool>(async () =>
         {
             var changePasswordResult = await userDomainService
@@ -155,5 +152,50 @@ public class UserAppService(UserManager<ApplicationUser> userManager,
         return transactionResult
             ? ServiceResult<bool>.Ok(true, ResultCodes.User.UserChangePasswordSuccess, "User Change Password Success")
             : ServiceResult<bool>.Fail(ResultCodes.User.UserChangePasswordFailed, "User Change Password Failed");
+    }
+
+    public async Task<ServiceResult<JwtTokenPair>> RefreshUserTokenPairAsync(string userPublicId, string jwtVersion, CancellationToken cancellationToken = default)
+    {
+        var userCheckResult = await GetUserByPublicIdAndCheckJwtVersionAsync(userPublicId, jwtVersion, cancellationToken);
+        if (!userCheckResult.Success)
+        {
+            return ServiceResult<JwtTokenPair>.Fail(userCheckResult.Code!, userCheckResult.Message!);
+        }
+
+        var user = userCheckResult.Data!;
+        var roleResult = await userDomainService.GetRoleInnerAsync(user, cancellationToken);
+        if (string.IsNullOrEmpty(roleResult))
+        {
+            return ServiceResult<JwtTokenPair>.Fail(ResultCodes.User.UserCouldNotFindRole, "User role Not Found");
+        }
+
+        var jwtClaimSource = new JwtClaimSource()
+        {
+            UserPublicId = user.PublicId.ToString(),
+            JwtVersion = user.JwtVersion.ToString(),
+            TenantPublicId = user.Tenant!.PublicId.ToString(),
+            UserRoleInTenant = roleResult
+        };
+       var generateResult =  await jwtTokenService.GenerateJwtTokenPairAsync(jwtClaimSource);
+       return generateResult.Success
+           ? ServiceResult<JwtTokenPair>.Ok(generateResult.Data!, ResultCodes.User.UserRefreshTokenSuccess,
+               "User Refresh Token Success")
+           : generateResult;
+    }
+
+    private async Task<ServiceResult<ApplicationUser>> GetUserByPublicIdAndCheckJwtVersionAsync(string userPublicId, string jwtVersion, CancellationToken cancellationToken = default)
+    {
+        var user = await userDomainService.GetUserByPublicIdIncludeTenantAsync(userPublicId, cancellationToken);
+        if (user == null)
+        {
+            return ServiceResult<ApplicationUser>.Fail(ResultCodes.User.UserNotFound, "User Not Found");
+        }
+
+        if (!long.TryParse(jwtVersion, out var version) || version != user.JwtVersion)
+        {
+            return ServiceResult<ApplicationUser>.Fail(ResultCodes.Token.JwtTokenVersionInvalid, "Token Version Invalid");
+        }
+        return ServiceResult<ApplicationUser>
+            .Ok(user, ResultCodes.User.UserCheckPublicIdAndJwtVersionSuccess, "User Check Public Id and JWT Version Success");
     }
 }

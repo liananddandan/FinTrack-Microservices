@@ -70,7 +70,7 @@ public class JwtTokenService(IUserDomainService userService, IOptions<JwtOptions
                 "Invalid refresh token without valid claims.");
         }
 
-        var user = await userService.GetUserByPublicIdInnerAsync(userPublicId);
+        var user = await userService.GetUserByPublicIdIncludeTenantAsync(userPublicId);
         if (user is null)
         {
             return ServiceResult<JwtTokenPair>.Fail(ResultCodes.Token.RefreshJwtTokenFailedClaimUserNotFound,

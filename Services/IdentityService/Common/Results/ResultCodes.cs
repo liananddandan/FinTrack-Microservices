@@ -50,6 +50,8 @@ public static class ResultCodes
         public const string UserCouldNotFindRole = "100003006";
         public const string UserChangePasswordFailed = "100003007";
         
+        public const string UserRefreshTokenSuccess = "100003993";
+        public const string UserCheckPublicIdAndJwtVersionSuccess = "100003994";
         public const string UserChangePasswordSuccess = "100003995";
         public const string UserLoginSuccess = "100003996";
         public const string UserLoginSuccessButFirstLogin = "100003997";

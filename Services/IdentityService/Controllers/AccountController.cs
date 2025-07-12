@@ -37,7 +37,7 @@ public class AccountController(IMediator mediator) : ControllerBase
     [RequireTokenType(JwtTokenType.FirstLoginToken)]
     public async Task<IActionResult> UserFirstTimeChangePasswordAsync(ChangePasswordRequest request)
     {
-        var jwtParseResult = HttpContext.GetJwtParseResult();
+        var jwtParseResult = HttpContext.GetHttpHeaderJwtParseResult();
         if (jwtParseResult == null)
         {
             return Unauthorized("Request without valid token");
@@ -45,6 +45,20 @@ public class AccountController(IMediator mediator) : ControllerBase
 
         var command = new ChangeUserPasswordCommand(jwtParseResult.UserPublicId,
             jwtParseResult.JwtVersion, request.OldPassword, request.NewPassword);
+        var result = await mediator.Send(command);
+        return result.ToActionResult();
+    }
+
+    [HttpGet("refresh-token")]
+    [RequireTokenType(JwtTokenType.RefreshToken)]
+    public async Task<IActionResult> RefreshUserJwtTokenAsync()
+    {
+        var jwtParseResult = HttpContext.GetHttpHeaderJwtParseResult();
+        if (jwtParseResult == null)
+        {
+            return Unauthorized("Request without valid token");
+        }
+        var command = new RefreshUserJwtTokenCommand(jwtParseResult.UserPublicId, jwtParseResult.JwtVersion);
         var result = await mediator.Send(command);
         return result.ToActionResult();
     }
