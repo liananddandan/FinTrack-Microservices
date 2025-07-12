@@ -14,6 +14,7 @@ public class UsersSeed
         await SeedAddFirstLoginTestUser(dbContext, userManager, roleManager);
         await SeedAddSetPasswordTestUser(dbContext, userManager, roleManager);
         await SeedAddRefreshJwtTokenTestUser(dbContext, userManager, roleManager);
+        await SeedAddResetPasswordTestUser(dbContext, userManager, roleManager);
     }
 
     private static async Task SeedAddLoginTestUser(ApplicationIdentityDbContext dbContext,
