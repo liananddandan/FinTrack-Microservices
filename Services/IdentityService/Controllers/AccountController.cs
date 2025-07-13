@@ -78,5 +78,17 @@ public class AccountController(IMediator mediator) : ControllerBase
         var result = await mediator.Send(command);
         return result.ToActionResult();
     }
-    
+
+    [HttpGet]
+    public async Task<IActionResult> GetUserInfoAsync()
+    {
+        var jwtParseResult = HttpContext.GetHttpHeaderJwtParseResult();
+        if (jwtParseResult == null)
+        {
+            return Unauthorized("Request without valid token");
+        }
+        var command = new FetchUserInfoCommand(jwtParseResult.UserPublicId, jwtParseResult.JwtVersion);
+        var result = await mediator.Send(command);
+        return result.ToActionResult();
+    }
 }

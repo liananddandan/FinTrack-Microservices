@@ -13,4 +13,5 @@ public interface IUserAppService
     Task<ServiceResult<bool>> SetUserPasswordAsync(string userPublicId, string jwtVersion, 
         string oldPassword, string newPassword, bool reset, CancellationToken cancellationToken = default);
     Task<ServiceResult<JwtTokenPair>> RefreshUserTokenPairAsync(string userPublicId, string jwtVersion, CancellationToken cancellationToken = default);
+    Task<ServiceResult<UserInfoDto>> GetUserInfoAsync(string userPublicId, string jwtVersion, CancellationToken cancellationToken = default);
 }

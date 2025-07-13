@@ -262,4 +262,39 @@ public class AccountControllerTests(
         content.Should().Contain("accessToken");
         content.Should().Contain("refreshToken");
     }
+    
+    [Fact]
+    public async Task GetUserInfoAsync_ShouldReturnSuccess_WhenAccessTokenIsCorrect()
+    {
+        // Arrange
+        using var scope = factory.Services.CreateScope();
+        var jwtTokenService = scope.ServiceProvider.GetRequiredService<IJwtTokenService>();
+        var userDomainService = scope.ServiceProvider.GetRequiredService<IUserDomainService>();
+        var user = await userDomainService.GetUserByEmailInnerAsync("testUserForGetUserInfoTest@test.com");
+        user.Should().NotBeNull();
+        var jwtClaimSource = new JwtClaimSource()
+        {
+            UserPublicId = user.PublicId.ToString(),
+            JwtVersion = user.JwtVersion.ToString(),
+            TenantPublicId = Guid.NewGuid().ToString(),
+            UserRoleInTenant = "GetUserTestRole"
+        };
+        var generateResult = await jwtTokenService.GenerateJwtTokenAsync(jwtClaimSource, JwtTokenType.RefreshToken);
+        generateResult.Success.Should().BeTrue();
+        generateResult.Data.Should().NotBeNull();
+        var refreshToken = generateResult.Data;
+        var client = factory.CreateClient();
+        client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", refreshToken);
+        
+        // Act
+        var response = await client.GetAsync("api/account");
+        
+        // Assert
+        string content = await response.Content.ReadAsStringAsync();
+        response.EnsureSuccessStatusCode();
+        content.Should().NotBeNull();
+        content.Should().Contain("100003992");
+        content.Should().Contain("UserInfoDto");
+        content.Should().Contain("TenantInfoDto");
+    }
 }

@@ -644,4 +644,79 @@ public class UserAppServiceTests
         result.Success.Should().BeTrue();
         result.Code.Should().BeEquivalentTo(ResultCodes.User.UserRefreshTokenSuccess);
     }
+
+    [Theory, AutoMoqData]
+    public async Task GetUserInfoAsync_ShouldReturnFail_WhenTenantMissing(
+        [Frozen] Mock<IUserDomainService> userDomainServiceMock,
+        UserAppService sut, 
+        ApplicationUser user,
+        string userPublicId)
+    {
+        // Arrange
+        user.Tenant = null;
+        userDomainServiceMock.Setup(
+            uds => uds.GetUserByPublicIdIncludeTenantAsync(userPublicId, CancellationToken.None))
+            .ReturnsAsync(user);
+        
+        // Act
+        var result = await sut.GetUserInfoAsync(userPublicId, user.JwtVersion.ToString(), CancellationToken.None);
+        
+        // Assert
+        result.Success.Should().BeFalse();
+        result.Code.Should().BeEquivalentTo(ResultCodes.User.UserTenantInfoMissed);
+    }
+    
+    [Theory, AutoMoqData]
+    public async Task GetUserInfoAsync_ShouldReturnFail_WhenRoleMissing(
+        [Frozen] Mock<IUserDomainService> userDomainServiceMock,
+        UserAppService sut, 
+        ApplicationUser user,
+        string userPublicId)
+    {
+        // Arrange
+        userDomainServiceMock.Setup(
+                uds => uds.GetUserByPublicIdIncludeTenantAsync(userPublicId, CancellationToken.None))
+            .ReturnsAsync(user);
+        userDomainServiceMock.Setup(uds => uds.GetRoleInnerAsync(user, CancellationToken.None))
+            .ReturnsAsync((string?)null);
+        
+        // Act
+        var result = await sut.GetUserInfoAsync(userPublicId, user.JwtVersion.ToString(), CancellationToken.None);
+        
+        // Assert
+        result.Success.Should().BeFalse();
+        result.Code.Should().BeEquivalentTo(ResultCodes.User.UserCouldNotFindRole);
+    }
+    
+    [Theory, AutoMoqData]
+    public async Task GetUserInfoAsync_ShouldReturnSuccess_WhenGetInfo(
+        [Frozen] Mock<IUserDomainService> userDomainServiceMock,
+        UserAppService sut, 
+        ApplicationUser user,
+        string userPublicId)
+    {
+        // Arrange
+        userDomainServiceMock.Setup(
+                uds => uds.GetUserByPublicIdIncludeTenantAsync(userPublicId, CancellationToken.None))
+            .ReturnsAsync(user);
+        userDomainServiceMock.Setup(uds => uds.GetRoleInnerAsync(user, CancellationToken.None))
+            .ReturnsAsync("Admin_test");
+        
+        // Act
+        var result = await sut.GetUserInfoAsync(userPublicId, user.JwtVersion.ToString(), CancellationToken.None);
+        
+        // Assert
+        result.Success.Should().BeTrue();
+        result.Code.Should().BeEquivalentTo(ResultCodes.User.UserGetInfoSuccess);
+        var userInfo = result.Data;
+        userInfo.Should().NotBeNull();
+        userInfo.userPublicId.Should().Be(user.PublicId.ToString());
+        userInfo.email.Should().Be(user.Email);
+        userInfo.userName.Should().Be(user.UserName);
+        userInfo.roleName.Should().Be("Admin_test");
+        var tenantInfo = userInfo.tenantInfoDto;
+        tenantInfo.Should().NotBeNull();
+        tenantInfo.TenantPublicId.Should().Be(user.Tenant!.PublicId.ToString());
+        tenantInfo.TenantName.Should().Be(user.Tenant!.Name);
+    }
 }

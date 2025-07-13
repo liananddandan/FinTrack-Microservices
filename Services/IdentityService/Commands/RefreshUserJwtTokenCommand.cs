@@ -4,4 +4,5 @@ using SharedKernel.Common.Results;
 
 namespace IdentityService.Commands;
 
-public record RefreshUserJwtTokenCommand(string UserPublicId, string JwtVersion) : IRequest<ServiceResult<JwtTokenPair>>;
+public record RefreshUserJwtTokenCommand(string UserPublicId, string JwtVersion)
+    : IRequest<ServiceResult<JwtTokenPair>>;
