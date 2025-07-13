@@ -252,7 +252,7 @@ public class AccountControllerTests(
         client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", refreshToken);
         
         // Act
-        var response = await client.GetAsync("api/Account/refresh-token");
+        var response = await client.GetAsync("api/account/refresh-token");
         
         // Assert
         string content = await response.Content.ReadAsStringAsync();
@@ -279,7 +279,7 @@ public class AccountControllerTests(
             TenantPublicId = Guid.NewGuid().ToString(),
             UserRoleInTenant = "GetUserTestRole"
         };
-        var generateResult = await jwtTokenService.GenerateJwtTokenAsync(jwtClaimSource, JwtTokenType.RefreshToken);
+        var generateResult = await jwtTokenService.GenerateJwtTokenAsync(jwtClaimSource, JwtTokenType.AccessToken);
         generateResult.Success.Should().BeTrue();
         generateResult.Data.Should().NotBeNull();
         var refreshToken = generateResult.Data;
@@ -294,7 +294,7 @@ public class AccountControllerTests(
         response.EnsureSuccessStatusCode();
         content.Should().NotBeNull();
         content.Should().Contain("100003992");
-        content.Should().Contain("UserInfoDto");
-        content.Should().Contain("TenantInfoDto");
+        content.Should().Contain("tenantInfoDto");
+        content.Should().Contain("email");
     }
 }

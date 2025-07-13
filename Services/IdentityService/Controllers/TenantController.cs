@@ -8,7 +8,7 @@ using Microsoft.AspNetCore.Mvc;
 namespace IdentityService.Controllers;
 
 [ApiController]
-[Route("api/[controller]")]
+[Route("api/tenant")]
 public class TenantController(IMediator mediator) : ControllerBase
 {
     [HttpPost("register")]

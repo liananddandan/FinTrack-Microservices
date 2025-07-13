@@ -12,7 +12,7 @@ using Microsoft.AspNetCore.Mvc;
 namespace IdentityService.Controllers;
 
 [ApiController]
-[Route("api/[controller]")]
+[Route("api/account")]
 public class AccountController(IMediator mediator) : ControllerBase
 {
     [HttpGet("confirm-email")]
