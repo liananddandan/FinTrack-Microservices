@@ -13,6 +13,7 @@ public class ApplicationIdentityDbContext: IdentityDbContext<
     public DbSet<Tenant> Tenants { get; set; }
     public DbSet<ApplicationUser> Users { get; set; }
     public DbSet<ApplicationRole> Roles { get; set; }
+    public DbSet<TenantInvitation> TenantInvitations { get; set; }
 
     public ApplicationIdentityDbContext(DbContextOptions<ApplicationIdentityDbContext> options) : base(options)
     {

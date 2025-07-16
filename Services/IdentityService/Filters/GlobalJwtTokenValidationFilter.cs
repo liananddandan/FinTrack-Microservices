@@ -12,6 +12,7 @@ public class GlobalJwtTokenValidationFilter(IJwtTokenService jwtTokenService) : 
 {
     public async Task OnAuthorizationAsync(AuthorizationFilterContext context)
     {
+        // todo：自定义头Invite解析，不要用Bearer即可
         if (context.ActionDescriptor.EndpointMetadata.OfType<AllowAnonymousTokenAttribute>().Any())
         {
             return;

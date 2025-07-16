@@ -1,4 +1,3 @@
-using System.Diagnostics;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
@@ -46,7 +45,7 @@ public class JwtTokenService(IUserDomainService userService, IOptions<JwtOptions
 
     public async Task<ServiceResult<JwtTokenPair>> RefreshJwtTokenPairAsync(string oldRefreshToken)
     {
-        var (principalResult, resultCode) = GetPrincipalFromTokenInner(oldRefreshToken);
+        var (principalResult, _) = GetPrincipalFromTokenInner(oldRefreshToken);
         if (principalResult is null)
         {
             return ServiceResult<JwtTokenPair>.Fail(ResultCodes.Token.RefreshJwtTokenFailedTokenInvalid,
@@ -166,6 +165,46 @@ public class JwtTokenService(IUserDomainService userService, IOptions<JwtOptions
             ResultCodes.Token.JwtTokenParseSuccess, "Jwt Claim parsed successfully."));
     }
 
+    public Task<ServiceResult<string>> GenerateInvitationTokenAsync(InvitationClaimSource invitationClaimSource)
+    {
+        var claims = new List<Claim>()
+        {
+            new(JwtTokenCustomKeys.InvitationPublicIdkey, invitationClaimSource.InvitationPublicId),
+            new(JwtTokenCustomKeys.InvitationVersionKey, invitationClaimSource.InvitationVersion)
+        };
+        return Task.FromResult(ServiceResult<string>
+            .Ok(GenerateJwtTokenInner(claims, JwtTokenType.InvitationToken),
+            ResultCodes.Token.GenerateInvitationTokenSuccess, 
+            "Invitation token generated successfully."));
+    }
+
+    public Task<ServiceResult<InvitationParseResult>> ParseInvitationTokenAsync(string token)
+    {
+        var (principalResult, resultCode) = GetPrincipalFromTokenInner(token);
+        if (principalResult is null)
+        {
+            return Task.FromResult(ServiceResult<InvitationParseResult>.Fail(resultCode,
+                "Token could not be parsed."));
+        }
+        var invitationPublicId = principalResult.FindFirst(JwtTokenCustomKeys.InvitationPublicIdkey)?.Value;
+        var invitationVersion = principalResult.FindFirst(JwtTokenCustomKeys.InvitationVersionKey)?.Value;
+        if (string.IsNullOrEmpty(invitationPublicId) 
+            || string.IsNullOrEmpty(invitationVersion))
+        {
+            return Task.FromResult(ServiceResult<InvitationParseResult>
+                .Fail(ResultCodes.Token.JwtTokenClaimMissing, "Jwt claims are missing."));
+        }
+
+        var invitationParseResult = new InvitationParseResult()
+        {
+            InvitationPublicId = invitationPublicId,
+            InvitationVersion = invitationVersion
+        };
+        return Task.FromResult(ServiceResult<InvitationParseResult>.Ok(invitationParseResult, 
+            ResultCodes.Token.InvitationTokenParseSuccess, 
+            "Invitation Claim parsed successfully."));
+    }
+
     private JwtTokenPair GenerateJwtTokenPairInner(JwtClaimSource jwtClaimSource)
     {
         var baseClaims = GetBaseClaims(jwtClaimSource);
@@ -235,6 +274,7 @@ public class JwtTokenService(IUserDomainService userService, IOptions<JwtOptions
             JwtTokenType.RefreshToken => DateTime.UtcNow.AddDays(jwtOptions.Value.RefreshTokenExpirationDays),
             JwtTokenType.FirstLoginToken => DateTime.UtcNow.AddMinutes(jwtOptions.Value
                 .FirstLoginChangePasswordExpirationMinutes),
+            JwtTokenType.InvitationToken => DateTime.UtcNow.AddDays(jwtOptions.Value.InvitationTokenExpirationDays),
             _ => throw new ArgumentOutOfRangeException(nameof(type), "Unsupported token type")
         };
 

@@ -9,7 +9,14 @@ public static class ResultCodes
         public const string RegisterTenantRoleCreateFailed = "100001001";
         public const string RegisterTenantRoleGrantFailed = "100001002";
         public const string RegisterTenantException = "100001003";
+        public const string InvitationRecordNotFound = "100001004";
+        public const string InvitationPublicIdInvalid = "100001005";
         // RegisterTenant Success 100 001 999
+        public const string InvitationRecordUpdateSuccess = "100001994";
+        public const string InvitationRecordFoundByEmailSuccess = "100001995";
+        public const string InvitationRecordFoundByPublicIdSuccess = "100001996";
+        public const string InvitationRecordAddSuccess = "100001997";
+        public const string InvitationUsersStartSuccess = "100001998";
         public const string RegisterTenantSuccess = "100001999";
     }
 
@@ -31,6 +38,9 @@ public static class ResultCodes
         public const string JwtTokenClaimMissing = "100002013";
         public const string JwtTokenParseFailed = "100002014";
         public const string JwtTokenExpired = "100002015";
+        
+        public const string InvitationTokenParseSuccess = "100002992";
+        public const string GenerateInvitationTokenSuccess = "100002993";
         public const string JwtTokenParseSuccess = "100002994";
         public const string RefreshJwtTokenSuccess = "100002995";
         public const string GenerateJwtTokenPairSuccess = "100002996";
@@ -51,6 +61,7 @@ public static class ResultCodes
         public const string UserSetPasswordFailed = "100003007";
         public const string UserResetPasswordBeforeSetPasswordFailed = "100003008";
         public const string UserTenantInfoMissed = "100003009";
+        public const string UserWithoutAdminRolePermission = "100003010";
         
         public const string UserGetInfoSuccess = "100003992";
         public const string UserRefreshTokenSuccess = "100003993";

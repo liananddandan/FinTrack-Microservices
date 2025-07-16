@@ -87,8 +87,8 @@ public class AccountControllerTests(
         var client = factory.CreateClient();
         var userLoginCommand = new UserLoginCommand()
         {
-            Email = "testUserForLogin@test.com",
-            Password = "TestUserForLoginPassword0@"
+            Email = "testUserForLoginTest@test.com",
+            Password = "TestUserForLogin0@"
         };
 
         // Act
@@ -127,8 +127,8 @@ public class AccountControllerTests(
 
         var userLoginCommand = new UserLoginCommand()
         {
-            Email = "testUserForFirstLogin@test.com",
-            Password = "TestUserForFirstLoginPassword0@"
+            Email = "testUserForFirstLoginTest@test.com",
+            Password = "TestUserForFirstLogin0@"
         };
 
         // Act
@@ -143,13 +143,13 @@ public class AccountControllerTests(
     }
 
     [Fact]
-    public async Task UserFirstTimeChangePasswordAsync_ShouldReturnSuccess_WhenUserAllGood()
+    public async Task UserSetPasswordAsync_ShouldReturnSuccess_WhenUserAllGood()
     {
         // Arrange
         using var scope = factory.Services.CreateScope();
         var jwtTokenService = scope.ServiceProvider.GetRequiredService<IJwtTokenService>();
         var userDomainService = scope.ServiceProvider.GetRequiredService<IUserDomainService>();
-        var user = await userDomainService.GetUserByEmailInnerAsync("testUserForChangePassword@test.com");
+        var user = await userDomainService.GetUserByEmailInnerAsync("testUserForSetPasswordTest@test.com");
         user.Should().NotBeNull();
         var jwtClaimSource = new JwtClaimSource()
         {
@@ -161,8 +161,8 @@ public class AccountControllerTests(
         var tokenResult = await jwtTokenService.GenerateJwtTokenAsync(jwtClaimSource, JwtTokenType.FirstLoginToken);
         tokenResult.Success.Should().BeTrue();
         tokenResult.Data.Should().NotBeNull();
-        var userOldPassword = "TestUserForChangePassword0@";
-        var userNewPassword = "TestUserForChangePassword1@";
+        var userOldPassword = "TestUserForSetPassword0@";
+        var userNewPassword = "TestUserForSetPassword1@";
         var reqeust = new ChangePasswordRequest
         {
             OldPassword = userOldPassword,
@@ -179,7 +179,7 @@ public class AccountControllerTests(
         var dbContext = scope.ServiceProvider.GetRequiredService<ApplicationIdentityDbContext>();
         var userAfter = await dbContext.Users
             .AsNoTracking()
-            .FirstOrDefaultAsync(u => u.Email == "testUserForChangePassword@test.com");
+            .FirstOrDefaultAsync(u => u.Email == "testUserForSetPasswordTest@test.com");
         userAfter.Should().NotBeNull();
         userAfter.IsFirstLogin.Should().BeFalse();
         userAfter.JwtVersion.Should().BeGreaterThan(user.JwtVersion);
@@ -192,7 +192,7 @@ public class AccountControllerTests(
         using var scope = factory.Services.CreateScope();
         var jwtTokenService = scope.ServiceProvider.GetRequiredService<IJwtTokenService>();
         var userDomainService = scope.ServiceProvider.GetRequiredService<IUserDomainService>();
-        var user = await userDomainService.GetUserByEmailInnerAsync("testUserForResetPassword@test.com");
+        var user = await userDomainService.GetUserByEmailInnerAsync("testUserForResetPasswordTest@test.com");
         user.Should().NotBeNull();
         var jwtClaimSource = new JwtClaimSource()
         {
@@ -222,7 +222,7 @@ public class AccountControllerTests(
         var dbContext = scope.ServiceProvider.GetRequiredService<ApplicationIdentityDbContext>();
         var userAfter = await dbContext.Users
             .AsNoTracking()
-            .FirstOrDefaultAsync(u => u.Email == "testUserForResetPassword@test.com");
+            .FirstOrDefaultAsync(u => u.Email == "testUserForResetPasswordTest@test.com");
         userAfter.Should().NotBeNull();
         userAfter.IsFirstLogin.Should().BeFalse();
         userAfter.JwtVersion.Should().BeGreaterThan(user.JwtVersion);
@@ -282,9 +282,9 @@ public class AccountControllerTests(
         var generateResult = await jwtTokenService.GenerateJwtTokenAsync(jwtClaimSource, JwtTokenType.AccessToken);
         generateResult.Success.Should().BeTrue();
         generateResult.Data.Should().NotBeNull();
-        var refreshToken = generateResult.Data;
+        var accessToken = generateResult.Data;
         var client = factory.CreateClient();
-        client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", refreshToken);
+        client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
         
         // Act
         var response = await client.GetAsync("api/account");
@@ -297,4 +297,5 @@ public class AccountControllerTests(
         content.Should().Contain("tenantInfoDto");
         content.Should().Contain("email");
     }
+    
 }

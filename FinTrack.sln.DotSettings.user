@@ -8,6 +8,7 @@
 	<s:String x:Key="/Default/CodeInspection/ExcludedFiles/FilesAndFoldersToSkip2/=7020124F_002D9FFC_002D4AC3_002D8F3D_002DAAB8E0240759_002Ff_003AHttpStatusCode_002Ecs_002Fl_003A_002E_002E_003F_002E_002E_003F_002E_002E_003FLibrary_003FApplication_0020Support_003FJetBrains_003FRider2024_002E3_003Fresharper_002Dhost_003FDecompilerCache_003Fdecompiler_003Fd92020b8d74a46c297f732c264e2ed7a3cc00_003Ff2_003Fdbf3666f_003FHttpStatusCode_002Ecs/@EntryIndexedValue">ForceIncluded</s:String>
 	<s:String x:Key="/Default/CodeInspection/ExcludedFiles/FilesAndFoldersToSkip2/=7020124F_002D9FFC_002D4AC3_002D8F3D_002DAAB8E0240759_002Ff_003AICapPublisher_002Ecs_002Fl_003A_002E_002E_003F_002E_002E_003F_002E_002E_003FLibrary_003FApplication_0020Support_003FJetBrains_003FRider2024_002E3_003Fresharper_002Dhost_003FSourcesCache_003Fe1a9465d1d2c4e751bd1d80499f1b8e481bb3633350860e777eccda64f4664_003FICapPublisher_002Ecs/@EntryIndexedValue">ForceIncluded</s:String>
 	<s:String x:Key="/Default/CodeInspection/ExcludedFiles/FilesAndFoldersToSkip2/=7020124F_002D9FFC_002D4AC3_002D8F3D_002DAAB8E0240759_002Ff_003AICapSubscribe_002Ecs_002Fl_003A_002E_002E_003F_002E_002E_003F_002E_002E_003FLibrary_003FApplication_0020Support_003FJetBrains_003FRider2024_002E3_003Fresharper_002Dhost_003FSourcesCache_003F5ad15457c4ae6f7a791aa5172c76fafeb52fd19edbff7e87b3600b425a4_003FICapSubscribe_002Ecs/@EntryIndexedValue">ForceIncluded</s:String>
+	<s:String x:Key="/Default/CodeInspection/ExcludedFiles/FilesAndFoldersToSkip2/=7020124F_002D9FFC_002D4AC3_002D8F3D_002DAAB8E0240759_002Ff_003AICommandPayloadCreator_002Ecs_002Fl_003A_002E_002E_003F_002E_002E_003F_002E_002E_003FLibrary_003FApplication_0020Support_003FJetBrains_003FRider2024_002E3_003Fresharper_002Dhost_003FSourcesCache_003F3542fbc8bfb133fbacba22c52e6f2888a59cffd4e33acdf9a1da59927239914_003FICommandPayloadCreator_002Ecs/@EntryIndexedValue">ForceIncluded</s:String>
 	<s:String x:Key="/Default/CodeInspection/ExcludedFiles/FilesAndFoldersToSkip2/=7020124F_002D9FFC_002D4AC3_002D8F3D_002DAAB8E0240759_002Ff_003AIdentityDbContext_002Ecs_002Fl_003A_002E_002E_003F_002E_002E_003F_002E_002E_003FLibrary_003FApplication_0020Support_003FJetBrains_003FRider2024_002E3_003Fresharper_002Dhost_003FSourcesCache_003Ff9342fb513b7b524925c79d9822cd3ecaf072c50231aa3b469875f4c2cdf_003FIdentityDbContext_002Ecs/@EntryIndexedValue">ForceIncluded</s:String>
 	<s:String x:Key="/Default/CodeInspection/ExcludedFiles/FilesAndFoldersToSkip2/=7020124F_002D9FFC_002D4AC3_002D8F3D_002DAAB8E0240759_002Ff_003AIdentityError_002Ecs_002Fl_003A_002E_002E_003F_002E_002E_003F_002E_002E_003FLibrary_003FApplication_0020Support_003FJetBrains_003FRider2024_002E3_003Fresharper_002Dhost_003FSourcesCache_003F19a439d6630657c8021461dd7db9f3b12ee99e2dc6c77b5027c2d9721c877a_003FIdentityError_002Ecs_002Fz_003A2_002D1/@EntryIndexedValue">ForceIncluded</s:String>
 	<s:String x:Key="/Default/CodeInspection/ExcludedFiles/FilesAndFoldersToSkip2/=7020124F_002D9FFC_002D4AC3_002D8F3D_002DAAB8E0240759_002Ff_003AIdentityError_002Ecs_002Fl_003A_002E_002E_003F_002E_002E_003F_002E_002E_003FLibrary_003FApplication_0020Support_003FJetBrains_003FRider2024_002E3_003Fresharper_002Dhost_003FSourcesCache_003F2474f5bb514c788c7afc62a89b4b8e1d1637b52585b684a05474e54d93ac522_003FIdentityError_002Ecs/@EntryIndexedValue">ForceIncluded</s:String>
@@ -30,132 +31,21 @@
 	<s:String x:Key="/Default/CodeInspection/ExcludedFiles/FilesAndFoldersToSkip2/=7020124F_002D9FFC_002D4AC3_002D8F3D_002DAAB8E0240759_002Ff_003ATokenOptions_002Ecs_002Fl_003A_002E_002E_003F_002E_002E_003F_002E_002E_003FLibrary_003FApplication_0020Support_003FJetBrains_003FRider2024_002E3_003Fresharper_002Dhost_003FSourcesCache_003F9eaf4b91d3dbcc674c69b263a1551d2451e1551419f55134586d98f0b4f2fb_003FTokenOptions_002Ecs/@EntryIndexedValue">ForceIncluded</s:String>
 	<s:String x:Key="/Default/CodeInspection/ExcludedFiles/FilesAndFoldersToSkip2/=7020124F_002D9FFC_002D4AC3_002D8F3D_002DAAB8E0240759_002Ff_003AUserManager_002Ecs_002Fl_003A_002E_002E_003F_002E_002E_003F_002E_002E_003FLibrary_003FApplication_0020Support_003FJetBrains_003FRider2024_002E3_003Fresharper_002Dhost_003FSourcesCache_003F1622b8f95d27187bc1fb39bac49bd64e928773df4fda6fcf6271680be54a2_003FUserManager_002Ecs/@EntryIndexedValue">ForceIncluded</s:String>
 	<s:String x:Key="/Default/CodeInspection/ExcludedFiles/FilesAndFoldersToSkip2/=7020124F_002D9FFC_002D4AC3_002D8F3D_002DAAB8E0240759_002Ff_003AWebApplicationFactory_002Ecs_002Fl_003A_002E_002E_003F_002E_002E_003F_002E_002E_003FLibrary_003FApplication_0020Support_003FJetBrains_003FRider2024_002E3_003Fresharper_002Dhost_003FSourcesCache_003F255f916e5a2d424ef01b291afc761e049b367614440bf4b216824ec479064b_003FWebApplicationFactory_002Ecs/@EntryIndexedValue">ForceIncluded</s:String>
-	<s:String x:Key="/Default/Environment/UnitTesting/UnitTestSessionStore/Sessions/=0f4ce024_002D469b_002D44ca_002D99e6_002Da1fe911c0c30/@EntryIndexedValue">&lt;SessionState ContinuousTestingMode="0" Name="ConfirmAccountEmailAsync_ShouldReturnResult" xmlns="urn:schemas-jetbrains-com:jetbrains-ut-session"&gt;
+	<s:String x:Key="/Default/Environment/UnitTesting/UnitTestSessionStore/Sessions/=3e47d8da_002D626c_002D4d5f_002D94ba_002Da97881e4ad9b/@EntryIndexedValue">&lt;SessionState ContinuousTestingMode="0" IsActive="True" Name="InviteUserAsync_ShouldReturnSuccess" xmlns="urn:schemas-jetbrains-com:jetbrains-ut-session"&gt;
   &lt;TestAncestor&gt;
-    &lt;TestId&gt;xUnit::634E2A0D-EE3E-4F9F-9F60-D97B140815D8::net9.0::IdentityService.Tests.Controllers.AccountControllerTests.ConfirmAccountEmailAsync_ShouldReturnResult&lt;/TestId&gt;
-  &lt;/TestAncestor&gt;
-&lt;/SessionState&gt;</s:String>
-	<s:String x:Key="/Default/Environment/UnitTesting/UnitTestSessionStore/Sessions/=7b5cf868_002D03b3_002D4a44_002D81a8_002Dac3be824ef79/@EntryIndexedValue">&lt;SessionState ContinuousTestingMode="0" Name="SendAsync_WithValidInput_SendsEmailWithoutException" xmlns="urn:schemas-jetbrains-com:jetbrains-ut-session"&gt;
-  &lt;TestAncestor&gt;
-    &lt;TestId&gt;xUnit::AF11EA61-0F3E-4A44-9EC4-95B27AF31D11::net9.0::EmailService.Tests.Services.SmtpEmailServiceTests.SendAsync_WithValidInput_SendsEmailWithoutException&lt;/TestId&gt;
-    &lt;TestId&gt;xUnit::AF11EA61-0F3E-4A44-9EC4-95B27AF31D11::net9.0::EmailService.Tests.Handlers.EmailSendEventHandlerTests.HandleAsync_InvokesEmailServiceSend&lt;/TestId&gt;
-    &lt;TestId&gt;xUnit::634E2A0D-EE3E-4F9F-9F60-D97B140815D8::net9.0::IdentityService.Tests.Repositories.TenantRepoTests.AddTenantAsync_Should_Save_Tenant&lt;/TestId&gt;
-    &lt;TestId&gt;xUnit::634E2A0D-EE3E-4F9F-9F60-D97B140815D8::net9.0::IdentityService.Tests.Services.UserVerificationServiceTests.GenerateTokenAsync_ShouldReturnToken_WhenSuccess&lt;/TestId&gt;
-    &lt;TestId&gt;xUnit::634E2A0D-EE3E-4F9F-9F60-D97B140815D8::net9.0::IdentityService.Tests.Services.UserVerificationServiceTests&lt;/TestId&gt;
-    &lt;TestId&gt;xUnit::634E2A0D-EE3E-4F9F-9F60-D97B140815D8::net9.0::IdentityService.Tests.Services.UserServiceTests.CreateUserInnerAsync_ShouldReturnUser_WhenCreateSuccess&lt;/TestId&gt;
-    &lt;TestId&gt;xUnit::634E2A0D-EE3E-4F9F-9F60-D97B140815D8::net9.0::IdentityService.Tests.Services.UserServiceTests.CreateUserInnerAsync_ShouldThrowException_WhenCreateFail&lt;/TestId&gt;
-    &lt;TestId&gt;xUnit::634E2A0D-EE3E-4F9F-9F60-D97B140815D8::net9.0::IdentityService.Tests.Services.UserServiceTests.CreateRoleInnerAsync_ShouldReturnAlreadyExist_WhenRoleExisted&lt;/TestId&gt;
-    &lt;TestId&gt;xUnit::634E2A0D-EE3E-4F9F-9F60-D97B140815D8::net9.0::IdentityService.Tests.Services.UserServiceTests.CreateRoleInnterAsync_ShouldReturnSuccess_WhenRoleNotExistAndCreateSuccess&lt;/TestId&gt;
-    &lt;TestId&gt;xUnit::634E2A0D-EE3E-4F9F-9F60-D97B140815D8::net9.0::IdentityService.Tests.Services.UserServiceTests.CreateRoleInnterAsync_ShouldReturnFail_WhenRoleNotExistAndCreateFailed&lt;/TestId&gt;
-    &lt;TestId&gt;xUnit::634E2A0D-EE3E-4F9F-9F60-D97B140815D8::net9.0::IdentityService.Tests.Services.UserServiceTests.AddUserToRoleInnerAsync_ShouldReturnRoleNotExist_WhenRoleNotExisted&lt;/TestId&gt;
-    &lt;TestId&gt;xUnit::634E2A0D-EE3E-4F9F-9F60-D97B140815D8::net9.0::IdentityService.Tests.Services.UserServiceTests.AddUserToRoleInnerAsync_ShouldReturnSuccess_WhenRoleExistAndAddSuccess&lt;/TestId&gt;
-    &lt;TestId&gt;xUnit::634E2A0D-EE3E-4F9F-9F60-D97B140815D8::net9.0::IdentityService.Tests.Services.UserServiceTests.AddUserToRoleInnerAsync_ShouldReturnFail_WhenRoleExistAndAddFailed&lt;/TestId&gt;
-    &lt;TestId&gt;xUnit::634E2A0D-EE3E-4F9F-9F60-D97B140815D8::net9.0::IdentityService.Tests.Services.UserServiceTests.GetUserByIdAsync_ShouldReturnSuccess_WhenFindUser&lt;/TestId&gt;
-    &lt;TestId&gt;xUnit::634E2A0D-EE3E-4F9F-9F60-D97B140815D8::net9.0::IdentityService.Tests.Services.UserServiceTests.GetUserByIdAsync_ShouldReturnFail_WhenNotFindUser&lt;/TestId&gt;
-    &lt;TestId&gt;xUnit::634E2A0D-EE3E-4F9F-9F60-D97B140815D8::net9.0::IdentityService.Tests.Services.TenantServiceTests.RegisterTenantAsync_ShouldThrowException_WhenCreateUserFailed&lt;/TestId&gt;
-    &lt;TestId&gt;xUnit::634E2A0D-EE3E-4F9F-9F60-D97B140815D8::net9.0::IdentityService.Tests.Services.TenantServiceTests.RegisterTenantAsync_ShouldReturnFail_WhenCreateRoleFailed&lt;/TestId&gt;
-    &lt;TestId&gt;xUnit::634E2A0D-EE3E-4F9F-9F60-D97B140815D8::net9.0::IdentityService.Tests.Services.TenantServiceTests.RegisterTenantAsync_ShouldReturnFail_WhenAddUserToRoleFailed&lt;/TestId&gt;
-    &lt;TestId&gt;xUnit::634E2A0D-EE3E-4F9F-9F60-D97B140815D8::net9.0::IdentityService.Tests.Services.TenantServiceTests.RegisterTenantAsync_ShouldReturnTrue_WhenRegisterSuccess&lt;/TestId&gt;
-    &lt;TestId&gt;xUnit::634E2A0D-EE3E-4F9F-9F60-D97B140815D8::net9.0::IdentityService.Tests.EventHandlers.TenantRegisteredEventHandlerTests.Handler_ShouldThrowException_WhenUserNotGetById&lt;/TestId&gt;
-    &lt;TestId&gt;xUnit::634E2A0D-EE3E-4F9F-9F60-D97B140815D8::net9.0::IdentityService.Tests.EventHandlers.TenantRegisteredEventHandlerTests.Handler_ShouldThrowException_WhenGenerateTokenFailed&lt;/TestId&gt;
-    &lt;TestId&gt;xUnit::634E2A0D-EE3E-4F9F-9F60-D97B140815D8::net9.0::IdentityService.Tests.EventHandlers.TenantRegisteredEventHandlerTests.Handler_ShouldSuccess_WhenEverythingIsOk&lt;/TestId&gt;
-    &lt;TestId&gt;xUnit::634E2A0D-EE3E-4F9F-9F60-D97B140815D8::net9.0::IdentityService.Tests.CommandHandlers.RegisterTenantCommandHandlerTests.Handle_ShouldReturnResult_FromService&lt;/TestId&gt;
-    &lt;TestId&gt;xUnit::634E2A0D-EE3E-4F9F-9F60-D97B140815D8::net9.0::IdentityService.Tests.Controllers.TenantControllerTests.RegisterTenant_ShouldReturnSuccess&lt;/TestId&gt;
-    &lt;TestId&gt;xUnit::634E2A0D-EE3E-4F9F-9F60-D97B140815D8::net9.0::IdentityService.Tests.Controllers.TenantControllerTests&lt;/TestId&gt;
-    &lt;TestId&gt;xUnit::634E2A0D-EE3E-4F9F-9F60-D97B140815D8::net9.0::IdentityService.Tests.Services.UserServiceTests.ConfirmAccountAsync_ShouldReturnUserNotFound_WhenUserNotExist&lt;/TestId&gt;
-    &lt;TestId&gt;xUnit::634E2A0D-EE3E-4F9F-9F60-D97B140815D8::net9.0::IdentityService.Tests.Services.UserServiceTests.ConfirmAccountAsync_ShouldReturnFail_WhenTokenVerifyFailed&lt;/TestId&gt;
-    &lt;TestId&gt;xUnit::634E2A0D-EE3E-4F9F-9F60-D97B140815D8::net9.0::IdentityService.Tests.Services.UserServiceTests.ConfirmAccountAsync_ShouldReturnSuccess_WhenTokenVerifySucceeded&lt;/TestId&gt;
-    &lt;TestId&gt;xUnit::634E2A0D-EE3E-4F9F-9F60-D97B140815D8::net9.0::IdentityService.Tests.Services.UserServiceTests&lt;/TestId&gt;
-    &lt;TestId&gt;xUnit::634E2A0D-EE3E-4F9F-9F60-D97B140815D8::net9.0::IdentityService.Tests.Controllers.AccountControllerTests.ConfirmAccountEmailAsync_ShouldReturnResult&lt;/TestId&gt;
-    &lt;TestId&gt;xUnit::634E2A0D-EE3E-4F9F-9F60-D97B140815D8::net9.0::IdentityService.Tests.Controllers.AccountControllerTests&lt;/TestId&gt;
-  &lt;/TestAncestor&gt;
-&lt;/SessionState&gt;</s:String>
-	<s:String x:Key="/Default/Environment/UnitTesting/UnitTestSessionStore/Sessions/=848f2956_002D652a_002D4634_002Db165_002D16eff524a308/@EntryIndexedValue">&lt;SessionState ContinuousTestingMode="0" IsActive="True" Name="GetPrincipalFromTokenAsync_ShouldReturnNull_WhenTokenExpired" xmlns="urn:schemas-jetbrains-com:jetbrains-ut-session"&gt;
-  &lt;TestAncestor&gt;
-    &lt;TestId&gt;xUnit::634E2A0D-EE3E-4F9F-9F60-D97B140815D8::net9.0::IdentityService.Tests.Services.JwtTokenServiceTests.GetPrincipalFromTokenAsync_ShouldReturnNull_WhenTokenExpired&lt;/TestId&gt;
-    &lt;TestId&gt;xUnit::634E2A0D-EE3E-4F9F-9F60-D97B140815D8::net9.0::IdentityService.Tests.Services.JwtTokenServiceTests.GetPrincipalFromTokenAsync_ShouldReturnPrincipal_WhenTokenValid&lt;/TestId&gt;
-    &lt;TestId&gt;xUnit::634E2A0D-EE3E-4F9F-9F60-D97B140815D8::net9.0::IdentityService.Tests.CommandHandlers.FetchUserInfoCommandHandlerTests.Handle_ShouldReturnResult_WhenRecievedCommand&lt;/TestId&gt;
-    &lt;TestId&gt;xUnit::634E2A0D-EE3E-4F9F-9F60-D97B140815D8::net9.0::IdentityService.Tests.Services.UserAppServiceTests.GetUserInfoAsync_ShouldReturnFail_WhenTenantMissing&lt;/TestId&gt;
-    &lt;TestId&gt;xUnit::634E2A0D-EE3E-4F9F-9F60-D97B140815D8::net9.0::IdentityService.Tests.Services.UserAppServiceTests.GetUserInfoAsync_ShouldReturnFail_WhenRoleMissing&lt;/TestId&gt;
-    &lt;TestId&gt;xUnit::634E2A0D-EE3E-4F9F-9F60-D97B140815D8::net9.0::IdentityService.Tests.Services.UserAppServiceTests.GetUserInfoAsync_ShouldReturnSuccess_WhenGetInfo&lt;/TestId&gt;
-    &lt;TestId&gt;xUnit::634E2A0D-EE3E-4F9F-9F60-D97B140815D8::net9.0::IdentityService.Tests.Controllers.AccountControllerTests.ResetPasswordAsync_ShouldReturnSuccess_WhenUserAllGood&lt;/TestId&gt;
-    &lt;TestId&gt;xUnit::634E2A0D-EE3E-4F9F-9F60-D97B140815D8::net9.0::IdentityService.Tests.Controllers.AccountControllerTests.GetUserInfoAsync_ShouldReturnSuccess_WhenAccessTokenIsCorrect&lt;/TestId&gt;
-  &lt;/TestAncestor&gt;
-&lt;/SessionState&gt;</s:String>
-	<s:String x:Key="/Default/Environment/UnitTesting/UnitTestSessionStore/Sessions/=8f71ac35_002D1c32_002D4aed_002Da68e_002Da93254c6f6c3/@EntryIndexedValue">&lt;SessionState ContinuousTestingMode="0" Name="ConfirmAccountEmailAsync_ShouldReturnResult #3" xmlns="urn:schemas-jetbrains-com:jetbrains-ut-session"&gt;
-  &lt;TestAncestor&gt;
-    &lt;TestId&gt;xUnit::634E2A0D-EE3E-4F9F-9F60-D97B140815D8::net9.0::IdentityService.Tests.Controllers.AccountControllerTests.ConfirmAccountEmailAsync_ShouldReturnResult&lt;/TestId&gt;
-    &lt;TestId&gt;xUnit::634E2A0D-EE3E-4F9F-9F60-D97B140815D8::net9.0::IdentityService.Tests.Services.UserVerificationServiceTests&lt;/TestId&gt;
-    &lt;TestId&gt;xUnit::634E2A0D-EE3E-4F9F-9F60-D97B140815D8::net9.0::IdentityService.Tests.Controllers.TenantControllerTests.RegisterTenant_ShouldReturnSuccess&lt;/TestId&gt;
-    &lt;TestId&gt;xUnit::AF11EA61-0F3E-4A44-9EC4-95B27AF31D11::net9.0::EmailService.Tests.Services.SmtpEmailServiceTests.SendAsync_WithValidInput_SendsEmailWithoutException&lt;/TestId&gt;
-    &lt;TestId&gt;xUnit::634E2A0D-EE3E-4F9F-9F60-D97B140815D8::net9.0::IdentityService.Tests.Services.TenantServiceTests.RegisterTenantAsync_ShouldReturnFail_WhenCreateRoleFailed&lt;/TestId&gt;
-    &lt;TestId&gt;xUnit::634E2A0D-EE3E-4F9F-9F60-D97B140815D8::net9.0::IdentityService.Tests.Services.UserServiceTests.CreateRoleInnerAsync_ShouldReturnAlreadyExist_WhenRoleExisted&lt;/TestId&gt;
-    &lt;TestId&gt;xUnit::634E2A0D-EE3E-4F9F-9F60-D97B140815D8::net9.0::IdentityService.Tests.Services.UserServiceTests.GetUserByPublicIdInnerAsync_ShouldReturnNull_WhenPublicIdIsInvalid&lt;/TestId&gt;
-    &lt;TestId&gt;xUnit::634E2A0D-EE3E-4F9F-9F60-D97B140815D8::net9.0::IdentityService.Tests.Services.UserServiceTests.GetUserByPublicIdInnerAsync_ShouldReturnUser_WhenPublicIdIsValid&lt;/TestId&gt;
-    &lt;TestId&gt;xUnit::634E2A0D-EE3E-4F9F-9F60-D97B140815D8::net9.0::IdentityService.Tests.Services.UserServiceTests.GetUserByPublicIdInnerAsync_ShouldReturnNull_WhenPublicIdNotExist&lt;/TestId&gt;
-    &lt;TestId&gt;xUnit::634E2A0D-EE3E-4F9F-9F60-D97B140815D8::net9.0::IdentityService.Tests.Services.UserServiceTests.GetUserByPublicIdInnerAsync_ShouldReturnUser_WhenPublicIdExist&lt;/TestId&gt;
-    &lt;TestId&gt;xUnit::634E2A0D-EE3E-4F9F-9F60-D97B140815D8::net9.0::IdentityService.Tests.Services.UserServiceTests.GetUserByPublicIdInnerAsync_ShouldReturnUserWithoutTenant_WhenTenantNotExist&lt;/TestId&gt;
-    &lt;TestId&gt;xUnit::634E2A0D-EE3E-4F9F-9F60-D97B140815D8::net9.0::IdentityService.Tests.Services.JwtTokenServiceTests.GenerateJwtTokenAsync_ShouldReturnToken_WhenGenerateSuccess&lt;/TestId&gt;
-    &lt;TestId&gt;xUnit::634E2A0D-EE3E-4F9F-9F60-D97B140815D8::net9.0::IdentityService.Tests.Services.JwtTokenServiceTests.GenerateJwtTokenPairAsync_ShouldReturnTokenPair_WhenGenerateSuccess&lt;/TestId&gt;
-    &lt;TestId&gt;xUnit::634E2A0D-EE3E-4F9F-9F60-D97B140815D8::net9.0::IdentityService.Tests.Services.JwtTokenServiceTests&lt;/TestId&gt;
-    &lt;TestId&gt;xUnit::634E2A0D-EE3E-4F9F-9F60-D97B140815D8::net9.0::IdentityService.Tests.CommandHandlers.UserLoginCommandHandlerTests.Handle_ShouldReturnServiceResult_WhenComandExecuted&lt;/TestId&gt;
-    &lt;TestId&gt;xUnit::634E2A0D-EE3E-4F9F-9F60-D97B140815D8::net9.0::IdentityService.Tests.EventHandlers.UserFirstLoginEventHandlerTests.Handle_ShouldFinish_WhenEverythingIsOk&lt;/TestId&gt;
-    &lt;TestId&gt;xUnit::634E2A0D-EE3E-4F9F-9F60-D97B140815D8::net9.0::IdentityService.Tests.EventHandlers.UserFirstLoginEventHandlerTests.Handle_ShouldThrowException_WhenTokenGenerateFail&lt;/TestId&gt;
-    &lt;TestId&gt;xUnit::634E2A0D-EE3E-4F9F-9F60-D97B140815D8::net9.0::IdentityService.Tests.CommandHandlers.UserLoginCommandHandlerTests&lt;/TestId&gt;
-    &lt;TestId&gt;xUnit::634E2A0D-EE3E-4F9F-9F60-D97B140815D8::net9.0::IdentityService.Tests.EventHandlers.UserFirstLoginEventHandlerTests&lt;/TestId&gt;
-    &lt;TestId&gt;xUnit::634E2A0D-EE3E-4F9F-9F60-D97B140815D8::net9.0::IdentityService.Tests.Services.UserDomainServiceTests.ChangePasswordInnerAsync_ShouldReturnResult&lt;/TestId&gt;
-    &lt;TestId&gt;xUnit::634E2A0D-EE3E-4F9F-9F60-D97B140815D8::net9.0::IdentityService.Tests.Services.UserAppServiceTests.ChangeUserPasswordAsync_ShouldReturnFalse_WhenUserNotFound&lt;/TestId&gt;
-    &lt;TestId&gt;xUnit::634E2A0D-EE3E-4F9F-9F60-D97B140815D8::net9.0::IdentityService.Tests.Services.UserAppServiceTests.ChangeUserPasswordAsync_ShouldReturnFalse_WhenJwtVersionMismatch&lt;/TestId&gt;
-    &lt;TestId&gt;xUnit::634E2A0D-EE3E-4F9F-9F60-D97B140815D8::net9.0::IdentityService.Tests.Services.UserAppServiceTests.ChangeUserPasswordAsync_ShouldReturnTrue_WhenChangePasswordSuccess&lt;/TestId&gt;
-    &lt;TestId&gt;xUnit::634E2A0D-EE3E-4F9F-9F60-D97B140815D8::net9.0::IdentityService.Tests.Services.UserDomainServiceTests.GetUserByEmailInnerAsync_ShouldReturnUser_WhenUserExist&lt;/TestId&gt;
-    &lt;TestId&gt;xUnit::634E2A0D-EE3E-4F9F-9F60-D97B140815D8::net9.0::IdentityService.Tests.Services.UserDomainServiceTests.GetUserByEmailInnerAsync_ShouldReturnNull_WhenUserNotExist&lt;/TestId&gt;
-    &lt;TestId&gt;xUnit::634E2A0D-EE3E-4F9F-9F60-D97B140815D8::net9.0::IdentityService.Tests.Controllers.AccountControllerTests.UserFirstTimeChangePasswordAsync_ShouldReturnSuccess_WhenUserAllGood&lt;/TestId&gt;
-    &lt;TestId&gt;xUnit::634E2A0D-EE3E-4F9F-9F60-D97B140815D8::net9.0::IdentityService.Tests.Repositories.ApplicationUserRepoTests.ChangeFirstLoginStatus_ShouldChangeStatus&lt;/TestId&gt;
-    &lt;TestId&gt;xUnit::634E2A0D-EE3E-4F9F-9F60-D97B140815D8::net9.0::IdentityService.Tests.Repositories.ApplicationUserRepoTests.IncreaseJwtVersion_ShouldPlusOne&lt;/TestId&gt;
-    &lt;TestId&gt;xUnit::634E2A0D-EE3E-4F9F-9F60-D97B140815D8::net9.0::IdentityService.Tests.CommandHandlers.RefreshUserJwtTokenCommandHandlerTests.Handle_ShouldReturnResultFromService&lt;/TestId&gt;
-    &lt;TestId&gt;xUnit::634E2A0D-EE3E-4F9F-9F60-D97B140815D8::net9.0::IdentityService.Tests.Filters.GlobalJwtTokenValidationFilterTests.OnAuthorizationAsync_ShouldReturnUnAuthorization_WhenTokenParsedResultIsNull&lt;/TestId&gt;
-    &lt;TestId&gt;xUnit::634E2A0D-EE3E-4F9F-9F60-D97B140815D8::net9.0::IdentityService.Tests.Services.UserAppServiceTests.RefreshUserTokenPairAsync_ShouldReturnFail_WhenUserIdWrong&lt;/TestId&gt;
-    &lt;TestId&gt;xUnit::634E2A0D-EE3E-4F9F-9F60-D97B140815D8::net9.0::IdentityService.Tests.Services.UserAppServiceTests.RefreshUserTokenPairAsync_ShouldReturnFail_WhenJwtVersionMismatch&lt;/TestId&gt;
-    &lt;TestId&gt;xUnit::634E2A0D-EE3E-4F9F-9F60-D97B140815D8::net9.0::IdentityService.Tests.Services.UserAppServiceTests.SetUserPasswordAsync_ShouldReturnFalse_WhenJwtVersionParseToLongFail&lt;/TestId&gt;
-    &lt;TestId&gt;xUnit::634E2A0D-EE3E-4F9F-9F60-D97B140815D8::net9.0::IdentityService.Tests.Services.UserAppServiceTests.RefreshUserTokenPairAsync_ShouldReturnFail_WhenUserNoRole&lt;/TestId&gt;
-    &lt;TestId&gt;xUnit::634E2A0D-EE3E-4F9F-9F60-D97B140815D8::net9.0::IdentityService.Tests.Services.UserAppServiceTests.RefreshUserTokenPairAsync_ShouldReturnSuccess_WhenGenerateSuccess&lt;/TestId&gt;
-    &lt;TestId&gt;xUnit::634E2A0D-EE3E-4F9F-9F60-D97B140815D8::net9.0::IdentityService.Tests.Controllers.AccountControllerTests.RefreshUserJwtTokenAsync_ShouldReturnSuccess_WhenRefreshTokenIsCorrect&lt;/TestId&gt;
-    &lt;TestId&gt;xUnit::634E2A0D-EE3E-4F9F-9F60-D97B140815D8::net9.0::IdentityService.Tests.CommandHandlers.ChangeUserPasswordCommandhandlerTests.Handle_ShouldReturnResult_WhenRequestArrived&lt;/TestId&gt;
-    &lt;TestId&gt;xUnit::634E2A0D-EE3E-4F9F-9F60-D97B140815D8::net9.0::IdentityService.Tests.Services.UserDomainServiceTests.ChangeFirstLoginStateInnerAsync_Should_Invoke_Repo_Method&lt;/TestId&gt;
-    &lt;TestId&gt;xUnit::634E2A0D-EE3E-4F9F-9F60-D97B140815D8::net9.0::IdentityService.Tests.Services.UserAppServiceTests&lt;/TestId&gt;
-    &lt;TestId&gt;xUnit::634E2A0D-EE3E-4F9F-9F60-D97B140815D8::net9.0::IdentityService.Tests.Controllers.AccountControllerTests.ResetPasswordAsync_ShouldReturnSuccess_WhenUserAllGood&lt;/TestId&gt;
-  &lt;/TestAncestor&gt;
-&lt;/SessionState&gt;</s:String>
-	<s:String x:Key="/Default/Environment/UnitTesting/UnitTestSessionStore/Sessions/=c2432f41_002D9fe2_002D4d89_002Db88c_002D917b6de3a090/@EntryIndexedValue">&lt;SessionState ContinuousTestingMode="0" Name="ConfirmAccountEmailAsync_ShouldReturnResult #2" xmlns="urn:schemas-jetbrains-com:jetbrains-ut-session"&gt;
-  &lt;TestAncestor&gt;
-    &lt;TestId&gt;xUnit::634E2A0D-EE3E-4F9F-9F60-D97B140815D8::net9.0::IdentityService.Tests.Controllers.AccountControllerTests.ConfirmAccountEmailAsync_ShouldReturnResult&lt;/TestId&gt;
-  &lt;/TestAncestor&gt;
-&lt;/SessionState&gt;</s:String>
-	<s:String x:Key="/Default/Environment/UnitTesting/UnitTestSessionStore/Sessions/=e9452efc_002Df957_002D45fc_002D8374_002D123572ed5e20/@EntryIndexedValue">&lt;SessionState ContinuousTestingMode="0" Name="Handle_ShouldThrowException_WhenTokenGenerateFail" xmlns="urn:schemas-jetbrains-com:jetbrains-ut-session"&gt;
-  &lt;TestAncestor&gt;
-    &lt;TestId&gt;xUnit::634E2A0D-EE3E-4F9F-9F60-D97B140815D8::net9.0::IdentityService.Tests.EventHandlers.UserFirstLoginEventHandlerTests.Handle_ShouldThrowException_WhenTokenGenerateFail&lt;/TestId&gt;
-    &lt;TestId&gt;xUnit::634E2A0D-EE3E-4F9F-9F60-D97B140815D8::net9.0::IdentityService.Tests.EventHandlers.UserFirstLoginEventHandlerTests.Handle_ShouldFinish_WhenEverythingIsOk&lt;/TestId&gt;
-    &lt;TestId&gt;xUnit::634E2A0D-EE3E-4F9F-9F60-D97B140815D8::net9.0::IdentityService.Tests.Services.UserServiceTests.UserLoginAsync_ShouldReturnFail_WhenUserNotFound&lt;/TestId&gt;
-    &lt;TestId&gt;xUnit::634E2A0D-EE3E-4F9F-9F60-D97B140815D8::net9.0::IdentityService.Tests.Services.UserServiceTests.UserLoginAsync_ShouldReturnFail_WhenEmailNotConfirmed&lt;/TestId&gt;
-    &lt;TestId&gt;xUnit::634E2A0D-EE3E-4F9F-9F60-D97B140815D8::net9.0::IdentityService.Tests.Services.UserServiceTests.UserLoginAsync_ShouldReturnFail_WhenPasswordWrong&lt;/TestId&gt;
-    &lt;TestId&gt;xUnit::634E2A0D-EE3E-4F9F-9F60-D97B140815D8::net9.0::IdentityService.Tests.Services.UserServiceTests.UserLoginAsync_ShouldReturnFail_WhenRoleMissed&lt;/TestId&gt;
-    &lt;TestId&gt;xUnit::634E2A0D-EE3E-4F9F-9F60-D97B140815D8::net9.0::IdentityService.Tests.Services.UserServiceTests.UserLoginAsync_ShouldReturnSuccess_WhenFirstLoginIn&lt;/TestId&gt;
-    &lt;TestId&gt;xUnit::634E2A0D-EE3E-4F9F-9F60-D97B140815D8::net9.0::IdentityService.Tests.Services.UserServiceTests.UserLoginAsync_ShouldReturnSuccess_WhenLoginSuccess&lt;/TestId&gt;
-    &lt;TestId&gt;xUnit::634E2A0D-EE3E-4F9F-9F60-D97B140815D8::net9.0::IdentityService.Tests.Controllers.AccountControllerTests.UserLoginAsync_ShouldReturnSuccess_WhenAccountAndPasswordIsCorrect&lt;/TestId&gt;
-    &lt;TestId&gt;xUnit::634E2A0D-EE3E-4F9F-9F60-D97B140815D8::net9.0::IdentityService.Tests.Services.UserAppServiceTests&lt;/TestId&gt;
-    &lt;TestId&gt;xUnit::634E2A0D-EE3E-4F9F-9F60-D97B140815D8::net9.0::IdentityService.Tests.Services.UserDomainServiceTests&lt;/TestId&gt;
+    &lt;TestId&gt;xUnit::634E2A0D-EE3E-4F9F-9F60-D97B140815D8::net9.0::IdentityService.Tests.Controllers.TenantControllerTests.InviteUserAsync_ShouldReturnSuccess&lt;/TestId&gt;
     &lt;TestId&gt;xUnit::634E2A0D-EE3E-4F9F-9F60-D97B140815D8::net9.0::IdentityService.Tests.Controllers.AccountControllerTests.UserLoginAsync_ShouldReturnSuccess_WhenFirstLogin&lt;/TestId&gt;
-    &lt;TestId&gt;xUnit::634E2A0D-EE3E-4F9F-9F60-D97B140815D8::net9.0::IdentityService.Tests.CommandHandlers.ChangeUserPasswordCommandhandlerTests.Handle_ShouldReturnResult_WhenRequestArrived&lt;/TestId&gt;
-    &lt;TestId&gt;xUnit::634E2A0D-EE3E-4F9F-9F60-D97B140815D8::net9.0::IdentityService.Tests.Filters.GlobalJwtTokenValidationFilterTests.OnAuthorizationAsync_ShouldReturnWithoutUnAuthroizedResult_WhenHasAllowAnonymousToken&lt;/TestId&gt;
-    &lt;TestId&gt;xUnit::634E2A0D-EE3E-4F9F-9F60-D97B140815D8::net9.0::IdentityService.Tests.Filters.GlobalJwtTokenValidationFilterTests.OnAuthorizationAsync_ShouldReturnUnAuthorizationResult_WhenHasAllowAnonymousToken&lt;/TestId&gt;
-    &lt;TestId&gt;xUnit::634E2A0D-EE3E-4F9F-9F60-D97B140815D8::net9.0::IdentityService.Tests.Filters.GlobalJwtTokenValidationFilterTests.OnAuthorizationAsync_ShouldReturnUnAuthorizationResult_WhenBearerIsEmpty&lt;/TestId&gt;
-    &lt;TestId&gt;xUnit::634E2A0D-EE3E-4F9F-9F60-D97B140815D8::net9.0::IdentityService.Tests.Filters.GlobalJwtTokenValidationFilterTests.OnAuthorizationAsync_ShouldReturnUnAuthorizationResult_WhenTokenIsInvalid&lt;/TestId&gt;
-    &lt;TestId&gt;xUnit::634E2A0D-EE3E-4F9F-9F60-D97B140815D8::net9.0::IdentityService.Tests.Filters.GlobalJwtTokenValidationFilterTests.OnAuthorizationAsync_ShouldReturnForbidResult_WhenTokenTypeIsInvalid&lt;/TestId&gt;
-    &lt;TestId&gt;xUnit::634E2A0D-EE3E-4F9F-9F60-D97B140815D8::net9.0::IdentityService.Tests.Filters.GlobalJwtTokenValidationFilterTests.OnAuthorizationAsync_ShouldReturnSuccess_WhenTokenValid&lt;/TestId&gt;
-    &lt;TestId&gt;xUnit::634E2A0D-EE3E-4F9F-9F60-D97B140815D8::net9.0::IdentityService.Tests.Filters.GlobalJwtTokenValidationFilterTests&lt;/TestId&gt;
-    &lt;TestId&gt;xUnit::634E2A0D-EE3E-4F9F-9F60-D97B140815D8::net9.0::IdentityService.Tests.Services.JwtTokenServiceTests.ParseJwtTokenAsync_ShouldReturnFail_WhenTokenIsInvalid&lt;/TestId&gt;
-    &lt;TestId&gt;xUnit::634E2A0D-EE3E-4F9F-9F60-D97B140815D8::net9.0::IdentityService.Tests.Services.JwtTokenServiceTests.ParseJwtTokenAsync_ShouldReturnFail_WhenClaimIsInvalid&lt;/TestId&gt;
-    &lt;TestId&gt;xUnit::634E2A0D-EE3E-4F9F-9F60-D97B140815D8::net9.0::IdentityService.Tests.Services.JwtTokenServiceTests.ParseJwtTokenAsync_ShouldReturnSuccess_WhenTokenValid&lt;/TestId&gt;
+    &lt;TestId&gt;xUnit::634E2A0D-EE3E-4F9F-9F60-D97B140815D8::net9.0::IdentityService.Tests.Controllers.AccountControllerTests.ResetPasswordAsync_ShouldReturnSuccess_WhenUserAllGood&lt;/TestId&gt;
+    &lt;TestId&gt;xUnit::634E2A0D-EE3E-4F9F-9F60-D97B140815D8::net9.0::IdentityService.Tests.Controllers.AccountControllerTests.UserSetPasswordAsync_ShouldReturnSuccess_WhenUserAllGood&lt;/TestId&gt;
+    &lt;TestId&gt;xUnit::634E2A0D-EE3E-4F9F-9F60-D97B140815D8::net9.0::IdentityService.Tests.Controllers.AccountControllerTests.UserLoginAsync_ShouldReturnSuccess_WhenAccountAndPasswordIsCorrect&lt;/TestId&gt;
   &lt;/TestAncestor&gt;
 &lt;/SessionState&gt;</s:String>
+	
+	
+	
+	
+	
+	
+	
+	
 	</wpf:ResourceDictionary>

@@ -13,7 +13,7 @@ namespace IdentityService.Services;
 public class TenantService(
     IUnitOfWork unitOfWork, 
     ITenantRepo tenantRepo,
-    IUserDomainService userService,
+    IUserDomainService userDomainService,
     IMediator mediator) : ITenantService
 {
     public async Task<ServiceResult<RegisterTenantResult>> RegisterTenantAsync(
@@ -35,12 +35,12 @@ public class TenantService(
                 await tenantRepo.AddTenantAsync(tenant, cancellationToken);
                 await unitOfWork.SaveChangesAsync(cancellationToken); 
                 // 2. create admin account
-                var (user, randomPassword) = await userService
+                var (user, randomPassword) = await userDomainService
                     .CreateUserOrThrowInnerAsync(adminName, adminEmail, tenant.Id, cancellationToken);
 
                 // 3. create admin role
-                var roleName = $"Admin_{tenantName}";
-                var createStatus = await userService.CreateRoleInnerAsync(roleName, cancellationToken);
+                var roleName = GetTenantAdminRoleName(tenantName);
+                var createStatus = await userDomainService.CreateRoleInnerAsync(roleName, cancellationToken);
                 if (createStatus == RoleStatus.CreateFailed)
                 {
                     return ServiceResult<RegisterTenantResult>
@@ -48,7 +48,7 @@ public class TenantService(
                 }
 
                 // 4. Give user the admin role
-                var addStatus = await userService.AddUserToRoleInnerAsync(user, roleName, cancellationToken);
+                var addStatus = await userDomainService.AddUserToRoleInnerAsync(user, roleName, cancellationToken);
                 if (addStatus == RoleStatus.AddRoleToUserFailed)
                 {
                     return ServiceResult<RegisterTenantResult>
@@ -70,5 +70,44 @@ public class TenantService(
             return ServiceResult<RegisterTenantResult>.Fail(ResultCodes.Tenant.RegisterTenantException, 
                 ex.InnerException != null ? ex.InnerException.Message : ex.Message);
         }
+    }
+
+    public async Task<ServiceResult<bool>> InviteUserForTenantAsync(string adminPublicId, string adminJwtVersion, string tenantPublicId,
+        string adminRoleInTenant, List<string> emails, CancellationToken cancellationToken = default)
+    {
+        var admin = await userDomainService.GetUserByPublicIdIncludeTenantAsync(adminPublicId, cancellationToken);
+        if (admin == null)
+        {
+            return ServiceResult<bool>.Fail(ResultCodes.User.UserNotFound, "User not found");
+        }
+
+        if (admin.Tenant == null || !admin.Tenant.PublicId.ToString().Equals(tenantPublicId))
+        {
+            return ServiceResult<bool>.Fail(ResultCodes.User.UserTenantInfoMissed, "User tenant not found");
+        }
+
+        if (!admin.JwtVersion.ToString().Equals(adminJwtVersion))
+        {
+            return ServiceResult<bool>.Fail(ResultCodes.Token.JwtTokenVersionInvalid, "Token version is invalid");
+        }
+
+        var role = await userDomainService.GetRoleInnerAsync(admin, cancellationToken);
+        if (role == null)
+        {
+            return ServiceResult<bool>.Fail(ResultCodes.User.UserCouldNotFindRole, "User role not found");
+        }
+
+        if (!role.Equals(adminRoleInTenant) || !role.Equals(GetTenantAdminRoleName(admin.Tenant.Name)))
+        {
+            return ServiceResult<bool>.Fail(ResultCodes.User.UserWithoutAdminRolePermission, "User does not have admin role");
+        }
+
+        await mediator.Publish(new TenantInvitationEvent(admin, emails), cancellationToken);
+        return ServiceResult<bool>.Ok(true, ResultCodes.Tenant.InvitationUsersStartSuccess, "Invitation users start success");
+    }
+
+    private string GetTenantAdminRoleName(string tenantName)
+    {
+        return $"Admin_{tenantName}";
     }
 }

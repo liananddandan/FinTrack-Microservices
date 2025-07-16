@@ -160,4 +160,186 @@ public class TenantServiceTests
             m.Publish(It.IsAny<TenantRegisteredEvent>(), It.IsAny<CancellationToken>()),
             Times.Once);
     }
+
+    [Theory, AutoMoqData]
+    public async Task InviteUserForTenantAsync_ShouldReturnFail_WhenUserNotExist(
+        [Frozen] Mock<IUserDomainService> userDomainServiceMock,
+        string adminPublicId, string adminJwtVersion, string tenantPublicId,
+        string adminRoleInTenant, List<string> emails, 
+        TenantService sut)
+    {
+        // Arrange
+        userDomainServiceMock
+            .Setup(uds => uds.GetUserByPublicIdIncludeTenantAsync(adminPublicId, It.IsAny<CancellationToken>()))
+            .ReturnsAsync((ApplicationUser?)null);
+        
+        // Act
+        var result = await sut.InviteUserForTenantAsync(adminPublicId, adminJwtVersion, tenantPublicId, adminRoleInTenant, emails);
+        
+        // Assert
+        result.Success.Should().BeFalse();
+        result.Code.Should().BeEquivalentTo(ResultCodes.User.UserNotFound);
+    }
+    
+    [Theory, AutoMoqData]
+    public async Task InviteUserForTenantAsync_ShouldReturnFail_WhenUserTenantNotExist(
+        [Frozen] Mock<IUserDomainService> userDomainServiceMock,
+        string adminPublicId, string adminJwtVersion, string tenantPublicId,
+        string adminRoleInTenant, List<string> emails, 
+        ApplicationUser user,
+        TenantService sut)
+    {
+        // Arrange
+        user.Tenant = null;
+        userDomainServiceMock
+            .Setup(uds => uds.GetUserByPublicIdIncludeTenantAsync(adminPublicId, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(user);
+        
+        // Act
+        var result = await sut.InviteUserForTenantAsync(adminPublicId, adminJwtVersion, tenantPublicId, adminRoleInTenant, emails);
+        
+        // Assert
+        result.Success.Should().BeFalse();
+        result.Code.Should().BeEquivalentTo(ResultCodes.User.UserTenantInfoMissed);
+    }
+    
+    [Theory, AutoMoqData]
+    public async Task InviteUserForTenantAsync_ShouldReturnFail_WhenUserTenantNotMatch(
+        [Frozen] Mock<IUserDomainService> userDomainServiceMock,
+        string adminPublicId, string adminJwtVersion, string tenantPublicId,
+        string adminRoleInTenant, List<string> emails, 
+        ApplicationUser user,
+        TenantService sut)
+    {
+        // Arrange
+        userDomainServiceMock
+            .Setup(uds => uds.GetUserByPublicIdIncludeTenantAsync(adminPublicId, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(user);
+        
+        // Act
+        var result = await sut.InviteUserForTenantAsync(adminPublicId, adminJwtVersion, tenantPublicId, adminRoleInTenant, emails);
+        
+        // Assert
+        result.Success.Should().BeFalse();
+        result.Code.Should().BeEquivalentTo(ResultCodes.User.UserTenantInfoMissed);
+    }
+    
+    [Theory, AutoMoqData]
+    public async Task InviteUserForTenantAsync_ShouldReturnFail_WhenJwtVersionNotMatch(
+        [Frozen] Mock<IUserDomainService> userDomainServiceMock,
+        string adminJwtVersion,
+        string adminRoleInTenant, List<string> emails, 
+        ApplicationUser user,
+        TenantService sut)
+    {
+        // Arrange
+        userDomainServiceMock
+            .Setup(uds => uds.GetUserByPublicIdIncludeTenantAsync(user.PublicId.ToString(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(user);
+        
+        // Act
+        var result = await sut.InviteUserForTenantAsync(user.PublicId.ToString(), adminJwtVersion, 
+            user.Tenant!.PublicId.ToString(), adminRoleInTenant, emails);
+        
+        // Assert
+        result.Success.Should().BeFalse();
+        result.Code.Should().BeEquivalentTo(ResultCodes.Token.JwtTokenVersionInvalid);
+    }
+    
+    [Theory, AutoMoqData]
+    public async Task InviteUserForTenantAsync_ShouldReturnFail_WhenRoleNotExist(
+        [Frozen] Mock<IUserDomainService> userDomainServiceMock,
+        string adminRoleInTenant, List<string> emails, 
+        ApplicationUser user,
+        TenantService sut)
+    {
+        // Arrange
+        userDomainServiceMock
+            .Setup(uds => uds.GetUserByPublicIdIncludeTenantAsync(user.PublicId.ToString(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(user);
+        userDomainServiceMock
+            .Setup(uds => uds.GetRoleInnerAsync(user, CancellationToken.None))
+            .ReturnsAsync((string?)null);
+        
+        // Act
+        var result = await sut.InviteUserForTenantAsync(user.PublicId.ToString(), user.JwtVersion.ToString(), 
+            user.Tenant!.PublicId.ToString(), adminRoleInTenant, emails);
+        
+        // Assert
+        result.Success.Should().BeFalse();
+        result.Code.Should().BeEquivalentTo(ResultCodes.User.UserCouldNotFindRole);
+    }
+    
+    [Theory, AutoMoqData]
+    public async Task InviteUserForTenantAsync_ShouldReturnFail_WhenRoleNotMatch(
+        [Frozen] Mock<IUserDomainService> userDomainServiceMock,
+        string adminRoleInTenant, List<string> emails, 
+        ApplicationUser user,
+        TenantService sut)
+    {
+        // Arrange
+        var role = "test_role";
+        userDomainServiceMock
+            .Setup(uds => uds.GetUserByPublicIdIncludeTenantAsync(user.PublicId.ToString(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(user);
+        userDomainServiceMock
+            .Setup(uds => uds.GetRoleInnerAsync(user, CancellationToken.None))
+            .ReturnsAsync(role);
+        
+        // Act
+        var result = await sut.InviteUserForTenantAsync(user.PublicId.ToString(), user.JwtVersion.ToString(), 
+            user.Tenant!.PublicId.ToString(), adminRoleInTenant, emails);
+        
+        // Assert
+        result.Success.Should().BeFalse();
+        result.Code.Should().BeEquivalentTo(ResultCodes.User.UserWithoutAdminRolePermission);
+    }
+    
+    [Theory, AutoMoqData]
+    public async Task InviteUserForTenantAsync_ShouldReturnFail_WhenRoleNotMatchTenant(
+        [Frozen] Mock<IUserDomainService> userDomainServiceMock, List<string> emails, 
+        ApplicationUser user,
+        TenantService sut)
+    {
+        // Arrange
+        var role = "test_role";
+        userDomainServiceMock
+            .Setup(uds => uds.GetUserByPublicIdIncludeTenantAsync(user.PublicId.ToString(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(user);
+        userDomainServiceMock
+            .Setup(uds => uds.GetRoleInnerAsync(user, CancellationToken.None))
+            .ReturnsAsync(role);
+        
+        // Act
+        var result = await sut.InviteUserForTenantAsync(user.PublicId.ToString(), user.JwtVersion.ToString(), 
+            user.Tenant!.PublicId.ToString(), role, emails);
+        
+        // Assert
+        result.Success.Should().BeFalse();
+        result.Code.Should().BeEquivalentTo(ResultCodes.User.UserWithoutAdminRolePermission);
+    }
+    
+    [Theory, AutoMoqData]
+    public async Task InviteUserForTenantAsync_ShouldReturnFail_WhenEverythingMatch(
+        [Frozen] Mock<IUserDomainService> userDomainServiceMock, List<string> emails, 
+        ApplicationUser user,
+        TenantService sut)
+    {
+        // Arrange
+        var role = $"Admin_{user.Tenant!.Name}";
+        userDomainServiceMock
+            .Setup(uds => uds.GetUserByPublicIdIncludeTenantAsync(user.PublicId.ToString(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(user);
+        userDomainServiceMock
+            .Setup(uds => uds.GetRoleInnerAsync(user, CancellationToken.None))
+            .ReturnsAsync(role);
+        
+        // Act
+        var result = await sut.InviteUserForTenantAsync(user.PublicId.ToString(), user.JwtVersion.ToString(), 
+            user.Tenant!.PublicId.ToString(), role, emails);
+        
+        // Assert
+        result.Success.Should().BeTrue();
+        result.Code.Should().BeEquivalentTo(ResultCodes.Tenant.InvitationUsersStartSuccess);
+    }
 }

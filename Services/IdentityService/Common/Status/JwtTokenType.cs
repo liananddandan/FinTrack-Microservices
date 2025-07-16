@@ -4,5 +4,6 @@ public enum JwtTokenType
 {
     AccessToken,
     RefreshToken,
-    FirstLoginToken
+    FirstLoginToken,
+    InvitationToken
 }

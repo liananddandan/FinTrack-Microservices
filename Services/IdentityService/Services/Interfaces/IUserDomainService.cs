@@ -14,6 +14,7 @@ public interface IUserDomainService
     Task<string?> GetRoleInnerAsync(ApplicationUser user, CancellationToken cancellationToken = default);
     Task<bool> ChangePasswordInnerAsync(ApplicationUser user, string oldPassword, string newPassword, CancellationToken cancellationToken = default);
     Task<ApplicationUser?> GetUserByEmailInnerAsync(string userEmail, CancellationToken cancellationToken = default);
+    Task<ApplicationUser?> GetUserByEmailWithTenantInnerAsync(string userEmail, CancellationToken cancellationToken = default);
     Task ChangeFirstLoginStateInnerAsync(ApplicationUser user, CancellationToken cancellationToken = default);
     Task IncreaseUserJwtVersionInnerAsync(ApplicationUser user, CancellationToken cancellationToken = default);
 }

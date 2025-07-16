@@ -95,6 +95,11 @@ public class UserDomainService(
         return await userManager.FindByEmailAsync(userEmail);
     }
 
+    public Task<ApplicationUser?> GetUserByEmailWithTenantInnerAsync(string userEmail, CancellationToken cancellationToken = default)
+    {
+        return userRepo.GetUserByEmailWithTenant(userEmail, cancellationToken);
+    }
+
     public Task ChangeFirstLoginStateInnerAsync(ApplicationUser user, CancellationToken cancellationToken = default)
     {
         userRepo.ChangeFirstLoginStatus(user, cancellationToken);

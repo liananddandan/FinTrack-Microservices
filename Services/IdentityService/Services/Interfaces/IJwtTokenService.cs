@@ -13,4 +13,6 @@ public interface IJwtTokenService
     Task<ServiceResult<JwtTokenPair>> RefreshJwtTokenPairAsync(string oldRefreshToken);
     Task<ServiceResult<ClaimsPrincipal?>> GetPrincipalFromTokenAsync(string token);
     Task<ServiceResult<JwtParseResult>> ParseJwtTokenAsync(string token);
+    Task<ServiceResult<string>> GenerateInvitationTokenAsync(InvitationClaimSource invitationClaimSource);
+    Task<ServiceResult<InvitationParseResult>> ParseInvitationTokenAsync(string token);
 }

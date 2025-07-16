@@ -8,4 +8,5 @@ public class JwtOptions
     public int AccessTokenExpirationMinutes { get; set; }
     public int FirstLoginChangePasswordExpirationMinutes { get; set; }
     public int RefreshTokenExpirationDays { get; set; }
+    public int InvitationTokenExpirationDays { get; set; }
 }

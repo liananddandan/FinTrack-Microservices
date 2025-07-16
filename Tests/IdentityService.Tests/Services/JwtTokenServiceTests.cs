@@ -616,4 +616,72 @@ public class JwtTokenServiceTests
         result.Data.UserRoleInTenant.Should().BeEquivalentTo(jwtClaimSource.UserRoleInTenant);
         result.Data.TokenType.Should().Be(JwtTokenType.AccessToken);
     }
+
+    [Theory, AutoMoqData]
+    public async Task GenerateInvitationTokenAsync_ShouldReturnToken_WhenInputCorrect(
+        InvitationClaimSource invitationClaimSource,
+        JwtTokenService sut)
+    {
+        // Arrange
+        
+        // Act
+        var result = await sut.GenerateInvitationTokenAsync(invitationClaimSource);
+        
+        // Assert
+        result.Success.Should().BeTrue();
+        result.Data.Should().NotBeNull();
+    }
+
+    [Theory, AutoMoqData]
+    public async Task ParseInvitationTokenAsync_ShouldReturnFail_WhenTokenInvalid(
+        string token,
+        JwtTokenService sut)
+    {
+        var result = await sut.ParseInvitationTokenAsync(token);
+        result.Success.Should().BeFalse();
+    }
+    
+    [Theory, AutoMoqData]
+    public async Task ParseInvitationTokenAsync_ShouldReturnFail_WhenClaimIsInvalid(
+        JwtTokenService sut)
+    {
+        //Arrange
+        var invitationClaimSource = new InvitationClaimSource()
+        {
+            InvitationPublicId = "",
+            InvitationVersion = ""
+        };
+        var generateToken = await sut.GenerateInvitationTokenAsync(invitationClaimSource);
+        generateToken.Success.Should().BeTrue();
+        generateToken.Data.Should().NotBeNull();
+        
+        // Act
+        var result = await sut.ParseInvitationTokenAsync(generateToken.Data);
+        
+        // Assert
+        result.Success.Should().BeFalse();
+        result.Data.Should().BeNull();
+        result.Code.Should().BeEquivalentTo(ResultCodes.Token.JwtTokenClaimMissing);
+    }
+    
+    [Theory, AutoMoqData]
+    public async Task ParseInvitationTokenAsync_ShouldReturnSuccess_WhenTokenValid(
+        InvitationClaimSource invitationClaimSource,
+        JwtTokenService sut)
+    {
+        //Arrange
+        var generateToken = await sut.GenerateInvitationTokenAsync(invitationClaimSource);
+        generateToken.Success.Should().BeTrue();
+        generateToken.Data.Should().NotBeNull();
+        
+        // Act
+        var result = await sut.ParseInvitationTokenAsync(generateToken.Data);
+        
+        // Assert
+        result.Success.Should().BeTrue();
+        result.Data.Should().NotBeNull();
+        result.Code.Should().BeEquivalentTo(ResultCodes.Token.InvitationTokenParseSuccess);
+        result.Data.InvitationPublicId.Should().BeEquivalentTo(invitationClaimSource.InvitationPublicId);
+        result.Data.InvitationVersion.Should().BeEquivalentTo(invitationClaimSource.InvitationVersion);
+    }
 }
