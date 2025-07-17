@@ -440,7 +440,7 @@ public class UserAppServiceTests
         string newPassword)
     {
         // Arrange
-        unitOfWorkMock.SetupExecuteWithTransaction<bool>();
+        unitOfWorkMock.SetupExecuteWithTransaction<(bool,string)>();
         string jwtVersion = "3";
         var user = new ApplicationUser()
         {
@@ -472,7 +472,7 @@ public class UserAppServiceTests
         string newPassword)
     {
         // Arrange
-        unitOfWorkMock.SetupExecuteWithTransaction<bool>();
+        unitOfWorkMock.SetupExecuteWithTransaction<(bool,string)>();
         string jwtVersion = "3";
         var user = new ApplicationUser()
         {
@@ -506,7 +506,7 @@ public class UserAppServiceTests
         string newPassword)
     {
         // Arrange
-        unitOfWorkMock.SetupExecuteWithTransaction<bool>();
+        unitOfWorkMock.SetupExecuteWithTransaction<(bool,string)>();
         string jwtVersion = "3";
         var user = new ApplicationUser()
         {

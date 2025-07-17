@@ -407,6 +407,7 @@ public class TenantServiceTests
     )
     {
         // Arrange
+        invitation.ExpiredAt = DateTime.UtcNow.AddDays(7);
         tenantInvitationServiceMock
             .Setup(tis => tis.GetTenantInvitationByPublicIdAsync(invitationPublicId, It.IsAny<CancellationToken>()))
             .ReturnsAsync(ServiceResult<TenantInvitation>.Ok(invitation, "exist", "exist"));
@@ -429,6 +430,7 @@ public class TenantServiceTests
     )
     {
         // Arrange
+        invitation.ExpiredAt = DateTime.UtcNow.AddDays(7);
         invitation.Version = 4;
         var invitationVersion = "3";
         tenantInvitationServiceMock
