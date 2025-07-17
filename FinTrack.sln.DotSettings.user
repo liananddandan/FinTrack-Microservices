@@ -42,6 +42,7 @@
     &lt;TestId&gt;xUnit::634E2A0D-EE3E-4F9F-9F60-D97B140815D8::net9.0::IdentityService.Tests.Services.TenantServiceTests.ReceiveInviteForTenantAsync_ShouldReturnFalse_WhenAddUserRoleFailed&lt;/TestId&gt;
     &lt;TestId&gt;xUnit::634E2A0D-EE3E-4F9F-9F60-D97B140815D8::net9.0::IdentityService.Tests.Services.TenantServiceTests.InviteUserForTenantAsync_ShouldReturnSuccess_WhenEverythingMatch&lt;/TestId&gt;
     &lt;TestId&gt;xUnit::634E2A0D-EE3E-4F9F-9F60-D97B140815D8::net9.0::IdentityService.Tests.Services.TenantServiceTests.ReceiveInviteForTenantAsync_ShouldReturnTrue_WhenSendInvitationSuccess&lt;/TestId&gt;
+    &lt;TestId&gt;xUnit::634E2A0D-EE3E-4F9F-9F60-D97B140815D8::net9.0::IdentityService.Tests.Services.UserDomainServiceTests.ChangePasswordInnerAsync_ShouldReturnResult&lt;/TestId&gt;
   &lt;/TestAncestor&gt;
 &lt;/SessionState&gt;</s:String>
 	<s:String x:Key="/Default/Environment/UnitTesting/UnitTestSessionStore/Sessions/=fdd8069c_002D21c4_002D4e79_002D94ad_002D5aafa28d8405/@EntryIndexedValue">&lt;SessionState ContinuousTestingMode="0" Name="OnAuthorizationAsync_ShouldReturnUnAuthorizationResult_WhenBearerIsEmpty" xmlns="urn:schemas-jetbrains-com:jetbrains-ut-session"&gt;

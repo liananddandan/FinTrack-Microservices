@@ -294,10 +294,11 @@ public class UserDomainServiceTests
             .ReturnsAsync(IdentityResult.Success);
         
         // Act
-        var result = await sut.ChangePasswordInnerAsync(user, oldPassword, newPassword);
+        var (result, reason) = await sut.ChangePasswordInnerAsync(user, oldPassword, newPassword);
         
         // Assert
         result.Should().BeTrue();
+        reason.Should().NotBeNull();
     }
 
     [Theory, AutoMoqData]

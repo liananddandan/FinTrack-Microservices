@@ -450,7 +450,7 @@ public class UserAppServiceTests
         userDomainServiceMock.Setup(uds => uds.GetUserByPublicIdIncludeTenantAsync(userPublicId, CancellationToken.None))
             .ReturnsAsync(user);
         userDomainServiceMock.Setup(uds => uds.ChangePasswordInnerAsync(user, oldPassword, newPassword, CancellationToken.None))
-            .ReturnsAsync(true);
+            .ReturnsAsync((true, "success"));
         
         // Act
         var result = await sut.SetUserPasswordAsync(userPublicId, jwtVersion, 
@@ -484,7 +484,7 @@ public class UserAppServiceTests
             .ReturnsAsync(user);
         userDomainServiceMock
             .Setup(uds => uds.ChangePasswordInnerAsync(user, oldPassword, newPassword, CancellationToken.None))
-            .ReturnsAsync(true);
+            .ReturnsAsync((true, "success"));
         
         // Act
         var result = await sut.SetUserPasswordAsync(userPublicId, jwtVersion, 
@@ -515,7 +515,7 @@ public class UserAppServiceTests
         userDomainServiceMock.Setup(uds => uds.GetUserByPublicIdIncludeTenantAsync(userPublicId, CancellationToken.None))
             .ReturnsAsync(user);
         userDomainServiceMock.Setup(uds => uds.ChangePasswordInnerAsync(user, oldPassword, newPassword, CancellationToken.None))
-            .ReturnsAsync(true);
+            .ReturnsAsync((true, "success"));
         
         // Act
         var result = await sut.SetUserPasswordAsync(userPublicId, jwtVersion, oldPassword, newPassword, false);
