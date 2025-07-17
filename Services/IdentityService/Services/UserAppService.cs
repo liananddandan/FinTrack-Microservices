@@ -89,7 +89,7 @@ public class UserAppService(UserManager<ApplicationUser> userManager,
                 .Fail(ResultCodes.User.UserEmailOrPasswordInvalid, "User Email Or Password Invalid");
         }
         
-        var roleResult = await userDomainService.GetRoleInnerAsync(user, cancellationToken);
+        var roleResult = await userDomainService.GetUserRoleInnerAsync(user, cancellationToken);
         if (string.IsNullOrEmpty(roleResult))
         {
             return ServiceResult<UserLoginResult>
@@ -174,7 +174,7 @@ public class UserAppService(UserManager<ApplicationUser> userManager,
         }
 
         var user = userCheckResult.Data!;
-        var roleResult = await userDomainService.GetRoleInnerAsync(user, cancellationToken);
+        var roleResult = await userDomainService.GetUserRoleInnerAsync(user, cancellationToken);
         if (string.IsNullOrEmpty(roleResult))
         {
             return ServiceResult<JwtTokenPair>.Fail(ResultCodes.User.UserCouldNotFindRole, "User role Not Found");
@@ -207,7 +207,7 @@ public class UserAppService(UserManager<ApplicationUser> userManager,
             return ServiceResult<UserInfoDto>.Fail(ResultCodes.User.UserTenantInfoMissed, "User Tenant Not Found");
         }
 
-        var roleResult = await userDomainService.GetRoleInnerAsync(user, cancellationToken);
+        var roleResult = await userDomainService.GetUserRoleInnerAsync(user, cancellationToken);
         if (roleResult == null)
         {
             return ServiceResult<UserInfoDto>.Fail(ResultCodes.User.UserCouldNotFindRole, "User role Not Found");

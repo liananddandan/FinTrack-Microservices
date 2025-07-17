@@ -2,7 +2,7 @@ using MediatR;
 
 namespace IdentityService.Events;
 
-public record TenantRegisteredEvent(
+public record UserRegisteredEvent(
     long TenantId, 
     Guid TenantPublicId,
     long AdminUserId, 

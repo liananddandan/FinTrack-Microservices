@@ -2,6 +2,7 @@ using IdentityService.Commands;
 using IdentityService.Common.DTOs;
 using IdentityService.Common.Extensions;
 using IdentityService.Common.Results;
+using IdentityService.Common.Status;
 using IdentityService.Filters.Attributes;
 using IdentityService.Services;
 using MediatR;
@@ -42,6 +43,21 @@ public class TenantController(IMediator mediator) : ControllerBase
             AdminRoleInTenant = jwtParseResult.UserRoleInTenant,
             Emails = request.Emails
         };
+        var result = await mediator.Send(command);
+        return result.ToActionResult();
+    }
+
+    [HttpGet("receive-invite")]
+    [RequireTokenType(JwtTokenType.InvitationToken)]
+    public async Task<IActionResult> ReceiveInviteAsync()
+    {
+        var inviteParseResult = HttpContext.GetHttpHeaderInviteParseResult();
+        if (inviteParseResult == null)
+        {
+            return Unauthorized("Request Without valid token");
+        }
+
+        var command = new ReceiveInviteCommand(inviteParseResult.InvitationPublicId, inviteParseResult.InvitationVersion);
         var result = await mediator.Send(command);
         return result.ToActionResult();
     }

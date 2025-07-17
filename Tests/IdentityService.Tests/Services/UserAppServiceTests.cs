@@ -266,7 +266,7 @@ public class UserAppServiceTests
         userManagerMock.Setup(x => x.CheckPasswordAsync(user, password))
             .ReturnsAsync(true);
         userDomainServiceMock.Setup(x 
-            => x.GetRoleInnerAsync(user, CancellationToken.None))
+            => x.GetUserRoleInnerAsync(user, CancellationToken.None))
             .ReturnsAsync(null as string);
         // Act
         var result = await sut.UserLoginAsync(email, password, CancellationToken.None);
@@ -304,7 +304,7 @@ public class UserAppServiceTests
         userManagerMock.Setup(x => x.CheckPasswordAsync(user, password))
             .ReturnsAsync(true);
         userDomainServiceMock.Setup(x 
-                => x.GetRoleInnerAsync(user, CancellationToken.None))
+                => x.GetUserRoleInnerAsync(user, CancellationToken.None))
             .ReturnsAsync("Admin_TestTenant");
         // Act
         var result = await sut.UserLoginAsync(email, password, CancellationToken.None);
@@ -345,7 +345,7 @@ public class UserAppServiceTests
         userManagerMock.Setup(x => x.CheckPasswordAsync(user, password))
             .ReturnsAsync(true);
         userDomainServiceMock.Setup(x 
-                => x.GetRoleInnerAsync(user, CancellationToken.None))
+                => x.GetUserRoleInnerAsync(user, CancellationToken.None))
             .ReturnsAsync("Admin_TestTenant");        jwtTokenServiceMock.Setup(jts 
             => jts.GenerateJwtTokenPairAsync(It.IsAny<JwtClaimSource>()))
             .ReturnsAsync(ServiceResult<JwtTokenPair>.Ok(jwtTokenPair, "JwtTokenPair", "JwtTokenPair"));
@@ -603,7 +603,7 @@ public class UserAppServiceTests
             .Setup(uds => uds.GetUserByPublicIdIncludeTenantAsync(userPublicId, CancellationToken.None))
             .ReturnsAsync(user);
         userDomainServiceMock
-            .Setup(uds => uds.GetRoleInnerAsync(user, CancellationToken.None))
+            .Setup(uds => uds.GetUserRoleInnerAsync(user, CancellationToken.None))
             .ReturnsAsync((string?)null);
         
         // Act
@@ -631,7 +631,7 @@ public class UserAppServiceTests
             .Setup(uds => uds.GetUserByPublicIdIncludeTenantAsync(userPublicId, CancellationToken.None))
             .ReturnsAsync(user);
         userDomainServiceMock
-            .Setup(uds => uds.GetRoleInnerAsync(user, CancellationToken.None))
+            .Setup(uds => uds.GetUserRoleInnerAsync(user, CancellationToken.None))
             .ReturnsAsync("Admin_test");
         jwtTokenServiceMock
             .Setup(jts => jts.GenerateJwtTokenPairAsync(It.IsAny<JwtClaimSource>()))
@@ -677,7 +677,7 @@ public class UserAppServiceTests
         userDomainServiceMock.Setup(
                 uds => uds.GetUserByPublicIdIncludeTenantAsync(userPublicId, CancellationToken.None))
             .ReturnsAsync(user);
-        userDomainServiceMock.Setup(uds => uds.GetRoleInnerAsync(user, CancellationToken.None))
+        userDomainServiceMock.Setup(uds => uds.GetUserRoleInnerAsync(user, CancellationToken.None))
             .ReturnsAsync((string?)null);
         
         // Act
@@ -699,7 +699,7 @@ public class UserAppServiceTests
         userDomainServiceMock.Setup(
                 uds => uds.GetUserByPublicIdIncludeTenantAsync(userPublicId, CancellationToken.None))
             .ReturnsAsync(user);
-        userDomainServiceMock.Setup(uds => uds.GetRoleInnerAsync(user, CancellationToken.None))
+        userDomainServiceMock.Setup(uds => uds.GetUserRoleInnerAsync(user, CancellationToken.None))
             .ReturnsAsync("Admin_test");
         
         // Act

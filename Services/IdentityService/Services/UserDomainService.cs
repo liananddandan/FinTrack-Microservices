@@ -36,6 +36,12 @@ public class UserDomainService(
         return (user, randomPassword);
     }
 
+    public async Task<RoleStatus> IsRoleExistAsync(string roleName, CancellationToken cancellationToken = default)
+    {
+        var roleExist = await roleManager.RoleExistsAsync(roleName);
+        return roleExist ? RoleStatus.RoleAlreadyExist : RoleStatus.RoleNotExist;
+    }
+
     public async Task<RoleStatus> CreateRoleInnerAsync(string roleName, CancellationToken cancellationToken = default)
     {
         if (await roleManager.RoleExistsAsync(roleName.ToUpperInvariant()))
@@ -73,7 +79,7 @@ public class UserDomainService(
         return user;
     }
 
-    public async Task<string?> GetRoleInnerAsync(ApplicationUser user, CancellationToken cancellationToken = default)
+    public async Task<string?> GetUserRoleInnerAsync(ApplicationUser user, CancellationToken cancellationToken = default)
     {
         var roles = await userManager.GetRolesAsync(user);
         return roles.FirstOrDefault();

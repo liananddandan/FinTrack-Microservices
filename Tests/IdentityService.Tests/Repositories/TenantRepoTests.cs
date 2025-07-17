@@ -40,4 +40,45 @@ public class TenantRepoTests
         result.Name.Should().Be(tenant.Name);
         result.PublicId.Should().Be(tenant.PublicId);
     }
+
+    [Fact]
+    public async Task GetTenantByPublicIdAsync_ShouldReturnNull_WhenTenantNotFound()
+    {
+        // Arrange
+        var options = new DbContextOptionsBuilder<ApplicationIdentityDbContext>()
+            .UseInMemoryDatabase(databaseName: Guid.NewGuid().ToString())
+            .Options;
+        var dbContext = new TestDbContext(options);
+        var sut = new TenantRepo(dbContext);
+        
+        // Act
+        var result = await sut.GetTenantByPublicIdAsync("publicId", CancellationToken.None);
+        
+        // Assert
+        result.Should().BeNull();
+    }
+    
+    [Fact]
+    public async Task GetTenantByPublicIdAsync_ShouldReturnTenant_WhenTenantExist()
+    {
+        // Arrange
+        var options = new DbContextOptionsBuilder<ApplicationIdentityDbContext>()
+            .UseInMemoryDatabase(databaseName: Guid.NewGuid().ToString())
+            .Options;
+        var dbContext = new TestDbContext(options);
+        var sut = new TenantRepo(dbContext);
+        var tenant = new Tenant()
+        {
+            Name = "Tenant_Get_Tenant_By_PublicId"
+        };
+        dbContext.Tenants.Add(tenant);
+        await dbContext.SaveChangesAsync(CancellationToken.None);
+        
+        // Act
+        var result = await sut.GetTenantByPublicIdAsync(tenant.PublicId.ToString(), CancellationToken.None);
+        
+        // Assert
+        result.Should().NotBeNull();
+        result.Should().BeEquivalentTo(tenant);
+    }
 }

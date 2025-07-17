@@ -8,4 +8,9 @@ public static class HttpContextExtensions
     {
         return httpContext.Items["JwtParseResult"] as JwtParseResult;
     }
+    
+    public static InvitationParseResult? GetHttpHeaderInviteParseResult(this HttpContext httpContext)
+    {
+        return httpContext.Items["InviteParseResult"] as InvitationParseResult;
+    }
 }

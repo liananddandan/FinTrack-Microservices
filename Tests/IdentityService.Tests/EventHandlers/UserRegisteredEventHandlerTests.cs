@@ -16,23 +16,23 @@ using SharedKernel.Topics;
 
 namespace IdentityService.Tests.EventHandlers;
 
-public class TenantRegisteredEventHandlerTests
+public class UserRegisteredEventHandlerTests
 {
     [Theory, AutoMoqData]
     public async Task Handler_ShouldThrowException_WhenUserNotGetById(
         [Frozen] Mock<IUserAppService> userAppService,
-        TenantRegisteredEventHandler sut,
-        TenantRegisteredEvent tenantRegisteredEvent)
+        UserRegisteredEventHandler sut,
+        UserRegisteredEvent userRegisteredEvent)
     {
         // Arrange
         userAppService.Setup(u =>
-            u.GetUserByIdAsync(tenantRegisteredEvent.AdminUserId.ToString()))
+            u.GetUserByIdAsync(userRegisteredEvent.AdminUserId.ToString()))
             .ReturnsAsync(ServiceResult<ApplicationUser>.Fail(ResultCodes.User.UserNotFound, "user not found"));
         
         // Act
 
         var ex = await FluentActions.Awaiting(() =>
-                sut.Handle(tenantRegisteredEvent, CancellationToken.None))
+                sut.Handle(userRegisteredEvent, CancellationToken.None))
             .Should()
             .ThrowAsync<UserNotFoundException>();
          
@@ -45,13 +45,13 @@ public class TenantRegisteredEventHandlerTests
     public async Task Handler_ShouldThrowException_WhenGenerateTokenFailed(
         [Frozen] Mock<IUserAppService> userAppService,
         [Frozen] Mock<IUserVerificationService> userVerificationService,
-        TenantRegisteredEventHandler sut,
-        TenantRegisteredEvent tenantRegisteredEvent,
+        UserRegisteredEventHandler sut,
+        UserRegisteredEvent userRegisteredEvent,
         ApplicationUser user)
     {
         // Arrange
         userAppService.Setup(u =>
-                u.GetUserByIdAsync(tenantRegisteredEvent.AdminUserId.ToString()))
+                u.GetUserByIdAsync(userRegisteredEvent.AdminUserId.ToString()))
             .ReturnsAsync(ServiceResult<ApplicationUser>.Ok(user, ResultCodes.User.UserGetByIdSuccess, "User get Success"));
         
         userVerificationService.Setup(uv => 
@@ -60,7 +60,7 @@ public class TenantRegisteredEventHandlerTests
         // Act
 
         var ex = await FluentActions.Awaiting(() =>
-                sut.Handle(tenantRegisteredEvent, CancellationToken.None))
+                sut.Handle(userRegisteredEvent, CancellationToken.None))
             .Should()
             .ThrowAsync<TokenGenerateException>();
          
@@ -74,13 +74,13 @@ public class TenantRegisteredEventHandlerTests
         [Frozen] Mock<IUserAppService> userAppService,
         [Frozen] Mock<IUserVerificationService> userVerificationService,
         [Frozen] Mock<ICapPublisher> capPublisher,
-        TenantRegisteredEventHandler sut,
-        TenantRegisteredEvent tenantRegisteredEvent,
+        UserRegisteredEventHandler sut,
+        UserRegisteredEvent userRegisteredEvent,
         ApplicationUser user)
     {
         // Arrange
         userAppService.Setup(u =>
-                u.GetUserByIdAsync(tenantRegisteredEvent.AdminUserId.ToString()))
+                u.GetUserByIdAsync(userRegisteredEvent.AdminUserId.ToString()))
             .ReturnsAsync(ServiceResult<ApplicationUser>.Ok(user, ResultCodes.User.UserGetByIdSuccess, "User get Success"));
 
         var expectedToken = "expected-token";
@@ -89,11 +89,11 @@ public class TenantRegisteredEventHandlerTests
             .ReturnsAsync(ServiceResult<string>.Ok(expectedToken,ResultCodes.Token.VerifyTokenGenerateSuccess, "token generate Success"));
         
         // Act
-        await sut.Handle(tenantRegisteredEvent, CancellationToken.None);
+        await sut.Handle(userRegisteredEvent, CancellationToken.None);
         
         // Assert
         userAppService.Verify(u => 
-            u.GetUserByIdAsync(tenantRegisteredEvent.AdminUserId.ToString()), Times.Once);
+            u.GetUserByIdAsync(userRegisteredEvent.AdminUserId.ToString()), Times.Once);
         userVerificationService.Verify(uv => 
             uv.GenerateTokenAsync(user, TokenPurpose.EmailConfirmation, It.IsAny<CancellationToken>()), Times.Once);
         capPublisher.Verify(c => 

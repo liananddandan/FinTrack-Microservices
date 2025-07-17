@@ -347,4 +347,38 @@ public class UserDomainServiceTests
         // Assert
         userRepoMock.Verify(r => r.IncreaseJwtVersion(user, It.IsAny<CancellationToken>()), Times.Once);
     }
+
+    [Theory, AutoMoqData]
+    public async Task IsRoleExistAsync_ShouldReturnNotExist_WhenNotExist(
+        [Frozen] Mock<RoleManager<ApplicationRole>> roleManagerMock,
+        UserDomainService sut)
+    {
+        // Arrange
+        var roleName = "TestRole";
+        roleManagerMock.Setup(r => r.RoleExistsAsync(roleName)).ReturnsAsync(false);
+        
+        // Act
+        var result = await sut.IsRoleExistAsync(roleName);
+        
+        // Assert
+        result.Should().Be(RoleStatus.RoleNotExist);
+        roleManagerMock.Verify(r => r.RoleExistsAsync(roleName), Times.Once);
+    }
+    
+    [Theory, AutoMoqData]
+    public async Task IsRoleExistAsync_ShouldReturnExist_WhenRoleExist(
+        [Frozen] Mock<RoleManager<ApplicationRole>> roleManagerMock,
+        UserDomainService sut)
+    {
+        // Arrange
+        var roleName = "TestRole";
+        roleManagerMock.Setup(r => r.RoleExistsAsync(roleName)).ReturnsAsync(true);
+        
+        // Act
+        var result = await sut.IsRoleExistAsync(roleName);
+        
+        // Assert
+        result.Should().Be(RoleStatus.RoleAlreadyExist);
+        roleManagerMock.Verify(r => r.RoleExistsAsync(roleName), Times.Once);
+    }
 }

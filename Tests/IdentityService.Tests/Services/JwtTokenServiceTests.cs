@@ -461,7 +461,7 @@ public class JwtTokenServiceTests
             .ReturnsAsync(user);
 
         userDomainServiceMock.Setup(us
-                => us.GetRoleInnerAsync(user, It.IsAny<CancellationToken>()))
+                => us.GetUserRoleInnerAsync(user, It.IsAny<CancellationToken>()))
             .ReturnsAsync(null as string);
 
         // Act
@@ -518,7 +518,7 @@ public class JwtTokenServiceTests
                 => us.GetUserByPublicIdIncludeTenantAsync(jwtClaimSource.UserPublicId, It.IsAny<CancellationToken>()))
             .ReturnsAsync(user);
         userDomainServiceMock.Setup(us
-                => us.GetRoleInnerAsync(user, It.IsAny<CancellationToken>()))
+                => us.GetUserRoleInnerAsync(user, It.IsAny<CancellationToken>()))
             .ReturnsAsync("AdminRole");
 
         // Act

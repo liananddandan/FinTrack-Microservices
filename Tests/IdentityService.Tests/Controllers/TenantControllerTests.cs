@@ -1,6 +1,7 @@
 using System.Net;
 using System.Net.Http.Headers;
 using System.Net.Http.Json;
+using System.Text.RegularExpressions;
 using AutoFixture.Xunit2;
 using DotNetCore.CAP;
 using FluentAssertions;
@@ -15,10 +16,12 @@ using Microsoft.Extensions.DependencyInjection;
 using Moq;
 using SharedKernel.Events;
 using SharedKernel.Topics;
+using Xunit.Abstractions;
 
 namespace IdentityService.Tests.Controllers;
 
-public class TenantControllerTests(IdentityWebApplicationFactory<Program> factory) : IClassFixture<IdentityWebApplicationFactory<Program>>
+public class TenantControllerTests(IdentityWebApplicationFactory<Program> factory,
+    ITestOutputHelper testOutputHelper) : IClassFixture<IdentityWebApplicationFactory<Program>>
 {
 
     [Theory, AutoMoqData]
@@ -144,5 +147,67 @@ public class TenantControllerTests(IdentityWebApplicationFactory<Program> factor
         count.Should().Be(inviteRequest.Emails.Count);
         var content = await response.Content.ReadAsStringAsync();
         content.Should().Contain(ResultCodes.Tenant.InvitationUsersStartSuccess);
+    }
+    
+        [Theory, AutoMoqData]
+    public async Task ReceiveInviteAsync_ShouldReturnSuccess(
+        [Frozen] Mock<ICapPublisher> capPublisherMock)
+    {
+        // Arrange
+        var client = factory.WithWebHostBuilder(builder =>
+        {
+            builder.ConfigureServices(services =>
+            {
+                var descriptor = services.SingleOrDefault(d => d.ServiceType == typeof(ICapPublisher));
+                if (descriptor != null) services.Remove(descriptor);
+                services.AddSingleton(capPublisherMock.Object);
+            });
+        }).CreateClient();
+        EmailSendRequestedEvent? capturedEmail = null;
+        capPublisherMock.Setup(p
+                => p.PublishAsync(CapTopics.EmailSend,
+                    It.IsAny<EmailSendRequestedEvent>(),
+                    It.IsAny<IDictionary<string, string?>>(),
+                    It.IsAny<CancellationToken>()))
+            .Callback<string, EmailSendRequestedEvent, IDictionary<string, string?>, CancellationToken>(
+                (topic, evt, headers, token) =>
+                {
+                    capturedEmail = evt;
+                })
+            .Returns(Task.CompletedTask);
+        using var scope = factory.Services.CreateScope();
+        var jwtTokenService = scope.ServiceProvider.GetRequiredService<IJwtTokenService>();
+        var userDomainService = scope.ServiceProvider.GetRequiredService<IUserDomainService>();
+        var user = await userDomainService.GetUserByEmailWithTenantInnerAsync("testUserForInviteUserTest@test.com");
+        user.Should().NotBeNull();
+        var jwtClaimSource = new JwtClaimSource()
+        {
+            UserPublicId = user.PublicId.ToString(),
+            JwtVersion = user.JwtVersion.ToString(),
+            TenantPublicId = user.Tenant!.PublicId.ToString(),
+            UserRoleInTenant = $"Admin_{user.Tenant!.Name}"
+        };
+        var generateResult = await jwtTokenService.GenerateJwtTokenAsync(jwtClaimSource, JwtTokenType.AccessToken);
+        generateResult.Success.Should().BeTrue();
+        generateResult.Data.Should().NotBeNull();
+        var accessToken = generateResult.Data;
+        client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
+        var inviteRequest = new InviteUserRequest()
+        {
+            Emails = new List<string> { $"receive_invitation_{Guid.NewGuid().ToString()}@gmail.com"},
+        };
+        var response = await client.PostAsJsonAsync("/api/tenant/invite", inviteRequest);
+        response.EnsureSuccessStatusCode();
+        var match = Regex.Match(capturedEmail!.Body, @"Token is ([\w\-\.]+)", RegexOptions.IgnoreCase);
+        match.Success.Should().BeTrue();
+        string invitationToken = match.Groups[1].Value;
+        
+        // Act
+        var request = new HttpRequestMessage(HttpMethod.Get, "/api/tenant/receive-invite");
+        request.Headers.Authorization = new AuthenticationHeaderValue("Invite", invitationToken);
+        var receiveResponse = await client.SendAsync(request);
+        
+        // Assert
+        receiveResponse.EnsureSuccessStatusCode();
     }
 }

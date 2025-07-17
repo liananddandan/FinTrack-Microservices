@@ -45,7 +45,7 @@ public class GlobalJwtTokenValidationFilterTests
     }
     
     [Theory, AutoMoqData]
-    public async Task OnAuthorizationAsync_ShouldReturnUnAuthorizationResult_WhenNoBearer(
+    public async Task OnAuthorizationAsync_ShouldReturnUnAuthorizationResult_WhenNoAuthorization(
         GlobalJwtTokenValidationFilter sut)
     {
         var context = CreateAuthorizationFilterContext();
@@ -56,15 +56,31 @@ public class GlobalJwtTokenValidationFilterTests
     }
     
     [Theory, AutoMoqData]
-    public async Task OnAuthorizationAsync_ShouldReturnUnAuthorizationResult_WhenBearerIsEmpty(
+    public async Task OnAuthorizationAsync_ShouldReturnUnAuthorizationResult_WhenAuthorizationWithoutValidPrefix(
         GlobalJwtTokenValidationFilter sut)
     {
+        var context = CreateAuthorizationFilterContext();
+        context.HttpContext.Request.Headers.Authorization = "Invalid ";
+        
+        await sut.OnAuthorizationAsync(context);
+
+        Assert.IsType<UnauthorizedResult>(context.Result);
+    }
+    
+    [Theory, AutoMoqData]
+    public async Task OnAuthorizationAsync_ShouldReturnUnAuthorizationResult_WhenBearerIsEmpty(
+        [Frozen] Mock<IJwtTokenService> jwtTokenServiceMock,
+        GlobalJwtTokenValidationFilter sut)
+    {
+        // Arrange
+        jwtTokenServiceMock.Setup(jts => jts.ParseJwtTokenAsync(""))
+            .ReturnsAsync(ServiceResult<JwtParseResult>.Fail("empty token", "empty token"));
         var context = CreateAuthorizationFilterContext();
         context.HttpContext.Request.Headers.Authorization = "Bearer ";
         
         await sut.OnAuthorizationAsync(context);
 
-        Assert.IsType<UnauthorizedResult>(context.Result);
+        Assert.IsType<JsonResult>(context.Result);
     }
     
     [Theory, AutoMoqData]
@@ -83,6 +99,7 @@ public class GlobalJwtTokenValidationFilterTests
 
         // Assert
         Assert.IsType<JsonResult>(context.Result);
+        jwtTokenServiceMock.Verify(jts => jts.ParseJwtTokenAsync("invalidToken"), Times.Once);
     }
     
     [Theory, AutoMoqData]
@@ -102,7 +119,7 @@ public class GlobalJwtTokenValidationFilterTests
         await sut.OnAuthorizationAsync(context);
 
         // Assert
-        Assert.IsType<UnauthorizedResult>(context.Result);
+        Assert.IsType<JsonResult>(context.Result);
     }
     
     [Theory, AutoMoqData]
@@ -146,5 +163,102 @@ public class GlobalJwtTokenValidationFilterTests
         Assert.IsNotType<ForbidResult>(context.Result);
         context.HttpContext.Items["JwtParseResult"].Should().NotBeNull();
         context.HttpContext.Items["JwtParseResult"].Should().BeEquivalentTo(jwtParseResult);
+    }
+    
+    [Theory, AutoMoqData]
+    public async Task OnAuthorizationAsync_ShouldReturnUnAuthorizationResult_WhenInviteIsEmpty(
+        [Frozen] Mock<IJwtTokenService> jwtTokenServiceMock,
+        GlobalJwtTokenValidationFilter sut)
+    {
+        jwtTokenServiceMock.Setup(jts => jts.ParseInvitationTokenAsync(""))
+            .ReturnsAsync(ServiceResult<InvitationParseResult>.Fail("empty token", "empty token"));
+        var context = CreateAuthorizationFilterContext();
+        context.HttpContext.Request.Headers.Authorization = "Invite ";
+        
+        await sut.OnAuthorizationAsync(context);
+
+        Assert.IsType<JsonResult>(context.Result);
+    }
+    
+    [Theory, AutoMoqData]
+    public async Task OnAuthorizationAsync_ShouldReturnUnAuthorizationResult_WhenInviteTokenIsInvalid(
+        [Frozen] Mock<IJwtTokenService> jwtTokenServiceMock,
+        GlobalJwtTokenValidationFilter sut)
+    {
+        // Arrange
+        var context = CreateAuthorizationFilterContext();
+        context.HttpContext.Request.Headers.Authorization= "Invite invalidToken";
+        jwtTokenServiceMock.Setup(jts => jts.ParseInvitationTokenAsync("invalidToken"))
+            .ReturnsAsync(ServiceResult<InvitationParseResult>.Fail("invalidToken", "Invalid token"));
+        
+        // Act
+        await sut.OnAuthorizationAsync(context);
+
+        // Assert
+        Assert.IsType<JsonResult>(context.Result);
+        jwtTokenServiceMock.Verify(jts => jts.ParseInvitationTokenAsync("invalidToken"), Times.Once);
+    }
+    
+    [Theory, AutoMoqData]
+    public async Task OnAuthorizationAsync_ShouldReturnUnAuthorization_WhenInvitationParsedResultIsNull(
+        [Frozen] Mock<IJwtTokenService> jwtTokenServiceMock,
+        JwtParseResult jwtParseResult,
+        GlobalJwtTokenValidationFilter sut)
+    {
+        // Arrange
+        jwtParseResult.TokenType = JwtTokenType.AccessToken;
+        var context = CreateAuthorizationFilterContext(new RequireTokenTypeAttribute(JwtTokenType.FirstLoginToken));
+        context.HttpContext.Request.Headers.Authorization = "Invite WrongTypeToken";
+        jwtTokenServiceMock.Setup(jts => jts.ParseInvitationTokenAsync("WrongTypeToken"))
+            .ReturnsAsync(ServiceResult<InvitationParseResult>.Ok(null,"wrong token type", "wrong token type"));
+        
+        // Act
+        await sut.OnAuthorizationAsync(context);
+
+        // Assert
+        Assert.IsType<JsonResult>(context.Result);
+    }
+    
+    [Theory, AutoMoqData]
+    public async Task OnAuthorizationAsync_ShouldReturnForbidResult_WhenInvitationTypeIsInvalid(
+        [Frozen] Mock<IJwtTokenService> jwtTokenServiceMock,
+        InvitationParseResult invitationParseResult,
+        GlobalJwtTokenValidationFilter sut)
+    {
+        // Arrange
+        invitationParseResult.TokenType = JwtTokenType.InvitationToken;
+        var context = CreateAuthorizationFilterContext(new RequireTokenTypeAttribute(JwtTokenType.FirstLoginToken));
+        context.HttpContext.Request.Headers.Authorization = "Bearer WrongTypeToken";
+        jwtTokenServiceMock.Setup(jts => jts.ParseInvitationTokenAsync("WrongTypeToken"))
+            .ReturnsAsync(ServiceResult<InvitationParseResult>.Ok(invitationParseResult,"wrong token type", "wrong token type"));
+        
+        // Act
+        await sut.OnAuthorizationAsync(context);
+
+        // Assert
+        Assert.IsType<ForbidResult>(context.Result);
+    }
+    
+    [Theory, AutoMoqData]
+    public async Task OnAuthorizationAsync_ShouldReturnSuccess_WhenInvitationTokenValid(
+        [Frozen] Mock<IJwtTokenService> jwtTokenServiceMock,
+        InvitationParseResult invitationParseResult,
+        GlobalJwtTokenValidationFilter sut)
+    {
+        // Arrange
+        invitationParseResult.TokenType = JwtTokenType.InvitationToken;
+        var context = CreateAuthorizationFilterContext(new RequireTokenTypeAttribute(JwtTokenType.InvitationToken));
+        context.HttpContext.Request.Headers.Authorization = "Invite fine-token-in-request";
+        jwtTokenServiceMock.Setup(jts => jts.ParseInvitationTokenAsync("fine-token-in-request"))
+            .ReturnsAsync(ServiceResult<InvitationParseResult>.Ok(invitationParseResult,"good token", "good token"));
+        
+        // Act
+        await sut.OnAuthorizationAsync(context);
+
+        // Assert
+        Assert.IsNotType<UnauthorizedResult>(context.Result);
+        Assert.IsNotType<ForbidResult>(context.Result);
+        context.HttpContext.Items["InviteParseResult"].Should().NotBeNull();
+        context.HttpContext.Items["InviteParseResult"].Should().BeEquivalentTo(invitationParseResult);
     }
 }

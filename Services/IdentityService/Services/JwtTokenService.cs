@@ -90,7 +90,7 @@ public class JwtTokenService(IUserDomainService userService, IOptions<JwtOptions
                 "Invalid tenant ID.");
         }
 
-        var role = await userService.GetRoleInnerAsync(user);
+        var role = await userService.GetUserRoleInnerAsync(user);
         if (role is null)
         {
             return ServiceResult<JwtTokenPair>.Fail(ResultCodes.Token.RefreshJwtTokenFailedRoleInvalid,
@@ -198,7 +198,8 @@ public class JwtTokenService(IUserDomainService userService, IOptions<JwtOptions
         var invitationParseResult = new InvitationParseResult()
         {
             InvitationPublicId = invitationPublicId,
-            InvitationVersion = invitationVersion
+            InvitationVersion = invitationVersion,
+            TokenType = JwtTokenType.InvitationToken
         };
         return Task.FromResult(ServiceResult<InvitationParseResult>.Ok(invitationParseResult, 
             ResultCodes.Token.InvitationTokenParseSuccess, 

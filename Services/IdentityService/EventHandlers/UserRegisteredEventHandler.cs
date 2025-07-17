@@ -10,14 +10,14 @@ using SharedKernel.Topics;
 
 namespace IdentityService.EventHandlers;
 
-public class TenantRegisteredEventHandler(IUserAppService userService,
+public class UserRegisteredEventHandler(IUserAppService userService,
     IUserVerificationService userVerificationService,
     ICapPublisher capPublisher)
-    : INotificationHandler<TenantRegisteredEvent>
+    : INotificationHandler<UserRegisteredEvent>
 {
-    public async Task Handle(TenantRegisteredEvent tenantRegisteredEvent, CancellationToken cancellationToken)
+    public async Task Handle(UserRegisteredEvent userRegisteredEvent, CancellationToken cancellationToken)
     {
-        var getUserResult = await userService.GetUserByIdAsync(tenantRegisteredEvent.AdminUserId.ToString());
+        var getUserResult = await userService.GetUserByIdAsync(userRegisteredEvent.AdminUserId.ToString());
         if (getUserResult.Data == null)
         {
             throw new UserNotFoundException("Admin user not found");
@@ -36,7 +36,7 @@ public class TenantRegisteredEventHandler(IUserAppService userService,
         {
             To = getUserResult.Data.Email!,
             Subject = $"Please confirm your email",
-            Body = GetEmailVerificationBody(confirmUrl, tenantRegisteredEvent.TempPassword),
+            Body = GetEmailVerificationBody(confirmUrl, userRegisteredEvent.TempPassword),
             IsHtml = true
         }, new Dictionary<string, string?>(), cancellationToken);
         

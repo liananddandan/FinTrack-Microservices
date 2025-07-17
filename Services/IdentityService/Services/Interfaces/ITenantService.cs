@@ -10,4 +10,7 @@ public interface ITenantService
     
     Task<ServiceResult<bool>> InviteUserForTenantAsync(string adminPublicId, string adminJwtVersion,
         string tenantPublicId, string adminRoleInTenant, List<string> emails, CancellationToken cancellationToken = default);
+
+    Task<ServiceResult<bool>> ReceiveInviteForTenantAsync(string invitationPublicId, 
+        string invitationVersion, CancellationToken cancellationToken = default);
 }
