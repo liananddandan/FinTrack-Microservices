@@ -142,13 +142,13 @@ public class UserAppService(UserManager<ApplicationUser> userManager,
             return ServiceResult<bool>.Fail(ResultCodes.User.UserResetPasswordBeforeSetPasswordFailed, "User Reset Password Before Set Password Failed");
         }
 
-        var transactionResult = await unitOfWork.WithTransactionAsync(async () =>
+        var (transactionResult, reason) = await unitOfWork.WithTransactionAsync(async () =>
         {
-            var changePasswordResult = await userDomainService
+            var (changePasswordResult, reason) = await userDomainService
                 .ChangePasswordInnerAsync(user, oldPassword, newPassword, cancellationToken);
             if (!changePasswordResult)
             {
-                return changePasswordResult;
+                return (changePasswordResult, reason);
             }
 
             if (!reset)
@@ -158,11 +158,11 @@ public class UserAppService(UserManager<ApplicationUser> userManager,
 
             await userDomainService.IncreaseUserJwtVersionInnerAsync(user, cancellationToken);
 
-            return changePasswordResult;
+            return (changePasswordResult, reason);
         }, cancellationToken);
         return transactionResult
             ? ServiceResult<bool>.Ok(true, ResultCodes.User.UserChangePasswordSuccess, "User Change Password Success")
-            : ServiceResult<bool>.Fail(ResultCodes.User.UserSetPasswordFailed, "User Change Password Failed");
+            : ServiceResult<bool>.Fail(ResultCodes.User.UserSetPasswordFailed, reason);
     }
 
     public async Task<ServiceResult<JwtTokenPair>> RefreshUserTokenPairAsync(string userPublicId, string jwtVersion, CancellationToken cancellationToken = default)

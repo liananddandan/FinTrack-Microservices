@@ -13,7 +13,7 @@ public interface IUserDomainService
     Task<RoleStatus> AddUserToRoleInnerAsync(ApplicationUser user, string roleName, CancellationToken cancellationToken = default);
     Task<ApplicationUser?> GetUserByPublicIdIncludeTenantAsync(string userPublicId, CancellationToken cancellationToken = default);
     Task<string?> GetUserRoleInnerAsync(ApplicationUser user, CancellationToken cancellationToken = default);
-    Task<bool> ChangePasswordInnerAsync(ApplicationUser user, string oldPassword, string newPassword, CancellationToken cancellationToken = default);
+    Task<(bool, string)> ChangePasswordInnerAsync(ApplicationUser user, string oldPassword, string newPassword, CancellationToken cancellationToken = default);
     Task<ApplicationUser?> GetUserByEmailInnerAsync(string userEmail, CancellationToken cancellationToken = default);
     Task<ApplicationUser?> GetUserByEmailWithTenantInnerAsync(string userEmail, CancellationToken cancellationToken = default);
     Task ChangeFirstLoginStateInnerAsync(ApplicationUser user, CancellationToken cancellationToken = default);

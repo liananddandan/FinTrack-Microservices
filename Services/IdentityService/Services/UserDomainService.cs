@@ -85,15 +85,16 @@ public class UserDomainService(
         return roles.FirstOrDefault();
     }
 
-    public async Task<bool> ChangePasswordInnerAsync(ApplicationUser user, string oldPassword, string newPassword,
+    public async Task<(bool, string)> ChangePasswordInnerAsync(ApplicationUser user, string oldPassword, string newPassword,
         CancellationToken cancellationToken = default)
     {
         var changePasswordResult = await userManager.ChangePasswordAsync(user, oldPassword, newPassword);
+        var reason = "success";
         if (!changePasswordResult.Succeeded)
         {
-            logger.LogError($"ChangePasswordInner failed: {string.Join(", ", changePasswordResult.Errors)}");
+            reason = string.Join(Environment.NewLine, changePasswordResult.Errors.Select(e => e.Description));
         }
-        return changePasswordResult.Succeeded;
+        return (changePasswordResult.Succeeded, reason);
     }
 
     public async Task<ApplicationUser?> GetUserByEmailInnerAsync(string userEmail, CancellationToken cancellationToken = default)
