@@ -464,7 +464,7 @@ public class UserDomainServiceTests
         UserDomainService sut)
     {
         // Arrange
-        var role = new ApplicationRole(){Name = "TestRole"};
+        var role = new ApplicationRole(){ Name = "TestRole", NormalizedName = "TESTROLE"};
         var roles = new List<ApplicationRole>() {role}.AsQueryable();
         var rolesMock = roles.BuildMock();
         roleManagerMock.Setup(r => r.Roles).Returns(rolesMock);
@@ -491,7 +491,9 @@ public class UserDomainServiceTests
         var result = await sut.GetAllUsersInTenantIncludeRoleAsync(1, CancellationToken.None);
         
         // Assert
-        result.Should().BeNull();
+        result = result.ToList();
+        result.Should().NotBeNull();
+        result.Count().Should().Be(0);
     }
     
     [Theory, AutoMoqData]

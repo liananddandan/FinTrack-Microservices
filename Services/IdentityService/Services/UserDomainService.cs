@@ -153,9 +153,10 @@ public class UserDomainService(
 
     public async Task<ApplicationRole?> GetRoleByNameInnerAsync(string roleName, CancellationToken cancellationToken = default)
     {
+        roleName = roleName.ToUpperInvariant();
         return await roleManager.Roles
             .FirstOrDefaultAsync(r 
-                => roleName.ToUpperInvariant().Equals(r.Name!.ToUpperInvariant()), cancellationToken);
+                => roleName.Equals(r.NormalizedName), cancellationToken);
     }
 
     private string GenerateSecurePassword()
