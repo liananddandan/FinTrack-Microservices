@@ -12,8 +12,7 @@ public class InviteUserCommandHandler (
     {
         return await tenantService.InviteUserForTenantAsync(
             request.AdminUserPublicId,
-            request.AdminJwtVersion,
-            request.TenantPublicid,
+            request.TenantPublicId,
             request.AdminRoleInTenant,
             request.Emails,
             cancellationToken

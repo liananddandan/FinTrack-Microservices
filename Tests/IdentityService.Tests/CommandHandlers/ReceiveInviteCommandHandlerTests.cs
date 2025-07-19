@@ -19,7 +19,7 @@ public class ReceiveInviteCommandHandlerTests
     {
         // Arrange
         tenantServiceMock.Setup(
-            ts => ts.ReceiveInviteForTenantAsync(command.InvitationPublicId, command.InvitationVersion, CancellationToken.None))
+            ts => ts.ReceiveInviteForTenantAsync(command.InvitationPublicId, CancellationToken.None))
             .ReturnsAsync(ServiceResult<bool>.Ok(true, "receive invitation", "receive invitation"));
         
         // Act

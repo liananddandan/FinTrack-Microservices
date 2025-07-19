@@ -2,6 +2,7 @@ using AutoFixture.Xunit2;
 using FluentAssertions;
 using IdentityService.Common.DTOs;
 using IdentityService.Common.Status;
+using IdentityService.Domain.Entities;
 using IdentityService.Filters;
 using IdentityService.Filters.Attributes;
 using IdentityService.Services.Interfaces;
@@ -143,18 +144,106 @@ public class GlobalJwtTokenValidationFilterTests
     }
     
     [Theory, AutoMoqData]
-    public async Task OnAuthorizationAsync_ShouldReturnSuccess_WhenTokenValid(
+    public async Task OnAuthorizationAsync_ShouldReturnUnauthorizedResult_WhenUserNotFound(
         [Frozen] Mock<IJwtTokenService> jwtTokenServiceMock,
+        [Frozen] Mock<IUserDomainService> userDomainServiceMock,
         JwtParseResult jwtParseResult,
         GlobalJwtTokenValidationFilter sut)
     {
         // Arrange
         jwtParseResult.TokenType = JwtTokenType.AccessToken;
         var context = CreateAuthorizationFilterContext(new RequireTokenTypeAttribute(JwtTokenType.AccessToken));
+        context.HttpContext.Request.Headers.Authorization = "Bearer GoodToken";
+        jwtTokenServiceMock.Setup(jts => jts.ParseJwtTokenAsync("GoodToken"))
+            .ReturnsAsync(ServiceResult<JwtParseResult>
+                .Ok(jwtParseResult,"good token", "good type"));
+        userDomainServiceMock
+            .Setup(uds =>
+                uds.GetUserByPublicIdIncludeTenantAsync(jwtParseResult.UserPublicId, CancellationToken.None))
+            .ReturnsAsync((ApplicationUser?)null);
+        // Act
+        await sut.OnAuthorizationAsync(context);
+
+        // Assert
+        Assert.IsType<UnauthorizedResult>(context.Result);
+    }
+    
+    [Theory, AutoMoqData]
+    public async Task OnAuthorizationAsync_ShouldReturnUnauthorizedResult_WhenJwtTokenCanNotParsed(
+        [Frozen] Mock<IJwtTokenService> jwtTokenServiceMock,
+        [Frozen] Mock<IUserDomainService> userDomainServiceMock,
+        JwtParseResult jwtParseResult,
+        ApplicationUser user,
+        GlobalJwtTokenValidationFilter sut)
+    {
+        // Arrange
+        jwtParseResult.TokenType = JwtTokenType.AccessToken;
+        jwtParseResult.JwtVersion = "3s";
+        user.JwtVersion = 4;
+        var context = CreateAuthorizationFilterContext(new RequireTokenTypeAttribute(JwtTokenType.AccessToken));
+        context.HttpContext.Request.Headers.Authorization = "Bearer GoodToken";
+        jwtTokenServiceMock.Setup(jts => jts.ParseJwtTokenAsync("GoodToken"))
+            .ReturnsAsync(ServiceResult<JwtParseResult>
+                .Ok(jwtParseResult,"good token", "good type"));
+        userDomainServiceMock
+            .Setup(uds =>
+                uds.GetUserByPublicIdIncludeTenantAsync(jwtParseResult.UserPublicId, CancellationToken.None))
+            .ReturnsAsync(user);
+        // Act
+        await sut.OnAuthorizationAsync(context);
+
+        // Assert
+        Assert.IsType<UnauthorizedResult>(context.Result);
+    }
+    
+    [Theory, AutoMoqData]
+    public async Task OnAuthorizationAsync_ShouldReturnUnauthorizedResult_WhenJwtTokenIsNotValid(
+        [Frozen] Mock<IJwtTokenService> jwtTokenServiceMock,
+        [Frozen] Mock<IUserDomainService> userDomainServiceMock,
+        JwtParseResult jwtParseResult,
+        ApplicationUser user,
+        GlobalJwtTokenValidationFilter sut)
+    {
+        // Arrange
+        jwtParseResult.TokenType = JwtTokenType.AccessToken;
+        jwtParseResult.JwtVersion = "3";
+        user.JwtVersion = 4;
+        var context = CreateAuthorizationFilterContext(new RequireTokenTypeAttribute(JwtTokenType.AccessToken));
+        context.HttpContext.Request.Headers.Authorization = "Bearer GoodToken";
+        jwtTokenServiceMock.Setup(jts => jts.ParseJwtTokenAsync("GoodToken"))
+            .ReturnsAsync(ServiceResult<JwtParseResult>
+                .Ok(jwtParseResult,"good token", "good type"));
+        userDomainServiceMock
+            .Setup(uds =>
+                uds.GetUserByPublicIdIncludeTenantAsync(jwtParseResult.UserPublicId, CancellationToken.None))
+            .ReturnsAsync(user);
+        // Act
+        await sut.OnAuthorizationAsync(context);
+
+        // Assert
+        Assert.IsType<UnauthorizedResult>(context.Result);
+    }
+    
+    [Theory, AutoMoqData]
+    public async Task OnAuthorizationAsync_ShouldReturnSuccess_WhenTokenValid(
+        [Frozen] Mock<IJwtTokenService> jwtTokenServiceMock,
+        [Frozen] Mock<IUserDomainService> userDomainServiceMock,
+        JwtParseResult jwtParseResult,
+        ApplicationUser user,
+        GlobalJwtTokenValidationFilter sut)
+    {
+        // Arrange
+        jwtParseResult.TokenType = JwtTokenType.AccessToken;
+        jwtParseResult.JwtVersion = "3";
+        user.JwtVersion = 3;
+        var context = CreateAuthorizationFilterContext(new RequireTokenTypeAttribute(JwtTokenType.AccessToken));
         context.HttpContext.Request.Headers.Authorization = "Bearer fine-token-in-request";
         jwtTokenServiceMock.Setup(jts => jts.ParseJwtTokenAsync("fine-token-in-request"))
             .ReturnsAsync(ServiceResult<JwtParseResult>.Ok(jwtParseResult,"good token", "good token"));
-        
+        userDomainServiceMock
+            .Setup(uds =>
+                uds.GetUserByPublicIdIncludeTenantAsync(jwtParseResult.UserPublicId, CancellationToken.None))
+            .ReturnsAsync(user);
         // Act
         await sut.OnAuthorizationAsync(context);
 
@@ -240,18 +329,73 @@ public class GlobalJwtTokenValidationFilterTests
     }
     
     [Theory, AutoMoqData]
-    public async Task OnAuthorizationAsync_ShouldReturnSuccess_WhenInvitationTokenValid(
+    public async Task OnAuthorizationAsync_ShouldReturnForbidResult_WhenInvitationCouldNotFound(
         [Frozen] Mock<IJwtTokenService> jwtTokenServiceMock,
+        [Frozen] Mock<ITenantInvitationService> tenantInvitationServiceMock,
         InvitationParseResult invitationParseResult,
         GlobalJwtTokenValidationFilter sut)
     {
         // Arrange
         invitationParseResult.TokenType = JwtTokenType.InvitationToken;
         var context = CreateAuthorizationFilterContext(new RequireTokenTypeAttribute(JwtTokenType.InvitationToken));
-        context.HttpContext.Request.Headers.Authorization = "Invite fine-token-in-request";
-        jwtTokenServiceMock.Setup(jts => jts.ParseInvitationTokenAsync("fine-token-in-request"))
+        context.HttpContext.Request.Headers.Authorization = "Invite GoodToken";
+        jwtTokenServiceMock.Setup(jts => jts.ParseInvitationTokenAsync("GoodToken"))
             .ReturnsAsync(ServiceResult<InvitationParseResult>.Ok(invitationParseResult,"good token", "good token"));
-        
+        tenantInvitationServiceMock
+            .Setup(tis => tis.GetTenantInvitationByPublicIdAsync(invitationParseResult.InvitationPublicId, CancellationToken.None))
+            .ReturnsAsync(ServiceResult<TenantInvitation>.Fail("fail", "fail"));
+        // Act
+        await sut.OnAuthorizationAsync(context);
+
+        // Assert
+        Assert.IsType<UnauthorizedResult>(context.Result);
+    }
+    
+    [Theory, AutoMoqData]
+    public async Task OnAuthorizationAsync_ShouldReturnForbidResult_WhenInvitationVersionInvalid(
+        [Frozen] Mock<IJwtTokenService> jwtTokenServiceMock,
+        [Frozen] Mock<ITenantInvitationService> tenantInvitationServiceMock,
+        InvitationParseResult invitationParseResult,
+        TenantInvitation tenantInvitation,
+        GlobalJwtTokenValidationFilter sut)
+    {
+        // Arrange
+        tenantInvitation.Version = 5;
+        invitationParseResult.InvitationVersion = "4";
+        invitationParseResult.TokenType = JwtTokenType.InvitationToken;
+        var context = CreateAuthorizationFilterContext(new RequireTokenTypeAttribute(JwtTokenType.InvitationToken));
+        context.HttpContext.Request.Headers.Authorization = "Invite GoodToken";
+        jwtTokenServiceMock.Setup(jts => jts.ParseInvitationTokenAsync("GoodToken"))
+            .ReturnsAsync(ServiceResult<InvitationParseResult>.Ok(invitationParseResult,"good token", "good token"));
+        tenantInvitationServiceMock
+            .Setup(tis => tis.GetTenantInvitationByPublicIdAsync(invitationParseResult.InvitationPublicId, CancellationToken.None))
+            .ReturnsAsync(ServiceResult<TenantInvitation>.Ok(tenantInvitation,"good", "good"));
+        // Act
+        await sut.OnAuthorizationAsync(context);
+
+        // Assert
+        Assert.IsType<UnauthorizedResult>(context.Result);
+    }
+    
+    [Theory, AutoMoqData]
+    public async Task OnAuthorizationAsync_ShouldReturnSuccess_WhenInvitationTokenValid(
+        [Frozen] Mock<IJwtTokenService> jwtTokenServiceMock,
+        [Frozen] Mock<ITenantInvitationService> tenantInvitationServiceMock,
+        InvitationParseResult invitationParseResult,
+        TenantInvitation tenantInvitation,
+        GlobalJwtTokenValidationFilter sut)
+    {
+        // Arrange
+        tenantInvitation.Version = 5;
+        invitationParseResult.InvitationVersion = "5";
+        invitationParseResult.TokenType = JwtTokenType.InvitationToken;
+        var context = CreateAuthorizationFilterContext(new RequireTokenTypeAttribute(JwtTokenType.InvitationToken));
+        context.HttpContext.Request.Headers.Authorization = "Invite GoodToken";
+        jwtTokenServiceMock.Setup(jts => jts.ParseInvitationTokenAsync("GoodToken"))
+            .ReturnsAsync(ServiceResult<InvitationParseResult>.Ok(invitationParseResult,"good token", "good token"));
+        tenantInvitationServiceMock
+            .Setup(tis => tis.GetTenantInvitationByPublicIdAsync(invitationParseResult.InvitationPublicId, CancellationToken.None))
+            .ReturnsAsync(ServiceResult<TenantInvitation>.Ok(tenantInvitation,"good", "good"));
         // Act
         await sut.OnAuthorizationAsync(context);
 

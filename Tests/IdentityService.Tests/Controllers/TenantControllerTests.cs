@@ -149,7 +149,7 @@ public class TenantControllerTests(IdentityWebApplicationFactory<Program> factor
         content.Should().Contain(ResultCodes.Tenant.InvitationUsersStartSuccess);
     }
     
-        [Theory, AutoMoqData]
+    [Theory, AutoMoqData]
     public async Task ReceiveInviteAsync_ShouldReturnSuccess(
         [Frozen] Mock<ICapPublisher> capPublisherMock)
     {
@@ -209,5 +209,37 @@ public class TenantControllerTests(IdentityWebApplicationFactory<Program> factor
         
         // Assert
         receiveResponse.EnsureSuccessStatusCode();
+    }
+
+    [Fact]
+    public async Task GetUsersInfoInTenantAsync_ShouldReturnSuccess()
+    {
+        // Arrange
+        using var scope = factory.Services.CreateScope();
+        var jwtTokenService = scope.ServiceProvider.GetRequiredService<IJwtTokenService>();
+        var userDomainService = scope.ServiceProvider.GetRequiredService<IUserDomainService>();
+        var user = await userDomainService.GetUserByEmailWithTenantInnerAsync("testUserForGetUsersInTenantTest@test.com");
+        user.Should().NotBeNull();
+        var jwtClaimSource = new JwtClaimSource()
+        {
+            UserPublicId = user.PublicId.ToString(),
+            JwtVersion = user.JwtVersion.ToString(),
+            TenantPublicId = user.Tenant.PublicId.ToString(),
+            UserRoleInTenant = $"Admin_{user.Tenant!.Name}"
+        };
+        var generateResult = await jwtTokenService.GenerateJwtTokenAsync(jwtClaimSource, JwtTokenType.AccessToken);
+        generateResult.Success.Should().BeTrue();
+        generateResult.Data.Should().NotBeNull();
+        var accessToken = generateResult.Data;
+        var client = factory.CreateClient();
+        client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
+
+        // Act
+        var result = await client.GetAsync("/api/tenant/users");
+        
+        //Assert
+        result.EnsureSuccessStatusCode();
+        var content = await result.Content.ReadAsStringAsync();
+        testOutputHelper.WriteLine(content);
     }
 }

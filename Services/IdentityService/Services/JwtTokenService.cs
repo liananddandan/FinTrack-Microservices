@@ -76,12 +76,6 @@ public class JwtTokenService(IUserDomainService userService, IOptions<JwtOptions
                 "Invalid refresh token with invalid user.");
         }
 
-        if (!long.TryParse(jwtVersion, out var jwtVersionL) || user.JwtVersion > jwtVersionL)
-        {
-            return ServiceResult<JwtTokenPair>.Fail(ResultCodes.Token.RefreshJwtTokenFailedVersionInvalid,
-                "Invalid refresh token version.");
-        }
-
         if (!Guid.TryParse(tenantPublicId, out var tPublicId)
             || user.Tenant == null
             || !user.Tenant.PublicId.Equals(tPublicId))

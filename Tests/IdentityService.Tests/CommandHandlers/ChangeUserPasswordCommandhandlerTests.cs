@@ -20,14 +20,13 @@ public class ChangeUserPasswordCommandhandlerTests
         // Arrange
         var command = new SetUserPasswordCommand(
             Guid.NewGuid().ToString(),
-            "1",
             "NewPassword",
             "OldPassword",
             true
         );
 
     userAppServiceMock.Setup(uas => uas.SetUserPasswordAsync(
-            command.UserPublicId, command.JwtVersion, 
+            command.UserPublicId, 
             command.OldPassword, command.NewPassword, 
             command.Reset, CancellationToken.None))
             .ReturnsAsync(ServiceResult<bool>.Ok(true, "Change password successfully.", "Change password successfully."));

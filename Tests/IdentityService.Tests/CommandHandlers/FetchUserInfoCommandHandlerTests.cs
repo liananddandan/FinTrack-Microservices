@@ -21,7 +21,7 @@ public class FetchUserInfoCommandHandlerTests
     {
         // Arrange
         userAppServiceMock.Setup(uas 
-            => uas.GetUserInfoAsync(require.UserPublicId, require.JwtVersion, CancellationToken.None))
+            => uas.GetUserInfoAsync(require.UserPublicId, CancellationToken.None))
             .ReturnsAsync(ServiceResult<UserInfoDto>.Ok(userInfo, "get user info", "get user info"));
         
         // Act

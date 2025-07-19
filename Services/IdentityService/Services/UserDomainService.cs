@@ -16,7 +16,7 @@ public class UserDomainService(
     IApplicationUserRepo userRepo) : IUserDomainService
 {
     public async Task<(ApplicationUser, string)> CreateUserOrThrowInnerAsync(string userName, string userEmail,
-        long tenantId, CancellationToken cancellationToken = default)
+        long tenantId, long roleId, CancellationToken cancellationToken = default)
     {
         var randomPassword = GenerateSecurePassword();
         var user = new ApplicationUser
@@ -25,6 +25,7 @@ public class UserDomainService(
             Email = userEmail,
             EmailConfirmed = false,
             TenantId = tenantId,
+            RoleId = roleId
         };
         var result = await userManager.CreateAsync(user, randomPassword);
         if (!result.Succeeded)
@@ -50,6 +51,16 @@ public class UserDomainService(
         }
 
         var result = await roleManager.CreateAsync(new ApplicationRole() { Name = roleName });
+        return result.Succeeded ? RoleStatus.CreateSuccess : RoleStatus.CreateFailed;
+    }
+
+    public async Task<RoleStatus> CreateRoleInnerAsync(ApplicationRole role, CancellationToken cancellationToken = default)
+    {
+        if (await roleManager.RoleExistsAsync(role.Name!.ToUpperInvariant()))
+        {
+            return RoleStatus.RoleAlreadyExist;
+        }
+        var result = await roleManager.CreateAsync(role);
         return result.Succeeded ? RoleStatus.CreateSuccess : RoleStatus.CreateFailed;
     }
 
@@ -117,6 +128,34 @@ public class UserDomainService(
     {
         userRepo.IncreaseJwtVersion(user, cancellationToken);
         return Task.CompletedTask;
+    }
+
+    public async Task<ApplicationUser?> GetUserByPublicIdIncludeTenantAndRoleAsync(string userPublicId, CancellationToken cancellationToken = default)
+    {
+        if (!Guid.TryParse(userPublicId, out var uPublicId))
+        {
+            return null;
+        }
+        
+        var user = await userManager.Users.Include(u => u.Tenant)
+            .Include(u => u.Role)
+            .Where(u => u.PublicId == uPublicId)
+            .FirstOrDefaultAsync(cancellationToken);
+        return user;
+    }
+
+    public async Task<IEnumerable<ApplicationUser>> GetAllUsersInTenantIncludeRoleAsync(long tenantId, CancellationToken cancellationToken = default)
+    {
+        return await userManager.Users.Include(u => u.Role)
+            .Where(u => u.TenantId == tenantId)
+            .ToListAsync(cancellationToken);
+    }
+
+    public async Task<ApplicationRole?> GetRoleByNameInnerAsync(string roleName, CancellationToken cancellationToken = default)
+    {
+        return await roleManager.Roles
+            .FirstOrDefaultAsync(r 
+                => roleName.ToUpperInvariant().Equals(r.Name!.ToUpperInvariant()), cancellationToken);
     }
 
     private string GenerateSecurePassword()

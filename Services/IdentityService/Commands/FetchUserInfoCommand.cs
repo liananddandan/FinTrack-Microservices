@@ -4,4 +4,4 @@ using SharedKernel.Common.Results;
 
 namespace IdentityService.Commands;
 
-public record FetchUserInfoCommand(string UserPublicId, string JwtVersion) : IRequest<ServiceResult<UserInfoDto>>;
+public record FetchUserInfoCommand(string UserPublicId) : IRequest<ServiceResult<UserInfoDto>>;

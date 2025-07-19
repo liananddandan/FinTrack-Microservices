@@ -12,4 +12,7 @@ public class ApplicationUser : IdentityUser<long>
     public DateTime? DeletedAt { get; set; }
     public long JwtVersion { get; set; } = 1;
     public bool IsFirstLogin { get; set; } = true;
+    
+    public required long RoleId { get; set; }
+    public ApplicationRole Role { get; set; }
 }

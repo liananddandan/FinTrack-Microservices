@@ -17,7 +17,11 @@ public static class ResultCodes
         public const string InvitationHasAccepted = "100001009";
         public const string InvitationWithAInvalidTenant = "100001010";
         public const string InvitationCreateFailed = "100001011";
+        public const string UserDoNotHavePermissionToQueryTenant = "100001012";
+        public const string UserDoNotBelongToTenant = "100001013";
+        public const string InvitationUsingWrongRole = "100001014";
         // RegisterTenant Success 100 001 999
+        public const string GetAllUserInTenantSuccess = "100001992";
         public const string InvitationReceiveSuccess = "100001993";
         public const string InvitationRecordUpdateSuccess = "100001994";
         public const string InvitationRecordFoundByEmailSuccess = "100001995";

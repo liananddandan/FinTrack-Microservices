@@ -19,8 +19,8 @@ public class InviteUserCommandHandlerTest
     {
         // Arrange
         tenantServiceMock.Setup(ts => ts.InviteUserForTenantAsync(
-            inviteUserCommand.AdminUserPublicId, inviteUserCommand.AdminJwtVersion,
-            inviteUserCommand.TenantPublicid, inviteUserCommand.AdminRoleInTenant,
+            inviteUserCommand.AdminUserPublicId,
+            inviteUserCommand.TenantPublicId, inviteUserCommand.AdminRoleInTenant,
             inviteUserCommand.Emails, CancellationToken.None))
             .ReturnsAsync(ServiceResult<bool>.Ok(true, "invite", "invite"));
         

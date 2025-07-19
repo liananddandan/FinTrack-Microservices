@@ -33,7 +33,7 @@ public class TenantServiceTests
 
         userDomainServiceMock.Setup(u
                 => u.CreateUserOrThrowInnerAsync(It.IsAny<string>(),
-                    It.IsAny<string>(), It.IsAny<long>(),
+                    It.IsAny<string>(), It.IsAny<long>(), It.IsAny<long>(),
                     It.IsAny<CancellationToken>()))
             .ThrowsAsync(new UserCreateException("UserCreateException"));
 
@@ -57,9 +57,8 @@ public class TenantServiceTests
         // Arrange
         unitOfWorkMock.SetupExecuteWithTransaction<ServiceResult<RegisterTenantResult>>();
 
-        var roleName = $"Admin_{tenantName}";
         userDomainServiceMock.Setup(u
-                => u.CreateRoleInnerAsync(roleName, It.IsAny<CancellationToken>()))
+                => u.CreateRoleInnerAsync(It.IsAny<ApplicationRole>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(RoleStatus.CreateFailed);
 
         // Act
@@ -89,11 +88,13 @@ public class TenantServiceTests
             Id = 3003,
             Email = adminEmail,
             UserName = adminName,
-            TenantId = 2002
+            TenantId = 2002,
+            RoleId = 1
         };
         userDomainServiceMock.Setup(u
                 => u.CreateUserOrThrowInnerAsync(It.IsAny<string>(),
                     It.IsAny<string>(), It.IsAny<long>(),
+                    It.IsAny<long>(),
                     It.IsAny<CancellationToken>()))
             .ReturnsAsync((user, randomPassword));
         var roleName = $"Admin_{tenantName}";
@@ -132,11 +133,13 @@ public class TenantServiceTests
             Id = 3003,
             Email = adminEmail,
             UserName = adminName,
-            TenantId = 2002
+            TenantId = 2002,
+            RoleId = 1
         };
         userDomainServiceMock.Setup(u
                 => u.CreateUserOrThrowInnerAsync(It.IsAny<string>(),
                     It.IsAny<string>(), It.IsAny<long>(),
+                    It.IsAny<long>(),
                     It.IsAny<CancellationToken>()))
             .ReturnsAsync((user, randomPassword));
         var roleName = "Admin";
@@ -164,7 +167,7 @@ public class TenantServiceTests
     [Theory, AutoMoqData]
     public async Task InviteUserForTenantAsync_ShouldReturnFail_WhenUserNotExist(
         [Frozen] Mock<IUserDomainService> userDomainServiceMock,
-        string adminPublicId, string adminJwtVersion, string tenantPublicId,
+        string adminPublicId, string tenantPublicId,
         string adminRoleInTenant, List<string> emails,
         TenantService sut)
     {
@@ -174,8 +177,7 @@ public class TenantServiceTests
             .ReturnsAsync((ApplicationUser?)null);
 
         // Act
-        var result = await sut.InviteUserForTenantAsync(adminPublicId, adminJwtVersion, tenantPublicId,
-            adminRoleInTenant, emails);
+        var result = await sut.InviteUserForTenantAsync(adminPublicId, tenantPublicId, adminRoleInTenant, emails);
 
         // Assert
         result.Success.Should().BeFalse();
@@ -185,7 +187,7 @@ public class TenantServiceTests
     [Theory, AutoMoqData]
     public async Task InviteUserForTenantAsync_ShouldReturnFail_WhenUserTenantNotExist(
         [Frozen] Mock<IUserDomainService> userDomainServiceMock,
-        string adminPublicId, string adminJwtVersion, string tenantPublicId,
+        string adminPublicId, string tenantPublicId,
         string adminRoleInTenant, List<string> emails,
         ApplicationUser user,
         TenantService sut)
@@ -197,7 +199,7 @@ public class TenantServiceTests
             .ReturnsAsync(user);
 
         // Act
-        var result = await sut.InviteUserForTenantAsync(adminPublicId, adminJwtVersion, tenantPublicId,
+        var result = await sut.InviteUserForTenantAsync(adminPublicId, tenantPublicId,
             adminRoleInTenant, emails);
 
         // Assert
@@ -208,7 +210,7 @@ public class TenantServiceTests
     [Theory, AutoMoqData]
     public async Task InviteUserForTenantAsync_ShouldReturnFail_WhenUserTenantNotMatch(
         [Frozen] Mock<IUserDomainService> userDomainServiceMock,
-        string adminPublicId, string adminJwtVersion, string tenantPublicId,
+        string adminPublicId, string tenantPublicId,
         string adminRoleInTenant, List<string> emails,
         ApplicationUser user,
         TenantService sut)
@@ -219,37 +221,14 @@ public class TenantServiceTests
             .ReturnsAsync(user);
 
         // Act
-        var result = await sut.InviteUserForTenantAsync(adminPublicId, adminJwtVersion, tenantPublicId,
+        var result = await sut.InviteUserForTenantAsync(adminPublicId, tenantPublicId,
             adminRoleInTenant, emails);
 
         // Assert
         result.Success.Should().BeFalse();
         result.Code.Should().BeEquivalentTo(ResultCodes.User.UserTenantInfoMissed);
     }
-
-    [Theory, AutoMoqData]
-    public async Task InviteUserForTenantAsync_ShouldReturnFail_WhenJwtVersionNotMatch(
-        [Frozen] Mock<IUserDomainService> userDomainServiceMock,
-        string adminJwtVersion,
-        string adminRoleInTenant, List<string> emails,
-        ApplicationUser user,
-        TenantService sut)
-    {
-        // Arrange
-        userDomainServiceMock
-            .Setup(uds =>
-                uds.GetUserByPublicIdIncludeTenantAsync(user.PublicId.ToString(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(user);
-
-        // Act
-        var result = await sut.InviteUserForTenantAsync(user.PublicId.ToString(), adminJwtVersion,
-            user.Tenant!.PublicId.ToString(), adminRoleInTenant, emails);
-
-        // Assert
-        result.Success.Should().BeFalse();
-        result.Code.Should().BeEquivalentTo(ResultCodes.Token.JwtTokenVersionInvalid);
-    }
-
+    
     [Theory, AutoMoqData]
     public async Task InviteUserForTenantAsync_ShouldReturnFail_WhenRoleNotExist(
         [Frozen] Mock<IUserDomainService> userDomainServiceMock,
@@ -267,7 +246,7 @@ public class TenantServiceTests
             .ReturnsAsync((string?)null);
 
         // Act
-        var result = await sut.InviteUserForTenantAsync(user.PublicId.ToString(), user.JwtVersion.ToString(),
+        var result = await sut.InviteUserForTenantAsync(user.PublicId.ToString(),
             user.Tenant!.PublicId.ToString(), adminRoleInTenant, emails);
 
         // Assert
@@ -293,7 +272,7 @@ public class TenantServiceTests
             .ReturnsAsync(role);
 
         // Act
-        var result = await sut.InviteUserForTenantAsync(user.PublicId.ToString(), user.JwtVersion.ToString(),
+        var result = await sut.InviteUserForTenantAsync(user.PublicId.ToString(), 
             user.Tenant!.PublicId.ToString(), adminRoleInTenant, emails);
 
         // Assert
@@ -318,7 +297,7 @@ public class TenantServiceTests
             .ReturnsAsync(role);
 
         // Act
-        var result = await sut.InviteUserForTenantAsync(user.PublicId.ToString(), user.JwtVersion.ToString(),
+        var result = await sut.InviteUserForTenantAsync(user.PublicId.ToString(),
             user.Tenant!.PublicId.ToString(), role, emails);
 
         // Assert
@@ -343,7 +322,7 @@ public class TenantServiceTests
             .ReturnsAsync(role);
 
         // Act
-        var result = await sut.InviteUserForTenantAsync(user.PublicId.ToString(), user.JwtVersion.ToString(),
+        var result = await sut.InviteUserForTenantAsync(user.PublicId.ToString(),
             user.Tenant!.PublicId.ToString(), role, emails);
 
         // Assert
@@ -355,7 +334,6 @@ public class TenantServiceTests
     public async Task ReceiveInviteForTenantAsync_ShouldReturnFalse_WhenInvitationNotExist(
         [Frozen] Mock<ITenantInvitationService> tenantInvitationServiceMock,
         string invitationPublicId,
-        string invitationVersion,
         TenantService sut
     )
     {
@@ -366,7 +344,7 @@ public class TenantServiceTests
 
         // Act
         var result =
-            await sut.ReceiveInviteForTenantAsync(invitationPublicId, invitationVersion, CancellationToken.None);
+            await sut.ReceiveInviteForTenantAsync(invitationPublicId, CancellationToken.None);
 
         // Assert
         result.Success.Should().BeFalse();
@@ -377,7 +355,6 @@ public class TenantServiceTests
     public async Task ReceiveInviteForTenantAsync_ShouldReturnFalse_WhenInvitationExpired(
         [Frozen] Mock<ITenantInvitationService> tenantInvitationServiceMock,
         string invitationPublicId,
-        string invitationVersion,
         TenantInvitation invitation,
         TenantService sut
     )
@@ -390,60 +367,11 @@ public class TenantServiceTests
 
         // Act
         var result =
-            await sut.ReceiveInviteForTenantAsync(invitationPublicId, invitationVersion, CancellationToken.None);
+            await sut.ReceiveInviteForTenantAsync(invitationPublicId, CancellationToken.None);
 
         // Assert
         result.Success.Should().BeFalse();
         result.Code.Should().BeEquivalentTo(ResultCodes.Tenant.InvitationExpired);
-    }
-
-    [Theory, AutoMoqData]
-    public async Task ReceiveInviteForTenantAsync_ShouldReturnFalse_WhenVersionInvalid(
-        [Frozen] Mock<ITenantInvitationService> tenantInvitationServiceMock,
-        string invitationPublicId,
-        string invitationVersion,
-        TenantInvitation invitation,
-        TenantService sut
-    )
-    {
-        // Arrange
-        invitation.ExpiredAt = DateTime.UtcNow.AddDays(7);
-        tenantInvitationServiceMock
-            .Setup(tis => tis.GetTenantInvitationByPublicIdAsync(invitationPublicId, It.IsAny<CancellationToken>()))
-            .ReturnsAsync(ServiceResult<TenantInvitation>.Ok(invitation, "exist", "exist"));
-
-        // Act
-        var result =
-            await sut.ReceiveInviteForTenantAsync(invitationPublicId, invitationVersion, CancellationToken.None);
-
-        // Assert
-        result.Success.Should().BeFalse();
-        result.Code.Should().BeEquivalentTo(ResultCodes.Tenant.InvitationVersionInvalid);
-    }
-
-    [Theory, AutoMoqData]
-    public async Task ReceiveInviteForTenantAsync_ShouldReturnFalse_WhenVersionNotMatch(
-        [Frozen] Mock<ITenantInvitationService> tenantInvitationServiceMock,
-        string invitationPublicId,
-        TenantInvitation invitation,
-        TenantService sut
-    )
-    {
-        // Arrange
-        invitation.ExpiredAt = DateTime.UtcNow.AddDays(7);
-        invitation.Version = 4;
-        var invitationVersion = "3";
-        tenantInvitationServiceMock
-            .Setup(tis => tis.GetTenantInvitationByPublicIdAsync(invitationPublicId, It.IsAny<CancellationToken>()))
-            .ReturnsAsync(ServiceResult<TenantInvitation>.Ok(invitation, "exist", "exist"));
-
-        // Act
-        var result =
-            await sut.ReceiveInviteForTenantAsync(invitationPublicId, invitationVersion, CancellationToken.None);
-
-        // Assert
-        result.Success.Should().BeFalse();
-        result.Code.Should().BeEquivalentTo(ResultCodes.Tenant.InvitationVersionInvalid);
     }
 
     [Theory, AutoMoqData]
@@ -458,14 +386,13 @@ public class TenantServiceTests
         invitation.Version = 4;
         invitation.ExpiredAt = DateTime.UtcNow.AddDays(7);
         invitation.Status = InvitationStatus.Revoked;
-        var invitationVersion = "4";
         tenantInvitationServiceMock
             .Setup(tis => tis.GetTenantInvitationByPublicIdAsync(invitationPublicId, It.IsAny<CancellationToken>()))
             .ReturnsAsync(ServiceResult<TenantInvitation>.Ok(invitation, "exist", "exist"));
 
         // Act
         var result =
-            await sut.ReceiveInviteForTenantAsync(invitationPublicId, invitationVersion, CancellationToken.None);
+            await sut.ReceiveInviteForTenantAsync(invitationPublicId, CancellationToken.None);
 
         // Assert
         result.Success.Should().BeFalse();
@@ -484,14 +411,13 @@ public class TenantServiceTests
         invitation.Version = 4;
         invitation.ExpiredAt = DateTime.UtcNow.AddDays(7);
         invitation.Status = InvitationStatus.Accepted;
-        var invitationVersion = "4";
         tenantInvitationServiceMock
             .Setup(tis => tis.GetTenantInvitationByPublicIdAsync(invitationPublicId, It.IsAny<CancellationToken>()))
             .ReturnsAsync(ServiceResult<TenantInvitation>.Ok(invitation, "exist", "exist"));
 
         // Act
         var result =
-            await sut.ReceiveInviteForTenantAsync(invitationPublicId, invitationVersion, CancellationToken.None);
+            await sut.ReceiveInviteForTenantAsync(invitationPublicId, CancellationToken.None);
 
         // Assert
         result.Success.Should().BeFalse();
@@ -504,7 +430,6 @@ public class TenantServiceTests
         [Frozen] Mock<ITenantRepo> tenantRepoMock,
         string invitationPublicId,
         TenantInvitation invitation,
-        Tenant tenant,
         TenantService sut
     )
     {
@@ -512,7 +437,6 @@ public class TenantServiceTests
         invitation.Version = 4;
         invitation.ExpiredAt = DateTime.UtcNow.AddDays(7);
         invitation.Status = InvitationStatus.Pending;
-        var invitationVersion = "4";
         tenantInvitationServiceMock
             .Setup(tis => tis.GetTenantInvitationByPublicIdAsync(invitationPublicId, It.IsAny<CancellationToken>()))
             .ReturnsAsync(ServiceResult<TenantInvitation>.Ok(invitation, "exist", "exist"));
@@ -522,7 +446,7 @@ public class TenantServiceTests
 
         // Act
         var result =
-            await sut.ReceiveInviteForTenantAsync(invitationPublicId, invitationVersion, CancellationToken.None);
+            await sut.ReceiveInviteForTenantAsync(invitationPublicId, CancellationToken.None);
 
         // Assert
         result.Success.Should().BeFalse();
@@ -546,7 +470,6 @@ public class TenantServiceTests
         invitation.Version = 4;
         invitation.ExpiredAt = DateTime.UtcNow.AddDays(7);
         invitation.Status = InvitationStatus.Pending;
-        var invitationVersion = "4";
         tenantInvitationServiceMock
             .Setup(tis => tis.GetTenantInvitationByPublicIdAsync(invitationPublicId, It.IsAny<CancellationToken>()))
             .ReturnsAsync(ServiceResult<TenantInvitation>.Ok(invitation, "exist", "exist"));
@@ -554,12 +477,12 @@ public class TenantServiceTests
             .Setup(tr => tr.GetTenantByPublicIdAsync(invitation.TenantPublicId, It.IsAny<CancellationToken>()))
             .ReturnsAsync(tenant);
         userDomainServiceMock.Setup(uds => uds.CreateUserOrThrowInnerAsync(
-                It.IsAny<string>(), It.IsAny<string>(), It.IsAny<long>(), It.IsAny<CancellationToken>()))
+                It.IsAny<string>(), It.IsAny<string>(), It.IsAny<long>(), It.IsAny<long>(),It.IsAny<CancellationToken>()))
             .ThrowsAsync(new UserCreateException("user creation failed"));
 
         // Act
         var result =
-            await sut.ReceiveInviteForTenantAsync(invitationPublicId, invitationVersion, CancellationToken.None);
+            await sut.ReceiveInviteForTenantAsync(invitationPublicId, CancellationToken.None);
 
         // Assert
         result.Success.Should().BeFalse();
@@ -585,7 +508,6 @@ public class TenantServiceTests
         invitation.Version = 4;
         invitation.ExpiredAt = DateTime.UtcNow.AddDays(7);
         invitation.Status = InvitationStatus.Pending;
-        var invitationVersion = "4";
         tenantInvitationServiceMock
             .Setup(tis => tis.GetTenantInvitationByPublicIdAsync(invitationPublicId, It.IsAny<CancellationToken>()))
             .ReturnsAsync(ServiceResult<TenantInvitation>.Ok(invitation, "exist", "exist"));
@@ -593,7 +515,7 @@ public class TenantServiceTests
             .Setup(tr => tr.GetTenantByPublicIdAsync(invitation.TenantPublicId, It.IsAny<CancellationToken>()))
             .ReturnsAsync(tenant);
         userDomainServiceMock.Setup(uds => uds.CreateUserOrThrowInnerAsync(
-                It.IsAny<string>(), It.IsAny<string>(), It.IsAny<long>(), It.IsAny<CancellationToken>()))
+                It.IsAny<string>(), It.IsAny<string>(), It.IsAny<long>(),It.IsAny<long>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync((user, password));
         userDomainServiceMock.Setup(uds => uds.IsRoleExistAsync(invitation.Role, It.IsAny<CancellationToken>()))
             .ReturnsAsync(RoleStatus.RoleNotExist);
@@ -602,7 +524,7 @@ public class TenantServiceTests
 
         // Act
         var result =
-            await sut.ReceiveInviteForTenantAsync(invitationPublicId, invitationVersion, CancellationToken.None);
+            await sut.ReceiveInviteForTenantAsync(invitationPublicId, CancellationToken.None);
 
         // Assert
         result.Success.Should().BeFalse();
@@ -628,7 +550,6 @@ public class TenantServiceTests
         invitation.Version = 4;
         invitation.ExpiredAt = DateTime.UtcNow.AddDays(7);
         invitation.Status = InvitationStatus.Pending;
-        var invitationVersion = "4";
         tenantInvitationServiceMock
             .Setup(tis => tis.GetTenantInvitationByPublicIdAsync(invitationPublicId, It.IsAny<CancellationToken>()))
             .ReturnsAsync(ServiceResult<TenantInvitation>.Ok(invitation, "exist", "exist"));
@@ -636,7 +557,7 @@ public class TenantServiceTests
             .Setup(tr => tr.GetTenantByPublicIdAsync(invitation.TenantPublicId, It.IsAny<CancellationToken>()))
             .ReturnsAsync(tenant);
         userDomainServiceMock.Setup(uds => uds.CreateUserOrThrowInnerAsync(
-                It.IsAny<string>(), It.IsAny<string>(), It.IsAny<long>(), It.IsAny<CancellationToken>()))
+                It.IsAny<string>(), It.IsAny<string>(), It.IsAny<long>(), It.IsAny<long>(),It.IsAny<CancellationToken>()))
             .ReturnsAsync((user, password));
         userDomainServiceMock.Setup(uds => uds.IsRoleExistAsync(invitation.Role, It.IsAny<CancellationToken>()))
             .ReturnsAsync(RoleStatus.RoleNotExist);
@@ -648,7 +569,7 @@ public class TenantServiceTests
 
         // Act
         var result =
-            await sut.ReceiveInviteForTenantAsync(invitationPublicId, invitationVersion, CancellationToken.None);
+            await sut.ReceiveInviteForTenantAsync(invitationPublicId, CancellationToken.None);
 
         // Assert
         result.Success.Should().BeFalse();
@@ -661,7 +582,6 @@ public class TenantServiceTests
         [Frozen] Mock<ITenantRepo> tenantRepoMock,
         [Frozen] Mock<IUnitOfWork> unitOfWorkMock,
         [Frozen] Mock<IUserDomainService> userDomainServiceMock,
-        [Frozen] Mock<ITenantInvitationService> invitationServiceMock,
         ApplicationUser user,
         string password,
         string invitationPublicId,
@@ -675,7 +595,6 @@ public class TenantServiceTests
         invitation.Version = 4;
         invitation.ExpiredAt = DateTime.UtcNow.AddDays(7);
         invitation.Status = InvitationStatus.Pending;
-        var invitationVersion = "4";
         tenantInvitationServiceMock
             .Setup(tis => tis.GetTenantInvitationByPublicIdAsync(invitationPublicId, It.IsAny<CancellationToken>()))
             .ReturnsAsync(ServiceResult<TenantInvitation>.Ok(invitation, "exist", "exist"));
@@ -683,7 +602,7 @@ public class TenantServiceTests
             .Setup(tr => tr.GetTenantByPublicIdAsync(invitation.TenantPublicId, It.IsAny<CancellationToken>()))
             .ReturnsAsync(tenant);
         userDomainServiceMock.Setup(uds => uds.CreateUserOrThrowInnerAsync(
-                It.IsAny<string>(), It.IsAny<string>(), It.IsAny<long>(), It.IsAny<CancellationToken>()))
+                It.IsAny<string>(), It.IsAny<string>(), It.IsAny<long>(), It.IsAny<long>(),It.IsAny<CancellationToken>()))
             .ReturnsAsync((user, password));
         userDomainServiceMock.Setup(uds => uds.IsRoleExistAsync(invitation.Role, It.IsAny<CancellationToken>()))
             .ReturnsAsync(RoleStatus.RoleNotExist);
@@ -697,11 +616,155 @@ public class TenantServiceTests
 
         // Act
         var result =
-            await sut.ReceiveInviteForTenantAsync(invitationPublicId, invitationVersion, CancellationToken.None);
+            await sut.ReceiveInviteForTenantAsync(invitationPublicId, CancellationToken.None);
 
         // Assert
         result.Success.Should().BeTrue();
         result.Code.Should().BeEquivalentTo(ResultCodes.Tenant.InvitationReceiveSuccess);
+    }
+
+    [Theory, AutoMoqData]
+    public async Task GetUsersForTenantAsync_ShouldReturnFail_WhenAdminNotFound(
+        [Frozen]Mock<IUserDomainService> userDomainServiceMock,
+        string adminPublicId, 
+        string tenantPublicId,
+        string adminRoleInTenant,
+        TenantService sut)
+    {
+        // Arrange
+        userDomainServiceMock
+            .Setup(uds => uds.GetUserByPublicIdIncludeTenantAndRoleAsync(adminPublicId, CancellationToken.None))
+            .ReturnsAsync((ApplicationUser?)null);
         
+        // Act
+        var result = await sut.GetUsersForTenantAsync(adminPublicId, tenantPublicId, adminRoleInTenant, CancellationToken.None);
+        
+        // Assert
+        result.Success.Should().BeFalse();
+        result.Code.Should().BeEquivalentTo(ResultCodes.User.UserNotFound);
+    }
+    
+    [Theory, AutoMoqData]
+    public async Task GetUsersForTenantAsync_ShouldReturnFail_WhenRoleIncorecct(
+        [Frozen]Mock<IUserDomainService> userDomainServiceMock,
+        string adminPublicId, 
+        string tenantPublicId,
+        string adminRoleInTenant,
+        ApplicationUser user,
+        TenantService sut)
+    {
+        // Arrange
+        userDomainServiceMock
+            .Setup(uds => uds.GetUserByPublicIdIncludeTenantAndRoleAsync(adminPublicId, CancellationToken.None))
+            .ReturnsAsync(user);
+        
+        // Act
+        var result = await sut.GetUsersForTenantAsync(adminPublicId, tenantPublicId, adminRoleInTenant, CancellationToken.None);
+        
+        // Assert
+        result.Success.Should().BeFalse();
+        result.Code.Should().BeEquivalentTo(ResultCodes.Tenant.UserDoNotHavePermissionToQueryTenant);
+    }
+    
+    [Theory, AutoMoqData]
+    public async Task GetUsersForTenantAsync_ShouldReturnFail_WhenRoleIncorrect(
+        [Frozen]Mock<IUserDomainService> userDomainServiceMock,
+        string adminPublicId, 
+        string tenantPublicId,
+        string adminRoleInTenant,
+        ApplicationUser user,
+        TenantService sut)
+    {
+        // Arrange
+        user.Role.Name = "Admin_Test";
+        userDomainServiceMock
+            .Setup(uds => uds.GetUserByPublicIdIncludeTenantAndRoleAsync(adminPublicId, CancellationToken.None))
+            .ReturnsAsync(user);
+        
+        // Act
+        var result = await sut.GetUsersForTenantAsync(adminPublicId, tenantPublicId, adminRoleInTenant, CancellationToken.None);
+        
+        // Assert
+        result.Success.Should().BeFalse();
+        result.Code.Should().BeEquivalentTo(ResultCodes.Tenant.UserDoNotHavePermissionToQueryTenant);
+    }
+    
+    [Theory, AutoMoqData]
+    public async Task GetUsersForTenantAsync_ShouldReturnFail_WhenPermissonNotBelongToTenantIncorrect(
+        [Frozen]Mock<IUserDomainService> userDomainServiceMock,
+        string adminPublicId, 
+        string tenantPublicId,
+        string adminRoleInTenant,
+        ApplicationUser user,
+        TenantService sut)
+    {
+        // Arrange
+        user.Tenant.Name = "Test_Role";
+        user.Role.Name = "Admin_Test";
+        userDomainServiceMock
+            .Setup(uds => uds.GetUserByPublicIdIncludeTenantAndRoleAsync(adminPublicId, CancellationToken.None))
+            .ReturnsAsync(user);
+        
+        // Act
+        var result = await sut.GetUsersForTenantAsync(adminPublicId, tenantPublicId, adminRoleInTenant, CancellationToken.None);
+        
+        // Assert
+        result.Success.Should().BeFalse();
+        result.Code.Should().BeEquivalentTo(ResultCodes.Tenant.UserDoNotHavePermissionToQueryTenant);
+    }
+    
+    [Theory, AutoMoqData]
+    public async Task GetUsersForTenantAsync_ShouldReturnFail_WhenTenantNotMatchJwtToken(
+        [Frozen]Mock<IUserDomainService> userDomainServiceMock,
+        string adminPublicId, 
+        string tenantPublicId,
+        ApplicationUser user,
+        TenantService sut)
+    {
+        // Arrange
+        user.Tenant.Name = "Test_Role";
+        user.Role.Name = "Admin_Test_Role";
+        var adminRoleInTenant = "Admin_Test_Role";
+        userDomainServiceMock
+            .Setup(uds => uds.GetUserByPublicIdIncludeTenantAndRoleAsync(adminPublicId, CancellationToken.None))
+            .ReturnsAsync(user);
+        
+        // Act
+        var result = await sut.GetUsersForTenantAsync(adminPublicId, tenantPublicId, adminRoleInTenant, CancellationToken.None);
+        
+        // Assert
+        result.Success.Should().BeFalse();
+        result.Code.Should().BeEquivalentTo(ResultCodes.Tenant.UserDoNotBelongToTenant);
+    }
+    
+    [Theory, AutoMoqData]
+    public async Task GetUsersForTenantAsync_ShouldReturnSuccess_WhenEveryThingMatch(
+        [Frozen]Mock<IUserDomainService> userDomainServiceMock,
+        string adminPublicId, 
+        ApplicationUser user,
+        List<ApplicationUser> users,
+        TenantService sut)
+    {
+        // Arrange
+        user.Tenant.Name = "Test_Role";
+        user.Role.Name = "Admin_Test_Role";
+        user.TenantId = 1;
+        var tenantPublicId = user.Tenant.PublicId.ToString();
+        var adminRoleInTenant = "Admin_Test_Role";
+        userDomainServiceMock
+            .Setup(uds => uds.GetUserByPublicIdIncludeTenantAndRoleAsync(adminPublicId, CancellationToken.None))
+            .ReturnsAsync(user);
+        userDomainServiceMock
+            .Setup(uds => uds.GetAllUsersInTenantIncludeRoleAsync(user.TenantId, CancellationToken.None))
+            .ReturnsAsync(users);
+        
+        // Act
+        var result = await sut.GetUsersForTenantAsync(adminPublicId, tenantPublicId, adminRoleInTenant, CancellationToken.None);
+        
+        // Assert
+        result.Success.Should().BeTrue();
+        result.Code.Should().BeEquivalentTo(ResultCodes.Tenant.GetAllUserInTenantSuccess);
+        result.Data.Should().NotBeNull();
+        result.Data.Count().Should().Be(users.Count);
     }
 }

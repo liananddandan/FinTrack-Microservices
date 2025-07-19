@@ -10,7 +10,7 @@ public class SetUserPasswordCommandHandler(
 {
     public Task<ServiceResult<bool>> Handle(SetUserPasswordCommand request, CancellationToken cancellationToken)
     {
-        return userAppService.SetUserPasswordAsync(request.UserPublicId, request.JwtVersion, request.OldPassword,
+        return userAppService.SetUserPasswordAsync(request.UserPublicId, request.OldPassword,
             request.NewPassword, request.Reset, cancellationToken);
     }
 }

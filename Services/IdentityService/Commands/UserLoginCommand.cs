@@ -4,8 +4,4 @@ using SharedKernel.Common.Results;
 
 namespace IdentityService.Commands;
 
-public class UserLoginCommand : IRequest<ServiceResult<UserLoginResult>>
-{
-    public required string Email { get; set; }
-    public required string Password { get; set; }
-}
+public record UserLoginCommand(string Email, string Password) : IRequest<ServiceResult<UserLoginResult>>;

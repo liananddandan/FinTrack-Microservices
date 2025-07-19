@@ -21,11 +21,7 @@ public class UserLoginCommandHandlerTests
         // Arrange
         string email = "test@email.com";
         string password = "password";
-        var userLoginCommand = new UserLoginCommand()
-        {
-            Email = email,
-            Password = password
-        };
+        var userLoginCommand = new UserLoginCommand(email, password);
         userAppServiceMock.Setup(uas =>
                 uas.UserLoginAsync(email, password,
                     It.IsAny<CancellationToken>()))

@@ -44,8 +44,8 @@ public class AccountController(IMediator mediator) : ControllerBase
             return Unauthorized("Request without valid token");
         }
 
-        var command = new SetUserPasswordCommand(jwtParseResult.UserPublicId,
-            jwtParseResult.JwtVersion,request.OldPassword, request.NewPassword, false);
+        var command = new SetUserPasswordCommand(jwtParseResult.UserPublicId, request.OldPassword, request.NewPassword,
+            false);
         var result = await mediator.Send(command);
         return result.ToActionResult();
     }
@@ -59,8 +59,8 @@ public class AccountController(IMediator mediator) : ControllerBase
         {
             return Unauthorized("Request without valid token");
         }
-        var command = new SetUserPasswordCommand(jwtParseResult.UserPublicId, jwtParseResult.JwtVersion, 
-            request.OldPassword, request.NewPassword, true);
+
+        var command = new SetUserPasswordCommand(jwtParseResult.UserPublicId, request.OldPassword, request.NewPassword, true);
         var result = await mediator.Send(command);
         return result.ToActionResult();
     }
@@ -74,20 +74,22 @@ public class AccountController(IMediator mediator) : ControllerBase
         {
             return Unauthorized("Request without valid token");
         }
-        var command = new RefreshUserJwtTokenCommand(jwtParseResult.UserPublicId, jwtParseResult.JwtVersion);
+
+        var command = new RefreshUserJwtTokenCommand(jwtParseResult.UserPublicId);
         var result = await mediator.Send(command);
         return result.ToActionResult();
     }
 
     [HttpGet]
-    public async Task<IActionResult> GetUserInfoAsync()
+    public async Task<IActionResult> GetUsersInfoInTenantAsync()
     {
         var jwtParseResult = HttpContext.GetHttpHeaderJwtParseResult();
         if (jwtParseResult == null)
         {
             return Unauthorized("Request without valid token");
         }
-        var command = new FetchUserInfoCommand(jwtParseResult.UserPublicId, jwtParseResult.JwtVersion);
+
+        var command = new FetchUserInfoCommand(jwtParseResult.UserPublicId);
         var result = await mediator.Send(command);
         return result.ToActionResult();
     }

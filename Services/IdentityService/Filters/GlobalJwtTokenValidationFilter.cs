@@ -9,7 +9,9 @@ using SharedKernel.Common.Results;
 
 namespace IdentityService.Filters;
 
-public class GlobalJwtTokenValidationFilter(IJwtTokenService jwtTokenService) : IAsyncAuthorizationFilter
+public class GlobalJwtTokenValidationFilter(IJwtTokenService jwtTokenService,
+    IUserDomainService userDomainService,
+    ITenantInvitationService tenantInvitationService) : IAsyncAuthorizationFilter
 {
     public async Task OnAuthorizationAsync(AuthorizationFilterContext context)
     {
@@ -49,7 +51,22 @@ public class GlobalJwtTokenValidationFilter(IJwtTokenService jwtTokenService) : 
                 context.Result = new ForbidResult("Token type not supported");
                 return;
             }
-            context.HttpContext.Items["InviteParseResult"] = result.Data;
+            var invitationParsedResult = result.Data;
+            var invitation =
+                await tenantInvitationService
+                    .GetTenantInvitationByPublicIdAsync(invitationParsedResult.InvitationPublicId);
+            if (!invitation.Success || invitation.Data == null)
+            {
+                context.Result = new UnauthorizedResult();
+                return;
+            }
+            if (!long.TryParse(invitationParsedResult.InvitationVersion, out var version)
+                || version != invitation.Data.Version)
+            {
+                context.Result = new UnauthorizedResult();
+                return;
+            }
+            context.HttpContext.Items["InviteParseResult"] = invitationParsedResult;
         }
         else
         {
@@ -64,8 +81,22 @@ public class GlobalJwtTokenValidationFilter(IJwtTokenService jwtTokenService) : 
                 context.Result = new ForbidResult("Token type not supported");
                 return;
             }
-        
-            context.HttpContext.Items["JwtParseResult"] = result.Data;
+            var jwtParseResult = result.Data;
+            
+            var user = await userDomainService.GetUserByPublicIdIncludeTenantAsync(result.Data.UserPublicId);
+            if (user == null)
+            {
+                context.Result = new UnauthorizedResult();
+                return;
+            }
+
+            if (!long.TryParse(jwtParseResult.JwtVersion, out var version)
+                || version != user.JwtVersion)
+            {
+                context.Result = new UnauthorizedResult();
+                return;
+            }
+            context.HttpContext.Items["JwtParseResult"] = jwtParseResult;
         }
     }
     

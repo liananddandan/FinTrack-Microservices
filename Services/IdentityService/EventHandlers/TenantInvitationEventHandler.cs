@@ -13,6 +13,7 @@ namespace IdentityService.EventHandlers;
 public class TenantInvitationEventHandler(
     ITenantInvitationService tenantInvitationService,
     IJwtTokenService jwtTokenService,
+    IUserDomainService userDomainService,
     ICapPublisher capPublisher) 
     : INotificationHandler<TenantInvitationEvent>
 {
@@ -36,11 +37,18 @@ public class TenantInvitationEventHandler(
             }
             else
             {
+                var roleName = $"User_{admin.Tenant!.Name}";
+                var roleCreateState = await userDomainService.CreateRoleInnerAsync(roleName, cancellationToken);
+                if (roleCreateState != RoleStatus.CreateSuccess && roleCreateState != RoleStatus.RoleAlreadyExist)
+                {
+                    continue;
+                }
+
                 invitation = new TenantInvitation()
                 {
                     Email = email,
                     TenantPublicId = admin.Tenant!.PublicId.ToString(),
-                    Role = $"User_{admin.Tenant!.Name}",
+                    Role = roleName,
                     Status = InvitationStatus.Pending,
                     ExpiredAt = DateTime.UtcNow.AddDays(7),
                     CreatedBy = admin.Email!

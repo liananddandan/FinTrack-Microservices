@@ -10,6 +10,6 @@ public class ReceiveInviteCommandHandler(
 {
     public Task<ServiceResult<bool>> Handle(ReceiveInviteCommand request, CancellationToken cancellationToken)
     {
-        return tenantService.ReceiveInviteForTenantAsync(request.InvitationPublicId, request.InvitationVersion, cancellationToken);
+        return tenantService.ReceiveInviteForTenantAsync(request.InvitationPublicId, cancellationToken);
     }
 }

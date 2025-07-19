@@ -10,6 +10,6 @@ public class FetchUserInfoCommandHandler(IUserAppService userAppService) : IRequ
 {
     public Task<ServiceResult<UserInfoDto>> Handle(FetchUserInfoCommand request, CancellationToken cancellationToken)
     {
-        return userAppService.GetUserInfoAsync(request.UserPublicId, request.JwtVersion, cancellationToken);
+        return userAppService.GetUserInfoAsync(request.UserPublicId, cancellationToken);
     }
 }

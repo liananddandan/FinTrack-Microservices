@@ -307,60 +307,6 @@ public class JwtTokenServiceTests
     }
 
     [Theory, AutoMoqData]
-    public async Task GenerateJwtTokenPairAsync_ShouldReturnFail_WhenJwtVersionTooSmall(
-        [Frozen] Mock<IUserDomainService> userDomainServiceMock,
-        [Frozen] Mock<IOptions<JwtOptions>> jwtOptionsMock,
-        JwtTokenService sut)
-    {
-        // Arrange
-        var jwtOptions = new JwtOptions()
-        {
-            Secret = "this-is-secret-very-long-token-value-and-long-token-value",
-            Audience = "Audience",
-            Issuer = "Issuer",
-            AccessTokenExpirationMinutes = 15,
-            RefreshTokenExpirationDays = 7
-        };
-        jwtOptionsMock.Setup(j => j.Value).Returns(jwtOptions);
-        var userPublicId = new Guid("00000000-0000-0000-0000-000000000001");
-        var tenantPublicId = new Guid("00000000-0000-0000-0000-000000000002");
-        var jwtClaimSource = new JwtClaimSource()
-        {
-            UserPublicId = userPublicId.ToString(),
-            JwtVersion = "1",
-            TenantPublicId = tenantPublicId.ToString(),
-            UserRoleInTenant = "Role_test"
-        };
-        var jwtToken = await sut.GenerateJwtTokenAsync(jwtClaimSource, JwtTokenType.RefreshToken);
-        jwtToken.Data.Should().NotBeNull();
-
-        var tenant = new Tenant()
-        {
-            Id = 4444,
-            PublicId = tenantPublicId
-        };
-        var user = new ApplicationUser()
-        {
-            PublicId = userPublicId,
-            UserName = "TestUser",
-            Email = "test@test.com",
-            Tenant = tenant,
-            TenantId = 4444,
-            JwtVersion = 3
-        };
-        userDomainServiceMock.Setup(us
-                => us.GetUserByPublicIdIncludeTenantAsync(jwtClaimSource.UserPublicId, It.IsAny<CancellationToken>()))
-            .ReturnsAsync(user);
-
-        // Act
-        var result = await sut.RefreshJwtTokenPairAsync(jwtToken.Data);
-
-        // Assert
-        result.Data.Should().BeNull();
-        result.Code.Should().BeEquivalentTo(ResultCodes.Token.RefreshJwtTokenFailedVersionInvalid);
-    }
-
-    [Theory, AutoMoqData]
     public async Task GenerateJwtTokenPairAsync_ShouldReturnFail_WhenTenantIdIsInvalid(
         [Frozen] Mock<IUserDomainService> userDomainServiceMock,
         [Frozen] Mock<IOptions<JwtOptions>> jwtOptionsMock,
@@ -400,7 +346,8 @@ public class JwtTokenServiceTests
             Email = "test@test.com",
             Tenant = tenant,
             TenantId = 4444,
-            JwtVersion = 3
+            JwtVersion = 3,
+            RoleId = 1
         };
         userDomainServiceMock.Setup(us
                 => us.GetUserByPublicIdIncludeTenantAsync(jwtClaimSource.UserPublicId, It.IsAny<CancellationToken>()))
@@ -454,7 +401,8 @@ public class JwtTokenServiceTests
             Email = "test@test.com",
             Tenant = tenant,
             TenantId = 4444,
-            JwtVersion = 3
+            JwtVersion = 3,
+            RoleId = 1
         };
         userDomainServiceMock.Setup(us
                 => us.GetUserByPublicIdIncludeTenantAsync(jwtClaimSource.UserPublicId, It.IsAny<CancellationToken>()))
@@ -512,7 +460,8 @@ public class JwtTokenServiceTests
             Email = "test@test.com",
             Tenant = tenant,
             TenantId = 4444,
-            JwtVersion = 3
+            JwtVersion = 3,
+            RoleId = 1
         };
         userDomainServiceMock.Setup(us
                 => us.GetUserByPublicIdIncludeTenantAsync(jwtClaimSource.UserPublicId, It.IsAny<CancellationToken>()))

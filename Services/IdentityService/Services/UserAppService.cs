@@ -128,10 +128,10 @@ public class UserAppService(UserManager<ApplicationUser> userManager,
             .Ok(userLoginResult, ResultCodes.User.UserLoginSuccess, "User Login Success.");
     }
 
-    public async Task<ServiceResult<bool>> SetUserPasswordAsync(string userPublicId, string jwtVersion, 
+    public async Task<ServiceResult<bool>> SetUserPasswordAsync(string userPublicId, 
         string oldPassword, string newPassword, bool reset, CancellationToken cancellationToken = default)
     {
-        var userCheckResult = await GetUserIncludeTenantAsync(userPublicId, jwtVersion, cancellationToken);
+        var userCheckResult = await GetUserIncludeTenantAsync(userPublicId, cancellationToken);
         if (!userCheckResult.Success)
         {
             return ServiceResult<bool>.Fail(userCheckResult.Code!, userCheckResult.Message!);
@@ -165,9 +165,9 @@ public class UserAppService(UserManager<ApplicationUser> userManager,
             : ServiceResult<bool>.Fail(ResultCodes.User.UserSetPasswordFailed, reason);
     }
 
-    public async Task<ServiceResult<JwtTokenPair>> RefreshUserTokenPairAsync(string userPublicId, string jwtVersion, CancellationToken cancellationToken = default)
+    public async Task<ServiceResult<JwtTokenPair>> RefreshUserTokenPairAsync(string userPublicId, CancellationToken cancellationToken = default)
     {
-        var userCheckResult = await GetUserIncludeTenantAsync(userPublicId, jwtVersion, cancellationToken);
+        var userCheckResult = await GetUserIncludeTenantAsync(userPublicId, cancellationToken);
         if (!userCheckResult.Success)
         {
             return ServiceResult<JwtTokenPair>.Fail(userCheckResult.Code!, userCheckResult.Message!);
@@ -194,9 +194,9 @@ public class UserAppService(UserManager<ApplicationUser> userManager,
            : generateResult;
     }
 
-    public async Task<ServiceResult<UserInfoDto>> GetUserInfoAsync(string userPublicId, string jwtVersion, CancellationToken cancellationToken = default)
+    public async Task<ServiceResult<UserInfoDto>> GetUserInfoAsync(string userPublicId, CancellationToken cancellationToken = default)
     {
-        var userCheckResult = await GetUserIncludeTenantAsync(userPublicId, jwtVersion, cancellationToken);
+        var userCheckResult = await GetUserIncludeTenantAsync(userPublicId, cancellationToken);
         if (!userCheckResult.Success)
         {
             return ServiceResult<UserInfoDto>.Fail(userCheckResult.Code!, userCheckResult.Message!);
@@ -230,18 +230,14 @@ public class UserAppService(UserManager<ApplicationUser> userManager,
         return ServiceResult<UserInfoDto>.Ok(userInfoDto, ResultCodes.User.UserGetInfoSuccess, "User Info Success");
     }
 
-    private async Task<ServiceResult<ApplicationUser>> GetUserIncludeTenantAsync(string userPublicId, string jwtVersion, CancellationToken cancellationToken = default)
+    private async Task<ServiceResult<ApplicationUser>> GetUserIncludeTenantAsync(string userPublicId, CancellationToken cancellationToken = default)
     {
         var user = await userDomainService.GetUserByPublicIdIncludeTenantAsync(userPublicId, cancellationToken);
         if (user == null)
         {
             return ServiceResult<ApplicationUser>.Fail(ResultCodes.User.UserNotFound, "User Not Found");
         }
-
-        if (!long.TryParse(jwtVersion, out var version) || version != user.JwtVersion)
-        {
-            return ServiceResult<ApplicationUser>.Fail(ResultCodes.Token.JwtTokenVersionInvalid, "Token Version Invalid");
-        }
+        
         return ServiceResult<ApplicationUser>
             .Ok(user, ResultCodes.User.UserCheckPublicIdAndJwtVersionSuccess, "User Check Public Id and JWT Version Success");
     }

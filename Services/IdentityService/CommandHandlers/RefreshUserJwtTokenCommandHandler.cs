@@ -11,6 +11,6 @@ public class RefreshUserJwtTokenCommandHandler(IUserAppService userAppService)
 {
     public async Task<ServiceResult<JwtTokenPair>> Handle(RefreshUserJwtTokenCommand request, CancellationToken cancellationToken)
     {
-        return await userAppService.RefreshUserTokenPairAsync(request.UserPublicId, request.JwtVersion, cancellationToken);
+        return await userAppService.RefreshUserTokenPairAsync(request.UserPublicId, cancellationToken);
     }
 }

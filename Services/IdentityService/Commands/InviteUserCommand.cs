@@ -3,11 +3,7 @@ using SharedKernel.Common.Results;
 
 namespace IdentityService.Commands;
 
-public class InviteUserCommand : IRequest<ServiceResult<bool>>
-{
-    public List<string> Emails { get; set; } = new ();
-    public required string AdminUserPublicId { get; set; }
-    public required string AdminJwtVersion { get; set; }
-    public required string TenantPublicid { get; set; }
-    public required string AdminRoleInTenant { get; set; }
-}
+public record InviteUserCommand(List<string> Emails,
+    string AdminUserPublicId,
+    string TenantPublicId,
+    string AdminRoleInTenant) : IRequest<ServiceResult<bool>>;

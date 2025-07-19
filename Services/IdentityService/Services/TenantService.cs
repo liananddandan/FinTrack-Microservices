@@ -35,21 +35,21 @@ public class TenantService(
                 };
                 await tenantRepo.AddTenantAsync(tenant, cancellationToken);
                 await unitOfWork.SaveChangesAsync(cancellationToken);
-                // 2. create admin account
-                var (user, randomPassword) = await userDomainService
-                    .CreateUserOrThrowInnerAsync(adminName, adminEmail, tenant.Id, cancellationToken);
 
-                // 3. create admin role
-                var roleName = GetTenantAdminRoleName(tenantName);
-                var createStatus = await userDomainService.CreateRoleInnerAsync(roleName, cancellationToken);
-                if (createStatus == RoleStatus.CreateFailed)
+                var role = new ApplicationRole() { Name = GetTenantAdminRoleName(tenantName)};
+                var roleStatus = await userDomainService.CreateRoleInnerAsync(role, cancellationToken);
+                if (roleStatus == RoleStatus.CreateFailed)
                 {
                     return ServiceResult<RegisterTenantResult>
                         .Fail(ResultCodes.Tenant.RegisterTenantRoleCreateFailed, "Role creation failed");
                 }
 
+                // 2. create admin account
+                var (user, randomPassword) = await userDomainService
+                    .CreateUserOrThrowInnerAsync(adminName, adminEmail, tenant.Id, role.Id, cancellationToken);
+                
                 // 4. Give user the admin role
-                var addStatus = await userDomainService.AddUserToRoleInnerAsync(user, roleName, cancellationToken);
+                var addStatus = await userDomainService.AddUserToRoleInnerAsync(user, role.Name, cancellationToken);
                 if (addStatus == RoleStatus.AddRoleToUserFailed)
                 {
                     return ServiceResult<RegisterTenantResult>
@@ -73,7 +73,7 @@ public class TenantService(
         }
     }
 
-    public async Task<ServiceResult<bool>> InviteUserForTenantAsync(string adminPublicId, string adminJwtVersion,
+    public async Task<ServiceResult<bool>> InviteUserForTenantAsync(string adminPublicId,
         string tenantPublicId,
         string adminRoleInTenant, List<string> emails, CancellationToken cancellationToken = default)
     {
@@ -86,11 +86,6 @@ public class TenantService(
         if (admin.Tenant == null || !admin.Tenant.PublicId.ToString().Equals(tenantPublicId))
         {
             return ServiceResult<bool>.Fail(ResultCodes.User.UserTenantInfoMissed, "User tenant not found");
-        }
-
-        if (!admin.JwtVersion.ToString().Equals(adminJwtVersion))
-        {
-            return ServiceResult<bool>.Fail(ResultCodes.Token.JwtTokenVersionInvalid, "Token version is invalid");
         }
 
         var role = await userDomainService.GetUserRoleInnerAsync(admin, cancellationToken);
@@ -110,8 +105,7 @@ public class TenantService(
             "Invitation users start success");
     }
 
-    public async Task<ServiceResult<bool>> ReceiveInviteForTenantAsync(string invitationPublicId,
-        string invitationVersion, CancellationToken cancellationToken = default)
+    public async Task<ServiceResult<bool>> ReceiveInviteForTenantAsync(string invitationPublicId, CancellationToken cancellationToken = default)
     {
         var tenantInvitationResult =
             await tenantInvitationService.GetTenantInvitationByPublicIdAsync(invitationPublicId, cancellationToken);
@@ -124,12 +118,6 @@ public class TenantService(
         if (invitation.ExpiredAt < DateTime.UtcNow)
         {
             return ServiceResult<bool>.Fail(ResultCodes.Tenant.InvitationExpired, "Invitation expired");
-        }
-        
-        if (!long.TryParse(invitationVersion, out long version) || version != invitation.Version)
-        {
-            return ServiceResult<bool>.Fail(ResultCodes.Tenant.InvitationVersionInvalid,
-                "Invitation version is invalid");
         }
 
         switch (invitation.Status)
@@ -148,13 +136,19 @@ public class TenantService(
             return ServiceResult<bool>.Fail(ResultCodes.Tenant.InvitationWithAInvalidTenant, "Tenant not found");
         }
 
+        var role = await userDomainService.GetRoleByNameInnerAsync(invitation.Role, cancellationToken);
+        if (role == null)
+        {
+            return ServiceResult<bool>.Fail(ResultCodes.Tenant.InvitationUsingWrongRole, "Role not found");
+        }
+
         try
         {
             var createResult = await unitOfWork.WithTransactionAsync(async () =>
             {
                 // create a new user
                 var (user, password) = await userDomainService
-                    .CreateUserOrThrowInnerAsync(invitation.Email, invitation.Email, tenant.Id,
+                    .CreateUserOrThrowInnerAsync(invitation.Email, invitation.Email, tenant.Id, role.Id,
                         cancellationToken);
                 
                 // create a role for user
@@ -194,6 +188,40 @@ public class TenantService(
         {
             return ServiceResult<bool>.Fail(ResultCodes.Tenant.InvitationCreateFailed, "Invitation create failed");
         }
+    }
+
+    public async Task<ServiceResult<IEnumerable<UserInfoDto>>> GetUsersForTenantAsync(string adminPublicId, string tenantPublicId,
+        string adminRoleInTenant, CancellationToken cancellationToken = default)
+    {
+        var user = await userDomainService.GetUserByPublicIdIncludeTenantAndRoleAsync(adminPublicId, cancellationToken);
+        if (user == null)
+        {
+            return ServiceResult<IEnumerable<UserInfoDto>>.Fail(ResultCodes.User.UserNotFound, "User not found");
+        }
+        var role = user.Role;
+        if (role == null 
+            || role.Name == null 
+            || !role.Name.Equals(adminRoleInTenant) 
+            || !role.Name.Equals(GetTenantAdminRoleName(user.Tenant.Name)))
+        {
+            return ServiceResult<IEnumerable<UserInfoDto>>.Fail(ResultCodes.Tenant.UserDoNotHavePermissionToQueryTenant, "User do not have permission to query tenant");
+        }
+
+        if (user.Tenant == null || !user.Tenant.PublicId.ToString().Equals(tenantPublicId))
+        {
+            return ServiceResult<IEnumerable<UserInfoDto>>.Fail(ResultCodes.Tenant.UserDoNotBelongToTenant, "User do not belong to tenant");
+        }
+        
+        var users = await userDomainService.GetAllUsersInTenantIncludeRoleAsync(user.TenantId, cancellationToken);
+        var userInfoDtos = users.Select(u => new UserInfoDto()
+        {
+            email = u.Email,
+            userName = u.UserName,
+            userPublicId = u.PublicId.ToString(),
+            tenantInfoDto = null,
+            roleName = u.Role.Name,
+        }).ToList();
+        return ServiceResult<IEnumerable<UserInfoDto>>.Ok(userInfoDtos, ResultCodes.Tenant.GetAllUserInTenantSuccess, "Get all users in tenant success");
     }
 
     private string GetTenantAdminRoleName(string tenantName)

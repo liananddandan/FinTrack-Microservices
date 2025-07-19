@@ -85,11 +85,10 @@ public class AccountControllerTests(
         // Arrange
 
         var client = factory.CreateClient();
-        var userLoginCommand = new UserLoginCommand()
-        {
-            Email = "testUserForLoginTest@test.com",
-            Password = "TestUserForLogin0@"
-        };
+        var userLoginCommand = new UserLoginCommand(
+            "testUserForLoginTest@test.com",
+            "TestUserForLogin0@"
+        );
 
         // Act
         var userLoginResponse = await client.PostAsJsonAsync("api/account/login", userLoginCommand);
@@ -125,11 +124,7 @@ public class AccountControllerTests(
             });
         }).CreateClient();
 
-        var userLoginCommand = new UserLoginCommand()
-        {
-            Email = "testUserForFirstLoginTest@test.com",
-            Password = "TestUserForFirstLogin0@"
-        };
+        var userLoginCommand = new UserLoginCommand("testUserForFirstLoginTest@test.com", "TestUserForFirstLogin0@");
 
         // Act
         var response1 = await client.PostAsJsonAsync("api/account/login", userLoginCommand);
@@ -173,7 +168,7 @@ public class AccountControllerTests(
 
         // Act
         var result = await client.PostAsJsonAsync("api/account/set-password", reqeust);
-        
+
         // Assert
         result.EnsureSuccessStatusCode();
         var dbContext = scope.ServiceProvider.GetRequiredService<ApplicationIdentityDbContext>();
@@ -185,7 +180,7 @@ public class AccountControllerTests(
         userAfter.JwtVersion.Should().BeGreaterThan(user.JwtVersion);
     }
 
-        [Fact]
+    [Fact]
     public async Task ResetPasswordAsync_ShouldReturnSuccess_WhenUserAllGood()
     {
         // Arrange
@@ -216,7 +211,7 @@ public class AccountControllerTests(
 
         // Act
         var result = await client.PostAsJsonAsync("api/account/set-password", reqeust);
-        
+
         // Assert
         result.EnsureSuccessStatusCode();
         var dbContext = scope.ServiceProvider.GetRequiredService<ApplicationIdentityDbContext>();
@@ -227,7 +222,7 @@ public class AccountControllerTests(
         userAfter.IsFirstLogin.Should().BeFalse();
         userAfter.JwtVersion.Should().BeGreaterThan(user.JwtVersion);
     }
-    
+
     [Fact]
     public async Task RefreshUserJwtTokenAsync_ShouldReturnSuccess_WhenRefreshTokenIsCorrect()
     {
@@ -250,10 +245,10 @@ public class AccountControllerTests(
         var refreshToken = generateResult.Data;
         var client = factory.CreateClient();
         client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", refreshToken);
-        
+
         // Act
         var response = await client.GetAsync("api/account/refresh-token");
-        
+
         // Assert
         string content = await response.Content.ReadAsStringAsync();
         response.EnsureSuccessStatusCode();
@@ -262,7 +257,7 @@ public class AccountControllerTests(
         content.Should().Contain("accessToken");
         content.Should().Contain("refreshToken");
     }
-    
+
     [Fact]
     public async Task GetUserInfoAsync_ShouldReturnSuccess_WhenAccessTokenIsCorrect()
     {
@@ -285,10 +280,10 @@ public class AccountControllerTests(
         var accessToken = generateResult.Data;
         var client = factory.CreateClient();
         client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
-        
+
         // Act
         var response = await client.GetAsync("api/account");
-        
+
         // Assert
         string content = await response.Content.ReadAsStringAsync();
         response.EnsureSuccessStatusCode();
@@ -297,5 +292,4 @@ public class AccountControllerTests(
         content.Should().Contain("tenantInfoDto");
         content.Should().Contain("email");
     }
-    
 }

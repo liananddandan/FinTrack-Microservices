@@ -21,7 +21,7 @@ public class RefreshUserJwtTokenCommandHandlerTests
     {
         // Arrange
         userAppServiceMock.Setup(uas =>
-            uas.RefreshUserTokenPairAsync(command.UserPublicId, command.JwtVersion, CancellationToken.None))
+            uas.RefreshUserTokenPairAsync(command.UserPublicId, CancellationToken.None))
             .ReturnsAsync(ServiceResult<JwtTokenPair>.Ok(jwtTokenPair, "jwt token pair", "jwt token pair"));
         
         // Act

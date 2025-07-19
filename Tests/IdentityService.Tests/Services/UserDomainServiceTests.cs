@@ -21,7 +21,8 @@ public class UserDomainServiceTests
         UserDomainService sut,
         string userName,
         string userEmail,
-        long tenantId)
+        long tenantId,
+        long roleId)
     {
         // Arrange
         long expectedUserId = 1001;
@@ -34,7 +35,7 @@ public class UserDomainServiceTests
             .ReturnsAsync(IdentityResult.Success);
         
         // Act
-        var (userResult, pwdResult) = await sut.CreateUserOrThrowInnerAsync(userName, userEmail, tenantId);
+        var (userResult, pwdResult) = await sut.CreateUserOrThrowInnerAsync(userName, userEmail, tenantId, roleId);
         
         // Assert
         userResult.Should().NotBeNull();
@@ -53,6 +54,7 @@ public class UserDomainServiceTests
         string userName,
         string userEmail,
         long tenantId,
+        long roleId,
         IdentityError[] expectedErrors)
     {
         // Arrange
@@ -62,7 +64,7 @@ public class UserDomainServiceTests
         
         // Act
         var ex = await Assert.ThrowsAsync<UserCreateException>(() =>
-            sut.CreateUserOrThrowInnerAsync(userName, userEmail, tenantId));
+            sut.CreateUserOrThrowInnerAsync(userName, userEmail, tenantId, roleId));
         
         // Assert
         ex.Should().NotBeNull();
@@ -211,7 +213,8 @@ public class UserDomainServiceTests
         {
             Id = 1111,
             UserName = "TestUser",
-            Email = "test@test.com"
+            Email = "test@test.com",
+            RoleId = 1
         };
         var users = new List<ApplicationUser>(){user}.AsQueryable();
         var mockUsers = users.BuildMock();
@@ -239,7 +242,8 @@ public class UserDomainServiceTests
             Email = "test@test.com",
             PublicId = expectedGuid,
             Tenant = tenant,
-            TenantId = 222
+            TenantId = 222,
+            RoleId = 1
         };
         var users = new List<ApplicationUser>(){user}.AsQueryable();
         var mockUsers = users.BuildMock();
@@ -267,6 +271,7 @@ public class UserDomainServiceTests
             UserName = "TestUser",
             Email = "test@test.com",
             PublicId = expectedGuid,
+            RoleId = 1
         };
         var users = new List<ApplicationUser>(){user}.AsQueryable();
         var mockUsers = users.BuildMock();
@@ -381,5 +386,129 @@ public class UserDomainServiceTests
         // Assert
         result.Should().Be(RoleStatus.RoleAlreadyExist);
         roleManagerMock.Verify(r => r.RoleExistsAsync(roleName), Times.Once);
+    }
+
+    [Theory, AutoMoqData]
+    public async Task CreateRoleInnerAsync_ShouldReturnExist_WhenRoleExist(
+        [Frozen] Mock<RoleManager<ApplicationRole>> roleManagerMock,
+        UserDomainService sut)
+    {
+        // Arrange
+        var role = new ApplicationRole(){Name = "TestRole"};
+        roleManagerMock.Setup(r => r.RoleExistsAsync(role.Name.ToUpperInvariant())).ReturnsAsync(true);
+        
+        // Act
+        var result = await sut.CreateRoleInnerAsync(role);
+        
+        // Assert
+        result.Should().Be(RoleStatus.RoleAlreadyExist);
+        roleManagerMock.Verify(r => r.RoleExistsAsync(role.Name.ToUpperInvariant()), Times.Once);
+    }
+    
+    [Theory, AutoMoqData]
+    public async Task CreateRoleInnerAsync_ShouldReturnFailed_WhenRoleCreatedFail(
+        [Frozen] Mock<RoleManager<ApplicationRole>> roleManagerMock,
+        UserDomainService sut)
+    {
+        // Arrange
+        var role = new ApplicationRole(){Name = "TestRole"};
+        roleManagerMock.Setup(r => r.RoleExistsAsync(role.Name.ToUpperInvariant())).ReturnsAsync(false);
+        roleManagerMock.Setup(r => r.CreateAsync(role)).ReturnsAsync(IdentityResult.Failed(new IdentityError()));
+        // Act
+        var result = await sut.CreateRoleInnerAsync(role);
+        
+        // Assert
+        result.Should().Be(RoleStatus.CreateFailed);
+        roleManagerMock.Verify(r => r.RoleExistsAsync(role.Name.ToUpperInvariant()), Times.Once);
+        roleManagerMock.Verify(r => r.CreateAsync(role), Times.Once);
+    }
+    
+    [Theory, AutoMoqData]
+    public async Task CreateRoleInnerAsync_ShouldReturnSuccess_WhenRoleCreated(
+        [Frozen] Mock<RoleManager<ApplicationRole>> roleManagerMock,
+        UserDomainService sut)
+    {
+        // Arrange
+        var role = new ApplicationRole(){Name = "TestRole"};
+        roleManagerMock.Setup(r => r.RoleExistsAsync(role.Name.ToUpperInvariant())).ReturnsAsync(false);
+        roleManagerMock.Setup(r => r.CreateAsync(role)).ReturnsAsync(IdentityResult.Success);
+        // Act
+        var result = await sut.CreateRoleInnerAsync(role);
+        
+        // Assert
+        result.Should().Be(RoleStatus.CreateSuccess);
+        roleManagerMock.Verify(r => r.RoleExistsAsync(role.Name.ToUpperInvariant()), Times.Once);
+        roleManagerMock.Verify(r => r.CreateAsync(role), Times.Once);
+    }
+
+    [Theory, AutoMoqData]
+    public async Task GetRoleByNameInnerAsync_ShouldReturnNull_WhenRoleNotExist(
+        [Frozen] Mock<RoleManager<ApplicationRole>> roleManagerMock,
+        UserDomainService sut)
+    {
+        // Arrange
+        var roles = new List<ApplicationRole>().AsQueryable();
+        var rolesMock = roles.BuildMock();
+        roleManagerMock.Setup(r => r.Roles).Returns(rolesMock);
+        
+        // Act
+        var result = await sut.GetRoleByNameInnerAsync("TestRole");
+        
+        // Assert
+        result.Should().BeNull();
+    }
+    
+    [Theory, AutoMoqData]
+    public async Task GetRoleByNameInnerAsync_ShouldReturnRole_WhenRoleExist(
+        [Frozen] Mock<RoleManager<ApplicationRole>> roleManagerMock,
+        UserDomainService sut)
+    {
+        // Arrange
+        var role = new ApplicationRole(){Name = "TestRole"};
+        var roles = new List<ApplicationRole>() {role}.AsQueryable();
+        var rolesMock = roles.BuildMock();
+        roleManagerMock.Setup(r => r.Roles).Returns(rolesMock);
+        
+        // Act
+        var result = await sut.GetRoleByNameInnerAsync("TestRole");
+        
+        // Assert
+        result.Should().NotBeNull();
+        result.Name.Should().Be(role.Name);
+    }
+    
+    [Theory, AutoMoqData]
+    public async Task GetAllUsersInTenantIncludeRoleAsync_ShouldReturnNull_WhenUsersNotExist(
+        [Frozen] Mock<UserManager<ApplicationUser>> userManagerMock,
+        UserDomainService sut)
+    {
+        // Arrange
+        var users = new List<ApplicationUser>().AsQueryable();
+        var usersMock = users.BuildMock();
+        userManagerMock.Setup(u => u.Users).Returns(usersMock);
+        
+        // Act
+        var result = await sut.GetAllUsersInTenantIncludeRoleAsync(1, CancellationToken.None);
+        
+        // Assert
+        result.Should().BeNull();
+    }
+    
+    [Theory, AutoMoqData]
+    public async Task GetAllUsersInTenantIncludeRoleAsync_ShouldReturnUsers_WhenUsersExist(
+        [Frozen] Mock<UserManager<ApplicationUser>> userManagerMock,
+        ApplicationUser user,
+        UserDomainService sut)
+    {
+        // Arrange
+        var users = new List<ApplicationUser>(){user}.AsQueryable();
+        var usersMock = users.BuildMock();
+        userManagerMock.Setup(u => u.Users).Returns(usersMock);
+        
+        // Act
+        var result = await sut.GetAllUsersInTenantIncludeRoleAsync(user.TenantId, CancellationToken.None);
+        
+        // Assert
+        result.Should().NotBeNull();
     }
 }
