@@ -1,0 +1,40 @@
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
+using Moq;
+using NotificationService.Options;
+using NotificationService.Services;
+using SharedKernel.Events;
+
+namespace NotificationService.Tests.Services;
+
+public class SmtpEmailServiceTests
+{
+    [Fact]
+    public async Task SendAsync_WithValidInput_SendsEmailWithoutException()
+    {
+        var smtpOptions = new SmtpOptions
+        {
+            Host= "localhost",
+            Port= 1025,
+            User= "",
+            Password= ""
+        };
+        var optionsMock = new Mock<IOptions<SmtpOptions>>();
+        optionsMock.Setup(o => o.Value).Returns(smtpOptions);
+        var loggerMock = new Mock<ILogger<SmtpEmailService>>();
+        
+        var emailService = new SmtpEmailService(optionsMock.Object, loggerMock.Object);
+
+        var emailEvent = new EmailSendRequestedEvent
+        {
+            From = "from@test.com",
+            To = "to@test.com",
+            ToName = "Receiver",
+            Subject = "Test Subject",
+            Body = "Test Body",
+            IsHtml = false
+        };
+        
+        await emailService.SendEmailAsync(emailEvent);
+    }
+}
