@@ -1,9 +1,8 @@
 using IdentityService.Commands;
+using IdentityService.Common.Extensions;
 using IdentityService.Filters.Attributes;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
-using SharedKernel.Common.DTOs;
-using SharedKernel.Common.Extensions;
 
 namespace IdentityService.Controllers;
 

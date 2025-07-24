@@ -2,7 +2,7 @@ using Microsoft.AspNetCore.Mvc;
 using SharedKernel.Common.DTOs;
 using SharedKernel.Common.Results;
 
-namespace SharedKernel.Common.Extensions;
+namespace IdentityService.Common.Extensions;
 
 public static class ServiceResultExtensions
 {

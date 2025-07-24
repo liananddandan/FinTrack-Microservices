@@ -1,7 +1,7 @@
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
-using SharedKernel.Common.Extensions;
 using TransactionService.Commands;
+using TransactionService.Common.Extensions;
 using TransactionService.Common.Requests;
 
 namespace TransactionService.Controllers;
