@@ -89,8 +89,11 @@ public static class ResultCodes
 
     public static class Transaction
     {
-        public const string TransactionFailed = "100004001";
-        public const string TransactionSuccess = "100004999";
+        public const string TransactionCreateFailed = "100004001";
+        public const string TransactionNotFound = "100004002";
+        public const string TransactionNotBelongToCurrentUser = "100004003";
+        public const string TransactionQuerySuccess = "100004998";
+        public const string TransactionCreateSuccess = "100004999";
     }
 
     public const string InternalError = "900900001";

@@ -1,4 +1,5 @@
 using SharedKernel.Common.Results;
+using TransactionService.Common.DTOs;
 using TransactionService.Common.Requests;
 using TransactionService.Common.Responses;
 
@@ -11,4 +12,8 @@ public interface ITransactionService
         decimal amount,
         string currency,
         string? description);
+
+    public Task<ServiceResult<TransactionDto>> QueryUserOwnTransactionByPublicIdAsync(string tenantPublicId, 
+        string userPublicId,
+        string transactionPublicId);
 }

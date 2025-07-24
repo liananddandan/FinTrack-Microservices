@@ -8,6 +8,7 @@ using TransactionService.ExternalServices;
 using TransactionService.ExternalServices.Interfaces;
 using TransactionService.Infrastructure;
 using TransactionService.Services.Interfaces;
+using TransactionService.Tests.Seeds;
 
 namespace TransactionService.Tests;
 
@@ -42,6 +43,7 @@ public class TransactionWebApplicationFactory<TProgram> : WebApplicationFactory<
                     db.Database.Migrate();
                     db.Database.ExecuteSqlRaw("DELETE FROM Transactions");
                     _dbInitialized = true;
+                    SeedMaker.InitializeAsync(db).GetAwaiter().GetResult();
                 }
             }
             

@@ -1,4 +1,5 @@
 using SharedKernel.Common.Results;
+using TransactionService.Common.DTOs;
 using TransactionService.Common.Responses;
 using TransactionService.Common.Status;
 using TransactionService.Domain.Entities;
@@ -24,7 +25,7 @@ public class TransactionService(
             Amount = amount,
             Currency = currency,
             Description = description,
-            TransStatus = riskResult == RiskStatus.Pass ? TransactionStatus.Success : TransactionStatus.Failed,
+            TransStatus = riskResult == RiskStatus.Pass ? TransStatus.Success : TransStatus.Failed,
             RiskStatus = riskResult
         };
         
@@ -38,7 +39,33 @@ public class TransactionService(
             transaction.RiskStatus,
             transaction.CreatedAt);
         return riskResult == RiskStatus.Pass
-            ? ServiceResult<CreateTransactionResponse>.Ok(response, ResultCodes.Transaction.TransactionSuccess, "Transaction Created")
-            : ServiceResult<CreateTransactionResponse>.Fail(ResultCodes.Transaction.TransactionFailed, "Transaction Failed");
+            ? ServiceResult<CreateTransactionResponse>.Ok(response, ResultCodes.Transaction.TransactionCreateSuccess, "Transaction Created")
+            : ServiceResult<CreateTransactionResponse>.Fail(ResultCodes.Transaction.TransactionCreateFailed, "Transaction Failed");
+    }
+
+    public async Task<ServiceResult<TransactionDto>> QueryUserOwnTransactionByPublicIdAsync(string tenantPublicId, string userPublicId, string transactionPublicId)
+    {
+        var transaction = await transactionRepo.GetTransactionByPublicIdAsync(transactionPublicId);
+        if (transaction == null)
+        {
+            return ServiceResult<TransactionDto>.Fail(ResultCodes.Transaction.TransactionNotFound, "Transaction Not Found");
+        }
+
+        if (transaction.UserPublicId != userPublicId 
+            || transaction.TenantPublicId != tenantPublicId)
+        {
+            return ServiceResult<TransactionDto>.Fail(ResultCodes.Transaction.TransactionNotBelongToCurrentUser, "Transaction Not belong to user");
+        }
+
+        var dto = new TransactionDto(transaction.TransactionPublicId.ToString(),
+            transaction.TenantPublicId, 
+            transaction.UserPublicId,
+            transaction.Amount,
+            transaction.Currency,
+            transaction.TransStatus,
+            transaction.RiskStatus,
+            transaction.Description,
+            transaction.CreatedAt);
+        return ServiceResult<TransactionDto>.Ok(dto, ResultCodes.Transaction.TransactionQuerySuccess, "Transaction Query Success");
     }
 }

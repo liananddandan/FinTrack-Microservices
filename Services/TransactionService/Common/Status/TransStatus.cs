@@ -1,6 +1,6 @@
 namespace TransactionService.Common.Status;
 
-public enum TransactionStatus
+public enum TransStatus
 {
     Success,
     Failed

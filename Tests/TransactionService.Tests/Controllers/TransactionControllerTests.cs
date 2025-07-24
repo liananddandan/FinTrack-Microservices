@@ -1,14 +1,17 @@
 using System.Net.Http.Json;
+using FluentAssertions;
 using SharedKernel.Common.DTOs;
+using SharedKernel.Common.Results;
 using TransactionService.Common.Requests;
 using TransactionService.Tests.Attributes;
 using WireMock.RequestBuilders;
 using WireMock.ResponseBuilders;
 using WireMock.Server;
+using Xunit.Abstractions;
 
 namespace TransactionService.Tests.Controllers;
 
-public class TransactionControllerTests : IAsyncLifetime
+public class TransactionControllerTests(ITestOutputHelper testOutputHelper) : IAsyncLifetime
 {
     private WireMockServer _wireMockServer;
     private TransactionWebApplicationFactory<Program> _mockFactory;
@@ -53,5 +56,25 @@ public class TransactionControllerTests : IAsyncLifetime
         
         // Assert
         response.EnsureSuccessStatusCode();
+    }
+
+    [Fact]
+    public async Task GetTransactionsAsync_ShouldQueryResult()
+    {
+        var transactionPublicId = "11111111-1111-1111-1111-111111111111";
+        var tenantPublicId = "11111111-1111-1111-1111-111111111111";
+        var userPublicId = "11111111-1111-1111-1111-111111111111";
+        var token = JwtTokenGenerator.GenerateFakeAccessToken(userPublicId,
+            "4", tenantPublicId, "User_test");
+        _client.DefaultRequestHeaders.Add("Authorization", $"Bearer {token}");
+        
+        // act
+        var response = await _client.GetAsync($"api/transaction/{transactionPublicId}");
+        
+        // assert
+        response.EnsureSuccessStatusCode();
+        var content = await response.Content.ReadAsStringAsync();
+        testOutputHelper.WriteLine(content);
+        content.Should().Contain(ResultCodes.Transaction.TransactionQuerySuccess);
     }
 }

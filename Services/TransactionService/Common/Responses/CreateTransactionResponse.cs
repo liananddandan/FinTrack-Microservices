@@ -6,6 +6,6 @@ public record CreateTransactionResponse(
     string TransactionPublicId,
     decimal Amount,
     string Currency,
-    TransactionStatus TranStatus,
+    TransStatus TranStatus,
     RiskStatus RiskStatus,
     DateTime CreatedAt);

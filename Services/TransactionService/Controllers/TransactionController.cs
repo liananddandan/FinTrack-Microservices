@@ -22,4 +22,12 @@ public class TransactionController(IMediator mediator) : BaseController
         var result = await mediator.Send(command);
         return result.ToActionResult();
     }
+
+    [HttpGet("{transactionPublicId}")]
+    public async Task<IActionResult> GetTransactionsAsync([FromRoute] string transactionPublicId)
+    {
+        var command = new QueryTransactionCommand(TenantPublicId, UserPublicId, transactionPublicId);
+        var result = await mediator.Send(command);
+        return result.ToActionResult();
+    }
 }
