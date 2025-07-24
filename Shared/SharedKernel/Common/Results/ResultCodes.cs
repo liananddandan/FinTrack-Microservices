@@ -1,4 +1,4 @@
-namespace IdentityService.Common.Results;
+namespace SharedKernel.Common.Results;
 
 public static class ResultCodes
 {
@@ -85,6 +85,12 @@ public static class ResultCodes
         public const string UserLoginSuccessButFirstLogin = "100003997";
         public const string UserEmailVerificationSuccess = "100003998";
         public const string UserGetByIdSuccess = "100003999";
+    }
+
+    public static class Transaction
+    {
+        public const string TransactionFailed = "100004001";
+        public const string TransactionSuccess = "100004999";
     }
 
     public const string InternalError = "900900001";

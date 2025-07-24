@@ -5,6 +5,7 @@ using IdentityService.Common.Status;
 using IdentityService.Filters.Attributes;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
+using SharedKernel.Common.Extensions;
 
 namespace IdentityService.Controllers;
 

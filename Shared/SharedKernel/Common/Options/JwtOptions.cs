@@ -1,4 +1,4 @@
-namespace IdentityService.Common.Options;
+namespace SharedKernel.Common.Options;
 
 public class JwtOptions
 {

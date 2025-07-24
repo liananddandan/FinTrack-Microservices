@@ -1,4 +1,3 @@
-using IdentityService.Common.Results;
 using IdentityService.Domain.Entities;
 using IdentityService.Repositories.Interfaces;
 using IdentityService.Services.Interfaces;

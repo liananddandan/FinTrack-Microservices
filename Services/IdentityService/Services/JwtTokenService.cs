@@ -2,13 +2,12 @@ using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
 using IdentityService.Common.DTOs;
-using IdentityService.Common.Options;
-using IdentityService.Common.Results;
 using IdentityService.Common.Status;
 using IdentityService.Services.Interfaces;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 using SharedKernel.Common.DTOs.Auth;
+using SharedKernel.Common.Options;
 using SharedKernel.Common.Results;
 
 namespace IdentityService.Services;

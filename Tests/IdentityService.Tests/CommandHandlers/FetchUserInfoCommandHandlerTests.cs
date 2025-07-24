@@ -6,6 +6,7 @@ using IdentityService.Common.DTOs;
 using IdentityService.Services.Interfaces;
 using IdentityService.Tests.Attributes;
 using Moq;
+using SharedKernel.Common.DTOs;
 using SharedKernel.Common.Results;
 
 namespace IdentityService.Tests.CommandHandlers;

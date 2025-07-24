@@ -2,12 +2,12 @@ using System.Web;
 using IdentityService.Commands;
 using IdentityService.Common.DTOs;
 using IdentityService.Common.Extensions;
-using IdentityService.Common.Results;
 using IdentityService.Common.Status;
 using IdentityService.Filters.Attributes;
 using MediatR;
 using Microsoft.AspNetCore.Identity.Data;
 using Microsoft.AspNetCore.Mvc;
+using SharedKernel.Common.Extensions;
 
 namespace IdentityService.Controllers;
 

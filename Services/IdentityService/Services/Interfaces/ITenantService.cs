@@ -1,4 +1,5 @@
 using IdentityService.Common.DTOs;
+using SharedKernel.Common.DTOs;
 using SharedKernel.Common.Results;
 
 namespace IdentityService.Services.Interfaces;

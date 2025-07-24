@@ -1,5 +1,4 @@
 using IdentityService.Common.DTOs;
-using IdentityService.Common.Results;
 using IdentityService.Common.Status;
 using IdentityService.Domain.Entities;
 using IdentityService.Events;
@@ -8,6 +7,7 @@ using IdentityService.Services.Interfaces;
 using MediatR;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using SharedKernel.Common.DTOs;
 using SharedKernel.Common.DTOs.Auth;
 using SharedKernel.Common.Results;
 

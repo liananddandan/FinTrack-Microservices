@@ -1,12 +1,12 @@
 using AutoFixture.Xunit2;
 using FluentAssertions;
-using IdentityService.Common.Results;
 using IdentityService.Common.Status;
 using IdentityService.Domain.Entities;
 using IdentityService.Services;
 using IdentityService.Tests.Attributes;
 using Microsoft.AspNetCore.Identity;
 using Moq;
+using SharedKernel.Common.Results;
 
 namespace IdentityService.Tests.Services;
 
