@@ -77,4 +77,27 @@ public class TransactionControllerTests(ITestOutputHelper testOutputHelper) : IA
         testOutputHelper.WriteLine(content);
         content.Should().Contain(ResultCodes.Transaction.TransactionQuerySuccess);
     }
+    
+    [Fact]
+    public async Task GetTransactionByPageAsync_ShouldQueryResult()
+    {
+        var tenantPublicId = "11111111-1111-1111-1111-111111111112";
+        var userPublicId = "11111111-1111-1111-1111-111111111112";
+        var token = JwtTokenGenerator.GenerateFakeAccessToken(userPublicId,
+            "4", tenantPublicId, "User_test");
+        _client.DefaultRequestHeaders.Add("Authorization", $"Bearer {token}");
+        
+        // act
+        var request = new QueryTransactionByPageRequest(null, null);
+        var response = await _client.PostAsJsonAsync($"api/transaction/query", request);
+        
+        // assert
+        response.EnsureSuccessStatusCode();
+        var content = await response.Content.ReadAsStringAsync();
+        testOutputHelper.WriteLine(content);
+        content.Should().NotContain("\"userPublicId\":\"11111111-1111-1111-1111-111111111111\"");
+        content.Should().Contain("\"totalCount\":20");
+        content.Should().Contain(ResultCodes.Transaction.TransactionQueryByPageSuccess);
+    }
+    
 }

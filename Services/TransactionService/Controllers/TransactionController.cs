@@ -30,4 +30,13 @@ public class TransactionController(IMediator mediator) : BaseController
         var result = await mediator.Send(command);
         return result.ToActionResult();
     }
+
+    [HttpPost("query")]
+    public async Task<IActionResult> GetTransactionByPageAsync(QueryTransactionByPageRequest request)
+    {
+        var command = new QueryTransactionByPageCommand(TenantPublicId, UserPublicId, 
+            request.StartDate, request.EndDate, request.Page, request.PageSize, request.SortBy);
+        var result = await mediator.Send(command);
+        return result.ToActionResult();
+    }
 }

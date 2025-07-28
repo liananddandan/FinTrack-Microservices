@@ -42,7 +42,7 @@
 	<s:String x:Key="/Default/CodeInspection/ExcludedFiles/FilesAndFoldersToSkip2/=7020124F_002D9FFC_002D4AC3_002D8F3D_002DAAB8E0240759_002Ff_003AUnauthorizedResult_002Ecs_002Fl_003A_002E_002E_003F_002E_002E_003F_002E_002E_003FLibrary_003FApplication_0020Support_003FJetBrains_003FRider2024_002E3_003Fresharper_002Dhost_003FSourcesCache_003F848c629dd035d9535248fad9944522c1b9cfaa290d4c1af25857955bc955ac8_003FUnauthorizedResult_002Ecs/@EntryIndexedValue">ForceIncluded</s:String>
 	<s:String x:Key="/Default/CodeInspection/ExcludedFiles/FilesAndFoldersToSkip2/=7020124F_002D9FFC_002D4AC3_002D8F3D_002DAAB8E0240759_002Ff_003AUserManager_002Ecs_002Fl_003A_002E_002E_003F_002E_002E_003F_002E_002E_003FLibrary_003FApplication_0020Support_003FJetBrains_003FRider2024_002E3_003Fresharper_002Dhost_003FSourcesCache_003F1622b8f95d27187bc1fb39bac49bd64e928773df4fda6fcf6271680be54a2_003FUserManager_002Ecs/@EntryIndexedValue">ForceIncluded</s:String>
 	<s:String x:Key="/Default/CodeInspection/ExcludedFiles/FilesAndFoldersToSkip2/=7020124F_002D9FFC_002D4AC3_002D8F3D_002DAAB8E0240759_002Ff_003AWebApplicationFactory_002Ecs_002Fl_003A_002E_002E_003F_002E_002E_003F_002E_002E_003FLibrary_003FApplication_0020Support_003FJetBrains_003FRider2024_002E3_003Fresharper_002Dhost_003FSourcesCache_003F255f916e5a2d424ef01b291afc761e049b367614440bf4b216824ec479064b_003FWebApplicationFactory_002Ecs/@EntryIndexedValue">ForceIncluded</s:String>
-	<s:String x:Key="/Default/Environment/UnitTesting/UnitTestSessionStore/Sessions/=b0d5d89b_002D67c6_002D4406_002D9b3e_002Dd14c556b0501/@EntryIndexedValue">&lt;SessionState ContinuousTestingMode="0" IsActive="True" Name="ReceiveInviteAsync_ShouldReturnSuccess" xmlns="urn:schemas-jetbrains-com:jetbrains-ut-session"&gt;
+	<s:String x:Key="/Default/Environment/UnitTesting/UnitTestSessionStore/Sessions/=b0d5d89b_002D67c6_002D4406_002D9b3e_002Dd14c556b0501/@EntryIndexedValue">&lt;SessionState ContinuousTestingMode="0" Name="ReceiveInviteAsync_ShouldReturnSuccess" xmlns="urn:schemas-jetbrains-com:jetbrains-ut-session"&gt;
   &lt;TestAncestor&gt;
     &lt;TestId&gt;xUnit::634E2A0D-EE3E-4F9F-9F60-D97B140815D8::net9.0::IdentityService.Tests.Controllers.TenantControllerTests.ReceiveInviteAsync_ShouldReturnSuccess&lt;/TestId&gt;
     &lt;TestId&gt;xUnit::634E2A0D-EE3E-4F9F-9F60-D97B140815D8::net9.0::IdentityService.Tests.Services.UserDomainServiceTests.GetRoleByNameInnerAsync_ShouldReturnRole_WhenRoleExist&lt;/TestId&gt;
@@ -68,10 +68,19 @@
     &lt;TestId&gt;xUnit::6C190E35-19C4-4C14-8449-9AC7178ABCE2::net9.0::TransactionService.Tests.Services.TransactionServiceTests.QueryUserOwnTransactionByPublicIdAsync_ShouldReturnFail_WhenTenantPublicIdNotMatches&lt;/TestId&gt;
     &lt;TestId&gt;xUnit::6C190E35-19C4-4C14-8449-9AC7178ABCE2::net9.0::TransactionService.Tests.Services.TransactionServiceTests.QueryUserOwnTransactionByPublicIdAsync_ShouldReturnSuccess_WhenAllMatches&lt;/TestId&gt;
     &lt;TestId&gt;xUnit::6C190E35-19C4-4C14-8449-9AC7178ABCE2::net9.0::TransactionService.Tests.Commands.Handlers.QueryTransactionCommandHandlerTests.Handle_ShouldReturnResult_WhenReceivedCommand&lt;/TestId&gt;
+    &lt;TestId&gt;xUnit::6C190E35-19C4-4C14-8449-9AC7178ABCE2::net9.0::TransactionService.Tests.Commands.Handlers.QueryTransactionByPageCommandHandlerTests.Handle_ShouldReturnResult_WhenReceiveCommand&lt;/TestId&gt;
   &lt;/TestAncestor&gt;
 &lt;/SessionState&gt;</s:String>
-	<s:String x:Key="/Default/Environment/UnitTesting/UnitTestSessionStore/Sessions/=d845880b_002D3308_002D4a2a_002Da74e_002Ddcd8de9101b1/@EntryIndexedValue">&lt;SessionState ContinuousTestingMode="0" Name="InviteUserAsync_ShouldReturnSuccess" xmlns="urn:schemas-jetbrains-com:jetbrains-ut-session"&gt;
-  &lt;Project Location="/Users/lichen/Documents/vsCode/FinTrack-Microservices/Tests/IdentityService.Tests" Presentation="&amp;lt;Tests&amp;gt;\&amp;lt;IdentityService.Tests&amp;gt;" /&gt;
+	<s:String x:Key="/Default/Environment/UnitTesting/UnitTestSessionStore/Sessions/=d845880b_002D3308_002D4a2a_002Da74e_002Ddcd8de9101b1/@EntryIndexedValue">&lt;SessionState ContinuousTestingMode="0" IsActive="True" Name="InviteUserAsync_ShouldReturnSuccess" xmlns="urn:schemas-jetbrains-com:jetbrains-ut-session"&gt;
+  &lt;Or&gt;
+    &lt;Project Location="/Users/lichen/Documents/vsCode/FinTrack-Microservices/Tests/IdentityService.Tests" Presentation="&amp;lt;Tests&amp;gt;\&amp;lt;IdentityService.Tests&amp;gt;" /&gt;
+    &lt;TestAncestor&gt;
+      &lt;TestId&gt;xUnit::6C190E35-19C4-4C14-8449-9AC7178ABCE2::net9.0::TransactionService.Tests.Services.TransactionServiceTests.QueryTransactionByPageAsync_ShouldReturnEmpty_WhenTransactionNotExist&lt;/TestId&gt;
+      &lt;TestId&gt;xUnit::6C190E35-19C4-4C14-8449-9AC7178ABCE2::net9.0::TransactionService.Tests.Services.TransactionServiceTests.QueryTransactionByPageAsync_ShouldReturnResult_WhenTransactionsExist&lt;/TestId&gt;
+      &lt;TestId&gt;xUnit::6C190E35-19C4-4C14-8449-9AC7178ABCE2::net9.0::TransactionService.Tests.Controllers.TransactionControllerTests.GetTransactionByPageAsync_ShouldQueryResult&lt;/TestId&gt;
+      &lt;TestId&gt;xUnit::6C190E35-19C4-4C14-8449-9AC7178ABCE2::net9.0::TransactionService.Tests.Repositories.TransactionRepoTests.GetTransactionsByPageAsync_ShouldReturnNull_IfNoExistInPublicIdOrTenantId&lt;/TestId&gt;
+    &lt;/TestAncestor&gt;
+  &lt;/Or&gt;
 &lt;/SessionState&gt;</s:String>
 	
 	

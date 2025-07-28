@@ -138,4 +138,57 @@ public class TransactionServiceTests
         result.Data.Amount.Should().Be(transaction.Amount);
         result.Data.Currency.Should().Be(transaction.Currency);
     }
+
+    [Theory, AutoMoqData]
+    public async Task QueryTransactionByPageAsync_ShouldReturnEmpty_WhenTransactionNotExist(
+        [Frozen] Mock<ITransactionRepo> transactionRepoMock,
+        string tenantPublicId,
+        string userPublicId, DateTime? startDate, DateTime? endDate,
+        int page, int pageSize, string sortBy,
+        TransactionService.Services.TransactionService sut)
+    {
+        // arrange
+        transactionRepoMock.Setup(tp
+            => tp.GetTransactionsByPageAsync(tenantPublicId, userPublicId, startDate, endDate, page, pageSize, sortBy))
+            .ReturnsAsync((new List<Transaction>(), 0));
+        
+        // act
+        var result = await sut.QueryTransactionByPageAsync(tenantPublicId, userPublicId, startDate, endDate, page, pageSize, sortBy);
+        
+        // assert
+        result.Success.Should().BeTrue();
+        result.Data.Should().NotBeNull();
+        result.Code.Should().BeEquivalentTo(ResultCodes.Transaction.TransactionQueryByPageSuccess);
+        result.Data.transactions.Should().BeEmpty();
+        result.Data.totalCount.Should().Be(0);
+        result.Data.page.Should().Be(page);
+        result.Data.pageSize.Should().Be(pageSize);
+    }
+    
+    [Theory, AutoMoqData]
+    public async Task QueryTransactionByPageAsync_ShouldReturnResult_WhenTransactionsExist(
+        [Frozen] Mock<ITransactionRepo> transactionRepoMock,
+        string tenantPublicId,
+        string userPublicId, DateTime? startDate, DateTime? endDate,
+        int page, int pageSize, string sortBy,
+        List<Transaction> transactions,
+        TransactionService.Services.TransactionService sut)
+    {
+        // arrange
+        transactionRepoMock.Setup(tp
+                => tp.GetTransactionsByPageAsync(tenantPublicId, userPublicId, startDate, endDate, page, pageSize, sortBy))
+            .ReturnsAsync((transactions, 100));
+        
+        // act
+        var result = await sut.QueryTransactionByPageAsync(tenantPublicId, userPublicId, startDate, endDate, page, pageSize, sortBy);
+        
+        // assert
+        result.Success.Should().BeTrue();
+        result.Data.Should().NotBeNull();
+        result.Code.Should().BeEquivalentTo(ResultCodes.Transaction.TransactionQueryByPageSuccess);
+        result.Data.transactions.Should().NotBeEmpty();
+        result.Data.totalCount.Should().Be(100);
+        result.Data.page.Should().Be(page);
+        result.Data.pageSize.Should().Be(pageSize);
+    }
 }

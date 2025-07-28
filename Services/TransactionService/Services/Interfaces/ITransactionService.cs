@@ -16,4 +16,13 @@ public interface ITransactionService
     public Task<ServiceResult<TransactionDto>> QueryUserOwnTransactionByPublicIdAsync(string tenantPublicId, 
         string userPublicId,
         string transactionPublicId);
+    
+    public Task<ServiceResult<QueryByPageDto>> QueryTransactionByPageAsync(
+        string tenantPublicId,
+        string userPublicId,
+        DateTime? startDate,
+        DateTime? endDate,
+        int page,
+        int pageSize,
+        string sortBy);
 }

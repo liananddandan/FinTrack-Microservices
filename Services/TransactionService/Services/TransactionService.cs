@@ -13,7 +13,8 @@ public class TransactionService(
     IUnitOfWork unitOfWork,
     IRiskService riskService) : ITransactionService
 {
-    public async Task<ServiceResult<CreateTransactionResponse>> CreateTransactionAsync(string tenantPublicId, string userPublicId, decimal amount, string currency,
+    public async Task<ServiceResult<CreateTransactionResponse>> CreateTransactionAsync(string tenantPublicId,
+        string userPublicId, decimal amount, string currency,
         string? description)
     {
         var riskResult = await riskService.CheckRiskAsync(tenantPublicId, userPublicId, amount, currency);
@@ -28,7 +29,7 @@ public class TransactionService(
             TransStatus = riskResult == RiskStatus.Pass ? TransStatus.Success : TransStatus.Failed,
             RiskStatus = riskResult
         };
-        
+
         await transactionRepo.AddTransactionAsync(transaction);
         await unitOfWork.SaveChangesAsync();
         var response = new CreateTransactionResponse(
@@ -39,26 +40,31 @@ public class TransactionService(
             transaction.RiskStatus,
             transaction.CreatedAt);
         return riskResult == RiskStatus.Pass
-            ? ServiceResult<CreateTransactionResponse>.Ok(response, ResultCodes.Transaction.TransactionCreateSuccess, "Transaction Created")
-            : ServiceResult<CreateTransactionResponse>.Fail(ResultCodes.Transaction.TransactionCreateFailed, "Transaction Failed");
+            ? ServiceResult<CreateTransactionResponse>.Ok(response, ResultCodes.Transaction.TransactionCreateSuccess,
+                "Transaction Created")
+            : ServiceResult<CreateTransactionResponse>.Fail(ResultCodes.Transaction.TransactionCreateFailed,
+                "Transaction Failed");
     }
 
-    public async Task<ServiceResult<TransactionDto>> QueryUserOwnTransactionByPublicIdAsync(string tenantPublicId, string userPublicId, string transactionPublicId)
+    public async Task<ServiceResult<TransactionDto>> QueryUserOwnTransactionByPublicIdAsync(string tenantPublicId,
+        string userPublicId, string transactionPublicId)
     {
         var transaction = await transactionRepo.GetTransactionByPublicIdAsync(transactionPublicId);
         if (transaction == null)
         {
-            return ServiceResult<TransactionDto>.Fail(ResultCodes.Transaction.TransactionNotFound, "Transaction Not Found");
+            return ServiceResult<TransactionDto>.Fail(ResultCodes.Transaction.TransactionNotFound,
+                "Transaction Not Found");
         }
 
-        if (transaction.UserPublicId != userPublicId 
+        if (transaction.UserPublicId != userPublicId
             || transaction.TenantPublicId != tenantPublicId)
         {
-            return ServiceResult<TransactionDto>.Fail(ResultCodes.Transaction.TransactionNotBelongToCurrentUser, "Transaction Not belong to user");
+            return ServiceResult<TransactionDto>.Fail(ResultCodes.Transaction.TransactionNotBelongToCurrentUser,
+                "Transaction Not belong to user");
         }
 
         var dto = new TransactionDto(transaction.TransactionPublicId.ToString(),
-            transaction.TenantPublicId, 
+            transaction.TenantPublicId,
             transaction.UserPublicId,
             transaction.Amount,
             transaction.Currency,
@@ -66,6 +72,34 @@ public class TransactionService(
             transaction.RiskStatus,
             transaction.Description,
             transaction.CreatedAt);
-        return ServiceResult<TransactionDto>.Ok(dto, ResultCodes.Transaction.TransactionQuerySuccess, "Transaction Query Success");
+        return ServiceResult<TransactionDto>.Ok(dto, ResultCodes.Transaction.TransactionQuerySuccess,
+            "Transaction Query Success");
+    }
+
+    public async Task<ServiceResult<QueryByPageDto>> QueryTransactionByPageAsync(string tenantPublicId,
+        string userPublicId, DateTime? startDate, DateTime? endDate,
+        int page, int pageSize, string sortBy)
+    {
+        var (queryResult, total) = await transactionRepo.GetTransactionsByPageAsync(tenantPublicId,
+            userPublicId, startDate, endDate, page, pageSize, sortBy);
+        var dTOs = new List<TransactionDto>();
+        queryResult?.ForEach(t =>
+        {
+            dTOs.Add(new TransactionDto(t.TransactionPublicId.ToString(),
+                t.TenantPublicId,
+                t.UserPublicId,
+                t.Amount,
+                t.Currency,
+                t.TransStatus,
+                t.RiskStatus,
+                t.Description,
+                t.CreatedAt));
+        });
+
+        var queryByPageDto = new QueryByPageDto(dTOs, total, page, pageSize);
+        
+        return ServiceResult<QueryByPageDto>.Ok(queryByPageDto,
+            ResultCodes.Transaction.TransactionQueryByPageSuccess,
+            "Transaction Query By Page Success");
     }
 }
