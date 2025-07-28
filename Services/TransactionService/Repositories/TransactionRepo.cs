@@ -28,22 +28,17 @@ public class TransactionRepo(TransactionDbContext dbContext) : ITransactionRepo
             .Where(t => t.UserPublicId.ToString().Equals(userPublicId));
         if (startDate is not null)
         {
-            query.Where(t => t.CreatedAt >= startDate);
+            query = query.Where(t => t.CreatedAt >= startDate);
         }
 
         if (endDate is not null)
         {
-            query.Where(t => t.CreatedAt <= endDate);
+            query = query.Where(t => t.CreatedAt <= endDate);
         }
-
-        if (sortBy.Equals("desc"))
-        {
-            query.OrderByDescending(t => t.CreatedAt);
-        }
-        else
-        {
-            query.OrderBy(t => t.CreatedAt);
-        }
+        
+        query = sortBy.Equals("desc")
+            ? query.OrderByDescending(t => t.CreatedAt) 
+            : query.OrderBy(t => t.CreatedAt);
 
         page = page > 0 ? page : 1;
         pageSize = pageSize > 0 ? pageSize : 10;

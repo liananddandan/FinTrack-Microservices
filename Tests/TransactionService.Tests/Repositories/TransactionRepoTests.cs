@@ -179,7 +179,7 @@ public class TransactionRepoTests(ITestOutputHelper testOutputHelper)
         
         // act
         var (data, totalCount) = await repo.GetTransactionsByPageAsync(
-            "11111111-1111-1111-1111-11111111111",
+            "11111111-1111-1111-1111-111111111111",
             "11111111-1111-1111-1111-111111111111",
             null,
             null,
@@ -222,7 +222,7 @@ public class TransactionRepoTests(ITestOutputHelper testOutputHelper)
         
         // act
         var (data, totalCount) = await repo.GetTransactionsByPageAsync(
-            "11111111-1111-1111-1111-11111111111",
+            "11111111-1111-1111-1111-111111111111",
             "11111111-1111-1111-1111-111111111111",
             null,
             null,
@@ -265,7 +265,7 @@ public class TransactionRepoTests(ITestOutputHelper testOutputHelper)
         
         // act
         var (data, totalCount) = await repo.GetTransactionsByPageAsync(
-            "11111111-1111-1111-1111-11111111111",
+            "11111111-1111-1111-1111-111111111111",
             "11111111-1111-1111-1111-111111111111",
             null,
             null,
@@ -308,7 +308,7 @@ public class TransactionRepoTests(ITestOutputHelper testOutputHelper)
         
         // act
         var (data, totalCount) = await repo.GetTransactionsByPageAsync(
-            "11111111-1111-1111-1111-11111111111",
+            "11111111-1111-1111-1111-111111111111",
             "11111111-1111-1111-1111-111111111111",
             null,
             null,
@@ -320,6 +320,54 @@ public class TransactionRepoTests(ITestOutputHelper testOutputHelper)
         totalCount.Should().Be(countSize);
         data.Should().NotBeNull();
         data.Count.Should().Be(7);
+        data.ForEach(t =>
+        {
+            testOutputHelper.WriteLine($"{t.CreatedAt}, {t.Id}, {t.TenantPublicId}, {t.Amount}, {t.Currency}");
+        });
+    }
+    
+    [Fact]
+    public async Task GetTransactionsByPageAsync_ShouldReturn_IfCreateAtMoreThan()
+    {
+        var option = new DbContextOptionsBuilder<TransactionDbContext>()
+            .UseInMemoryDatabase(databaseName: Guid.NewGuid().ToString())
+            .Options;
+        var countSize = 17;
+        await using var context = new TestDbContext(option);
+        var repo = new TransactionRepo(context);
+        var transactions = new List<Transaction>();
+        for (int i = 0; i < countSize; i++)
+        {
+            var t = new Transaction(){
+                TenantPublicId = "11111111-1111-1111-1111-111111111111",
+                UserPublicId = "11111111-1111-1111-1111-111111111111",
+                Amount = new decimal(15.234 * i),
+                Currency = "USD",
+                TransStatus = TransStatus.Success,
+                RiskStatus = RiskStatus.Pass,
+                Description = $"{i}",
+                CreatedAt = DateTime.UtcNow.AddDays(i)
+            };
+            transactions.Add(t);
+        }
+
+        await context.Transactions.AddRangeAsync(transactions);
+        await context.SaveChangesAsync();
+        
+        // act
+        var (data, totalCount) = await repo.GetTransactionsByPageAsync(
+            "11111111-1111-1111-1111-111111111111",
+            "11111111-1111-1111-1111-111111111111",
+            DateTime.UtcNow.AddDays(11),
+            null,
+            1,
+            10,
+            "asc");
+        
+        // assert
+        totalCount.Should().Be(5);
+        data.Should().NotBeNull();
+        data.Count.Should().Be(5);
         data.ForEach(t =>
         {
             testOutputHelper.WriteLine($"{t.CreatedAt}, {t.Id}, {t.TenantPublicId}, {t.Amount}, {t.Currency}");

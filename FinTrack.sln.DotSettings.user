@@ -80,6 +80,8 @@
       &lt;TestId&gt;xUnit::6C190E35-19C4-4C14-8449-9AC7178ABCE2::net9.0::TransactionService.Tests.Controllers.TransactionControllerTests.GetTransactionByPageAsync_ShouldQueryResult&lt;/TestId&gt;
       &lt;TestId&gt;xUnit::6C190E35-19C4-4C14-8449-9AC7178ABCE2::net9.0::TransactionService.Tests.Repositories.TransactionRepoTests.GetTransactionsByPageAsync_ShouldReturnNull_IfNoExistInPublicIdOrTenantId&lt;/TestId&gt;
     &lt;/TestAncestor&gt;
+    &lt;Project Location="/Users/lichen/Documents/vsCode/FinTrack-Microservices/Tests/NotificationService.Tests" Presentation="&amp;lt;Tests&amp;gt;\&amp;lt;NotificationService.Tests&amp;gt;" /&gt;
+    &lt;Project Location="/Users/lichen/Documents/vsCode/FinTrack-Microservices/Tests/TransactionService.Tests" Presentation="&amp;lt;Tests&amp;gt;\&amp;lt;TransactionService.Tests&amp;gt;" /&gt;
   &lt;/Or&gt;
 &lt;/SessionState&gt;</s:String>
 	
