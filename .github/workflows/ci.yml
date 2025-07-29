@@ -6,6 +6,7 @@ on:
       - main
       - feature/identity-service
       - feature/transaction-service
+      - feature/gateway-service
   pull_request:
     branches:
       - main
