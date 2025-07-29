@@ -1,4 +1,4 @@
-namespace IdentityService.Common.DTOs;
+namespace SharedKernel.Common.DTOs;
 
 public class TenantInfoDto
 {

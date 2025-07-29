@@ -1,5 +1,6 @@
 using IdentityService.Common.DTOs;
 using IdentityService.Domain.Entities;
+using SharedKernel.Common.DTOs;
 using SharedKernel.Common.DTOs.Auth;
 using SharedKernel.Common.Results;
 

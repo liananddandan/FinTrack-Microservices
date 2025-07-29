@@ -1,5 +1,4 @@
 using System.Web;
-using IdentityService.Common.Results;
 using IdentityService.Common.Status;
 using IdentityService.Domain.Entities;
 using IdentityService.Services.Interfaces;

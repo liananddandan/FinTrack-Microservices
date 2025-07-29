@@ -33,12 +33,12 @@ public class IdentityWebApplicationFactory<TProgram> : WebApplicationFactory<TPr
                     var sp = services.BuildServiceProvider();
                     using var scope = sp.CreateScope();
                     var db = scope.ServiceProvider.GetRequiredService<ApplicationIdentityDbContext>();
+                    db.Database.Migrate();
                     db.Database.ExecuteSqlRaw("DELETE FROM AspNetUserRoles");
                     db.Database.ExecuteSqlRaw("DELETE FROM AspNetUsers");
                     db.Database.ExecuteSqlRaw("DELETE FROM AspNetRoles");
                     db.Database.ExecuteSqlRaw("DELETE FROM Tenants");
                     db.Database.ExecuteSqlRaw("DELETE FROM TenantInvitations");
-                    db.Database.Migrate();
                     var userManager = scope.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();
                     var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<ApplicationRole>>();
                     UsersSeed.InitialAllDataAsync(db, userManager, roleManager).GetAwaiter().GetResult();

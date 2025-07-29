@@ -1,11 +1,11 @@
 using AutoFixture.Xunit2;
 using FluentAssertions;
-using IdentityService.Common.Results;
 using IdentityService.Domain.Entities;
 using IdentityService.Repositories.Interfaces;
 using IdentityService.Services;
 using IdentityService.Tests.Attributes;
 using Moq;
+using SharedKernel.Common.Results;
 
 namespace IdentityService.Tests.Services;
 

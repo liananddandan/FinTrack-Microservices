@@ -1,11 +1,11 @@
 using IdentityService.Common.DTOs;
-using IdentityService.Common.Results;
 using IdentityService.Common.Status;
 using IdentityService.Domain.Entities;
 using IdentityService.Events;
 using IdentityService.Repositories.Interfaces;
 using IdentityService.Services.Interfaces;
 using MediatR;
+using SharedKernel.Common.DTOs;
 using SharedKernel.Common.Results;
 
 namespace IdentityService.Services;

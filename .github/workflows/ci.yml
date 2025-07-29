@@ -5,6 +5,7 @@ on:
     branches:
       - main
       - feature/identity-service
+      - feature/transaction-service
   pull_request:
     branches:
       - main

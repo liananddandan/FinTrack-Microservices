@@ -1,5 +1,4 @@
 using System.Text;
-using IdentityService.Common.Options;
 using IdentityService.Domain.Entities;
 using IdentityService.Filters;
 using IdentityService.Infrastructure.Persistence;
@@ -11,6 +10,7 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Scalar.AspNetCore;
+using SharedKernel.Common.Options;
 
 var builder = WebApplication.CreateBuilder(args);
 

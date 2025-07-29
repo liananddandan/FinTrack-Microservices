@@ -1,4 +1,3 @@
-using IdentityService.Common.Results;
 using IdentityService.Common.Status;
 using IdentityService.Filters.Attributes;
 using IdentityService.Services.Interfaces;

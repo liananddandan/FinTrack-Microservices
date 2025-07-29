@@ -3,6 +3,7 @@ using IdentityService.Common.DTOs;
 using IdentityService.Domain.Entities;
 using IdentityService.Services.Interfaces;
 using MediatR;
+using SharedKernel.Common.DTOs;
 using SharedKernel.Common.Results;
 
 namespace IdentityService.CommandHandlers;

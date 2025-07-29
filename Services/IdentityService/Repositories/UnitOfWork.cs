@@ -1,4 +1,3 @@
-using IdentityService.Common.Results;
 using IdentityService.Infrastructure.Persistence;
 using IdentityService.Repositories.Interfaces;
 using Microsoft.EntityFrameworkCore.Storage;

@@ -4,8 +4,6 @@ using System.Text;
 using AutoFixture.Xunit2;
 using FluentAssertions;
 using IdentityService.Common.DTOs;
-using IdentityService.Common.Options;
-using IdentityService.Common.Results;
 using IdentityService.Common.Status;
 using IdentityService.Domain.Entities;
 using IdentityService.Services;
@@ -14,6 +12,8 @@ using IdentityService.Tests.Attributes;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 using Moq;
+using SharedKernel.Common.Options;
+using SharedKernel.Common.Results;
 
 namespace IdentityService.Tests.Services;
 
