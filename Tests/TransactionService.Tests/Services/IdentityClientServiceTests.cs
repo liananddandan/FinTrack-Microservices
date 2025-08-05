@@ -1,5 +1,6 @@
 using FluentAssertions;
 using SharedKernel.Common.DTOs;
+using SharedKernel.Common.Results;
 using TransactionService.ExternalServices;
 using TransactionService.Services;
 using TransactionService.Tests.Attributes;
@@ -38,7 +39,9 @@ public class IdentityClientServiceTests : IAsyncLifetime
         // arrange
         _wireMockServer.Given(Request.Create().WithPath($"/api/internal/account/{userPublicId}")
                 .UsingGet())
-            .RespondWith(Response.Create().WithStatusCode(200).WithBodyAsJson(userInfo));
+            .RespondWith(Response.Create().WithStatusCode(200)
+                .WithBodyAsJson(ServiceResult<UserInfoDto>
+                    .Ok(userInfo, "return userinfo", "return userinfo")));
         
         // act
         var result = await _identityClientService.GetUserInfoAsync(userPublicId);
