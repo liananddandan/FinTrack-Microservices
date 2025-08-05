@@ -7,9 +7,11 @@ using IdentityService.Services.Interfaces;
 using MediatR;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using SharedKernel.Common.Constants;
 using SharedKernel.Common.DTOs;
 using SharedKernel.Common.DTOs.Auth;
 using SharedKernel.Common.Results;
+using StackExchange.Redis;
 
 namespace IdentityService.Services;
 
@@ -18,7 +20,8 @@ public class UserAppService(UserManager<ApplicationUser> userManager,
     IUserDomainService userDomainService,
     IMediator mediator,
     IJwtTokenService jwtTokenService,
-    IUnitOfWork unitOfWork) : IUserAppService
+    IUnitOfWork unitOfWork,
+    IConnectionMultiplexer redis) : IUserAppService
 {
         public async Task<ServiceResult<ApplicationUser>> GetUserByIdAsync(string id)
     {
@@ -102,11 +105,18 @@ public class UserAppService(UserManager<ApplicationUser> userManager,
             UserPublicId = user.PublicId.ToString()
         };
 
+        var userPublicId = user.PublicId.ToString();
+        var jwtVersion = user.JwtVersion.ToString();
+        
+        // write jwtversion to redis
+        await redis.GetDatabase().StringSetAsync($"{Constant.Redis.JwtVersionPrefix}{userPublicId}",
+            jwtVersion, TimeSpan.FromDays(30));
+        
         if (user.IsFirstLogin)
         {
             await mediator.Publish(new UserFirstLoginEvent(){
-                UserPublicId = user.PublicId.ToString(), 
-                JwtVersion = user.JwtVersion.ToString(),
+                UserPublicId = userPublicId, 
+                JwtVersion = jwtVersion,
                 TenantPublicId = user.Tenant!.PublicId.ToString(),
                 UserEmail = user.Email!,
                 UserRoleInTenant = roleResult}, 
@@ -114,10 +124,11 @@ public class UserAppService(UserManager<ApplicationUser> userManager,
             return ServiceResult<UserLoginResult>
                 .Ok(userLoginResult, ResultCodes.User.UserLoginSuccessButFirstLogin, "User First Login Success.");
         }
+        
         var jwtClaimSource = new JwtClaimSource()
         {
-            UserPublicId = user.PublicId.ToString(),
-            JwtVersion = user.JwtVersion.ToString(),
+            UserPublicId = userPublicId,
+            JwtVersion = jwtVersion,
             TenantPublicId = user.Tenant!.PublicId.ToString(),
             UserRoleInTenant = roleResult
         };

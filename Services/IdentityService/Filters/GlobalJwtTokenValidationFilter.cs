@@ -28,12 +28,6 @@ public class GlobalJwtTokenValidationFilter(IJwtTokenService jwtTokenService,
             return;
         }
 
-        if (!token.StartsWith("Bearer ") && !token.StartsWith("Invite "))
-        {
-            context.Result = new UnauthorizedResult();
-            return;
-        }
-
         var inviteToken = token.StartsWith("Invite ");
         token = inviteToken ? token.Replace("Invite ", "") : token.Replace("Bearer ", "");
 

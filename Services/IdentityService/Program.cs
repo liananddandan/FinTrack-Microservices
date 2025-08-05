@@ -11,6 +11,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Scalar.AspNetCore;
 using SharedKernel.Common.Options;
+using StackExchange.Redis;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -53,6 +54,14 @@ builder.Services.AddCap(options =>
         cfg.UserName = builder.Configuration["CAP:RabbitMQ:UserName"]!;
         cfg.Password = builder.Configuration["CAP:RabbitMQ:Password"]!;
     });
+});
+
+builder.Services.AddSingleton<IConnectionMultiplexer>(sp =>
+{
+    var redisCon = builder.Configuration.GetConnectionString("Redis")!;
+    var configuration = ConfigurationOptions.Parse(redisCon, true);
+    configuration.ResolveDns = true;
+    return ConnectionMultiplexer.Connect(configuration);
 });
 
 builder.Services.AddIdentity<ApplicationUser, ApplicationRole>()

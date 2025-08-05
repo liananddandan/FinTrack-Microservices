@@ -8,8 +8,10 @@ using IdentityService.Tests.Attributes;
 using Microsoft.AspNetCore.Identity;
 using MockQueryable;
 using Moq;
+using SharedKernel.Common.Constants;
 using SharedKernel.Common.Exceptions;
 using SharedKernel.Common.Results;
+using StackExchange.Redis;
 
 namespace IdentityService.Tests.Services;
 
@@ -344,14 +346,29 @@ public class UserDomainServiceTests
     [Theory, AutoMoqData]
     public async Task IncreaseUserJwtVersionInnerAsync_Should_Invoke_Repo_Method(
         [Frozen] Mock<IApplicationUserRepo> userRepoMock,
+        [Frozen] Mock<IConnectionMultiplexer> redisMock,
+        [Frozen] Mock<IDatabase> databaseMock,
         ApplicationUser user,
         UserDomainService service)
     {
+        // Arrange
+        databaseMock.Setup(db => db.StringSetAsync(
+                $"{Constant.Redis.JwtVersionPrefix}{user.PublicId.ToString()}",
+                user.JwtVersion.ToString(),
+                TimeSpan.FromDays(30), false, When.Always, CommandFlags.None))
+            .ReturnsAsync(true);
+        redisMock.Setup(r => r.GetDatabase(It.IsAny<int>(), null))
+            .Returns(databaseMock.Object);
+        
         // Act
         await service.IncreaseUserJwtVersionInnerAsync(user);
 
         // Assert
         userRepoMock.Verify(r => r.IncreaseJwtVersion(user, It.IsAny<CancellationToken>()), Times.Once);
+        databaseMock.Verify(db => db.StringSetAsync(
+            $"{Constant.Redis.JwtVersionPrefix}{user.PublicId.ToString()}",
+            user.JwtVersion.ToString(),
+            TimeSpan.FromDays(30), false, When.Always, CommandFlags.None), Times.Once);
     }
 
     [Theory, AutoMoqData]

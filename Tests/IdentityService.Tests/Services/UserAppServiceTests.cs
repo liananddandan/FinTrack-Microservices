@@ -11,8 +11,10 @@ using IdentityService.Tests.Extensions;
 using Microsoft.AspNetCore.Identity;
 using MockQueryable;
 using Moq;
+using SharedKernel.Common.Constants;
 using SharedKernel.Common.DTOs.Auth;
 using SharedKernel.Common.Results;
+using StackExchange.Redis;
 
 namespace IdentityService.Tests.Services;
 

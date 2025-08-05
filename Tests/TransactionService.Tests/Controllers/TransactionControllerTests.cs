@@ -49,7 +49,9 @@ public class TransactionControllerTests(ITestOutputHelper testOutputHelper) : IA
         _client.DefaultRequestHeaders.Add("Authorization", $"Bearer {token}");
         _wireMockServer.Given(Request.Create().WithPath($"/api/internal/account/{userPublicId}")
                 .UsingGet())
-            .RespondWith(Response.Create().WithStatusCode(200).WithBodyAsJson(userInfo));
+            .RespondWith(Response.Create().WithStatusCode(200)
+                .WithBodyAsJson(ServiceResult<UserInfoDto>
+                    .Ok(userInfo, "Return UserInfo", "Return UserInfo")));
         
         // Act
         var response = await _client.PostAsJsonAsync("api/transaction/create", request);

@@ -1,0 +1,30 @@
+version: '3.9'
+
+services:
+  gateway:
+    build:
+      context: ./Services/GatewayService
+    ports:
+      - "5000:80"
+    depends_on:
+      - identity
+      - transaction
+      - notification
+
+  identity:
+    build:
+      context: ./Services/IdentityService
+    ports:
+      - "5100:80"
+
+  transaction:
+    build:
+      context: ./Services/TransactionService
+    ports:
+      - "5200:80"
+
+  notification:
+    build:
+      context: ./Services/NotificationService
+    ports:
+      - "5300:80"
