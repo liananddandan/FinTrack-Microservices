@@ -1,4 +1,5 @@
 using SharedKernel.Common.DTOs;
+using SharedKernel.Common.Results;
 using TransactionService.ExternalServices.Interfaces;
 
 namespace TransactionService.ExternalServices;
@@ -17,6 +18,8 @@ public class IdentityClientService : IIdentityClientService
         {
             return null;
         }
-        return await response.Content.ReadFromJsonAsync<UserInfoDto>();
+        
+        var serviceResult = await response.Content.ReadFromJsonAsync<ServiceResult<UserInfoDto>>();
+        return serviceResult?.Data;
     }
 }

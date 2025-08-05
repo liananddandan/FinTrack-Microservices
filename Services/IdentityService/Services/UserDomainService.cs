@@ -5,7 +5,9 @@ using IdentityService.Repositories.Interfaces;
 using IdentityService.Services.Interfaces;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using SharedKernel.Common.Constants;
 using SharedKernel.Common.Exceptions;
+using StackExchange.Redis;
 
 namespace IdentityService.Services;
 
@@ -13,7 +15,8 @@ public class UserDomainService(
     UserManager<ApplicationUser> userManager,
     RoleManager<ApplicationRole> roleManager,
     ILogger<UserDomainService> logger,
-    IApplicationUserRepo userRepo) : IUserDomainService
+    IApplicationUserRepo userRepo,
+    IConnectionMultiplexer redis) : IUserDomainService
 {
     public async Task<(ApplicationUser, string)> CreateUserOrThrowInnerAsync(string userName, string userEmail,
         long tenantId, long roleId, CancellationToken cancellationToken = default)
@@ -124,10 +127,11 @@ public class UserDomainService(
         return Task.CompletedTask;
     }
 
-    public Task IncreaseUserJwtVersionInnerAsync(ApplicationUser user, CancellationToken cancellationToken = default)
+    public async Task IncreaseUserJwtVersionInnerAsync(ApplicationUser user, CancellationToken cancellationToken = default)
     {
-        userRepo.IncreaseJwtVersion(user, cancellationToken);
-        return Task.CompletedTask;
+        await userRepo.IncreaseJwtVersion(user, cancellationToken);
+        await redis.GetDatabase().StringSetAsync($"{Constant.Redis.JwtVersionPrefix}{user.PublicId.ToString()}",
+            user.JwtVersion.ToString(), TimeSpan.FromDays(30));
     }
 
     public async Task<ApplicationUser?> GetUserByPublicIdIncludeTenantAndRoleAsync(string userPublicId, CancellationToken cancellationToken = default)
