@@ -55,3 +55,8 @@ nunit-*.xml
 
 # idea
 .idea
+
+# JetBrains Rider / ReSharper settings
+*.DotSettings.user
+
+.DS_Store
