@@ -59,4 +59,68 @@ nunit-*.xml
 # JetBrains Rider / ReSharper settings
 *.DotSettings.user
 
+# =========================
+# OS
+# =========================
 .DS_Store
+Thumbs.db
+
+# =========================
+# VSCode
+# =========================
+.vscode/*
+!.vscode/extensions.json
+!.vscode/settings.json
+
+# =========================
+# Logs
+# =========================
+*.log
+
+# =========================
+# Node / Frontend
+# =========================
+node_modules/
+dist/
+build/
+*.local
+.env
+.env.*
+
+# =========================
+# Vue / Vite
+# =========================
+.vite
+*.tsbuildinfo
+
+# =========================
+# .NET
+# =========================
+bin/
+obj/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+
+# =========================
+# Rider / VS
+# =========================
+.idea/
+
+# =========================
+# Docker
+# =========================
+docker-data/
+*.pid
+
+# =========================
+# Test / Coverage
+# =========================
+coverage/
+
+# =========================
+# Mac
+# =========================
+.AppleDouble
+.LSOverride
