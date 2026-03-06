@@ -13,7 +13,7 @@
         <div class="portal-card-header">
           <h2 class="portal-card-title">Register organization</h2>
           <p class="portal-card-subtitle">
-            This creates a tenant and the first administrator account.
+            This creates a tenant and its first administrator account.
           </p>
         </div>
 
@@ -52,6 +52,16 @@
             />
           </el-form-item>
 
+          <el-form-item label="Confirm password">
+            <el-input
+              v-model="form.confirmPassword"
+              type="password"
+              show-password
+              placeholder="Re-enter password"
+              size="large"
+            />
+          </el-form-item>
+
           <el-button
             type="primary"
             size="large"
@@ -63,16 +73,16 @@
           </el-button>
 
           <el-alert
-            v-if="success"
-            title="Organization registered successfully. Redirecting to sign in..."
+            v-if="successMessage"
+            :title="successMessage"
             type="success"
             show-icon
             class="portal-alert"
           />
 
           <el-alert
-            v-if="error"
-            :title="error"
+            v-if="errorMessage"
+            :title="errorMessage"
             type="error"
             show-icon
             class="portal-alert"
@@ -99,27 +109,48 @@ import { registerTenant } from "../api/tenant";
 const router = useRouter();
 
 const loading = ref(false);
-const success = ref(false);
-const error = ref("");
+const successMessage = ref("");
+const errorMessage = ref("");
 
 const form = reactive({
   tenantName: "",
   adminName: "",
   adminEmail: "",
   adminPassword: "",
+  confirmPassword: "",
 });
 
 async function onSubmit() {
-  error.value = "";
-  success.value = false;
+  errorMessage.value = "";
+  successMessage.value = "";
 
-  if (!form.tenantName || !form.adminName || !form.adminEmail || !form.adminPassword) {
-    error.value = "All fields are required.";
+  if (!form.tenantName.trim()) {
+    errorMessage.value = "Organization name is required.";
     return;
   }
 
-  if (form.adminPassword.length < 8) {
-    error.value = "Password must be at least 8 characters.";
+  if (!form.adminName.trim()) {
+    errorMessage.value = "Administrator name is required.";
+    return;
+  }
+
+  if (!form.adminEmail.trim()) {
+    errorMessage.value = "Administrator email is required.";
+    return;
+  }
+
+  if (!form.adminPassword.trim()) {
+    errorMessage.value = "Password is required.";
+    return;
+  }
+
+  if (!form.confirmPassword.trim()) {
+    errorMessage.value = "Please confirm your password.";
+    return;
+  }
+
+  if (form.adminPassword !== form.confirmPassword) {
+    errorMessage.value = "Passwords do not match.";
     return;
   }
 
@@ -127,19 +158,22 @@ async function onSubmit() {
 
   try {
     await registerTenant({
-      tenantName: form.tenantName,
-      adminName: form.adminName,
-      adminEmail: form.adminEmail,
+      tenantName: form.tenantName.trim(),
+      adminName: form.adminName.trim(),
+      adminEmail: form.adminEmail.trim(),
       adminPassword: form.adminPassword,
     });
 
-    success.value = true;
+    successMessage.value = "Organization registered successfully. Redirecting to sign in...";
 
     setTimeout(() => {
       router.push("/login");
     }, 1200);
   } catch (err: any) {
-    error.value = err?.response?.data?.message ?? "Failed to register organization.";
+    errorMessage.value =
+      err?.response?.data?.message ??
+      err?.message ??
+      "Failed to register organization.";
   } finally {
     loading.value = false;
   }

@@ -76,8 +76,8 @@ public class JwtTokenService(IUserDomainService userService, IOptions<JwtOptions
         }
 
         if (!Guid.TryParse(tenantPublicId, out var tPublicId)
-            || user.Tenant == null
-            || !user.Tenant.PublicId.Equals(tPublicId))
+            || user.Memberships == null
+            || !user.Memberships.First().PublicId.Equals(tPublicId))
         {
             return ServiceResult<JwtTokenPair>.Fail(ResultCodes.Token.RefreshJwtTokenFailedClaimTenantIdInvalid,
                 "Invalid tenant ID.");
@@ -94,7 +94,7 @@ public class JwtTokenService(IUserDomainService userService, IOptions<JwtOptions
         {
             JwtVersion = user.JwtVersion.ToString(),
             UserPublicId = user.PublicId.ToString(),
-            TenantPublicId = user.Tenant.PublicId.ToString(),
+            TenantPublicId = user.Memberships.First().PublicId.ToString(),
             UserRoleInTenant = role
         };
 

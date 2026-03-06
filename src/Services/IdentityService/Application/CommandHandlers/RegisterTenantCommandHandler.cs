@@ -13,7 +13,7 @@ public class RegisterTenantCommandHandler(
     public async Task<ServiceResult<RegisterTenantResult>> Handle(RegisterTenantCommand request, CancellationToken cancellationToken)
     {
         return await tenantService.RegisterTenantAsync(request.TenantName,
-            request.AdminName, request.AdminEmail, cancellationToken);
+            request.AdminName, request.AdminEmail, request.AdminPassword, cancellationToken);
     }
     
 }

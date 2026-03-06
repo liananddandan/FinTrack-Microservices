@@ -1,13 +1,11 @@
 using IdentityService.Domain.Entities;
 using IdentityService.Infrastructure.Persistence;
-using IdentityService.Tests.Seeds;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.DependencyInjection.Extensions;
 
 namespace IdentityService.Tests;
 
@@ -34,14 +32,21 @@ public class IdentityWebApplicationFactory<TProgram> : WebApplicationFactory<TPr
                     using var scope = sp.CreateScope();
                     var db = scope.ServiceProvider.GetRequiredService<ApplicationIdentityDbContext>();
                     db.Database.Migrate();
+                    
                     db.Database.ExecuteSqlRaw("DELETE FROM AspNetUserRoles");
+                    db.Database.ExecuteSqlRaw("DELETE FROM TenantInvitations");
+                    db.Database.ExecuteSqlRaw("DELETE FROM TenantMemberships");
+                    db.Database.ExecuteSqlRaw("DELETE FROM AspNetUserTokens");
+                    db.Database.ExecuteSqlRaw("DELETE FROM AspNetUserClaims");
+                    db.Database.ExecuteSqlRaw("DELETE FROM AspNetUserLogins");
+                    db.Database.ExecuteSqlRaw("DELETE FROM AspNetRoleClaims");
                     db.Database.ExecuteSqlRaw("DELETE FROM AspNetUsers");
                     db.Database.ExecuteSqlRaw("DELETE FROM AspNetRoles");
                     db.Database.ExecuteSqlRaw("DELETE FROM Tenants");
-                    db.Database.ExecuteSqlRaw("DELETE FROM TenantInvitations");
+                    
                     var userManager = scope.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();
-                    var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<ApplicationRole>>();
-                    UsersSeed.InitialAllDataAsync(db, userManager, roleManager).GetAwaiter().GetResult();
+                    // var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<IdentityRole>();
+                    // UsersSeed.InitialAllDataAsync(db, userManager, roleManager).GetAwaiter().GetResult();
                     _dbInitialized = true;
                 }
             }

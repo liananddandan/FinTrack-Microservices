@@ -5,19 +5,12 @@ using Microsoft.EntityFrameworkCore;
 
 namespace IdentityService.Infrastructure.Persistence;
 
-public class ApplicationIdentityDbContext: IdentityDbContext<
-    ApplicationUser, 
-    ApplicationRole, 
-    long>
+public class ApplicationIdentityDbContext(DbContextOptions<ApplicationIdentityDbContext> options) :
+    IdentityDbContext<ApplicationUser, IdentityRole<long>, long>(options)
 {
-    public DbSet<Tenant> Tenants { get; set; }
-    public DbSet<ApplicationUser> Users { get; set; }
-    public DbSet<ApplicationRole> Roles { get; set; }
-    public DbSet<TenantInvitation> TenantInvitations { get; set; }
-
-    public ApplicationIdentityDbContext(DbContextOptions<ApplicationIdentityDbContext> options) : base(options)
-    {
-    }
+    public DbSet<Tenant> Tenants => Set<Tenant>();
+    public DbSet<TenantMembership> TenantMemberships => Set<TenantMembership>();
+    public DbSet<TenantInvitation> TenantInvitations => Set<TenantInvitation>();
 
     protected override void OnModelCreating(ModelBuilder builder)
     {

@@ -7,5 +7,6 @@ namespace IdentityService.Application.Commands;
 public record RegisterTenantCommand(
     string TenantName,
     string AdminName,
-    string AdminEmail
+    string AdminEmail,
+    string AdminPassword
     ) : IRequest<ServiceResult<RegisterTenantResult>>;

@@ -8,4 +8,6 @@ public class Tenant
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     public bool IsDeleted { get; set; } = false;
     public DateTime? DeletedAt { get; set; }
+    public ICollection<TenantMembership> Memberships { get; set; } = new List<TenantMembership>();
+    public ICollection<TenantInvitation> Invitations { get; set; } = new List<TenantInvitation>();
 }

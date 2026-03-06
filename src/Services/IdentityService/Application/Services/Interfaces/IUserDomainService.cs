@@ -21,7 +21,5 @@ public interface IUserDomainService
     
     Task <ApplicationUser?> GetUserByPublicIdIncludeTenantAndRoleAsync(string userPublicId, CancellationToken cancellationToken = default);
     
-    Task<RoleStatus> CreateRoleInnerAsync(ApplicationRole role, CancellationToken cancellationToken = default);
     Task<IEnumerable<ApplicationUser>> GetAllUsersInTenantIncludeRoleAsync(long tenantId, CancellationToken cancellationToken = default);
-    Task<ApplicationRole?> GetRoleByNameInnerAsync(string roleName, CancellationToken cancellationToken = default);
 }

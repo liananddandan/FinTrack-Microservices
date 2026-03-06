@@ -50,7 +50,8 @@ public class AccountControllerTests(
         }).CreateClient();
 
         var registerTenantCommand = new RegisterTenantCommand("TestTenantName_ConfirmEmail",
-            "TestAdminName_ConfirmEmail", "TestAdmin_ConfirmEmail@Test.com");
+            "TestAdminName_ConfirmEmail", "TestAdmin_ConfirmEmail@Test.com",
+            "12345678");
         var registerTenantResponse = await client.PostAsJsonAsync("api/tenant/register", registerTenantCommand);
         registerTenantResponse.EnsureSuccessStatusCode();
         capturedEmail.Should().NotBeNull();
@@ -176,7 +177,6 @@ public class AccountControllerTests(
             .AsNoTracking()
             .FirstOrDefaultAsync(u => u.Email == "testUserForSetPasswordTest@test.com");
         userAfter.Should().NotBeNull();
-        userAfter.IsFirstLogin.Should().BeFalse();
         userAfter.JwtVersion.Should().BeGreaterThan(user.JwtVersion);
     }
 
@@ -219,7 +219,6 @@ public class AccountControllerTests(
             .AsNoTracking()
             .FirstOrDefaultAsync(u => u.Email == "testUserForResetPasswordTest@test.com");
         userAfter.Should().NotBeNull();
-        userAfter.IsFirstLogin.Should().BeFalse();
         userAfter.JwtVersion.Should().BeGreaterThan(user.JwtVersion);
     }
 

@@ -6,9 +6,11 @@ public static class ResultCodes
     {
         // Identity 100******
         // RegisterTenant Failed 100 001 001
-        public const string RegisterTenantRoleCreateFailed = "100001001";
-        public const string RegisterTenantRoleGrantFailed = "100001002";
-        public const string RegisterTenantException = "100001003";
+        public const string RegisterTenantParameterError = "100001001";
+        public const string RegisterTenantExistedError = "100001002";
+        public const string RegisterTenantCreateError = "100001003";
+        public const string RegisterTenantException = "100001004";
+        
         public const string InvitationRecordNotFound = "100001004";
         public const string InvitationPublicIdInvalid = "100001005";
         public const string InvitationVersionInvalid = "100001006";
@@ -20,6 +22,7 @@ public static class ResultCodes
         public const string UserDoNotHavePermissionToQueryTenant = "100001012";
         public const string UserDoNotBelongToTenant = "100001013";
         public const string InvitationUsingWrongRole = "100001014";
+        
         // RegisterTenant Success 100 001 999
         public const string GetAllUserInTenantSuccess = "100001992";
         public const string InvitationReceiveSuccess = "100001993";

@@ -13,8 +13,17 @@ public class TenantRepo(ApplicationIdentityDbContext dbContext) : ITenantRepo
 
     public async Task<Tenant?> GetTenantByPublicIdAsync(string publicId, CancellationToken cancellationToken = default)
     {
+        if (!Guid.TryParse(publicId, out var parsedPublicId))
+        {
+            return null;
+        }
+
         return await dbContext.Tenants
-            .Where(t => publicId.Equals(t.PublicId.ToString()))
-            .FirstOrDefaultAsync(cancellationToken);
+            .FirstOrDefaultAsync(t => t.PublicId == parsedPublicId, cancellationToken);
     }
+
+    public async Task<bool> IsTenantNameExistsAsync(string tenantName, CancellationToken cancellationToken = default)
+    {
+        return await dbContext.Tenants
+            .AnyAsync(t => t.Name == tenantName && !t.IsDeleted, cancellationToken);    }
 }

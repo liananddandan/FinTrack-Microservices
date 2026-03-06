@@ -62,7 +62,7 @@ builder.Services.AddSingleton<IConnectionMultiplexer>(sp =>
     return ConnectionMultiplexer.Connect(configuration);
 });
 
-builder.Services.AddIdentity<ApplicationUser, ApplicationRole>()
+builder.Services.AddIdentity<ApplicationUser, IdentityRole<long>>()
     .AddEntityFrameworkStores<ApplicationIdentityDbContext>()
     .AddDefaultTokenProviders();
 
@@ -79,11 +79,11 @@ builder.Services.AddControllers(options =>
 });
 
 builder.Services.Scan(scan => scan
-    .FromAssemblyOf<Program>() // 你也可以换成 typeof(Program) 或任何所在程序集的类型
+    .FromAssemblyOf<Program>()
     .AddClasses(classes => classes.InNamespaces(
-        "IdentityService.Services",
-        "IdentityService.Repositories"))
-    .AsMatchingInterface() // 如 UserService -> IUserService
+        "IdentityService.Application.Services",
+        "IdentityService.Infrastructure.Persistence.Repositories"))
+    .AsMatchingInterface()
     .WithScopedLifetime());
 
 var app = builder.Build();

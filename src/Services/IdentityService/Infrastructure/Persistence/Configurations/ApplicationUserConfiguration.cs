@@ -1,11 +1,10 @@
-using System.Collections.Immutable;
 using IdentityService.Domain.Entities;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
-namespace IdentityService.Infrastructure.Persistence.EFConfigurations;
+namespace IdentityService.Infrastructure.Persistence.Configurations;
 
-public class UserConfiguration : IEntityTypeConfiguration<ApplicationUser>
+public class ApplicationUserConfiguration : IEntityTypeConfiguration<ApplicationUser>
 {
     public void Configure(EntityTypeBuilder<ApplicationUser> builder)
     {
@@ -16,14 +15,7 @@ public class UserConfiguration : IEntityTypeConfiguration<ApplicationUser>
         builder.HasIndex(u => u.Email).IsUnique();
         builder.Property(u => u.UserName).IsRequired();
         builder.HasIndex(u => u.UserName).IsUnique();
-        builder.HasOne(u => u.Tenant)
-            .WithMany()
-            .HasForeignKey(u => u.TenantId)
-            .OnDelete(DeleteBehavior.Restrict);
-        builder.Property(u => u.IsFirstLogin).HasDefaultValue(true);
-        builder.HasOne(u => u.Role)
-            .WithMany()
-            .HasForeignKey(u => u.RoleId)
-            .OnDelete(DeleteBehavior.Restrict);
+        builder.Property(x => x.CreatedAt).IsRequired();
+        builder.Property(x => x.JwtVersion).IsRequired();
     }
 }

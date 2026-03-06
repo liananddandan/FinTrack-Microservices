@@ -20,13 +20,13 @@ public class AutoMoqDataAttribute : AutoDataAttribute
             fixture.Inject(userManager);
             fixture.Inject(userManager.Object);
             // RoleManager mock
-            var roleStore = new Mock<IRoleStore<ApplicationRole>>();
-            var roleManager = new Mock<RoleManager<ApplicationRole>>(
+            var roleStore = new Mock<IRoleStore<IdentityRole>>();
+            var roleManager = new Mock<RoleManager<IdentityRole>>(
                 roleStore.Object,
-                new IRoleValidator<ApplicationRole>[0],
+                new IRoleValidator<IdentityRole>[0],
                 new Mock<ILookupNormalizer>().Object,
                 new Mock<IdentityErrorDescriber>().Object,
-                new Mock<ILogger<RoleManager<ApplicationRole>>>().Object);
+                new Mock<ILogger<RoleManager<IdentityRole>>>().Object);
             fixture.Inject(roleManager);
             fixture.Inject(roleManager.Object);
             return fixture;
