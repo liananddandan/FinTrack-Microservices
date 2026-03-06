@@ -6,11 +6,16 @@ using SharedKernel.Common.Results;
 
 namespace IdentityService.Application.CommandHandlers;
 
-public class RefreshUserJwtTokenCommandHandler(IUserAppService userAppService)
+public class RefreshUserJwtTokenCommandHandler(IAccountService accountService)
     : IRequestHandler<RefreshUserJwtTokenCommand, ServiceResult<JwtTokenPair>>
 {
     public async Task<ServiceResult<JwtTokenPair>> Handle(RefreshUserJwtTokenCommand request, CancellationToken cancellationToken)
     {
-        return await userAppService.RefreshUserTokenPairAsync(request.UserPublicId, cancellationToken);
+        return await accountService.RefreshTokenAsync(
+            request.UserPublicId,
+            request.TenantPublicId,
+            request.JwtVersion,
+            request.UserRoleInTenant,
+            cancellationToken);
     }
 }

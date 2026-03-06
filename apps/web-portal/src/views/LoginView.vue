@@ -82,10 +82,11 @@ async function onLogin() {
             password: form.password
         })
 
-        auth.setTokens(
-            result.accessToken,
-            result.refreshToken
-        )
+        auth.setLoginSession(
+            result.tokens.accessToken,
+            result.tokens.refreshToken,
+            result.memberships
+        );
 
         const profile = await getCurrentUser()
         auth.setProfile(profile)

@@ -11,7 +11,7 @@ namespace IdentityService.Api.Controllers;
 
 [ApiController]
 [Route("api/account")]
-public class AccountLogin(IMediator mediator) : ControllerBase
+public class AccountController(IMediator mediator) : ControllerBase
 {
     [HttpPost("login")]
     [AllowAnonymousToken]
@@ -20,6 +20,42 @@ public class AccountLogin(IMediator mediator) : ControllerBase
         var result = await mediator.Send(request);
         return result.ToActionResult();
     }
+    
+    [HttpGet("me")]
+    public async Task<IActionResult> GetUsersInfoInTenantAsync()
+    {
+        var jwtParseResult = HttpContext.GetHttpHeaderJwtParseResult();
+        if (jwtParseResult == null)
+        {
+            return Unauthorized("Request without valid token");
+        }
+
+        var command = new FetchUserInfoCommand(jwtParseResult.UserPublicId);
+        var result = await mediator.Send(command);
+        return result.ToActionResult();
+    }
+    
+    [HttpGet("refresh-token")]
+    [RequireTokenType(JwtTokenType.RefreshToken)]
+    public async Task<IActionResult> RefreshUserJwtTokenAsync()
+    {
+        var jwtParseResult = HttpContext.GetHttpHeaderJwtParseResult();
+        if (jwtParseResult == null)
+        {
+            return Unauthorized("Request without valid token");
+        }
+
+        var command = new RefreshUserJwtTokenCommand(
+            jwtParseResult.UserPublicId,
+            jwtParseResult.TenantPublicId,
+            jwtParseResult.JwtVersion,
+            jwtParseResult.UserRoleInTenant
+        );
+        var result = await mediator.Send(command);
+        return result.ToActionResult();
+    }
+    
+    
     
     [HttpGet("confirm-email")]
     [AllowAnonymousToken]
@@ -43,35 +79,6 @@ public class AccountLogin(IMediator mediator) : ControllerBase
         }
 
         var command = new SetUserPasswordCommand(jwtParseResult.UserPublicId, request.OldPassword, request.NewPassword, true);
-        var result = await mediator.Send(command);
-        return result.ToActionResult();
-    }
-
-    [HttpGet("refresh-token")]
-    [RequireTokenType(JwtTokenType.RefreshToken)]
-    public async Task<IActionResult> RefreshUserJwtTokenAsync()
-    {
-        var jwtParseResult = HttpContext.GetHttpHeaderJwtParseResult();
-        if (jwtParseResult == null)
-        {
-            return Unauthorized("Request without valid token");
-        }
-
-        var command = new RefreshUserJwtTokenCommand(jwtParseResult.UserPublicId);
-        var result = await mediator.Send(command);
-        return result.ToActionResult();
-    }
-
-    [HttpGet("me")]
-    public async Task<IActionResult> GetUsersInfoInTenantAsync()
-    {
-        var jwtParseResult = HttpContext.GetHttpHeaderJwtParseResult();
-        if (jwtParseResult == null)
-        {
-            return Unauthorized("Request without valid token");
-        }
-
-        var command = new FetchUserInfoCommand(jwtParseResult.UserPublicId);
         var result = await mediator.Send(command);
         return result.ToActionResult();
     }

@@ -17,8 +17,8 @@ public interface IJwtTokenService
     Task<ServiceResult<InvitationParseResult>> ParseInvitationTokenAsync(string token);
     
     // updated
-    string GenerateAccessToken(ApplicationUser user, IEnumerable<TenantMembership> memberships);
-    string GenerateRefreshToken(ApplicationUser user);
+    string GenerateAccessToken(ApplicationUser user, TenantMembership memberships);
+    string GenerateRefreshToken(ApplicationUser user, TenantMembership membership);
     string GenerateInvitationToken(TenantInvitation invitation);
     Task<ServiceResult<JwtParseResult>> ParseJwtTokenAsync(string token);
 

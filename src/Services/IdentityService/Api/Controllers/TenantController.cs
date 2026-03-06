@@ -11,7 +11,7 @@ namespace IdentityService.Api.Controllers;
 
 [ApiController]
 [Route("api/tenant")]
-public class TenantRegister(IMediator mediator) : ControllerBase
+public class TenantController(IMediator mediator) : ControllerBase
 {
     [HttpPost("register")]
     [AllowAnonymousToken]

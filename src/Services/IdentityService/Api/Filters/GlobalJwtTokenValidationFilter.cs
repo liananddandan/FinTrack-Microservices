@@ -36,12 +36,12 @@ public class GlobalJwtTokenValidationFilter(IJwtTokenService jwtTokenService,
             var result = await jwtTokenService.ParseInvitationTokenAsync(token);
             if (!result.Success || result.Data == null)
             {
-                context.Result = BuildErrorResult(result);
+                context.Result = BuildUnauthorizedErrorResult(result);
                 return;
             }
             if (result.Data.TokenType != GetRequiredTokenType(context))
             {
-                context.Result = new ForbidResult("Token type not supported");
+                context.Result = BuildForbiddenErrorResult("Token type not supported");
                 return;
             }
             var invitationParsedResult = result.Data;
@@ -66,12 +66,12 @@ public class GlobalJwtTokenValidationFilter(IJwtTokenService jwtTokenService,
             var result = await jwtTokenService.ParseJwtTokenAsync(token);
             if (!result.Success || result.Data == null)
             {
-                context.Result = BuildErrorResult(result);
+                context.Result = BuildUnauthorizedErrorResult(result);
                 return;
             }
             if (result.Data.TokenType != GetRequiredTokenType(context))
             {
-                context.Result = new ForbidResult("Token type not supported");
+                context.Result = BuildForbiddenErrorResult("Token type not supported");
                 return;
             }
             var jwtParseResult = result.Data;
@@ -93,7 +93,7 @@ public class GlobalJwtTokenValidationFilter(IJwtTokenService jwtTokenService,
         }
     }
     
-    private IActionResult BuildErrorResult<T>(ServiceResult<T> result)
+    private IActionResult BuildUnauthorizedErrorResult<T>(ServiceResult<T> result)
     {
         return new JsonResult(new ApiResponse<object>(
             result.Code ?? ResultCodes.InternalError,
@@ -103,6 +103,18 @@ public class GlobalJwtTokenValidationFilter(IJwtTokenService jwtTokenService,
             StatusCode = StatusCodes.Status401Unauthorized
         };
     }
+
+    private IActionResult BuildForbiddenErrorResult(string message)
+    {
+        return new JsonResult(new ApiResponse<object>(
+            ResultCodes.Forbidden,
+            message,
+            null))
+        {
+            StatusCode = StatusCodes.Status403Forbidden
+        };
+    }
+
 
     private JwtTokenType GetRequiredTokenType(AuthorizationFilterContext context)
     {

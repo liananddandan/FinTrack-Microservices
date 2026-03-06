@@ -108,10 +108,12 @@ public static class ResultCodes
         public const string LoginException = "100005004";
         public const string UserNotFound = "100005005";
         public const string GetUserInfoException = "100005006";
+        public const string LoginMultipleTenantsNotSupported = "100005007";
         
         public const string GetUserInfoSuccess = "100005098";
         public const string LoginSuccess = "100005099";
     }
 
     public const string InternalError = "900900001";
+    public const string Forbidden = "900900002";
 }

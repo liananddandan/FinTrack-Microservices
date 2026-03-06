@@ -9,6 +9,7 @@ using IdentityService.Infrastructure.Persistence.Repositories.Interfaces;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.Logging;
 using Moq;
+using SharedKernel.Common.Results;
 using Xunit;
 
 namespace IdentityService.Tests.Services;
@@ -183,11 +184,11 @@ public class AccountServiceTests
             .ReturnsAsync(true);
 
         _jwtTokenServiceMock
-            .Setup(x => x.GenerateAccessToken(user, It.IsAny<IEnumerable<TenantMembership>>()))
+            .Setup(x => x.GenerateAccessToken(user, It.IsAny<TenantMembership>()))
             .Returns("fake-access-token");
 
         _jwtTokenServiceMock
-            .Setup(x => x.GenerateRefreshToken(user))
+            .Setup(x => x.GenerateRefreshToken(user, It.IsAny<TenantMembership>()))
             .Returns("fake-refresh-token");
 
         var result = await _sut.LoginAsync("user@test.com", "Password123!", CancellationToken.None);
@@ -195,8 +196,8 @@ public class AccountServiceTests
         result.Success.Should().BeTrue();
         result.Data.Should().NotBeNull();
 
-        result.Data!.AccessToken.Should().Be("fake-access-token");
-        result.Data.RefreshToken.Should().Be("fake-refresh-token");
+        result.Data!.Tokens.AccessToken.Should().Be("fake-access-token");
+        result.Data.Tokens.RefreshToken.Should().Be("fake-refresh-token");
         result.Data.Memberships.Should().HaveCount(1);
 
         var membership = result.Data.Memberships.Single();
@@ -216,5 +217,161 @@ public class AccountServiceTests
 
         result.Success.Should().BeFalse();
         result.Message.Should().Be("Login failed.");
+    }
+    
+        [Fact]
+    public async Task RefreshTokenAsync_Should_Return_Fail_When_User_Not_Found()
+    {
+        _applicationUserRepoMock
+            .Setup(x => x.GetUserByPublicIdWithMembershipsAsync("user-1", It.IsAny<CancellationToken>()))
+            .ReturnsAsync((ApplicationUser?)null);
+
+        var result = await _sut.RefreshTokenAsync(
+            "user-1",
+            "tenant-1",
+            "1",
+            "Admin",
+            CancellationToken.None);
+
+        result.Success.Should().BeFalse();
+        result.Message.Should().Be("User not found.");
+        result.Code.Should().Be(ResultCodes.Token.RefreshJwtTokenFailedClaimUserNotFound);
+    }
+
+    [Fact]
+    public async Task RefreshTokenAsync_Should_Return_Fail_When_JwtVersion_Is_Invalid()
+    {
+        var user = new ApplicationUser
+        {
+            PublicId = Guid.NewGuid(),
+            JwtVersion = 2,
+            Memberships = new List<TenantMembership>()
+        };
+
+        _applicationUserRepoMock
+            .Setup(x => x.GetUserByPublicIdWithMembershipsAsync("user-1", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(user);
+
+        var result = await _sut.RefreshTokenAsync(
+            "user-1",
+            "tenant-1",
+            "1",
+            "Admin",
+            CancellationToken.None);
+
+        result.Success.Should().BeFalse();
+        result.Message.Should().Be("Invalid jwt version.");
+        result.Code.Should().Be(ResultCodes.Token.RefreshJwtTokenFailedTokenInvalid);
+    }
+
+    [Fact]
+    public async Task RefreshTokenAsync_Should_Return_Fail_When_TenantMembership_Not_Found()
+    {
+        var user = new ApplicationUser
+        {
+            PublicId = Guid.NewGuid(),
+            JwtVersion = 1,
+            Memberships = new List<TenantMembership>
+            {
+                new()
+                {
+                    IsActive = true,
+                    Role = TenantRole.Admin,
+                    Tenant = new Tenant
+                    {
+                        PublicId = Guid.NewGuid(),
+                        Name = "OtherTenant",
+                        IsDeleted = false
+                    }
+                }
+            }
+        };
+
+        _applicationUserRepoMock
+            .Setup(x => x.GetUserByPublicIdWithMembershipsAsync("user-1", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(user);
+
+        var result = await _sut.RefreshTokenAsync(
+            "user-1",
+            Guid.NewGuid().ToString(),
+            "1",
+            "Admin",
+            CancellationToken.None);
+
+        result.Success.Should().BeFalse();
+        result.Message.Should().Be("Tenant membership not found.");
+        result.Code.Should().Be(ResultCodes.Token.RefreshJwtTokenFailedClaimTenantIdInvalid);
+    }
+
+    [Fact]
+    public async Task RefreshTokenAsync_Should_Return_New_TokenPair_When_Request_Is_Valid()
+    {
+        var tenantPublicId = Guid.NewGuid();
+
+        var membership = new TenantMembership
+        {
+            IsActive = true,
+            Role = TenantRole.Admin,
+            Tenant = new Tenant
+            {
+                PublicId = tenantPublicId,
+                Name = "FinTrack",
+                IsDeleted = false
+            }
+        };
+
+        var user = new ApplicationUser
+        {
+            PublicId = Guid.NewGuid(),
+            JwtVersion = 1,
+            Memberships = new List<TenantMembership> { membership }
+        };
+
+        _applicationUserRepoMock
+            .Setup(x => x.GetUserByPublicIdWithMembershipsAsync("user-1", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(user);
+
+        _jwtTokenServiceMock
+            .Setup(x => x.GenerateAccessToken(user, membership))
+            .Returns("new-access-token");
+
+        _jwtTokenServiceMock
+            .Setup(x => x.GenerateRefreshToken(user, membership))
+            .Returns("new-refresh-token");
+
+        var result = await _sut.RefreshTokenAsync(
+            "user-1",
+            tenantPublicId.ToString(),
+            "1",
+            "Admin",
+            CancellationToken.None);
+
+        result.Success.Should().BeTrue();
+        result.Data.Should().NotBeNull();
+        result.Data!.AccessToken.Should().Be("new-access-token");
+        result.Data.RefreshToken.Should().Be("new-refresh-token");
+
+        _userDomainServiceMock.Verify(
+            x => x.SyncJwtVersionAsync(user, It.IsAny<CancellationToken>()),
+            Times.Once);
+    }
+
+    [Fact]
+    public async Task RefreshTokenAsync_Should_Return_Fail_When_Exception_Is_Thrown()
+    {
+        _applicationUserRepoMock
+            .Setup(x => x.GetUserByPublicIdWithMembershipsAsync("user-1", It.IsAny<CancellationToken>()))
+            .ThrowsAsync(new Exception("db error"));
+
+        var result = await _sut.RefreshTokenAsync(
+            "user-1",
+            "tenant-1",
+            "1",
+            "Admin",
+            CancellationToken.None);
+
+        result.Success.Should().BeFalse();
+        result.Message.Should().Be("Refresh token failed.");
+        result.Code.Should().Be(ResultCodes.Token.RefreshJwtTokenFailedTokenInvalid);
     }
 }

@@ -161,9 +161,8 @@ public class JwtTokenService(
     }
 
     // updated interface!!!
-    public string GenerateAccessToken(ApplicationUser user, IEnumerable<TenantMembership> memberships)
+    public string GenerateAccessToken(ApplicationUser user, TenantMembership membership)
     {
-        var membership = memberships.FirstOrDefault(m => m.IsActive);
         if (membership is null)
         {
             throw new InvalidOperationException("User has no active tenant membership.");
@@ -175,28 +174,22 @@ public class JwtTokenService(
             new Claim(JwtClaimNames.JwtVersion, user.JwtVersion.ToString()),
             new Claim(JwtClaimNames.Tenant, membership.Tenant.PublicId.ToString()),
             new Claim(JwtClaimNames.Role, membership.Role.ToString()),
-            new Claim(JwtClaimNames.TokenType, JwtTokenType.AccessToken.ToString())
         };
 
-        var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_jwtOptions.Secret));
-        var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
-
-        var token = new JwtSecurityToken(
-            issuer: _jwtOptions.Issuer,
-            audience: _jwtOptions.Audience,
-            claims: claims,
-            expires: DateTime.UtcNow.AddMinutes(_jwtOptions.AccessTokenExpirationMinutes),
-            signingCredentials: creds);
-
-        return new JwtSecurityTokenHandler().WriteToken(token);
+        return GenerateToken(
+            claims,
+            JwtTokenType.AccessToken,
+            DateTime.UtcNow.AddDays(_jwtOptions.AccessTokenExpirationMinutes));
     }
     
-    public string GenerateRefreshToken(ApplicationUser user)
+    public string GenerateRefreshToken(ApplicationUser user, TenantMembership membership)
     {
         var claims = new List<Claim>
         {
             new Claim(JwtClaimNames.UserId, user.PublicId.ToString()),
             new Claim(JwtClaimNames.JwtVersion, user.JwtVersion.ToString()),
+            new Claim(JwtClaimNames.Tenant, membership.Tenant.PublicId.ToString()),
+            new Claim(JwtClaimNames.Role, membership.Role.ToString()),
         };
 
         return GenerateToken(
