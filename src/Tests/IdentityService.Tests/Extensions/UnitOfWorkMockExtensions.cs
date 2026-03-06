@@ -1,5 +1,5 @@
+using IdentityService.Infrastructure.Persistence.Repositories.Interfaces;
 using Moq;
-using IdentityService.Repositories.Interfaces;
 
 namespace IdentityService.Tests.Extensions;
 

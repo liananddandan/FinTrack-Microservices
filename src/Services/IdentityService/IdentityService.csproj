@@ -31,8 +31,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Folder Include="Common\Options\" />
-    <Folder Include="Common\Results\" />
     <Folder Include="Domain\" />
   </ItemGroup>
 

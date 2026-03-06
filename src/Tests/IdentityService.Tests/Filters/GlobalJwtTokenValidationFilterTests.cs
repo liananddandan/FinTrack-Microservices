@@ -1,11 +1,11 @@
 using AutoFixture.Xunit2;
 using FluentAssertions;
-using IdentityService.Common.DTOs;
-using IdentityService.Common.Status;
+using IdentityService.Api.Filters;
+using IdentityService.Api.Filters.Attributes;
+using IdentityService.Application.Common.DTOs;
+using IdentityService.Application.Common.Status;
+using IdentityService.Application.Services.Interfaces;
 using IdentityService.Domain.Entities;
-using IdentityService.Filters;
-using IdentityService.Filters.Attributes;
-using IdentityService.Services.Interfaces;
 using IdentityService.Tests.Attributes;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;

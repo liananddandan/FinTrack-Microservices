@@ -1,9 +1,9 @@
 using AutoFixture.Xunit2;
 using FluentAssertions;
-using IdentityService.Common.Status;
+using IdentityService.Application.Common.Status;
+using IdentityService.Application.Services;
 using IdentityService.Domain.Entities;
-using IdentityService.Repositories.Interfaces;
-using IdentityService.Services;
+using IdentityService.Infrastructure.Persistence.Repositories.Interfaces;
 using IdentityService.Tests.Attributes;
 using Microsoft.AspNetCore.Identity;
 using MockQueryable;

@@ -1,4 +1,4 @@
-using IdentityService.Common.Status;
+using IdentityService.Application.Common.Status;
 
 namespace IdentityService.Domain.Entities;
 

@@ -1,11 +1,11 @@
 using AutoFixture.Xunit2;
 using DotNetCore.CAP;
 using FluentAssertions;
-using IdentityService.Common.Status;
+using IdentityService.Application.Common.Status;
+using IdentityService.Application.EventHandlers;
+using IdentityService.Application.Events;
+using IdentityService.Application.Services.Interfaces;
 using IdentityService.Domain.Entities;
-using IdentityService.EventHandlers;
-using IdentityService.Events;
-using IdentityService.Services.Interfaces;
 using IdentityService.Tests.Attributes;
 using Moq;
 using SharedKernel.Common.Exceptions;

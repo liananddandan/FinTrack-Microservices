@@ -1,9 +1,8 @@
 using AutoFixture.Xunit2;
 using FluentAssertions;
-using IdentityService.CommandHandlers;
-using IdentityService.Commands;
-using IdentityService.Common.DTOs;
-using IdentityService.Services.Interfaces;
+using IdentityService.Application.CommandHandlers;
+using IdentityService.Application.Commands;
+using IdentityService.Application.Services.Interfaces;
 using IdentityService.Tests.Attributes;
 using Moq;
 using SharedKernel.Common.DTOs;

@@ -1,10 +1,8 @@
 using System.Text;
+using IdentityService.Api.Filters;
+using IdentityService.Api.Middlewares;
 using IdentityService.Domain.Entities;
-using IdentityService.Filters;
 using IdentityService.Infrastructure.Persistence;
-using IdentityService.Middlewares;
-using IdentityService.Services;
-using IdentityService.Services.Interfaces;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;

@@ -1,7 +1,7 @@
 using FluentAssertions;
 using IdentityService.Domain.Entities;
 using IdentityService.Infrastructure.Persistence;
-using IdentityService.Repositories;
+using IdentityService.Infrastructure.Persistence.Repositories;
 using Microsoft.EntityFrameworkCore;
 
 namespace IdentityService.Tests.Repositories;

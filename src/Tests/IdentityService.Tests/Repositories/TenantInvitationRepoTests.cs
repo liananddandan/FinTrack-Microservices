@@ -1,9 +1,9 @@
 using AutoFixture.Xunit2;
 using FluentAssertions;
-using IdentityService.Common.Status;
+using IdentityService.Application.Common.Status;
 using IdentityService.Domain.Entities;
 using IdentityService.Infrastructure.Persistence;
-using IdentityService.Repositories;
+using IdentityService.Infrastructure.Persistence.Repositories;
 using IdentityService.Tests.Attributes;
 using Microsoft.EntityFrameworkCore;
 
