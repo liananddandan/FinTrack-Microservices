@@ -100,5 +100,18 @@ public static class ResultCodes
         public const string TransactionCreateSuccess = "100004999";
     }
 
+    public static class Account
+    {
+        public const string LoginParameterError = "100005001";
+        public const string LoginInvalidCredential = "100005002";
+        public const string LoginNoTenant = "100005003";
+        public const string LoginException = "100005004";
+        public const string UserNotFound = "100005005";
+        public const string GetUserInfoException = "100005006";
+        
+        public const string GetUserInfoSuccess = "100005098";
+        public const string LoginSuccess = "100005099";
+    }
+
     public const string InternalError = "900900001";
 }

@@ -76,7 +76,7 @@ public class GlobalJwtTokenValidationFilter(IJwtTokenService jwtTokenService,
             }
             var jwtParseResult = result.Data;
             
-            var user = await userDomainService.GetUserByPublicIdIncludeTenantAsync(result.Data.UserPublicId);
+            var user = await userDomainService.GetUserByPublicIdAsync(result.Data.UserPublicId);
             if (user == null)
             {
                 context.Result = new UnauthorizedResult();

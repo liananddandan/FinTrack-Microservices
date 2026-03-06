@@ -4,6 +4,8 @@ using IdentityService.Application.Services.Interfaces;
 using IdentityService.Domain.Entities;
 using IdentityService.Infrastructure.Persistence.Repositories.Interfaces;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.EntityFrameworkCore;
+using SharedKernel.Common.Constants;
 using StackExchange.Redis;
 
 namespace IdentityService.Application.Services;
@@ -31,11 +33,6 @@ public class UserDomainService(
     }
 
     public Task<RoleStatus> AddUserToRoleInnerAsync(ApplicationUser user, string roleName, CancellationToken cancellationToken = default)
-    {
-        throw new NotImplementedException();
-    }
-
-    public Task<ApplicationUser?> GetUserByPublicIdIncludeTenantAsync(string userPublicId, CancellationToken cancellationToken = default)
     {
         throw new NotImplementedException();
     }
@@ -81,4 +78,26 @@ public class UserDomainService(
         throw new NotImplementedException();
     }
 
+    public async Task SyncJwtVersionAsync(ApplicationUser user, CancellationToken cancellationToken = default)
+    {
+        var key = $"{Constant.Redis.JwtVersionPrefix}{user.PublicId}";
+
+        await redis.GetDatabase().StringSetAsync(
+            key,
+            user.JwtVersion.ToString(),
+            TimeSpan.FromDays(30));
+    }
+
+    public async Task<ApplicationUser?> GetUserByPublicIdAsync(
+        string userPublicId,
+        CancellationToken cancellationToken = default)
+    {
+        if (!Guid.TryParse(userPublicId, out var parsedUserPublicId))
+        {
+            return null;
+        }
+
+        return await userManager.Users
+            .FirstOrDefaultAsync(u => u.PublicId == parsedUserPublicId, cancellationToken);
+    }
 }

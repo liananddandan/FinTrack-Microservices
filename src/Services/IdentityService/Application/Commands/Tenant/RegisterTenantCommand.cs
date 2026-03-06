@@ -2,7 +2,7 @@ using IdentityService.Application.Common.DTOs;
 using MediatR;
 using SharedKernel.Common.Results;
 
-namespace IdentityService.Application.Commands;
+namespace IdentityService.Application.Commands.Tenant;
 
 public record RegisterTenantCommand(
     string TenantName,

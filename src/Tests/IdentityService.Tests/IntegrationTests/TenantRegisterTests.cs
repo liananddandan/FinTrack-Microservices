@@ -1,28 +1,15 @@
 using System.Net;
-using System.Net.Http.Headers;
 using System.Net.Http.Json;
-using System.Text.RegularExpressions;
-using AutoFixture.Xunit2;
-using DotNetCore.CAP;
 using FluentAssertions;
-using IdentityService.Application.Commands;
-using IdentityService.Application.Common.DTOs;
-using IdentityService.Application.Common.Status;
-using IdentityService.Application.Services.Interfaces;
-using IdentityService.Domain.Entities;
 using IdentityService.Infrastructure.Persistence;
-using IdentityService.Tests.Attributes;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
-using Moq;
-using SharedKernel.Common.Results;
-using SharedKernel.Events;
-using SharedKernel.Topics;
-using Xunit.Abstractions;
 
 namespace IdentityService.Tests.IntegrationTests;
 
-public class TenantControllerTests(IdentityWebApplicationFactory<Program> factory)
+[Collection("IntegrationTests")]
+
+public class TenantRegisterTests(IdentityWebApplicationFactory<Program> factory)
     : IClassFixture<IdentityWebApplicationFactory<Program>>
 {
     private readonly IdentityWebApplicationFactory<Program> _factory = factory;

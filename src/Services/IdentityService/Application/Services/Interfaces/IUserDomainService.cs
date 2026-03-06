@@ -11,7 +11,6 @@ public interface IUserDomainService
     Task<RoleStatus> CreateRoleInnerAsync(string roleName, CancellationToken cancellationToken = default);
     Task<RoleStatus> AddUserToRoleInnerAsync(ApplicationUser user, string roleName, CancellationToken cancellationToken = default);
     // TODO: delete this interface later
-    Task<ApplicationUser?> GetUserByPublicIdIncludeTenantAsync(string userPublicId, CancellationToken cancellationToken = default);
     Task<string?> GetUserRoleInnerAsync(ApplicationUser user, CancellationToken cancellationToken = default);
     Task<(bool, string)> ChangePasswordInnerAsync(ApplicationUser user, string oldPassword, string newPassword, CancellationToken cancellationToken = default);
     Task<ApplicationUser?> GetUserByEmailInnerAsync(string userEmail, CancellationToken cancellationToken = default);
@@ -22,4 +21,8 @@ public interface IUserDomainService
     Task <ApplicationUser?> GetUserByPublicIdIncludeTenantAndRoleAsync(string userPublicId, CancellationToken cancellationToken = default);
     
     Task<IEnumerable<ApplicationUser>> GetAllUsersInTenantIncludeRoleAsync(long tenantId, CancellationToken cancellationToken = default);
+    
+    // updated
+    Task SyncJwtVersionAsync(ApplicationUser user, CancellationToken cancellationToken = default);
+    Task<ApplicationUser?> GetUserByPublicIdAsync(string userPublicId, CancellationToken cancellationToken = default);
 }

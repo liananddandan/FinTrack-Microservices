@@ -2,9 +2,8 @@ using SharedKernel.Common.DTOs.Auth;
 
 namespace IdentityService.Application.Common.DTOs;
 
-public class UserLoginResult
-{
-    public JwtTokenPair? TokenPair { get; set; }
-    public required string UserPublicId { get; set; }
-    public bool IsFirstLogin { get; set; }
-}
+public record UserLoginResult(
+    string AccessToken,
+    string RefreshToken,
+    IEnumerable<LoginMembershipDto> Memberships
+);

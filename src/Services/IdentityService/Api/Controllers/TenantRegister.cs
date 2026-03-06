@@ -1,5 +1,6 @@
 using IdentityService.Api.Filters.Attributes;
 using IdentityService.Application.Commands;
+using IdentityService.Application.Commands.Tenant;
 using IdentityService.Application.Common.DTOs;
 using IdentityService.Application.Common.Extensions;
 using IdentityService.Application.Common.Status;
@@ -10,7 +11,7 @@ namespace IdentityService.Api.Controllers;
 
 [ApiController]
 [Route("api/tenant")]
-public class TenantController(IMediator mediator) : ControllerBase
+public class TenantRegister(IMediator mediator) : ControllerBase
 {
     [HttpPost("register")]
     [AllowAnonymousToken]

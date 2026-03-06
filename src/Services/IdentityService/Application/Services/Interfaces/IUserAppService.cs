@@ -22,6 +22,6 @@ public interface IUserAppService
     Task<ServiceResult<JwtTokenPair>> RefreshUserTokenPairAsync(string userPublicId,
         CancellationToken cancellationToken = default);
 
-    Task<ServiceResult<UserInfoDto>> GetUserInfoAsync(string userPublicId,
+    Task<ServiceResult<CurrentUserInfoResult>> GetUserInfoAsync(string userPublicId,
         CancellationToken cancellationToken = default);
 }

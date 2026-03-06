@@ -15,13 +15,9 @@ using StackExchange.Redis;
 
 namespace IdentityService.Application.Services;
 
-public class UserAppService(UserManager<ApplicationUser> userManager, 
-    IUserVerificationService userVerificationService,
-    IUserDomainService userDomainService,
-    IMediator mediator,
-    IJwtTokenService jwtTokenService,
-    IUnitOfWork unitOfWork,
-    IConnectionMultiplexer redis) : IUserAppService
+public class UserAppService(
+    IApplicationUserRepo applicationUserRepo,
+    ILogger<UserAppService> logger) : IUserAppService
 {
     public Task<ServiceResult<ApplicationUser>> GetUserByIdAsync(string id)
     {
@@ -49,8 +45,49 @@ public class UserAppService(UserManager<ApplicationUser> userManager,
         throw new NotImplementedException();
     }
 
-    public Task<ServiceResult<UserInfoDto>> GetUserInfoAsync(string userPublicId, CancellationToken cancellationToken = default)
+    public async Task<ServiceResult<CurrentUserInfoResult>> GetUserInfoAsync(
+        string userPublicId,
+        CancellationToken cancellationToken = default)
     {
-        throw new NotImplementedException();
+        try
+        {
+            var user = await applicationUserRepo.GetUserByPublicIdWithMembershipsAsync(
+                userPublicId,
+                cancellationToken);
+
+            if (user is null)
+            {
+                return ServiceResult<CurrentUserInfoResult>.Fail(
+                    ResultCodes.Account.UserNotFound,
+                    "User not found.");
+            }
+
+            var memberships = user.Memberships
+                .Where(m => m.IsActive && !m.Tenant.IsDeleted)
+                .Select(m => new LoginMembershipDto(
+                    m.Tenant.PublicId.ToString(),
+                    m.Tenant.Name,
+                    m.Role.ToString()))
+                .ToList();
+
+            var result = new CurrentUserInfoResult(
+                user.PublicId.ToString(),
+                user.Email ?? string.Empty,
+                user.UserName,
+                memberships);
+
+            return ServiceResult<CurrentUserInfoResult>.Ok(
+                result,
+                ResultCodes.Account.GetUserInfoSuccess,
+                "User info fetched successfully.");
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Failed to get current user info for {UserPublicId}", userPublicId);
+
+            return ServiceResult<CurrentUserInfoResult>.Fail(
+                ResultCodes.Account.GetUserInfoException,
+                "Failed to get user info.");
+        }
     }
 }

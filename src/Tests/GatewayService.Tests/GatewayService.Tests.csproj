@@ -27,4 +27,8 @@
     <ProjectReference Include="..\..\Services\GatewayService\GatewayService.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Folder Include="Middlewares\" />
+  </ItemGroup>
+
 </Project>

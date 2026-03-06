@@ -19,6 +19,8 @@ builder.Services.Configure<JwtOptions>(
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>
     {
+        options.MapInboundClaims = false;
+
         var jwtTokenOptions = builder.Configuration.GetSection("JwtSettings").Get<JwtOptions>();
         options.RequireHttpsMetadata = false;
         options.SaveToken = true;

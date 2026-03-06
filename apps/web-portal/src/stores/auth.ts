@@ -1,41 +1,51 @@
-import { defineStore } from "pinia";
+import { defineStore } from "pinia"
 
-type AuthState = {
-  accessToken: string | null;
-  refreshToken: string | null;
-  userEmail: string | null;
-};
+const ACCESS_TOKEN_KEY = "fintrack.accessToken"
+const REFRESH_TOKEN_KEY = "fintrack.refreshToken"
+
+export type UserProfile = {
+  userPublicId: string
+  email: string
+  userName?: string
+  memberships?: Array<{
+    tenantPublicId: string
+    tenantName: string
+    role: string
+  }>
+}
 
 export const useAuthStore = defineStore("auth", {
-  state: (): AuthState => ({
-    accessToken: localStorage.getItem("portal.accessToken"),
-    refreshToken: localStorage.getItem("portal.refreshToken"),
-    userEmail: localStorage.getItem("portal.userEmail"),
+  state: () => ({
+    accessToken: localStorage.getItem(ACCESS_TOKEN_KEY) ?? "",
+    refreshToken: localStorage.getItem(REFRESH_TOKEN_KEY) ?? "",
+    profile: null as UserProfile | null
   }),
 
-  actions: {
-    setAuth(payload: { accessToken: string; refreshToken?: string; userEmail?: string }) {
-      this.accessToken = payload.accessToken;
-      this.refreshToken = payload.refreshToken ?? null;
-      this.userEmail = payload.userEmail ?? null;
+  getters: {
+    userEmail: (state) => state.profile?.email ?? "",
+    memberships: (state) => state.profile?.memberships ?? []
+  },
 
-      localStorage.setItem("portal.accessToken", this.accessToken);
-      if (this.refreshToken) {
-        localStorage.setItem("portal.refreshToken", this.refreshToken);
-      }
-      if (this.userEmail) {
-        localStorage.setItem("portal.userEmail", this.userEmail);
-      }
+  actions: {
+    setTokens(accessToken: string, refreshToken: string) {
+      this.accessToken = accessToken
+      this.refreshToken = refreshToken
+
+      localStorage.setItem(ACCESS_TOKEN_KEY, accessToken)
+      localStorage.setItem(REFRESH_TOKEN_KEY, refreshToken)
+    },
+
+    setProfile(profile: UserProfile) {
+      this.profile = profile
     },
 
     logout() {
-      this.accessToken = null;
-      this.refreshToken = null;
-      this.userEmail = null;
+      this.accessToken = ""
+      this.refreshToken = ""
+      this.profile = null
 
-      localStorage.removeItem("portal.accessToken");
-      localStorage.removeItem("portal.refreshToken");
-      localStorage.removeItem("portal.userEmail");
-    },
-  },
-});
+      localStorage.removeItem(ACCESS_TOKEN_KEY)
+      localStorage.removeItem(REFRESH_TOKEN_KEY)
+    }
+  }
+})

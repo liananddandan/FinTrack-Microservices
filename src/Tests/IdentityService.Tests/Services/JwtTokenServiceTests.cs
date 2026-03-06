@@ -269,42 +269,5 @@ public class JwtTokenServiceTests
         result.Code.Should().BeEquivalentTo(ResultCodes.Token.RefreshJwtTokenFailedClaimMissing);
     }
 
-    [Theory, AutoMoqData]
-    public async Task GenerateJwtTokenPairAsync_ShouldReturnFail_WhenUserNotFound(
-        [Frozen] Mock<IUserDomainService> userDomainServiceMock,
-        [Frozen] Mock<IOptions<JwtOptions>> jwtOptionsMock,
-        JwtTokenService sut)
-    {
-        // Arrange
-        var jwtOptions = new JwtOptions()
-        {
-            Secret = "this-is-secret-very-long-token-value-and-long-token-value",
-            Audience = "Audience",
-            Issuer = "Issuer",
-            AccessTokenExpirationMinutes = 15,
-            RefreshTokenExpirationDays = 7
-        };
-        jwtOptionsMock.Setup(j => j.Value).Returns(jwtOptions);
-        var jwtClaimSource = new JwtClaimSource()
-        {
-            UserPublicId = new Guid("00000000-0000-0000-0000-000000000001").ToString(),
-            JwtVersion = "1",
-            TenantPublicId = new Guid("00000000-0000-0000-0000-000000000002").ToString(),
-            UserRoleInTenant = "Role_test"
-        };
-        var jwtToken = await sut.GenerateJwtTokenAsync(jwtClaimSource, JwtTokenType.RefreshToken);
-        jwtToken.Data.Should().NotBeNull();
-        userDomainServiceMock.Setup(us
-                => us.GetUserByPublicIdIncludeTenantAsync(jwtClaimSource.UserPublicId, It.IsAny<CancellationToken>()))
-            .ReturnsAsync(null as ApplicationUser);
-
-        // Act
-        var result = await sut.RefreshJwtTokenPairAsync(jwtToken.Data);
-
-        // Assert
-        result.Data.Should().BeNull();
-        result.Code.Should().BeEquivalentTo(ResultCodes.Token.RefreshJwtTokenFailedClaimUserNotFound);
-    }
-
     
 }
