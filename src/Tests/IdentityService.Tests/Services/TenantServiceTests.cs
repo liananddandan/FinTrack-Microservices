@@ -290,4 +290,105 @@ public class TenantServiceTests
         result.Code.Should().Be(ResultCodes.Tenant.RegisterTenantException);
         result.Message.Should().Be("Tenant registration failed.");
     }
+    
+        [Fact]
+    public async Task GetTenantMembersAsync_Should_Return_Fail_When_TenantPublicId_Is_Empty()
+    {
+        var result = await _sut.GetTenantMembersAsync("", CancellationToken.None);
+
+        result.Success.Should().BeFalse();
+        result.Message.Should().Be("Tenant public id is required.");
+        result.Data.Should().BeNull();
+    }
+
+    [Fact]
+    public async Task GetTenantMembersAsync_Should_Return_Empty_List_When_No_Members_Exist()
+    {
+        _tenantMembershipRepoMock
+            .Setup(x => x.GetMembershipsByTenantPublicIdAsync("tenant-1", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new List<TenantMembership>());
+
+        var result = await _sut.GetTenantMembersAsync("tenant-1", CancellationToken.None);
+
+        result.Success.Should().BeTrue();
+        result.Message.Should().Be("Tenant members fetched successfully.");
+        result.Data.Should().NotBeNull();
+        result.Data.Should().BeEmpty();
+    }
+
+    [Fact]
+    public async Task GetTenantMembersAsync_Should_Return_Mapped_Member_List_When_Request_Is_Valid()
+    {
+        var membership1 = new TenantMembership
+        {
+            IsActive = true,
+            JoinedAt = new DateTime(2026, 3, 1, 0, 0, 0, DateTimeKind.Utc),
+            Role = TenantRole.Admin,
+            User = new ApplicationUser
+            {
+                PublicId = Guid.NewGuid(),
+                Email = "admin@test.com",
+                UserName = "AdminUser"
+            },
+            Tenant = new Tenant
+            {
+                PublicId = Guid.NewGuid(),
+                Name = "FinTrack",
+                IsDeleted = false
+            }
+        };
+
+        var membership2 = new TenantMembership
+        {
+            IsActive = true,
+            JoinedAt = new DateTime(2026, 3, 2, 0, 0, 0, DateTimeKind.Utc),
+            Role = TenantRole.Member,
+            User = new ApplicationUser
+            {
+                PublicId = Guid.NewGuid(),
+                Email = "member@test.com",
+                UserName = "MemberUser"
+            },
+            Tenant = new Tenant
+            {
+                PublicId = Guid.NewGuid(),
+                Name = "FinTrack",
+                IsDeleted = false
+            }
+        };
+
+        _tenantMembershipRepoMock
+            .Setup(x => x.GetMembershipsByTenantPublicIdAsync("tenant-1", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new List<TenantMembership> { membership1, membership2 });
+
+        var result = await _sut.GetTenantMembersAsync("tenant-1", CancellationToken.None);
+
+        result.Success.Should().BeTrue();
+        result.Data.Should().NotBeNull();
+        result.Data.Should().HaveCount(2);
+
+        result.Data![0].Email.Should().Be("admin@test.com");
+        result.Data[0].UserName.Should().Be("AdminUser");
+        result.Data[0].Role.Should().Be("Admin");
+        result.Data[0].IsActive.Should().BeTrue();
+
+        result.Data[1].Email.Should().Be("member@test.com");
+        result.Data[1].UserName.Should().Be("MemberUser");
+        result.Data[1].Role.Should().Be("Member");
+        result.Data[1].IsActive.Should().BeTrue();
+    }
+
+    [Fact]
+    public async Task GetTenantMembersAsync_Should_Return_Fail_When_Exception_Is_Thrown()
+    {
+        _tenantMembershipRepoMock
+            .Setup(x => x.GetMembershipsByTenantPublicIdAsync("tenant-1", It.IsAny<CancellationToken>()))
+            .ThrowsAsync(new Exception("db error"));
+
+        var result = await _sut.GetTenantMembersAsync("tenant-1", CancellationToken.None);
+
+        result.Success.Should().BeFalse();
+        result.Message.Should().Be("Failed to get tenant members.");
+        result.Data.Should().BeNull();
+    }
 }

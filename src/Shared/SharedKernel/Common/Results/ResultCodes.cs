@@ -10,19 +10,17 @@ public static class ResultCodes
         public const string RegisterTenantExistedError = "100001002";
         public const string RegisterTenantCreateError = "100001003";
         public const string RegisterTenantException = "100001004";
+        public const string GetTenantMembersParameterError = "100001005";
+        public const string GetTenantMembersException= "100001006";
         
-        public const string InvitationRecordNotFound = "100001004";
-        public const string InvitationPublicIdInvalid = "100001005";
-        public const string InvitationVersionInvalid = "100001006";
-        public const string InvitationExpired = "100001007";
-        public const string InvitationRevoked = "100001008";
+        public const string InvitationRevoked= "100001007";
+        public const string InvitationRevoked1 = "100001008";
         public const string InvitationHasAccepted = "100001009";
         public const string InvitationWithAInvalidTenant = "100001010";
         public const string InvitationCreateFailed = "100001011";
         public const string UserDoNotHavePermissionToQueryTenant = "100001012";
         public const string UserDoNotBelongToTenant = "100001013";
         public const string InvitationUsingWrongRole = "100001014";
-        
         // RegisterTenant Success 100 001 999
         public const string GetAllUserInTenantSuccess = "100001992";
         public const string InvitationReceiveSuccess = "100001993";
@@ -30,7 +28,8 @@ public static class ResultCodes
         public const string InvitationRecordFoundByEmailSuccess = "100001995";
         public const string InvitationRecordFoundByPublicIdSuccess = "100001996";
         public const string InvitationRecordAddSuccess = "100001997";
-        public const string InvitationUsersStartSuccess = "100001998";
+        
+        public const string GetTenantMembersSuccess = "100001998";
         public const string RegisterTenantSuccess = "100001999";
     }
 

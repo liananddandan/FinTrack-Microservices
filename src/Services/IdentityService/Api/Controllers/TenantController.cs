@@ -20,6 +20,25 @@ public class TenantController(IMediator mediator) : ControllerBase
         var result = await mediator.Send(command);
         return result.ToActionResult();
     }
+    
+    [HttpGet("members")]
+    public async Task<IActionResult> GetTenantMembersAsync()
+    {
+        var jwtParseResult = HttpContext.GetHttpHeaderJwtParseResult();
+        if (jwtParseResult == null)
+        {
+            return Unauthorized("Request without valid token");
+        }
+
+        var command = new GetTenantMembersCommand(jwtParseResult.TenantPublicId);
+        var result = await mediator.Send(command);
+        return result.ToActionResult();
+    }
+    
+    
+    
+    
+    
 
     [HttpPost("invite")]
     public async Task<IActionResult> InviteUserAsync(InviteUserRequest request)
@@ -50,19 +69,6 @@ public class TenantController(IMediator mediator) : ControllerBase
         }
 
         var command = new ReceiveInviteCommand(inviteParseResult.InvitationPublicId);
-        var result = await mediator.Send(command);
-        return result.ToActionResult();
-    }
-
-    [HttpGet("users")]
-    public async Task<IActionResult> GetUsersAsync()
-    {
-        var jwtParseResult = HttpContext.GetHttpHeaderJwtParseResult();
-        if (jwtParseResult == null)
-        {
-            return Unauthorized("Request Without valid token");
-        }
-        var command = new GetUsersInTenantCommand(jwtParseResult.UserPublicId, jwtParseResult.TenantPublicId, jwtParseResult.UserRoleInTenant);
         var result = await mediator.Send(command);
         return result.ToActionResult();
     }

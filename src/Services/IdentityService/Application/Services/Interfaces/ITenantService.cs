@@ -13,11 +13,12 @@ public interface ITenantService
         string adminPassword,
         CancellationToken cancellationToken = default);
     
+    Task<ServiceResult<List<TenantMemberDto>>> GetTenantMembersAsync(
+        string tenantPublicId,
+        CancellationToken cancellationToken = default);
+    
     Task<ServiceResult<bool>> InviteUserForTenantAsync(string adminPublicId,
         string tenantPublicId, string adminRoleInTenant, List<string> emails, CancellationToken cancellationToken = default);
 
     Task<ServiceResult<bool>> ReceiveInviteForTenantAsync(string invitationPublicId, CancellationToken cancellationToken = default);
-    
-    Task<ServiceResult<IEnumerable<UserInfoDto>>> GetUsersForTenantAsync(string adminPublicId, 
-        string tenantPublicId, string adminRoleInTenant, CancellationToken cancellationToken = default);
 }

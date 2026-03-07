@@ -1,6 +1,9 @@
 <template>
-  <div>
-    <h2>Transactions</h2>
-    <el-alert title="TODO: paged transactions list + status filters" type="info" show-icon />
-  </div>
+  <el-card shadow="never">
+    <template #header>
+      <div style="font-weight: 700;">Transactions</div>
+    </template>
+
+    <p>TODO: transaction list</p>
+  </el-card>
 </template>

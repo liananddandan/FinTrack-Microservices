@@ -1,34 +1,61 @@
 import { createRouter, createWebHistory } from "vue-router";
 import { useAuthStore } from "../stores/auth";
-import LoginView from "../views/LoginView.vue";
-import AdminLayout from "../layouts/AdminLayout.vue";
-import MembersView from "../views/MembersView.vue";
-import TransactionsView from "../views/TransactionsView.vue";
-
-const routes = [
-  { path: "/login", name: "login", component: LoginView },
-  {
-    path: "/",
-    component: AdminLayout,
-    children: [
-      { path: "", redirect: "/transactions" },
-      { path: "members", name: "members", component: MembersView },
-      { path: "transactions", name: "transactions", component: TransactionsView },
-    ],
-  },
-];
 
 const router = createRouter({
   history: createWebHistory(),
-  routes,
+  routes: [
+    {
+      path: "/login",
+      name: "admin-login",
+      component: () => import("../views/LoginView.vue"),
+      meta: { public: true },
+    },
+    {
+      path: "/",
+      component: () => import("../layouts/AdminLayout.vue"),
+      children: [
+        {
+          path: "",
+          redirect: "/dashboard",
+        },
+        {
+          path: "/dashboard",
+          name: "dashboard",
+          component: () => import("../views/DashboardView.vue"),
+        },
+        {
+          path: "/members",
+          name: "members",
+          component: () => import("../views/MembersView.vue"),
+        },
+        {
+          path: "/transactions",
+          name: "transactions",
+          component: () => import("../views/TransactionsView.vue"),
+        },
+      ],
+    },
+  ],
 });
 
-router.beforeEach((to) => {
+router.beforeEach(async (to) => {
   const auth = useAuthStore();
-  const isAuthed = !!auth.accessToken;
 
-  if (to.path !== "/login" && !isAuthed) return "/login";
-  if (to.path === "/login" && isAuthed) return "/transactions";
+  if (to.meta.public) {
+    return true;
+  }
+
+  await auth.initialize();
+
+  if (!auth.isAuthenticated) {
+    return "/login";
+  }
+
+  if (!auth.isAdmin) {
+    return "/login";
+  }
+
+  return true;
 });
 
 export default router;

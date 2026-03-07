@@ -135,6 +135,48 @@ public class TenantService(
         }
     }
 
+    public async Task<ServiceResult<List<TenantMemberDto>>> GetTenantMembersAsync(
+        string tenantPublicId,
+        CancellationToken cancellationToken = default)
+    {
+        if (string.IsNullOrWhiteSpace(tenantPublicId))
+        {
+            return ServiceResult<List<TenantMemberDto>>.Fail(
+                ResultCodes.Tenant.GetTenantMembersParameterError,
+                "Tenant public id is required.");
+        }
+
+        try
+        {
+            var memberships = await tenantMembershipRepo.GetMembershipsByTenantPublicIdAsync(
+                tenantPublicId,
+                cancellationToken);
+
+            var result = memberships
+                .Select(m => new TenantMemberDto(
+                    m.User.PublicId.ToString(),
+                    m.User.Email ?? string.Empty,
+                    m.User.UserName ?? string.Empty,
+                    m.Role.ToString(),
+                    m.IsActive,
+                    m.JoinedAt))
+                .ToList();
+
+            return ServiceResult<List<TenantMemberDto>>.Ok(
+                result,
+                ResultCodes.Tenant.GetTenantMembersSuccess,
+                "Tenant members fetched successfully.");
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Failed to get tenant members for tenant {TenantPublicId}", tenantPublicId);
+
+            return ServiceResult<List<TenantMemberDto>>.Fail(
+                ResultCodes.Tenant.GetTenantMembersException,
+                "Failed to get tenant members.");
+        }
+    }
+
     public Task<ServiceResult<bool>> InviteUserForTenantAsync(string adminPublicId, string tenantPublicId,
         string adminRoleInTenant, List<string> emails,
         CancellationToken cancellationToken = default)
@@ -143,13 +185,6 @@ public class TenantService(
     }
 
     public Task<ServiceResult<bool>> ReceiveInviteForTenantAsync(string invitationPublicId,
-        CancellationToken cancellationToken = default)
-    {
-        throw new NotImplementedException();
-    }
-
-    public Task<ServiceResult<IEnumerable<UserInfoDto>>> GetUsersForTenantAsync(string adminPublicId,
-        string tenantPublicId, string adminRoleInTenant,
         CancellationToken cancellationToken = default)
     {
         throw new NotImplementedException();

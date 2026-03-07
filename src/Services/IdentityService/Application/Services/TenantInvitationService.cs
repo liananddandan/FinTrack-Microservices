@@ -18,35 +18,15 @@ public class TenantInvitationService(
             "Invitation Record Add Success");
     }
 
-    public async Task<ServiceResult<TenantInvitation>> GetTenantInvitationByPublicIdAsync(string publicId, CancellationToken cancellationToken = default)
+    public async Task<ServiceResult<TenantInvitation>> GetTenantInvitationByPublicIdAsync(string publicId,
+        CancellationToken cancellationToken = default)
     {
-        if (!Guid.TryParse(publicId, out Guid id))
-        {
-            return ServiceResult<TenantInvitation>
-                .Fail(ResultCodes.Tenant.InvitationPublicIdInvalid, 
-                    "Invitation Public Id Invalid"); 
-        }
-
-        var invitation = await tenantInvitationRepo.FindByPublicIdAsync(id);
-        return invitation == null
-            ? ServiceResult<TenantInvitation>
-                .Fail(ResultCodes.Tenant.InvitationRecordNotFound,
-                    "Invitation Record Not Found")
-            : ServiceResult<TenantInvitation>.Ok(invitation, 
-                ResultCodes.Tenant.InvitationRecordFoundByPublicIdSuccess,
-                "Invitation Record Found By Public Id");
+        throw new NotImplementedException();
     }
 
     public async Task<ServiceResult<TenantInvitation>> GetTenantInvitationByEmailAsync(string email, CancellationToken cancellationToken = default)
     {
-        var invitation = await tenantInvitationRepo.FindByEmailAsync(email);
-        return invitation == null
-            ? ServiceResult<TenantInvitation>
-                .Fail(ResultCodes.Tenant.InvitationRecordNotFound,
-                    "Invitation Record Not Found")
-            : ServiceResult<TenantInvitation>.Ok(invitation, 
-                ResultCodes.Tenant.InvitationRecordFoundByEmailSuccess,
-                "Invitation Record Found By Public Id");
+        throw new NotImplementedException();
     }
 
     public async Task<ServiceResult<bool>> UpdateTenantInvitationAsync(TenantInvitation invitation, CancellationToken cancellationToken = default)

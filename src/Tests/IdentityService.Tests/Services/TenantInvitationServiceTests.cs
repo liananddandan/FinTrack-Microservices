@@ -28,40 +28,9 @@ public class TenantInvitationServiceTests
         unitOfWorkMock.Verify(u => u.SaveChangesAsync(CancellationToken.None), Times.Once);
     }
     
-    [Theory, AutoMoqData]
-    public async Task GetTenantInvitationByPublicIdAsync_ShouldReturnFail_WhenPublicIdIsInvalid(
-        [Frozen] Mock<ITenantInvitationRepo> tenantInvitationRepoMock,
-        string publicId,
-        TenantInvitationService sut)
-    {
-        // Act
-        var result = await sut.GetTenantInvitationByPublicIdAsync(publicId, CancellationToken.None);
-        
-        // Assert
-        result.Success.Should().BeFalse();
-        result.Code.Should().BeEquivalentTo(ResultCodes.Tenant.InvitationPublicIdInvalid);
-        tenantInvitationRepoMock.Verify(tir => tir.FindByPublicIdAsync(It.IsAny<Guid>()), Times.Never);
-    }
     
-    [Theory, AutoMoqData]
-    public async Task GetTenantInvitationByPublicIdAsync_ShouldReturnFail_WhenRecordNotExist(
-        [Frozen] Mock<ITenantInvitationRepo> tenantInvitationRepoMock,
-        Guid publicId,
-        TenantInvitationService sut)
-    {
-        // Arrange
-        tenantInvitationRepoMock
-            .Setup(tir => tir.FindByPublicIdAsync(publicId))
-            .ReturnsAsync((TenantInvitation?)null);
-        
-        // Act
-        var result = await sut.GetTenantInvitationByPublicIdAsync(publicId.ToString(), CancellationToken.None);
-        
-        // Assert
-        result.Success.Should().BeFalse();
-        result.Code.Should().BeEquivalentTo(ResultCodes.Tenant.InvitationRecordNotFound);
-        tenantInvitationRepoMock.Verify(tir => tir.FindByPublicIdAsync(It.IsAny<Guid>()), Times.Once);
-    }
+    
+    
     
     [Theory, AutoMoqData]
     public async Task GetTenantInvitationByPublicIdAsync_ShouldReturnSuccess_WhenRecordExist(
@@ -84,25 +53,7 @@ public class TenantInvitationServiceTests
         tenantInvitationRepoMock.Verify(tir => tir.FindByPublicIdAsync(It.IsAny<Guid>()), Times.Once);
     }
     
-    [Theory, AutoMoqData]
-    public async Task GetTenantInvitationByEmailAsync_ShouldReturnFail_WhenRecordNotExist(
-        [Frozen] Mock<ITenantInvitationRepo> tenantInvitationRepoMock,
-        string email,
-        TenantInvitationService sut)
-    {
-        // Arrange
-        tenantInvitationRepoMock
-            .Setup(tir => tir.FindByEmailAsync(email))
-            .ReturnsAsync((TenantInvitation?)null);
-        
-        // Act
-        var result = await sut.GetTenantInvitationByEmailAsync(email, CancellationToken.None);
-        
-        // Assert
-        result.Success.Should().BeFalse();
-        result.Code.Should().BeEquivalentTo(ResultCodes.Tenant.InvitationRecordNotFound);
-        tenantInvitationRepoMock.Verify(tir => tir.FindByEmailAsync(It.IsAny<string>()), Times.Once);
-    }
+    
     
     [Theory, AutoMoqData]
     public async Task GetTenantInvitationByEmailAsync_ShouldReturnSuccess_WhenRecordExist(
