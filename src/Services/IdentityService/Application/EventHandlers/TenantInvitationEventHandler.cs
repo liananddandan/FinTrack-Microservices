@@ -30,22 +30,15 @@ public class TenantInvitationEventHandler(
 
         var invitation = invitationResult.Data;
 
-        var tokenResult = await jwtTokenService.GenerateInvitationTokenAsync(
-            new InvitationClaimSource
-            {
-                InvitationPublicId = invitation.PublicId.ToString(),
-                InvitationVersion = invitation.Version.ToString()
-            });
+        var invitationToken = jwtTokenService.GenerateInvitationToken(invitation);
 
-        if (!tokenResult.Success || string.IsNullOrWhiteSpace(tokenResult.Data))
+        if (string.IsNullOrWhiteSpace(invitationToken))
         {
             logger.LogWarning(
                 "Could not generate invitation token for invitation {InvitationPublicId}.",
                 notification.InvitationPublicId);
             return;
         }
-
-        var invitationToken = tokenResult.Data;
 
         var invitationLink =
             $"http://localhost:5174/invitations/accept?token={Uri.EscapeDataString(invitationToken)}";

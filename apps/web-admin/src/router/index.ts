@@ -56,6 +56,10 @@ router.beforeEach(async (to) => {
     return "/login";
   }
 
+  if (!auth.hasTenantContext) {
+    return "/login";
+  }
+
   if (!auth.isAdmin) {
     return "/login";
   }

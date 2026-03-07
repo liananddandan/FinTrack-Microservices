@@ -7,7 +7,5 @@ namespace IdentityService.Application.Commands.Account;
 
 public record RefreshUserJwtTokenCommand(
     string UserPublicId,
-    string TenantPublicId,
-    string JwtVersion,
-    string UserRoleInTenant
+    string JwtVersion
 ) : IRequest<ServiceResult<JwtTokenPair>>;

@@ -13,6 +13,7 @@ namespace IdentityService.Api.Controllers;
 public class TenantInvitationController(IMediator mediator) : ControllerBase
 {
     [HttpPost]
+    [RequireTokenType(JwtTokenType.TenantAccessToken)]
     public async Task<IActionResult> InviteMemberAsync(
         [FromBody] InviteMemberRequest request)
     {
@@ -75,6 +76,7 @@ public class TenantInvitationController(IMediator mediator) : ControllerBase
     }
     
     [HttpGet]
+    [RequireTokenType(JwtTokenType.TenantAccessToken)]
     public async Task<IActionResult> GetTenantInvitationsAsync()
     {
         var jwtParseResult = HttpContext.GetHttpHeaderJwtParseResult();
@@ -89,6 +91,7 @@ public class TenantInvitationController(IMediator mediator) : ControllerBase
     }
     
     [HttpPost("{invitationPublicId}/resend")]
+    [RequireTokenType(JwtTokenType.TenantAccessToken)]
     public async Task<IActionResult> ResendInvitationAsync(string invitationPublicId)
     {
         var jwtParseResult = HttpContext.GetHttpHeaderJwtParseResult();

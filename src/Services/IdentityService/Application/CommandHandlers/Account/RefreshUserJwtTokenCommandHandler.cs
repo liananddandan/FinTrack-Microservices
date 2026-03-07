@@ -14,9 +14,7 @@ public class RefreshUserJwtTokenCommandHandler(IAccountService accountService)
     {
         return await accountService.RefreshTokenAsync(
             request.UserPublicId,
-            request.TenantPublicId,
             request.JwtVersion,
-            request.UserRoleInTenant,
             cancellationToken);
     }
 }

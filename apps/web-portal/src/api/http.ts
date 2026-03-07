@@ -21,18 +21,21 @@ const anonymousPaths = [
   "/api/account/login",
   "/api/account/register",
   "/api/tenant/register",
+  "/api/account/confirm-email",
+  "/api/tenant/invitations/resolve",
+  "/api/tenant/invitations/accept",
 ];
 
 export const http = axios.create({
-  baseURL: import.meta.env.VITE_API_BASE,
+  baseURL: import.meta.env.VITE_API_BASE_URL,
   timeout: 10000,
 });
 
 http.interceptors.request.use((config) => {
   const auth = useAuthStore();
 
-  if (auth.accessToken) {
-    config.headers.Authorization = `Bearer ${auth.accessToken}`;
+  if (auth.accountAccessToken) {
+    config.headers.Authorization = `Bearer ${auth.accountAccessToken}`;
   }
 
   return config;
@@ -56,31 +59,30 @@ http.interceptors.response.use(
       requestUrl.includes(path)
     );
 
-    // 不是 401，直接抛出
     if (status !== 401) {
       return Promise.reject(error);
     }
 
-    // refresh 接口自己报 401，不要再套 refresh
+    // refresh 自己失败，直接登出
     if (isRefreshRequest) {
       auth.logout();
       await router.push("/login");
       return Promise.reject(error);
     }
 
-    // 匿名接口报 401，不要跳登录页，交给页面自己显示错误
+    // 匿名接口失败，交给页面自己处理
     if (isAnonymousRequest) {
       return Promise.reject(error);
     }
 
-    // 已经重试过了，还 401，就真登出
+    // 已经重试过，直接登出
     if (originalRequest._retry) {
       auth.logout();
       await router.push("/login");
       return Promise.reject(error);
     }
 
-    // 没有 refresh token，就真登出
+    // 没 refresh token，直接登出
     if (!auth.refreshToken) {
       auth.logout();
       await router.push("/login");
@@ -91,7 +93,7 @@ http.interceptors.response.use(
 
     try {
       const refreshResponse = await axios.get<ApiResponse<JwtTokenPair>>(
-        `${import.meta.env.VITE_API_BASE}/api/account/refresh-token`,
+        `${import.meta.env.VITE_API_BASE_URL}/api/account/refresh-token`,
         {
           headers: {
             Authorization: `Bearer ${auth.refreshToken}`,
@@ -106,7 +108,7 @@ http.interceptors.response.use(
         throw new Error("Refresh token response is invalid.");
       }
 
-      auth.setTokens(tokenPair.accessToken, tokenPair.refreshToken);
+      auth.setAccountTokens(tokenPair.accessToken, tokenPair.refreshToken);
 
       originalRequest.headers = originalRequest.headers ?? {};
       originalRequest.headers.Authorization = `Bearer ${tokenPair.accessToken}`;

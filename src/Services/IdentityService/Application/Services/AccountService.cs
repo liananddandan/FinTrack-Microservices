@@ -63,22 +63,6 @@ public class AccountService(
                 .Where(m => m.IsActive && !m.Tenant.IsDeleted)
                 .ToList();
 
-            if (!activeMemberships.Any())
-            {
-                return ServiceResult<UserLoginResult>.Fail(
-                    ResultCodes.Account.LoginNoTenant,
-                    "User does not belong to any tenant.");
-            }
-
-            if (activeMemberships.Count > 1)
-            {
-                return ServiceResult<UserLoginResult>.Fail(
-                    ResultCodes.Account.LoginMultipleTenantsNotSupported,
-                    "Multiple tenant memberships are not supported in V1.");
-            }
-
-            var membership = activeMemberships.Single();
-
             var memberships = activeMemberships
                 .Select(m => new LoginMembershipDto(
                     m.Tenant.PublicId.ToString(),
@@ -88,13 +72,15 @@ public class AccountService(
 
             await userDomainService.SyncJwtVersionAsync(user, cancellationToken);
 
-            var accessToken = jwtTokenService.GenerateAccessToken(user, membership);
-            var refreshToken = jwtTokenService.GenerateRefreshToken(user, membership);
+            var accountAccessToken = jwtTokenService.GenerateAccountAccessToken(user);
+            var refreshToken = jwtTokenService.GenerateRefreshToken(user);
+
             var tokens = new JwtTokenPair
             {
-                AccessToken = accessToken,
+                AccessToken = accountAccessToken,
                 RefreshToken = refreshToken
             };
+
             return ServiceResult<UserLoginResult>.Ok(
                 new UserLoginResult(
                     tokens,
@@ -114,9 +100,7 @@ public class AccountService(
 
     public async Task<ServiceResult<JwtTokenPair>> RefreshTokenAsync(
         string userPublicId,
-        string tenantPublicId,
         string jwtVersion,
-        string userRoleInTenant,
         CancellationToken cancellationToken = default)
     {
         try
@@ -140,29 +124,15 @@ public class AccountService(
                     "Invalid jwt version.");
             }
 
-            var membership = user.Memberships
-                .FirstOrDefault(m =>
-                    m.IsActive &&
-                    !m.Tenant.IsDeleted &&
-                    m.Tenant.PublicId.ToString() == tenantPublicId);
-
-            if (membership == null)
-            {
-                return ServiceResult<JwtTokenPair>.Fail(
-                    ResultCodes.Token.RefreshJwtTokenFailedClaimTenantIdInvalid,
-                    "Tenant membership not found.");
-            }
-
-            // refresh 时不增加 jwtVersion，只同步 Redis
             await userDomainService.SyncJwtVersionAsync(user, cancellationToken);
 
-            var accessToken = jwtTokenService.GenerateAccessToken(user, membership);
-            var refreshToken = jwtTokenService.GenerateRefreshToken(user, membership);
+            var accountAccessToken = jwtTokenService.GenerateAccountAccessToken(user);
+            var refreshToken = jwtTokenService.GenerateRefreshToken(user);
 
             return ServiceResult<JwtTokenPair>.Ok(
                 new JwtTokenPair
                 {
-                    AccessToken = accessToken,
+                    AccessToken = accountAccessToken,
                     RefreshToken = refreshToken
                 },
                 ResultCodes.Token.RefreshJwtTokenSuccess,
@@ -181,77 +151,142 @@ public class AccountService(
         }
     }
 
-public async Task<ServiceResult<RegisterUserResult>> RegisterUserAsync(
-    string userName,
-    string email,
-    string password,
-    CancellationToken cancellationToken = default)
-{
-    userName = userName.Trim();
-    email = email.Trim().ToLowerInvariant();
-
-    if (string.IsNullOrWhiteSpace(userName))
+    public async Task<ServiceResult<RegisterUserResult>> RegisterUserAsync(
+        string userName,
+        string email,
+        string password,
+        CancellationToken cancellationToken = default)
     {
-        return ServiceResult<RegisterUserResult>.Fail(
-            ResultCodes.Account.RegisterUserParameterError,
-            "User name is required.");
-    }
+        userName = userName.Trim();
+        email = email.Trim().ToLowerInvariant();
 
-    if (string.IsNullOrWhiteSpace(email))
-    {
-        return ServiceResult<RegisterUserResult>.Fail(
-            ResultCodes.Account.RegisterUserParameterError,
-            "Email is required.");
-    }
-
-    if (string.IsNullOrWhiteSpace(password))
-    {
-        return ServiceResult<RegisterUserResult>.Fail(
-            ResultCodes.Account.RegisterUserParameterError,
-            "Password is required.");
-    }
-
-    try
-    {
-        var emailExists = await applicationUserRepo.IsEmailExistsAsync(email, cancellationToken);
-        if (emailExists)
+        if (string.IsNullOrWhiteSpace(userName))
         {
             return ServiceResult<RegisterUserResult>.Fail(
-                ResultCodes.Account.RegisterUserEmailExists,
-                "Email already exists.");
+                ResultCodes.Account.RegisterUserParameterError,
+                "User name is required.");
         }
 
-        var user = new ApplicationUser
+        if (string.IsNullOrWhiteSpace(email))
         {
-            UserName = userName,
-            Email = email,
-            EmailConfirmed = true
-        };
-
-        var createResult = await userManager.CreateAsync(user, password);
-        if (!createResult.Succeeded)
-        {
-            var error = string.Join(", ", createResult.Errors.Select(e => e.Description));
             return ServiceResult<RegisterUserResult>.Fail(
-                ResultCodes.Account.RegisterUserCreateFailed,
-                error);
+                ResultCodes.Account.RegisterUserParameterError,
+                "Email is required.");
         }
 
-        return ServiceResult<RegisterUserResult>.Ok(
-            new RegisterUserResult(
-                user.PublicId.ToString(),
-                user.Email!,
-                user.UserName!),
-            ResultCodes.Account.RegisterUserSuccess,
-            "User registered successfully.");
-    }
-    catch (Exception ex)
-    {
-        logger.LogError(ex, "Failed to register user {Email}", email);
+        if (string.IsNullOrWhiteSpace(password))
+        {
+            return ServiceResult<RegisterUserResult>.Fail(
+                ResultCodes.Account.RegisterUserParameterError,
+                "Password is required.");
+        }
 
-        return ServiceResult<RegisterUserResult>.Fail(
-            ResultCodes.Account.RegisterUserException,
-            "User registration failed.");
+        try
+        {
+            var emailExists = await applicationUserRepo.IsEmailExistsAsync(email, cancellationToken);
+            if (emailExists)
+            {
+                return ServiceResult<RegisterUserResult>.Fail(
+                    ResultCodes.Account.RegisterUserEmailExists,
+                    "Email already exists.");
+            }
+
+            var user = new ApplicationUser
+            {
+                UserName = userName,
+                Email = email,
+                EmailConfirmed = true
+            };
+
+            var createResult = await userManager.CreateAsync(user, password);
+            if (!createResult.Succeeded)
+            {
+                var error = string.Join(", ", createResult.Errors.Select(e => e.Description));
+                return ServiceResult<RegisterUserResult>.Fail(
+                    ResultCodes.Account.RegisterUserCreateFailed,
+                    error);
+            }
+
+            return ServiceResult<RegisterUserResult>.Ok(
+                new RegisterUserResult(
+                    user.PublicId.ToString(),
+                    user.Email!,
+                    user.UserName!),
+                ResultCodes.Account.RegisterUserSuccess,
+                "User registered successfully.");
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Failed to register user {Email}", email);
+
+            return ServiceResult<RegisterUserResult>.Fail(
+                ResultCodes.Account.RegisterUserException,
+                "User registration failed.");
+        }
     }
-}
+    
+    public async Task<ServiceResult<string>> SelectTenantAsync(
+        string userPublicId,
+        string tenantPublicId,
+        CancellationToken cancellationToken = default)
+    {
+        if (string.IsNullOrWhiteSpace(userPublicId))
+        {
+            return ServiceResult<string>.Fail(
+                ResultCodes.Account.SelectTenantParameterError,
+                "User public id is required.");
+        }
+
+        if (string.IsNullOrWhiteSpace(tenantPublicId))
+        {
+            return ServiceResult<string>.Fail(
+                ResultCodes.Account.SelectTenantParameterError,
+                "Tenant public id is required.");
+        }
+
+        try
+        {
+            var user = await applicationUserRepo.GetUserByPublicIdWithMembershipsAsync(
+                userPublicId,
+                cancellationToken);
+
+            if (user is null)
+            {
+                return ServiceResult<string>.Fail(
+                    ResultCodes.Account.SelectTenantUserNotFound,
+                    "User not found.");
+            }
+
+            var membership = user.Memberships.FirstOrDefault(m =>
+                m.IsActive &&
+                !m.Tenant.IsDeleted &&
+                m.Tenant.PublicId.ToString() == tenantPublicId);
+
+            if (membership is null)
+            {
+                return ServiceResult<string>.Fail(
+                    ResultCodes.Account.SelectTenantMembershipNotFound,
+                    "Tenant membership not found.");
+            }
+
+            var tenantAccessToken = jwtTokenService.GenerateTenantAccessToken(user, membership);
+
+            return ServiceResult<string>.Ok(
+                tenantAccessToken,
+                ResultCodes.Account.SelectTenantSuccess,
+                "Tenant selected successfully.");
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(
+                ex,
+                "Failed to select tenant {TenantPublicId} for user {UserPublicId}",
+                tenantPublicId,
+                userPublicId);
+
+            return ServiceResult<string>.Fail(
+                ResultCodes.Account.SelectTenantException,
+                "Failed to select tenant.");
+        }
+    }
 }

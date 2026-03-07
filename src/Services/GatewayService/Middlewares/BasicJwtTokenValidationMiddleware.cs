@@ -65,23 +65,24 @@ public class BasicJwtTokenValidationMiddleware
                 return;
             }
 
-            var tenantPublicId = context.User.FindFirst(JwtClaimNames.Tenant)?.Value;
             var userPublicId = context.User.FindFirst(JwtClaimNames.UserId)?.Value;
             var jwtVersion = context.User.FindFirst(JwtClaimNames.JwtVersion)?.Value;
+            var tokenType = context.User.FindFirst(JwtClaimNames.TokenType)?.Value;
+
+            var tenantPublicId = context.User.FindFirst(JwtClaimNames.Tenant)?.Value;
             var userRoleInTenant = context.User.FindFirst(JwtClaimNames.Role)?.Value;
 
             _logger.LogInformation(
-                "Gateway token claims. Path={Path}, UserPublicId={UserPublicId}, TenantPublicId={TenantPublicId}, Role={Role}, JwtVersion={JwtVersion}",
-                path, userPublicId, tenantPublicId, userRoleInTenant, jwtVersion);
+                "Gateway token claims. Path={Path}, UserPublicId={UserPublicId}, TokenType={TokenType}, TenantPublicId={TenantPublicId}, Role={Role}, JwtVersion={JwtVersion}",
+                path, userPublicId, tokenType, tenantPublicId, userRoleInTenant, jwtVersion);
 
-            if (string.IsNullOrEmpty(tenantPublicId)
-                || string.IsNullOrEmpty(userPublicId)
-                || string.IsNullOrEmpty(userRoleInTenant)
-                || string.IsNullOrEmpty(jwtVersion))
+            if (string.IsNullOrEmpty(userPublicId)
+                || string.IsNullOrEmpty(jwtVersion)
+                || string.IsNullOrEmpty(tokenType))
             {
                 _logger.LogWarning(
-                    "Gateway rejected request: missing claims. Path={Path}, UserPublicId={UserPublicId}, TenantPublicId={TenantPublicId}, Role={Role}, JwtVersion={JwtVersion}",
-                    path, userPublicId, tenantPublicId, userRoleInTenant, jwtVersion);
+                    "Gateway rejected request: missing required claims. Path={Path}, UserPublicId={UserPublicId}, TokenType={TokenType}, JwtVersion={JwtVersion}",
+                    path, userPublicId, tokenType, jwtVersion);
 
                 context.Response.Headers["X-Auth-Source"] = "Gateway";
                 context.Response.StatusCode = StatusCodes.Status401Unauthorized;
@@ -108,12 +109,18 @@ public class BasicJwtTokenValidationMiddleware
                 return;
             }
 
-            _logger.LogDebug("Gateway auth passed. Path={Path}, UserPublicId={UserPublicId}", path, userPublicId);
+            _logger.LogDebug(
+                "Gateway auth passed. Path={Path}, UserPublicId={UserPublicId}, TokenType={TokenType}",
+                path, userPublicId, tokenType);
+
             await _next(context);
             return;
         }
 
-        _logger.LogWarning("Gateway rejected request: unsupported Authorization header format. Path={Path}, RawHeader={Header}", path, token);
+        _logger.LogWarning(
+            "Gateway rejected request: unsupported Authorization header format. Path={Path}, RawHeader={Header}",
+            path, token);
+
         context.Response.Headers["X-Auth-Source"] = "Gateway";
         context.Response.StatusCode = StatusCodes.Status401Unauthorized;
         await context.Response.WriteAsync("Unauthorized");

@@ -13,14 +13,17 @@ public interface IAccountService
     
     Task<ServiceResult<JwtTokenPair>> RefreshTokenAsync(
         string userPublicId,
-        string tenantPublicId,
         string jwtVersion,
-        string userRoleInTenant,
         CancellationToken cancellationToken = default);
     
     Task<ServiceResult<RegisterUserResult>> RegisterUserAsync(
         string userName,
         string email,
         string password,
+        CancellationToken cancellationToken = default);
+    
+    Task<ServiceResult<string>> SelectTenantAsync(
+        string userPublicId,
+        string tenantPublicId,
         CancellationToken cancellationToken = default);
 }

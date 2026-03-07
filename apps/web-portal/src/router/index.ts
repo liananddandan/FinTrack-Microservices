@@ -3,6 +3,7 @@ import LoginView from "../views/LoginView.vue";
 import RegisterTenantView from "../views/RegisterTenantView.vue";
 import RegisterUserView from "../views/RegisterUserView.vue";
 import WaitingMembershipView from "../views/WaitingMembershipView.vue";
+import HomeView from "../views/HomeView.vue";
 import { useAuthStore } from "../stores/auth";
 
 const router = createRouter({
@@ -39,18 +40,34 @@ const router = createRouter({
       component: WaitingMembershipView,
       meta: { requiresAuth: true },
     },
+    {
+      path: "/home",
+      name: "home",
+      component: HomeView,
+      meta: { requiresAuth: true, requiresTenant: true },
+    },
   ],
 });
 
-router.beforeEach((to) => {
+router.beforeEach(async (to) => {
   const auth = useAuthStore();
 
-  if (to.meta.requiresAuth && !auth.accessToken) {
+  if (to.meta.public) {
+    return true;
+  }
+
+  await auth.initialize();
+
+  if (to.meta.requiresAuth && !auth.accountAccessToken) {
     return "/login";
   }
 
-  if (to.path === "/login" && auth.accessToken) {
+  if (to.meta.requiresTenant && !auth.tenantAccessToken) {
     return "/waiting-membership";
+  }
+
+  if (to.path === "/login" && auth.accountAccessToken) {
+    return auth.tenantAccessToken ? "/home" : "/waiting-membership";
   }
 
   return true;

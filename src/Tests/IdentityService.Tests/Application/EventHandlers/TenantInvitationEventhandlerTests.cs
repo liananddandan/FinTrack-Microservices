@@ -1,6 +1,5 @@
 using DotNetCore.CAP;
 using FluentAssertions;
-using IdentityService.Application.Common.DTOs;
 using IdentityService.Application.Common.Status;
 using IdentityService.Application.EventHandlers;
 using IdentityService.Application.Events;
@@ -9,9 +8,9 @@ using IdentityService.Domain.Entities;
 using IdentityService.Domain.Enums;
 using Microsoft.Extensions.Logging;
 using Moq;
+using SharedKernel.Common.Results;
 using SharedKernel.Events;
 using SharedKernel.Topics;
-using SharedKernel.Common.Results;
 using Xunit;
 
 namespace IdentityService.Tests.Application.EventHandlers;
@@ -64,23 +63,7 @@ public class TenantInvitationEventHandlerTests
     [Fact]
     public async Task Handle_Should_Not_Publish_When_Token_Generation_Fails()
     {
-        var invitation = new TenantInvitation
-        {
-            PublicId = Guid.NewGuid(),
-            Email = "user@test.com",
-            TenantId = 1,
-            Tenant = new Tenant
-            {
-                Id = 1,
-                PublicId = Guid.NewGuid(),
-                Name = "FinTrack"
-            },
-            Role = TenantRole.Member,
-            Status = InvitationStatus.Pending,
-            Version = 1,
-            ExpiredAt = DateTime.UtcNow.AddDays(7),
-            CreatedByUserId = 100
-        };
+        var invitation = BuildInvitation();
 
         var notification = new TenantInvitationCreatedEvent(
             invitation.PublicId.ToString(),
@@ -97,10 +80,8 @@ public class TenantInvitationEventHandlerTests
                 "Invitation found."));
 
         _jwtTokenServiceMock
-            .Setup(x => x.GenerateInvitationTokenAsync(It.IsAny<InvitationClaimSource>()))
-            .ReturnsAsync(ServiceResult<string>.Fail(
-                "INVITATION_TOKEN_FAILED",
-                "Token generation failed."));
+            .Setup(x => x.GenerateInvitationToken(It.IsAny<TenantInvitation>()))
+            .Throws(new Exception("Token generation failed."));
 
         await _sut.Handle(notification, CancellationToken.None);
 
@@ -116,23 +97,7 @@ public class TenantInvitationEventHandlerTests
     [Fact]
     public async Task Handle_Should_Publish_Email_Event_When_Invitation_And_Token_Are_Valid()
     {
-        var invitation = new TenantInvitation
-        {
-            PublicId = Guid.NewGuid(),
-            Email = "user@test.com",
-            TenantId = 1,
-            Tenant = new Tenant
-            {
-                Id = 1,
-                PublicId = Guid.NewGuid(),
-                Name = "FinTrack"
-            },
-            Role = TenantRole.Member,
-            Status = InvitationStatus.Pending,
-            Version = 1,
-            ExpiredAt = DateTime.UtcNow.AddDays(7),
-            CreatedByUserId = 100
-        };
+        var invitation = BuildInvitation();
 
         var notification = new TenantInvitationCreatedEvent(
             invitation.PublicId.ToString(),
@@ -149,11 +114,8 @@ public class TenantInvitationEventHandlerTests
                 "Invitation found."));
 
         _jwtTokenServiceMock
-            .Setup(x => x.GenerateInvitationTokenAsync(It.IsAny<InvitationClaimSource>()))
-            .ReturnsAsync(ServiceResult<string>.Ok(
-                "fake-invitation-token",
-                "INVITATION_TOKEN_SUCCESS",
-                "Token generated."));
+            .Setup(x => x.GenerateInvitationToken(It.IsAny<TenantInvitation>()))
+            .Returns("fake-invitation-token");
 
         await _sut.Handle(notification, CancellationToken.None);
 
@@ -169,29 +131,11 @@ public class TenantInvitationEventHandlerTests
                 It.IsAny<CancellationToken>()),
             Times.Once);
     }
-    
+
     [Fact]
     public async Task Handle_Should_Encode_Token_When_Building_Invitation_Link()
     {
-        // Arrange
-        var invitation = new TenantInvitation
-        {
-            PublicId = Guid.NewGuid(),
-            Email = "user@test.com",
-            TenantId = 1,
-            Tenant = new Tenant
-            {
-                Id = 1,
-                PublicId = Guid.NewGuid(),
-                Name = "FinTrack"
-            },
-            Role = TenantRole.Member,
-            Status = InvitationStatus.Pending,
-            Version = 1,
-            ExpiredAt = DateTime.UtcNow.AddDays(7),
-            CreatedByUserId = 100
-        };
-
+        var invitation = BuildInvitation();
         var rawToken = "abc+123/xyz==";
 
         var notification = new TenantInvitationCreatedEvent(
@@ -209,18 +153,13 @@ public class TenantInvitationEventHandlerTests
                 "Invitation found."));
 
         _jwtTokenServiceMock
-            .Setup(x => x.GenerateInvitationTokenAsync(It.IsAny<InvitationClaimSource>()))
-            .ReturnsAsync(ServiceResult<string>.Ok(
-                rawToken,
-                "INVITATION_TOKEN_SUCCESS",
-                "Token generated."));
+            .Setup(x => x.GenerateInvitationToken(It.IsAny<TenantInvitation>()))
+            .Returns(rawToken);
 
         var encodedToken = Uri.EscapeDataString(rawToken);
 
-        // Act
         await _sut.Handle(notification, CancellationToken.None);
 
-        // Assert
         _capPublisherMock.Verify(
             x => x.PublishAsync(
                 NotificationTopics.TenantInvitationEmailRequested,
@@ -232,5 +171,26 @@ public class TenantInvitationEventHandlerTests
                 It.IsAny<string>(),
                 It.IsAny<CancellationToken>()),
             Times.Once);
+    }
+
+    private static TenantInvitation BuildInvitation()
+    {
+        return new TenantInvitation
+        {
+            PublicId = Guid.NewGuid(),
+            Email = "user@test.com",
+            TenantId = 1,
+            Tenant = new Tenant
+            {
+                Id = 1,
+                PublicId = Guid.NewGuid(),
+                Name = "FinTrack"
+            },
+            Role = TenantRole.Member,
+            Status = InvitationStatus.Pending,
+            Version = 1,
+            ExpiredAt = DateTime.UtcNow.AddDays(7),
+            CreatedByUserId = 100
+        };
     }
 }

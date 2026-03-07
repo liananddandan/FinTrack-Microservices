@@ -102,48 +102,6 @@ public class AccountServiceTests
     }
 
     [Fact]
-    public async Task LoginAsync_Should_Return_Fail_When_User_Has_No_Active_Membership()
-    {
-        var tenant = new Tenant
-        {
-            Id = 1,
-            PublicId = Guid.NewGuid(),
-            Name = "FinTrack"
-        };
-
-        var user = new ApplicationUser
-        {
-            Email = "user@test.com",
-            UserName = "user@test.com",
-            PublicId = Guid.NewGuid(),
-            JwtVersion = 1,
-            Memberships = new List<TenantMembership>
-            {
-                new TenantMembership
-                {
-                    Tenant = tenant,
-                    TenantId = tenant.Id,
-                    IsActive = false,
-                    Role = TenantRole.Member
-                }
-            }
-        };
-
-        _applicationUserRepoMock
-            .Setup(x => x.GetUserByEmailWithMembershipsAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(user);
-
-        _userManagerMock
-            .Setup(x => x.CheckPasswordAsync(user, "Password123!"))
-            .ReturnsAsync(true);
-
-        var result = await _sut.LoginAsync("user@test.com", "Password123!", CancellationToken.None);
-
-        result.Success.Should().BeFalse();
-        result.Message.Should().Be("User does not belong to any tenant.");
-    }
-
-    [Fact]
     public async Task LoginAsync_Should_Return_Token_And_Memberships_When_Login_Succeeds()
     {
         var tenant = new Tenant
@@ -182,11 +140,11 @@ public class AccountServiceTests
             .ReturnsAsync(true);
 
         _jwtTokenServiceMock
-            .Setup(x => x.GenerateAccessToken(user, It.IsAny<TenantMembership>()))
+            .Setup(x => x.GenerateAccountAccessToken(user))
             .Returns("fake-access-token");
 
         _jwtTokenServiceMock
-            .Setup(x => x.GenerateRefreshToken(user, It.IsAny<TenantMembership>()))
+            .Setup(x => x.GenerateRefreshToken(user))
             .Returns("fake-refresh-token");
 
         var result = await _sut.LoginAsync("user@test.com", "Password123!", CancellationToken.None);
@@ -226,9 +184,7 @@ public class AccountServiceTests
 
         var result = await _sut.RefreshTokenAsync(
             "user-1",
-            "tenant-1",
             "1",
-            "Admin",
             CancellationToken.None);
 
         result.Success.Should().BeFalse();
@@ -252,53 +208,12 @@ public class AccountServiceTests
 
         var result = await _sut.RefreshTokenAsync(
             "user-1",
-            "tenant-1",
             "1",
-            "Admin",
             CancellationToken.None);
 
         result.Success.Should().BeFalse();
         result.Message.Should().Be("Invalid jwt version.");
         result.Code.Should().Be(ResultCodes.Token.RefreshJwtTokenFailedTokenInvalid);
-    }
-
-    [Fact]
-    public async Task RefreshTokenAsync_Should_Return_Fail_When_TenantMembership_Not_Found()
-    {
-        var user = new ApplicationUser
-        {
-            PublicId = Guid.NewGuid(),
-            JwtVersion = 1,
-            Memberships = new List<TenantMembership>
-            {
-                new()
-                {
-                    IsActive = true,
-                    Role = TenantRole.Admin,
-                    Tenant = new Tenant
-                    {
-                        PublicId = Guid.NewGuid(),
-                        Name = "OtherTenant",
-                        IsDeleted = false
-                    }
-                }
-            }
-        };
-
-        _applicationUserRepoMock
-            .Setup(x => x.GetUserByPublicIdWithMembershipsAsync("user-1", It.IsAny<CancellationToken>()))
-            .ReturnsAsync(user);
-
-        var result = await _sut.RefreshTokenAsync(
-            "user-1",
-            Guid.NewGuid().ToString(),
-            "1",
-            "Admin",
-            CancellationToken.None);
-
-        result.Success.Should().BeFalse();
-        result.Message.Should().Be("Tenant membership not found.");
-        result.Code.Should().Be(ResultCodes.Token.RefreshJwtTokenFailedClaimTenantIdInvalid);
     }
 
     [Fact]
@@ -330,18 +245,16 @@ public class AccountServiceTests
             .ReturnsAsync(user);
 
         _jwtTokenServiceMock
-            .Setup(x => x.GenerateAccessToken(user, membership))
+            .Setup(x => x.GenerateAccountAccessToken(user))
             .Returns("new-access-token");
 
         _jwtTokenServiceMock
-            .Setup(x => x.GenerateRefreshToken(user, membership))
+            .Setup(x => x.GenerateRefreshToken(user))
             .Returns("new-refresh-token");
 
         var result = await _sut.RefreshTokenAsync(
             "user-1",
-            tenantPublicId.ToString(),
             "1",
-            "Admin",
             CancellationToken.None);
 
         result.Success.Should().BeTrue();
@@ -363,9 +276,7 @@ public class AccountServiceTests
 
         var result = await _sut.RefreshTokenAsync(
             "user-1",
-            "tenant-1",
             "1",
-            "Admin",
             CancellationToken.None);
 
         result.Success.Should().BeFalse();
@@ -496,5 +407,255 @@ public class AccountServiceTests
 
         result.Success.Should().BeFalse();
         result.Message.Should().Be("User registration failed.");
+    }
+[Fact]
+    public async Task SelectTenantAsync_Should_Return_Fail_When_UserPublicId_Is_Empty()
+    {
+        var result = await _sut.SelectTenantAsync(
+            "",
+            Guid.NewGuid().ToString(),
+            CancellationToken.None);
+
+        result.Success.Should().BeFalse();
+        result.Data.Should().BeNull();
+        result.Message.Should().Be("User public id is required.");
+    }
+
+    [Fact]
+    public async Task SelectTenantAsync_Should_Return_Fail_When_TenantPublicId_Is_Empty()
+    {
+        var result = await _sut.SelectTenantAsync(
+            Guid.NewGuid().ToString(),
+            "",
+            CancellationToken.None);
+
+        result.Success.Should().BeFalse();
+        result.Data.Should().BeNull();
+        result.Message.Should().Be("Tenant public id is required.");
+    }
+
+    [Fact]
+    public async Task SelectTenantAsync_Should_Return_Fail_When_User_Not_Found()
+    {
+        var userPublicId = Guid.NewGuid().ToString();
+        var tenantPublicId = Guid.NewGuid().ToString();
+
+        _applicationUserRepoMock
+            .Setup(x => x.GetUserByPublicIdWithMembershipsAsync(
+                userPublicId,
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync((ApplicationUser?)null);
+
+        var result = await _sut.SelectTenantAsync(
+            userPublicId,
+            tenantPublicId,
+            CancellationToken.None);
+
+        result.Success.Should().BeFalse();
+        result.Data.Should().BeNull();
+        result.Message.Should().Be("User not found.");
+    }
+
+    [Fact]
+    public async Task SelectTenantAsync_Should_Return_Fail_When_Membership_Not_Found()
+    {
+        var userPublicId = Guid.NewGuid().ToString();
+        var tenantPublicId = Guid.NewGuid().ToString();
+
+        var user = new ApplicationUser
+        {
+            Id = 1,
+            PublicId = Guid.Parse(userPublicId),
+            Email = "user@test.com",
+            UserName = "user@test.com",
+            JwtVersion = 1,
+            Memberships = new List<TenantMembership>()
+        };
+
+        _applicationUserRepoMock
+            .Setup(x => x.GetUserByPublicIdWithMembershipsAsync(
+                userPublicId,
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(user);
+
+        var result = await _sut.SelectTenantAsync(
+            userPublicId,
+            tenantPublicId,
+            CancellationToken.None);
+
+        result.Success.Should().BeFalse();
+        result.Data.Should().BeNull();
+        result.Message.Should().Be("Tenant membership not found.");
+    }
+
+    [Fact]
+    public async Task SelectTenantAsync_Should_Return_Fail_When_Membership_Is_Inactive()
+    {
+        var userPublicId = Guid.NewGuid().ToString();
+        var tenantPublicId = Guid.NewGuid().ToString();
+
+        var membership = new TenantMembership
+        {
+            TenantId = 10,
+            Tenant = new Tenant
+            {
+                Id = 10,
+                PublicId = Guid.Parse(tenantPublicId),
+                Name = "FinTrack",
+                IsDeleted = false
+            },
+            UserId = 1,
+            Role = TenantRole.Admin,
+            IsActive = false
+        };
+
+        var user = new ApplicationUser
+        {
+            Id = 1,
+            PublicId = Guid.Parse(userPublicId),
+            Email = "user@test.com",
+            UserName = "user@test.com",
+            JwtVersion = 1,
+            Memberships = new List<TenantMembership> { membership }
+        };
+
+        _applicationUserRepoMock
+            .Setup(x => x.GetUserByPublicIdWithMembershipsAsync(
+                userPublicId,
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(user);
+
+        var result = await _sut.SelectTenantAsync(
+            userPublicId,
+            tenantPublicId,
+            CancellationToken.None);
+
+        result.Success.Should().BeFalse();
+        result.Data.Should().BeNull();
+        result.Message.Should().Be("Tenant membership not found.");
+    }
+
+    [Fact]
+    public async Task SelectTenantAsync_Should_Return_Fail_When_Tenant_Is_Deleted()
+    {
+        var userPublicId = Guid.NewGuid().ToString();
+        var tenantPublicId = Guid.NewGuid().ToString();
+
+        var membership = new TenantMembership
+        {
+            TenantId = 10,
+            Tenant = new Tenant
+            {
+                Id = 10,
+                PublicId = Guid.Parse(tenantPublicId),
+                Name = "FinTrack",
+                IsDeleted = true
+            },
+            UserId = 1,
+            Role = TenantRole.Admin,
+            IsActive = true
+        };
+
+        var user = new ApplicationUser
+        {
+            Id = 1,
+            PublicId = Guid.Parse(userPublicId),
+            Email = "user@test.com",
+            UserName = "user@test.com",
+            JwtVersion = 1,
+            Memberships = new List<TenantMembership> { membership }
+        };
+
+        _applicationUserRepoMock
+            .Setup(x => x.GetUserByPublicIdWithMembershipsAsync(
+                userPublicId,
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(user);
+
+        var result = await _sut.SelectTenantAsync(
+            userPublicId,
+            tenantPublicId,
+            CancellationToken.None);
+
+        result.Success.Should().BeFalse();
+        result.Data.Should().BeNull();
+        result.Message.Should().Be("Tenant membership not found.");
+    }
+
+    [Fact]
+    public async Task SelectTenantAsync_Should_Return_TenantAccessToken_When_Request_Is_Valid()
+    {
+        var userPublicId = Guid.NewGuid().ToString();
+        var tenantPublicId = Guid.NewGuid().ToString();
+
+        var membership = new TenantMembership
+        {
+            TenantId = 10,
+            Tenant = new Tenant
+            {
+                Id = 10,
+                PublicId = Guid.Parse(tenantPublicId),
+                Name = "FinTrack",
+                IsDeleted = false
+            },
+            UserId = 1,
+            Role = TenantRole.Admin,
+            IsActive = true
+        };
+
+        var user = new ApplicationUser
+        {
+            Id = 1,
+            PublicId = Guid.Parse(userPublicId),
+            Email = "user@test.com",
+            UserName = "user@test.com",
+            JwtVersion = 1,
+            Memberships = new List<TenantMembership> { membership }
+        };
+
+        _applicationUserRepoMock
+            .Setup(x => x.GetUserByPublicIdWithMembershipsAsync(
+                userPublicId,
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(user);
+
+        _jwtTokenServiceMock
+            .Setup(x => x.GenerateTenantAccessToken(user, membership))
+            .Returns("tenant-access-token");
+
+        var result = await _sut.SelectTenantAsync(
+            userPublicId,
+            tenantPublicId,
+            CancellationToken.None);
+
+        result.Success.Should().BeTrue();
+        result.Data.Should().Be("tenant-access-token");
+        result.Message.Should().Be("Tenant selected successfully.");
+
+        _jwtTokenServiceMock.Verify(
+            x => x.GenerateTenantAccessToken(user, membership),
+            Times.Once);
+    }
+
+    [Fact]
+    public async Task SelectTenantAsync_Should_Return_Fail_When_Exception_Is_Thrown()
+    {
+        var userPublicId = Guid.NewGuid().ToString();
+        var tenantPublicId = Guid.NewGuid().ToString();
+
+        _applicationUserRepoMock
+            .Setup(x => x.GetUserByPublicIdWithMembershipsAsync(
+                userPublicId,
+                It.IsAny<CancellationToken>()))
+            .ThrowsAsync(new Exception("db error"));
+
+        var result = await _sut.SelectTenantAsync(
+            userPublicId,
+            tenantPublicId,
+            CancellationToken.None);
+
+        result.Success.Should().BeFalse();
+        result.Data.Should().BeNull();
+        result.Message.Should().Be("Failed to select tenant.");
     }
 }

@@ -17,12 +17,12 @@ type JwtTokenPair = {
   refreshToken: string;
 };
 
-export const http = axios.create({
+export const tenantHttp = axios.create({
   baseURL: import.meta.env.VITE_API_BASE_URL,
-  timeout: 15000,
+  timeout: 10000,
 });
 
-http.interceptors.request.use((config) => {
+tenantHttp.interceptors.request.use((config) => {
   const auth = useAuthStore();
 
   if (auth.tenantAccessToken) {
@@ -32,7 +32,7 @@ http.interceptors.request.use((config) => {
   return config;
 });
 
-http.interceptors.response.use(
+tenantHttp.interceptors.response.use(
   (response) => response,
   async (error: AxiosError) => {
     const auth = useAuthStore();
@@ -44,6 +44,7 @@ http.interceptors.response.use(
 
     const status = error.response?.status;
     const requestUrl = originalRequest.url ?? "";
+
     const isRefreshRequest = requestUrl.includes("/api/account/refresh-token");
 
     if (status !== 401) {
@@ -77,7 +78,7 @@ http.interceptors.response.use(
           headers: {
             Authorization: `Bearer ${auth.refreshToken}`,
           },
-          timeout: 15000,
+          timeout: 10000,
         }
       );
 
@@ -87,14 +88,13 @@ http.interceptors.response.use(
         throw new Error("Refresh token response is invalid.");
       }
 
-      // 先刷新 account token
+      // 先更新 account token
       auth.setAccountTokens(tokenPair.accessToken, tokenPair.refreshToken);
 
-      // admin 后台此时 tenant token 已失效，清空上下文，回登录页最稳
+      // tenant token 失效后，当前阶段最稳妥是清空 tenant 上下文，要求重新选择 tenant
       auth.clearTenantAccessToken();
-      auth.clearProfile();
-      await router.push("/login");
 
+      await router.push("/waiting-membership");
       return Promise.reject(error);
     } catch (refreshError) {
       auth.logout();

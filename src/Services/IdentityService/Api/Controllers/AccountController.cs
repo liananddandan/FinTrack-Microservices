@@ -1,6 +1,7 @@
 using IdentityService.Api.Filters.Attributes;
 using IdentityService.Application.Commands;
 using IdentityService.Application.Commands.Account;
+using IdentityService.Application.Commands.Tenant;
 using IdentityService.Application.Common.DTOs;
 using IdentityService.Application.Common.Extensions;
 using IdentityService.Application.Common.Status;
@@ -22,6 +23,7 @@ public class AccountController(IMediator mediator) : ControllerBase
     }
     
     [HttpGet("me")]
+    [RequireTokenType(JwtTokenType.AccountAccessToken)]
     public async Task<IActionResult> GetUsersInfoInTenantAsync()
     {
         var jwtParseResult = HttpContext.GetHttpHeaderJwtParseResult();
@@ -47,9 +49,7 @@ public class AccountController(IMediator mediator) : ControllerBase
 
         var command = new RefreshUserJwtTokenCommand(
             jwtParseResult.UserPublicId,
-            jwtParseResult.TenantPublicId,
-            jwtParseResult.JwtVersion,
-            jwtParseResult.UserRoleInTenant
+            jwtParseResult.JwtVersion
         );
         var result = await mediator.Send(command);
         return result.ToActionResult();
@@ -63,6 +63,24 @@ public class AccountController(IMediator mediator) : ControllerBase
         return result.ToActionResult();
     }
     
+    [HttpPost("select-tenant")]
+    [RequireTokenType(JwtTokenType.AccountAccessToken)]
+    public async Task<IActionResult> SelectTenantAsync([FromBody] SelectTenantRequest request)
+    {
+        var jwtParseResult = HttpContext.GetHttpHeaderJwtParseResult();
+        if (jwtParseResult == null)
+        {
+            return Unauthorized("Request without valid token");
+        }
+
+        var command = new SelectTenantCommand(
+            jwtParseResult.UserPublicId,
+            request.TenantPublicId
+        );
+
+        var result = await mediator.Send(command);
+        return result.ToActionResult();
+    }
     
     [HttpGet("confirm-email")]
     [AllowAnonymousToken]
@@ -76,7 +94,6 @@ public class AccountController(IMediator mediator) : ControllerBase
     }
 
     [HttpPost("reset-password")]
-    [RequireTokenType(JwtTokenType.AccessToken)]
     public async Task<IActionResult> UserResetPasswordAsync(ChangePasswordRequest request)
     {
         var jwtParseResult = HttpContext.GetHttpHeaderJwtParseResult();

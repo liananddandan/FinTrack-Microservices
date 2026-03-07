@@ -14,7 +14,7 @@ export async function resolveTenantInvitation(
   token: string
 ): Promise<ResolveTenantInvitationResult> {
   const response = await axios.get<ApiResponse<ResolveTenantInvitationResult>>(
-    `${import.meta.env.VITE_API_BASE}/api/tenant/invitations/resolve`,
+    `${import.meta.env.VITE_API_BASE_URL}/api/tenant/invitations/resolve`,
     {
       headers: {
         Authorization: `Invite ${token}`,
@@ -34,7 +34,7 @@ export async function resolveTenantInvitation(
 
 export async function acceptTenantInvitation(token: string): Promise<boolean> {
   const response = await axios.post<ApiResponse<boolean>>(
-    `${import.meta.env.VITE_API_BASE}/api/tenant/invitations/accept`,
+    `${import.meta.env.VITE_API_BASE_URL}/api/tenant/invitations/accept`,
     null,
     {
       headers: {

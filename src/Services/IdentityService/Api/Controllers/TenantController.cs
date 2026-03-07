@@ -22,6 +22,7 @@ public class TenantController(IMediator mediator) : ControllerBase
     }
     
     [HttpGet("members")]
+    [RequireTokenType(JwtTokenType.TenantAccessToken)]
     public async Task<IActionResult> GetTenantMembersAsync()
     {
         var jwtParseResult = HttpContext.GetHttpHeaderJwtParseResult();

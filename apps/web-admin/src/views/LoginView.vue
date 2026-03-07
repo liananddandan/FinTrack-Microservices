@@ -45,7 +45,7 @@
 <script setup lang="ts">
 import { reactive, ref } from "vue";
 import { useRouter } from "vue-router";
-import { login, getCurrentUser } from "../api/account";
+import { getCurrentUser, login } from "../api/account";
 import { useAuthStore } from "../stores/auth";
 
 const router = useRouter();
@@ -80,19 +80,35 @@ async function onLogin() {
       password: form.password,
     });
 
-    auth.setTokens(
+    // 第一步：保存 account token
+    auth.setAccountTokens(
       result.tokens.accessToken,
       result.tokens.refreshToken
     );
 
-    auth.setMemberships(result.memberships);
+    // 清空旧 tenant 上下文，避免串租户
+    auth.clearTenantAccessToken();
 
+    // 先保存 memberships
+    auth.setMemberships(result.memberships ?? []);
+
+    // 第二步：拿 account 级 profile
     const profile = await getCurrentUser();
     auth.setProfile(profile);
 
+    // 第三步：只认 admin membership
     if (!auth.isAdmin) {
       auth.logout();
-      errorMessage.value = "This account is not an administrator.";
+      errorMessage.value = "This account does not have admin access.";
+      return;
+    }
+
+    // V1：只支持单 admin tenant 自动进入
+    const activated = await auth.activateSingleAdminTenantIfPossible();
+
+    if (!activated) {
+      auth.clearTenantAccessToken();
+      errorMessage.value = "Multiple admin tenants are not supported in V1.";
       return;
     }
 

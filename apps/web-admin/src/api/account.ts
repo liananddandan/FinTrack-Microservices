@@ -1,4 +1,5 @@
-import { http } from "./http";
+import axios from "axios";
+import { useAuthStore } from "../stores/auth";
 import type { ApiResponse } from "./types";
 
 export type LoginMembershipDto = {
@@ -10,18 +11,6 @@ export type LoginMembershipDto = {
 export type LoginRequest = {
   email: string;
   password: string;
-};
-
-export type RegisterUserRequest = {
-  userName: string;
-  email: string;
-  password: string;
-};
-
-export type RegisterUserResult = {
-  userPublicId: string;
-  email: string;
-  userName: string;
 };
 
 export type UserLoginResult = {
@@ -39,10 +28,25 @@ export type CurrentUserResult = {
   memberships?: LoginMembershipDto[];
 };
 
+export type SelectTenantRequest = {
+  tenantPublicId: string;
+};
+
+function getAccountAuthHeader() {
+  const auth = useAuthStore();
+
+  return {
+    Authorization: `Bearer ${auth.accountAccessToken}`,
+  };
+}
+
 export async function login(request: LoginRequest): Promise<UserLoginResult> {
-  const response = await http.post<ApiResponse<UserLoginResult>>(
-    "/api/account/login",
-    request
+  const response = await axios.post<ApiResponse<UserLoginResult>>(
+    `${import.meta.env.VITE_API_BASE_URL}/api/account/login`,
+    request,
+    {
+      timeout: 15000,
+    }
   );
 
   const result = response.data;
@@ -54,32 +58,40 @@ export async function login(request: LoginRequest): Promise<UserLoginResult> {
   return result.data;
 }
 
-export async function registerUser(
-  request: RegisterUserRequest
-): Promise<RegisterUserResult> {
-  const response = await http.post<ApiResponse<RegisterUserResult>>(
-    "/api/account/register",
-    request
-  );
-
-  const result = response.data;
-
-  if (!result.data) {
-    throw new Error(result.message || "User registration failed");
-  }
-
-  return result.data;
-}
-
 export async function getCurrentUser(): Promise<CurrentUserResult> {
-  const response = await http.get<ApiResponse<CurrentUserResult>>(
-    "/api/account/me"
+  const response = await axios.get<ApiResponse<CurrentUserResult>>(
+    `${import.meta.env.VITE_API_BASE_URL}/api/account/me`,
+    {
+      headers: getAccountAuthHeader(),
+      timeout: 15000,
+    }
   );
 
   const result = response.data;
 
   if (!result.data) {
     throw new Error(result.message || "Failed to fetch current user");
+  }
+
+  return result.data;
+}
+
+export async function selectTenant(
+  request: SelectTenantRequest
+): Promise<string> {
+  const response = await axios.post<ApiResponse<string>>(
+    `${import.meta.env.VITE_API_BASE_URL}/api/account/select-tenant`,
+    request,
+    {
+      headers: getAccountAuthHeader(),
+      timeout: 15000,
+    }
+  );
+
+  const result = response.data;
+
+  if (!result.data) {
+    throw new Error(result.message || "Failed to select tenant");
   }
 
   return result.data;

@@ -4,9 +4,9 @@ using System.Net.Http.Json;
 using FluentAssertions;
 using IdentityService.Application.Common.DTOs;
 using IdentityService.Application.Common.Status;
-using IdentityService.Application.Services.Interfaces;
 using IdentityService.Domain.Entities;
 using IdentityService.Domain.Enums;
+using IdentityService.Application.Services.Interfaces;
 using IdentityService.Infrastructure.Persistence;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.DependencyInjection;
@@ -40,7 +40,7 @@ public class TenantInvitationResolveAcceptTests : IClassFixture<IdentityWebAppli
     {
         var invitation = await SeedPendingInvitationAsync();
 
-        var invitationToken = await GenerateInvitationTokenAsync(invitation.PublicId.ToString(), invitation.Version.ToString());
+        var invitationToken = GenerateInvitationToken(invitation);
 
         _client.DefaultRequestHeaders.Authorization =
             new AuthenticationHeaderValue("Invite", invitationToken);
@@ -50,15 +50,18 @@ public class TenantInvitationResolveAcceptTests : IClassFixture<IdentityWebAppli
 
         response.StatusCode.Should().Be(HttpStatusCode.OK, body);
 
-        var apiResponse = await response.Content.ReadFromJsonAsync<ApiResponse<ResolveTenantInvitationResultTestDto>>();
+        var apiResponse =
+            await response.Content.ReadFromJsonAsync<ApiResponse<ResolveTenantInvitationResultTestDto>>();
+
         apiResponse.Should().NotBeNull();
         apiResponse!.Data.Should().NotBeNull();
 
         apiResponse.Data!.InvitationPublicId.Should().Be(invitation.PublicId.ToString());
-        apiResponse.Data.Email.Should().Be(invitation.Email);
         apiResponse.Data.TenantName.Should().Be(invitation.Tenant.Name);
+        apiResponse.Data.Email.Should().Be(invitation.Email);
         apiResponse.Data.Role.Should().Be(invitation.Role.ToString());
         apiResponse.Data.Status.Should().Be(invitation.Status.ToString());
+        apiResponse.Data.ExpiredAt.Should().Be(invitation.ExpiredAt);
     }
 
     [Fact]
@@ -66,7 +69,7 @@ public class TenantInvitationResolveAcceptTests : IClassFixture<IdentityWebAppli
     {
         var invitation = await SeedPendingInvitationAsync();
 
-        var invitationToken = await GenerateInvitationTokenAsync(invitation.PublicId.ToString(), invitation.Version.ToString());
+        var invitationToken = GenerateInvitationToken(invitation);
 
         _client.DefaultRequestHeaders.Authorization =
             new AuthenticationHeaderValue("Invite", invitationToken);
@@ -79,16 +82,20 @@ public class TenantInvitationResolveAcceptTests : IClassFixture<IdentityWebAppli
         using var scope = _factory.Services.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<ApplicationIdentityDbContext>();
 
+        var invitedUser = db.Users.First(x => x.Email == invitation.Email);
+
         var membership = db.TenantMemberships.FirstOrDefault(x =>
             x.TenantId == invitation.TenantId &&
-            x.User.Email == invitation.Email);
+            x.UserId == invitedUser.Id);
 
         membership.Should().NotBeNull();
         membership!.Role.Should().Be(invitation.Role);
+        membership.IsActive.Should().BeTrue();
 
         var updatedInvitation = db.TenantInvitations.First(x => x.Id == invitation.Id);
         updatedInvitation.Status.Should().Be(InvitationStatus.Accepted);
         updatedInvitation.AcceptedAt.Should().NotBeNull();
+        updatedInvitation.Version.Should().Be(invitation.Version + 1);
     }
 
     private async Task<TenantInvitation> SeedPendingInvitationAsync()
@@ -104,24 +111,30 @@ public class TenantInvitationResolveAcceptTests : IClassFixture<IdentityWebAppli
         db.Tenants.Add(tenant);
         await db.SaveChangesAsync();
 
+        var invitedUserEmail = $"user-{Guid.NewGuid():N}@test.com";
+        var inviterEmail = $"admin-{Guid.NewGuid():N}@test.com";
+
         var invitedUser = new ApplicationUser
         {
-            UserName = $"user-{Guid.NewGuid():N}@test.com",
-            Email = $"user-{Guid.NewGuid():N}@test.com",
+            UserName = invitedUserEmail,
+            Email = invitedUserEmail,
             EmailConfirmed = true,
             JwtVersion = 1
         };
 
         var inviter = new ApplicationUser
         {
-            UserName = $"admin-{Guid.NewGuid():N}@test.com",
-            Email = $"admin-{Guid.NewGuid():N}@test.com",
+            UserName = inviterEmail,
+            Email = inviterEmail,
             EmailConfirmed = true,
             JwtVersion = 1
         };
 
-        (await userManager.CreateAsync(invitedUser, "Password123!")).Succeeded.Should().BeTrue();
-        (await userManager.CreateAsync(inviter, "Password123!")).Succeeded.Should().BeTrue();
+        (await userManager.CreateAsync(invitedUser, "Password123!"))
+            .Succeeded.Should().BeTrue();
+
+        (await userManager.CreateAsync(inviter, "Password123!"))
+            .Succeeded.Should().BeTrue();
 
         var invitation = new TenantInvitation
         {
@@ -143,21 +156,12 @@ public class TenantInvitationResolveAcceptTests : IClassFixture<IdentityWebAppli
         return invitation;
     }
 
-    private async Task<string> GenerateInvitationTokenAsync(string invitationPublicId, string invitationVersion)
+    private string GenerateInvitationToken(TenantInvitation invitation)
     {
         using var scope = _factory.Services.CreateScope();
         var jwtTokenService = scope.ServiceProvider.GetRequiredService<IJwtTokenService>();
 
-        var result = await jwtTokenService.GenerateInvitationTokenAsync(new InvitationClaimSource
-        {
-            InvitationPublicId = invitationPublicId,
-            InvitationVersion = invitationVersion
-        });
-
-        result.Success.Should().BeTrue();
-        result.Data.Should().NotBeNullOrWhiteSpace();
-
-        return result.Data!;
+        return jwtTokenService.GenerateInvitationToken(invitation);
     }
 
     private sealed class ApiResponse<T>

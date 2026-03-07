@@ -1,7 +1,8 @@
 import { defineStore } from "pinia";
-import { getCurrentUser } from "../api/account";
+import { getCurrentUser, selectTenant } from "../api/account";
 
-const ACCESS_TOKEN_KEY = "fintrack.accessToken";
+const ACCOUNT_ACCESS_TOKEN_KEY = "fintrack.accountAccessToken";
+const TENANT_ACCESS_TOKEN_KEY = "fintrack.tenantAccessToken";
 const REFRESH_TOKEN_KEY = "fintrack.refreshToken";
 
 export type LoginMembershipDto = {
@@ -19,14 +20,17 @@ export type UserProfile = {
 
 export const useAuthStore = defineStore("auth", {
   state: () => ({
-    accessToken: localStorage.getItem(ACCESS_TOKEN_KEY) ?? "",
+    accountAccessToken: localStorage.getItem(ACCOUNT_ACCESS_TOKEN_KEY) ?? "",
+    tenantAccessToken: localStorage.getItem(TENANT_ACCESS_TOKEN_KEY) ?? "",
     refreshToken: localStorage.getItem(REFRESH_TOKEN_KEY) ?? "",
     memberships: [] as LoginMembershipDto[],
     profile: null as UserProfile | null,
   }),
 
   getters: {
-    isAuthenticated: (state) => !!state.accessToken,
+    isAuthenticated: (state) => !!state.accountAccessToken,
+    hasTenantContext: (state) => !!state.tenantAccessToken,
+
     userEmail: (state) => state.profile?.email ?? "",
     userName: (state) => state.profile?.userName ?? "",
 
@@ -35,12 +39,17 @@ export const useAuthStore = defineStore("auth", {
         ? state.profile.memberships
         : state.memberships,
 
-    currentMembership(): LoginMembershipDto | null {
+    adminMemberships(): LoginMembershipDto[] {
       const memberships =
         this.profile?.memberships?.length
           ? this.profile.memberships
           : this.memberships;
 
+      return memberships.filter((m) => m.role === "Admin");
+    },
+
+    currentMembership(): LoginMembershipDto | null {
+      const memberships = this.adminMemberships;
       return memberships.length > 0 ? memberships[0] : null;
     },
 
@@ -53,13 +62,13 @@ export const useAuthStore = defineStore("auth", {
     },
 
     isAdmin(): boolean {
-      return this.currentMembership?.role === "Admin";
+      return this.adminMemberships.length > 0;
     },
   },
 
   actions: {
     async initialize() {
-      if (!this.accessToken) return;
+      if (!this.accountAccessToken) return;
       if (this.profile) return;
 
       try {
@@ -70,29 +79,61 @@ export const useAuthStore = defineStore("auth", {
       }
     },
 
-    setTokens(accessToken: string, refreshToken: string) {
-      this.accessToken = accessToken;
+    setAccountTokens(accessToken: string, refreshToken: string) {
+      this.accountAccessToken = accessToken;
       this.refreshToken = refreshToken;
 
-      localStorage.setItem(ACCESS_TOKEN_KEY, accessToken);
+      localStorage.setItem(ACCOUNT_ACCESS_TOKEN_KEY, accessToken);
       localStorage.setItem(REFRESH_TOKEN_KEY, refreshToken);
+    },
+
+    setTenantAccessToken(token: string) {
+      this.tenantAccessToken = token;
+      localStorage.setItem(TENANT_ACCESS_TOKEN_KEY, token);
+    },
+
+    clearTenantAccessToken() {
+      this.tenantAccessToken = "";
+      localStorage.removeItem(TENANT_ACCESS_TOKEN_KEY);
     },
 
     setMemberships(memberships: LoginMembershipDto[]) {
       this.memberships = memberships;
     },
 
-    setProfile(profile: UserProfile) {
+    setProfile(profile: UserProfile | null) {
       this.profile = profile;
     },
 
+    clearProfile() {
+      this.profile = null;
+    },
+
+    async activateSingleAdminTenantIfPossible() {
+      const adminMemberships = this.adminMemberships;
+
+      if (adminMemberships.length !== 1) {
+        this.clearTenantAccessToken();
+        return false;
+      }
+
+      const tenantToken = await selectTenant({
+        tenantPublicId: adminMemberships[0].tenantPublicId,
+      });
+
+      this.setTenantAccessToken(tenantToken);
+      return true;
+    },
+
     logout() {
-      this.accessToken = "";
+      this.accountAccessToken = "";
+      this.tenantAccessToken = "";
       this.refreshToken = "";
       this.memberships = [];
       this.profile = null;
 
-      localStorage.removeItem(ACCESS_TOKEN_KEY);
+      localStorage.removeItem(ACCOUNT_ACCESS_TOKEN_KEY);
+      localStorage.removeItem(TENANT_ACCESS_TOKEN_KEY);
       localStorage.removeItem(REFRESH_TOKEN_KEY);
     },
   },

@@ -8,9 +8,11 @@ using SharedKernel.Common.Results;
 
 namespace IdentityService.Api.Filters;
 
-public class GlobalJwtTokenValidationFilter(IJwtTokenService jwtTokenService,
+public class GlobalJwtTokenValidationFilter(
+    IJwtTokenService jwtTokenService,
     IUserDomainService userDomainService,
-    ITenantInvitationService tenantInvitationService) : IAsyncAuthorizationFilter
+    ITenantInvitationService tenantInvitationService)
+    : IAsyncAuthorizationFilter
 {
     public async Task OnAuthorizationAsync(AuthorizationFilterContext context)
     {
@@ -19,85 +21,112 @@ public class GlobalJwtTokenValidationFilter(IJwtTokenService jwtTokenService,
             return;
         }
 
-        var token = context.HttpContext.Request.Headers["Authorization"]
-            .FirstOrDefault();
+        var authorizationHeader = context.HttpContext.Request.Headers["Authorization"].FirstOrDefault();
 
-        if (string.IsNullOrWhiteSpace(token))
+        if (string.IsNullOrWhiteSpace(authorizationHeader))
         {
             context.Result = new UnauthorizedResult();
             return;
         }
 
-        var inviteToken = token.StartsWith("Invite ");
-        token = inviteToken ? token.Replace("Invite ", "") : token.Replace("Bearer ", "");
-
-        if (inviteToken)
+        if (authorizationHeader.StartsWith("Invite ", StringComparison.OrdinalIgnoreCase))
         {
-            var result = await jwtTokenService.ParseInvitationTokenAsync(token);
-            if (!result.Success || result.Data == null)
-            {
-                context.Result = BuildUnauthorizedErrorResult(result);
-                return;
-            }
-            if (result.Data.TokenType != GetRequiredTokenType(context))
-            {
-                context.Result = BuildForbiddenErrorResult("Token type not supported");
-                return;
-            }
-            var invitationParsedResult = result.Data;
-            var invitation =
-                await tenantInvitationService
-                    .GetTenantInvitationByPublicIdAsync(invitationParsedResult.InvitationPublicId);
-            if (!invitation.Success || invitation.Data == null)
-            {
-                context.Result = new UnauthorizedResult();
-                return;
-            }
-            if (!long.TryParse(invitationParsedResult.InvitationVersion, out var version)
-                || version != invitation.Data.Version)
-            {
-                context.Result = new UnauthorizedResult();
-                return;
-            }
-            context.HttpContext.Items["InviteParseResult"] = invitationParsedResult;
+            await HandleInvitationTokenAsync(context, authorizationHeader["Invite ".Length..]);
+            return;
         }
-        else
-        {
-            var result = await jwtTokenService.ParseJwtTokenAsync(token);
-            if (!result.Success || result.Data == null)
-            {
-                context.Result = BuildUnauthorizedErrorResult(result);
-                return;
-            }
-            if (result.Data.TokenType != GetRequiredTokenType(context))
-            {
-                context.Result = BuildForbiddenErrorResult("Token type not supported");
-                return;
-            }
-            var jwtParseResult = result.Data;
-            
-            var user = await userDomainService.GetUserByPublicIdAsync(result.Data.UserPublicId);
-            if (user == null)
-            {
-                context.Result = new UnauthorizedResult();
-                return;
-            }
 
-            if (!long.TryParse(jwtParseResult.JwtVersion, out var version)
-                || version != user.JwtVersion)
-            {
-                context.Result = new UnauthorizedResult();
-                return;
-            }
-            context.HttpContext.Items["JwtParseResult"] = jwtParseResult;
+        if (authorizationHeader.StartsWith("Bearer ", StringComparison.OrdinalIgnoreCase))
+        {
+            await HandleBearerTokenAsync(context, authorizationHeader["Bearer ".Length..]);
+            return;
         }
+
+        context.Result = new UnauthorizedResult();
     }
-    
+
+    private async Task HandleInvitationTokenAsync(
+        AuthorizationFilterContext context,
+        string token)
+    {
+        var result = await jwtTokenService.ParseInvitationTokenAsync(token);
+
+        if (!result.Success || result.Data == null)
+        {
+            context.Result = BuildUnauthorizedErrorResult(result);
+            return;
+        }
+
+        var requiredTokenType = GetRequiredTokenType(context);
+        if (result.Data.TokenType != requiredTokenType)
+        {
+            context.Result = BuildForbiddenErrorResult("Token type not supported");
+            return;
+        }
+
+        var invitationParsedResult = result.Data;
+
+        var invitation = await tenantInvitationService
+            .GetTenantInvitationByPublicIdAsync(invitationParsedResult.InvitationPublicId);
+
+        if (!invitation.Success || invitation.Data == null)
+        {
+            context.Result = new UnauthorizedResult();
+            return;
+        }
+
+        if (!int.TryParse(invitationParsedResult.InvitationVersion, out var version) ||
+            version != invitation.Data.Version)
+        {
+            context.Result = new UnauthorizedResult();
+            return;
+        }
+
+        context.HttpContext.Items["InviteParseResult"] = invitationParsedResult;
+    }
+
+    private async Task HandleBearerTokenAsync(
+        AuthorizationFilterContext context,
+        string token)
+    {
+        var result = await jwtTokenService.ParseJwtTokenAsync(token);
+
+        if (!result.Success || result.Data == null)
+        {
+            context.Result = BuildUnauthorizedErrorResult(result);
+            return;
+        }
+
+        var requiredTokenType = GetRequiredTokenType(context);
+        if (result.Data.TokenType != requiredTokenType)
+        {
+            context.Result = BuildForbiddenErrorResult("Token type not supported");
+            return;
+        }
+
+        var jwtParseResult = result.Data;
+
+        var user = await userDomainService.GetUserByPublicIdAsync(jwtParseResult.UserPublicId);
+        if (user == null)
+        {
+            context.Result = new UnauthorizedResult();
+            return;
+        }
+
+        if (!long.TryParse(jwtParseResult.JwtVersion, out var version) ||
+            version != user.JwtVersion)
+        {
+            context.Result = new UnauthorizedResult();
+            return;
+        }
+
+        context.HttpContext.Items["JwtParseResult"] = jwtParseResult;
+    }
+
     private IActionResult BuildUnauthorizedErrorResult<T>(ServiceResult<T> result)
     {
         return new JsonResult(new ApiResponse<object>(
             result.Code ?? ResultCodes.InternalError,
-            result.Message ?? "",
+            result.Message ?? string.Empty,
             null))
         {
             StatusCode = StatusCodes.Status401Unauthorized
@@ -115,11 +144,11 @@ public class GlobalJwtTokenValidationFilter(IJwtTokenService jwtTokenService,
         };
     }
 
-
     private JwtTokenType GetRequiredTokenType(AuthorizationFilterContext context)
     {
         return context.ActionDescriptor.EndpointMetadata
             .OfType<RequireTokenTypeAttribute>()
-            .FirstOrDefault()?.TokenType ?? JwtTokenType.AccessToken;
+            .FirstOrDefault()?.TokenType
+               ?? JwtTokenType.AccountAccessToken;
     }
 }

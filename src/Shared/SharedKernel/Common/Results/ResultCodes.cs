@@ -128,7 +128,12 @@ public static class ResultCodes
         public const string RegisterUserEmailExists = "100005009";
         public const string RegisterUserCreateFailed = "100005011";
         public const string RegisterUserException = "100005012";
+        public const string SelectTenantParameterError = "100005013";
+        public const string SelectTenantUserNotFound = "100005014";
+        public const string SelectTenantMembershipNotFound = "100005015";
+        public const string SelectTenantException = "100005016";
         
+        public const string SelectTenantSuccess = "100005096";
         public const string RegisterUserSuccess = "100005097";
         public const string GetUserInfoSuccess = "100005098";
         public const string LoginSuccess = "100005099";

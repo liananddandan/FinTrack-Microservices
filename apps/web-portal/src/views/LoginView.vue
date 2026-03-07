@@ -12,7 +12,9 @@
             <el-card class="portal-card" shadow="never">
                 <div class="portal-card-header">
                     <h2 class="portal-card-title">Sign in</h2>
-                    <p class="portal-card-subtitle">Access your account and continue to your workspace.</p>
+                    <p class="portal-card-subtitle">
+                        Access your account and continue to your workspace.
+                    </p>
                 </div>
 
                 <el-form label-position="top" @submit.prevent>
@@ -45,64 +47,86 @@
 </template>
 
 <script setup lang="ts">
-import { reactive, ref } from "vue"
-import { useRouter } from "vue-router"
-import { login, getCurrentUser } from "../api/account"
+import { reactive, ref } from "vue";
+import { useRouter } from "vue-router";
+import { getCurrentUser, login } from "../api/account";
 import { useAuthStore } from "../stores/auth";
 
-const router = useRouter()
-const auth = useAuthStore()
+const router = useRouter();
+const auth = useAuthStore();
 
-const loading = ref(false)
-const errorMessage = ref("")
+const loading = ref(false);
+const errorMessage = ref("");
 
 const form = reactive({
     email: "",
-    password: ""
-})
+    password: "",
+});
 
 async function onLogin() {
-    errorMessage.value = ""
+    errorMessage.value = "";
 
     if (!form.email.trim()) {
-        errorMessage.value = "Email is required."
-        return
+        errorMessage.value = "Email is required.";
+        return;
     }
 
     if (!form.password.trim()) {
-        errorMessage.value = "Password is required."
-        return
+        errorMessage.value = "Password is required.";
+        return;
     }
 
-    loading.value = true
+    loading.value = true;
 
     try {
         const result = await login({
             email: form.email.trim(),
-            password: form.password
-        })
+            password: form.password,
+        });
 
-        auth.setLoginSession(
+        // 第一步：保存 account 级 token
+        auth.setAccountTokens(
             result.tokens.accessToken,
-            result.tokens.refreshToken,
-            result.memberships
+            result.tokens.refreshToken
         );
 
-        const profile = await getCurrentUser()
-        auth.setProfile(profile)
+        // 登录后先清空旧 tenant 上下文，避免串租户
+        auth.clearTenantAccessToken();
 
-        if (result.memberships.length > 0) {
-            await router.push("/waiting-membership")
-        } else {
-            await router.push("/waiting-membership")
+        // 第二步：先保存 memberships（登录返回值里的）
+        auth.setMemberships(result.memberships ?? []);
+
+        // 第三步：拉 account 级 profile
+        const profile = await getCurrentUser();
+        auth.setProfile(profile);
+
+        const memberships = profile.memberships ?? [];
+
+        if (memberships.length === 0) {
+            await router.push("/waiting-membership");
+            return;
         }
+
+        if (memberships.length === 1) {
+            await auth.activateSingleTenantIfPossible();
+
+            if (auth.hasTenantContext) {
+                await router.push("/home");
+                return;
+            }
+
+            await router.push("/waiting-membership");
+            return;
+        }
+
+        await router.push("/waiting-membership");
     } catch (err: any) {
         errorMessage.value =
             err?.response?.data?.message ??
             err?.message ??
-            "Login failed."
+            "Login failed.";
     } finally {
-        loading.value = false
+        loading.value = false;
     }
 }
 </script>
