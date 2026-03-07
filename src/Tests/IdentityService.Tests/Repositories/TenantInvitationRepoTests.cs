@@ -38,41 +38,6 @@ public class TenantInvitationRepoTests
         result.Email.Should().Be(invitation.Email);
         result.PublicId.Should().NotBeEmpty();
     }
-
-    [Fact]
-    public async Task FindByPublicIdAsync_ShouldReturnNull_WhenInvitationNotExist()
-    {
-        var options = new DbContextOptionsBuilder<ApplicationIdentityDbContext>()
-            .UseInMemoryDatabase(Guid.NewGuid().ToString())
-            .Options;
-        var dbContext = new TestDbContext(options);
-        var repo = new TenantInvitationRepo(dbContext);
-        
-        // Act
-        var result = await repo.FindByPublicIdAsync(Guid.NewGuid());
-        
-        // Assert
-        result.Should().BeNull();
-    }
-    
-    [Theory, AutoMoqData]
-    public async Task FindByPublicIdAsync_ShouldReturnInvitation_WhenInvitationExist(
-        TenantInvitation invitation)
-    {
-        var options = new DbContextOptionsBuilder<ApplicationIdentityDbContext>()
-            .UseInMemoryDatabase(Guid.NewGuid().ToString())
-            .Options;
-        var dbContext = new TestDbContext(options);
-        var repo = new TenantInvitationRepo(dbContext);
-        dbContext.TenantInvitations.Add(invitation);
-        await dbContext.SaveChangesAsync();
-        
-        // Act
-        var result = await repo.FindByPublicIdAsync(invitation.PublicId);
-        
-        // Assert
-        result.Should().NotBeNull();
-    }
     
     [Fact]
     public async Task FindByEmailAsync_ShouldReturnNull_WhenInvitationNotExist()
@@ -136,4 +101,5 @@ public class TenantInvitationRepoTests
         result.Version.Should().Be(originalVersion + 1);
         result.Status.Should().Be(InvitationStatus.Accepted);
     }
+    
 }

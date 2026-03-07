@@ -320,4 +320,52 @@ public class TenantInvitationService(
             ResultCodes.Tenant.AcceptInvitationSuccess,
             "Invitation accepted successfully.");
     }
+
+    public async Task<ServiceResult<List<TenantInvitationDto>>> GetTenantInvitationsAsync(
+        string tenantPublicId,
+        CancellationToken cancellationToken = default)
+    {
+        if (string.IsNullOrWhiteSpace(tenantPublicId))
+        {
+            return ServiceResult<List<TenantInvitationDto>>.Fail(
+                ResultCodes.Tenant.GetTenantInvitationsParameterError,
+                "Tenant public id is required.");
+        }
+
+        try
+        {
+            var invitations = await invitationRepo.GetByTenantPublicIdAsync(
+                tenantPublicId,
+                cancellationToken);
+
+            var result = invitations
+                .Select(x => new TenantInvitationDto(
+                    x.PublicId.ToString(),
+                    x.Email,
+                    x.Role.ToString(),
+                    x.Status.ToString(),
+                    x.CreatedAt,
+                    x.AcceptedAt,
+                    x.ExpiredAt,
+                    x.CreatedByUser.Email ?? string.Empty
+                ))
+                .ToList();
+
+            return ServiceResult<List<TenantInvitationDto>>.Ok(
+                result,
+                ResultCodes.Tenant.GetTenantInvitationsSuccess,
+                "Tenant invitations fetched successfully.");
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(
+                ex,
+                "Failed to get tenant invitations for tenant {TenantPublicId}",
+                tenantPublicId);
+
+            return ServiceResult<List<TenantInvitationDto>>.Fail(
+                ResultCodes.Tenant.GetTenantInvitationsException,
+                "Failed to get tenant invitations.");
+        }
+    }
 }

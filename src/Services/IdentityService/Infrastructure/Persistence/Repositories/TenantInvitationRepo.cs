@@ -23,9 +23,21 @@ public class TenantInvitationRepo(ApplicationIdentityDbContext dbContext) : ITen
                 cancellationToken);
     }
 
-    public async Task<TenantInvitation?> FindByPublicIdAsync(Guid publicId)
+    public async Task<List<TenantInvitation>> GetByTenantPublicIdAsync(
+        string tenantPublicId,
+        CancellationToken cancellationToken = default)
     {
-        return await dbContext.TenantInvitations.Where(ti => ti.PublicId == publicId).FirstOrDefaultAsync();
+        if (!Guid.TryParse(tenantPublicId, out var parsedTenantPublicId))
+        {
+            return new List<TenantInvitation>();
+        }
+
+        return await dbContext.TenantInvitations
+            .Include(x => x.Tenant)
+            .Include(x => x.CreatedByUser)
+            .Where(x => x.Tenant.PublicId == parsedTenantPublicId && !x.Tenant.IsDeleted)
+            .OrderByDescending(x => x.CreatedAt)
+            .ToListAsync(cancellationToken);
     }
 
     public async Task<TenantInvitation?> FindByEmailAsync(string email)

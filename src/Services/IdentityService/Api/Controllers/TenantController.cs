@@ -34,20 +34,4 @@ public class TenantController(IMediator mediator) : ControllerBase
         var result = await mediator.Send(command);
         return result.ToActionResult();
     }
-    
-
-    [HttpGet("receive-invite")]
-    [RequireTokenType(JwtTokenType.InvitationToken)]
-    public async Task<IActionResult> ReceiveInviteAsync()
-    {
-        var inviteParseResult = HttpContext.GetHttpHeaderInviteParseResult();
-        if (inviteParseResult == null)
-        {
-            return Unauthorized("Request Without valid token");
-        }
-
-        var command = new ReceiveInviteCommand(inviteParseResult.InvitationPublicId);
-        var result = await mediator.Send(command);
-        return result.ToActionResult();
-    }
 }

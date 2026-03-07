@@ -27,4 +27,9 @@ public interface ITenantInvitationService
         string invitationVersion,
         CancellationToken cancellationToken = default);
     
+    
+    Task<ServiceResult<List<TenantInvitationDto>>> GetTenantInvitationsAsync(
+        string tenantPublicId,
+        CancellationToken cancellationToken = default);
+    
 }

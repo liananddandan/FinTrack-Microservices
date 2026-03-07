@@ -30,11 +30,12 @@ public static class ResultCodes
         public const string AcceptInvitationExpired = "100001022";
         public const string AcceptInvitationUserNotFound = "100001023";
         public const string AcceptInvitationMembershipExists = "100001024";
-        
+        public const string GetTenantInvitationsParameterError = "100001025";
+        public const string GetTenantInvitationsException = "100001026";
         // RegisterTenant Success 100 001 999
         public const string GetAllUserInTenantSuccess = "100001992";
-        public const string InvitationReceiveSuccess = "100001993";
         
+        public const string GetTenantInvitationsSuccess = "100001993";
         public const string AcceptInvitationSuccess = "100001994";
         public const string ResolveInvitationSuccess = "100001995";
         public const string InvitationSuccess = "100001996";

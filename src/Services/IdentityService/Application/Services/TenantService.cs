@@ -176,17 +176,4 @@ public class TenantService(
                 "Failed to get tenant members.");
         }
     }
-
-    public Task<ServiceResult<bool>> InviteUserForTenantAsync(string adminPublicId, string tenantPublicId,
-        string adminRoleInTenant, List<string> emails,
-        CancellationToken cancellationToken = default)
-    {
-        throw new NotImplementedException();
-    }
-
-    public Task<ServiceResult<bool>> ReceiveInviteForTenantAsync(string invitationPublicId,
-        CancellationToken cancellationToken = default)
-    {
-        throw new NotImplementedException();
-    }
 }

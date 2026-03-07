@@ -24,6 +24,10 @@
         <el-menu-item index="/members">
           <span>Members</span>
         </el-menu-item>
+
+        <el-menu-item index="/invitations">
+          <span>Invitations</span>
+        </el-menu-item>
       </el-menu>
     </el-aside>
 

@@ -567,4 +567,135 @@ public class TenantInvitationServiceTests
             }
         };
     }
+    
+    [Fact]
+    public async Task GetTenantInvitationsAsync_Should_Return_Fail_When_TenantPublicId_Is_Empty()
+    {
+        var result = await _sut.GetTenantInvitationsAsync(
+            "",
+            CancellationToken.None);
+
+        result.Success.Should().BeFalse();
+        result.Data.Should().BeNull();
+        result.Message.Should().Be("Tenant public id is required.");
+    }
+
+    [Fact]
+    public async Task GetTenantInvitationsAsync_Should_Return_Empty_List_When_No_Invitations_Exist()
+    {
+        _invitationRepoMock
+            .Setup(x => x.GetByTenantPublicIdAsync("tenant-1", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new List<TenantInvitation>());
+
+        var result = await _sut.GetTenantInvitationsAsync(
+            "tenant-1",
+            CancellationToken.None);
+
+        result.Success.Should().BeTrue();
+        result.Data.Should().NotBeNull();
+        result.Data.Should().BeEmpty();
+        result.Message.Should().Be("Tenant invitations fetched successfully.");
+    }
+
+    [Fact]
+    public async Task GetTenantInvitationsAsync_Should_Return_Mapped_Invitation_List_When_Request_Is_Valid()
+    {
+        var inviter1 = new ApplicationUser
+        {
+            Id = 1,
+            PublicId = Guid.NewGuid(),
+            Email = "admin1@test.com",
+            UserName = "admin1@test.com"
+        };
+
+        var inviter2 = new ApplicationUser
+        {
+            Id = 2,
+            PublicId = Guid.NewGuid(),
+            Email = "admin2@test.com",
+            UserName = "admin2@test.com"
+        };
+
+        var tenant = new Tenant
+        {
+            Id = 10,
+            PublicId = Guid.NewGuid(),
+            Name = "FinTrack"
+        };
+
+        var invitation1 = new TenantInvitation
+        {
+            Id = 100,
+            PublicId = Guid.NewGuid(),
+            Email = "user1@test.com",
+            TenantId = tenant.Id,
+            Tenant = tenant,
+            Role = TenantRole.Member,
+            Status = InvitationStatus.Pending,
+            CreatedAt = new DateTime(2026, 3, 10, 10, 0, 0, DateTimeKind.Utc),
+            AcceptedAt = null,
+            ExpiredAt = new DateTime(2026, 3, 17, 10, 0, 0, DateTimeKind.Utc),
+            Version = 1,
+            CreatedByUserId = inviter1.Id,
+            CreatedByUser = inviter1
+        };
+
+        var invitation2 = new TenantInvitation
+        {
+            Id = 101,
+            PublicId = Guid.NewGuid(),
+            Email = "user2@test.com",
+            TenantId = tenant.Id,
+            Tenant = tenant,
+            Role = TenantRole.Admin,
+            Status = InvitationStatus.Accepted,
+            CreatedAt = new DateTime(2026, 3, 11, 10, 0, 0, DateTimeKind.Utc),
+            AcceptedAt = new DateTime(2026, 3, 12, 10, 0, 0, DateTimeKind.Utc),
+            ExpiredAt = new DateTime(2026, 3, 18, 10, 0, 0, DateTimeKind.Utc),
+            Version = 2,
+            CreatedByUserId = inviter2.Id,
+            CreatedByUser = inviter2
+        };
+
+        _invitationRepoMock
+            .Setup(x => x.GetByTenantPublicIdAsync("tenant-1", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new List<TenantInvitation> { invitation1, invitation2 });
+
+        var result = await _sut.GetTenantInvitationsAsync(
+            "tenant-1",
+            CancellationToken.None);
+
+        result.Success.Should().BeTrue();
+        result.Data.Should().NotBeNull();
+        result.Data.Should().HaveCount(2);
+
+        result.Data![0].InvitationPublicId.Should().Be(invitation1.PublicId.ToString());
+        result.Data[0].Email.Should().Be("user1@test.com");
+        result.Data[0].Role.Should().Be("Member");
+        result.Data[0].Status.Should().Be("Pending");
+        result.Data[0].CreatedByUserEmail.Should().Be("admin1@test.com");
+
+        result.Data[1].InvitationPublicId.Should().Be(invitation2.PublicId.ToString());
+        result.Data[1].Email.Should().Be("user2@test.com");
+        result.Data[1].Role.Should().Be("Admin");
+        result.Data[1].Status.Should().Be("Accepted");
+        result.Data[1].CreatedByUserEmail.Should().Be("admin2@test.com");
+        result.Data[1].AcceptedAt.Should().Be(invitation2.AcceptedAt);
+    }
+
+    [Fact]
+    public async Task GetTenantInvitationsAsync_Should_Return_Fail_When_Exception_Is_Thrown()
+    {
+        _invitationRepoMock
+            .Setup(x => x.GetByTenantPublicIdAsync("tenant-1", It.IsAny<CancellationToken>()))
+            .ThrowsAsync(new Exception("db error"));
+
+        var result = await _sut.GetTenantInvitationsAsync(
+            "tenant-1",
+            CancellationToken.None);
+
+        result.Success.Should().BeFalse();
+        result.Data.Should().BeNull();
+        result.Message.Should().Be("Failed to get tenant invitations.");
+    }
 }
