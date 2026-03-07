@@ -1,6 +1,8 @@
+using IdentityService.Api.Filters.Attributes;
 using IdentityService.Application.Commands.Tenant;
 using IdentityService.Application.Common.DTOs;
 using IdentityService.Application.Common.Extensions;
+using IdentityService.Application.Common.Status;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
 
@@ -30,6 +32,45 @@ public class TenantInvitationController(IMediator mediator) : ControllerBase
 
         var result = await mediator.Send(command);
 
+        return result.ToActionResult();
+    }
+    
+    
+    [HttpGet("resolve")]
+    [RequireTokenType(JwtTokenType.InvitationToken)]
+    public async Task<IActionResult> ResolveInvitationAsync()
+    {
+        var invitationParseResult = HttpContext.GetHttpHeaderInviteParseResult();
+        if (invitationParseResult == null)
+        {
+            return Unauthorized("Request without valid invitation token");
+        }
+
+        var command = new ResolveTenantInvitationCommand(
+            invitationParseResult.InvitationPublicId,
+            invitationParseResult.InvitationVersion
+        );
+
+        var result = await mediator.Send(command);
+        return result.ToActionResult();
+    }
+
+    [HttpPost("accept")]
+    [RequireTokenType(JwtTokenType.InvitationToken)]
+    public async Task<IActionResult> AcceptInvitationAsync()
+    {
+        var invitationParseResult = HttpContext.GetHttpHeaderInviteParseResult();
+        if (invitationParseResult == null)
+        {
+            return Unauthorized("Request without valid invitation token");
+        }
+
+        var command = new AcceptTenantInvitationCommand(
+            invitationParseResult.InvitationPublicId,
+            invitationParseResult.InvitationVersion
+        );
+
+        var result = await mediator.Send(command);
         return result.ToActionResult();
     }
 }

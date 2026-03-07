@@ -1,10 +1,11 @@
 using IdentityService.Application.Commands;
+using IdentityService.Application.Commands.Account;
 using IdentityService.Application.Services.Interfaces;
 using MediatR;
 using SharedKernel.Common.DTOs.Auth;
 using SharedKernel.Common.Results;
 
-namespace IdentityService.Application.CommandHandlers;
+namespace IdentityService.Application.CommandHandlers.Account;
 
 public class RefreshUserJwtTokenCommandHandler(IAccountService accountService)
     : IRequestHandler<RefreshUserJwtTokenCommand, ServiceResult<JwtTokenPair>>

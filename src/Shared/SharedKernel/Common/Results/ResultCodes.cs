@@ -20,12 +20,23 @@ public static class ResultCodes
         public const string CreateInvitationException = "100001012";
         public const string InvitationInvalidPublicId = "100001013";
         public const string InvitationNotFound = "100001014";
+        public const string ResolveInvitationNotFound = "100001015";
+        public const string ResolveInvitationVersionInvalid = "100001016";
+        public const string ResolveInvitationStatusInvalid = "100001017";
+        public const string ResolveInvitationExpired = "100001018";
+        public const string AcceptInvitationNotFound = "100001019";
+        public const string AcceptInvitationVersionInvalid = "100001020";
+        public const string AcceptInvitationStatusInvalid = "100001021";
+        public const string AcceptInvitationExpired = "100001022";
+        public const string AcceptInvitationUserNotFound = "100001023";
+        public const string AcceptInvitationMembershipExists = "100001024";
+        
         // RegisterTenant Success 100 001 999
         public const string GetAllUserInTenantSuccess = "100001992";
         public const string InvitationReceiveSuccess = "100001993";
-        public const string InvitationRecordUpdateSuccess = "100001994";
-        public const string InvitationRecordFoundByEmailSuccess = "100001995";
         
+        public const string AcceptInvitationSuccess = "100001994";
+        public const string ResolveInvitationSuccess = "100001995";
         public const string InvitationSuccess = "100001996";
         public const string CreateInvitationSuccess = "100001997";
         public const string GetTenantMembersSuccess = "100001998";

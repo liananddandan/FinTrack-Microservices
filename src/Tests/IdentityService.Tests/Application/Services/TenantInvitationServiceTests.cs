@@ -274,4 +274,297 @@ public class TenantInvitationServiceTests
             x => x.Publish(It.IsAny<TenantInvitationCreatedEvent>(), It.IsAny<CancellationToken>()),
             Times.Once);
     }
+    
+    [Fact]
+    public async Task ResolveInvitationAsync_Should_Return_Fail_When_Invitation_Not_Found()
+    {
+        _invitationRepoMock
+            .Setup(x => x.GetByPublicIdAsync(It.IsAny<Guid>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((TenantInvitation?)null);
+
+        var result = await _sut.ResolveInvitationAsync(
+            Guid.NewGuid().ToString(),
+            "1",
+            CancellationToken.None);
+
+        result.Success.Should().BeFalse();
+        result.Message.Should().Be("Invitation not found.");
+    }
+
+    [Fact]
+    public async Task ResolveInvitationAsync_Should_Return_Fail_When_Version_Is_Invalid()
+    {
+        var invitation = BuildPendingInvitation(version: 2);
+
+        _invitationRepoMock
+            .Setup(x => x.GetByPublicIdAsync(invitation.PublicId, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(invitation);
+
+        var result = await _sut.ResolveInvitationAsync(
+            invitation.PublicId.ToString(),
+            "1",
+            CancellationToken.None);
+
+        result.Success.Should().BeFalse();
+        result.Message.Should().Be("Invitation version is invalid.");
+    }
+
+    [Fact]
+    public async Task ResolveInvitationAsync_Should_Return_Fail_When_Status_Is_Not_Pending()
+    {
+        var invitation = BuildPendingInvitation();
+        invitation.Status = InvitationStatus.Accepted;
+
+        _invitationRepoMock
+            .Setup(x => x.GetByPublicIdAsync(invitation.PublicId, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(invitation);
+
+        var result = await _sut.ResolveInvitationAsync(
+            invitation.PublicId.ToString(),
+            invitation.Version.ToString(),
+            CancellationToken.None);
+
+        result.Success.Should().BeFalse();
+        result.Message.Should().Be("Invitation is no longer available.");
+    }
+
+    [Fact]
+    public async Task ResolveInvitationAsync_Should_Return_Fail_When_Invitation_Is_Expired()
+    {
+        var invitation = BuildPendingInvitation();
+        invitation.ExpiredAt = DateTime.UtcNow.AddMinutes(-1);
+
+        _invitationRepoMock
+            .Setup(x => x.GetByPublicIdAsync(invitation.PublicId, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(invitation);
+
+        var result = await _sut.ResolveInvitationAsync(
+            invitation.PublicId.ToString(),
+            invitation.Version.ToString(),
+            CancellationToken.None);
+
+        result.Success.Should().BeFalse();
+        result.Message.Should().Be("Invitation has expired.");
+    }
+
+    [Fact]
+    public async Task ResolveInvitationAsync_Should_Return_Invitation_Details_When_Request_Is_Valid()
+    {
+        var invitation = BuildPendingInvitation();
+
+        _invitationRepoMock
+            .Setup(x => x.GetByPublicIdAsync(invitation.PublicId, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(invitation);
+
+        var result = await _sut.ResolveInvitationAsync(
+            invitation.PublicId.ToString(),
+            invitation.Version.ToString(),
+            CancellationToken.None);
+
+        result.Success.Should().BeTrue();
+        result.Data.Should().NotBeNull();
+        result.Data!.InvitationPublicId.Should().Be(invitation.PublicId.ToString());
+        result.Data.TenantName.Should().Be(invitation.Tenant.Name);
+        result.Data.Email.Should().Be(invitation.Email);
+        result.Data.Role.Should().Be(invitation.Role.ToString());
+        result.Data.Status.Should().Be(invitation.Status.ToString());
+    }
+
+    [Fact]
+    public async Task AcceptInvitationAsync_Should_Return_Fail_When_Invitation_Not_Found()
+    {
+        _invitationRepoMock
+            .Setup(x => x.GetByPublicIdAsync(It.IsAny<Guid>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((TenantInvitation?)null);
+
+        var result = await _sut.AcceptInvitationAsync(
+            Guid.NewGuid().ToString(),
+            "1",
+            CancellationToken.None);
+
+        result.Success.Should().BeFalse();
+        result.Message.Should().Be("Invitation not found.");
+    }
+
+    [Fact]
+    public async Task AcceptInvitationAsync_Should_Return_Fail_When_Version_Is_Invalid()
+    {
+        var invitation = BuildPendingInvitation(version: 2);
+
+        _invitationRepoMock
+            .Setup(x => x.GetByPublicIdAsync(invitation.PublicId, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(invitation);
+
+        var result = await _sut.AcceptInvitationAsync(
+            invitation.PublicId.ToString(),
+            "1",
+            CancellationToken.None);
+
+        result.Success.Should().BeFalse();
+        result.Message.Should().Be("Invitation version is invalid.");
+    }
+
+    [Fact]
+    public async Task AcceptInvitationAsync_Should_Return_Fail_When_Invitation_Has_Expired()
+    {
+        var invitation = BuildPendingInvitation();
+        invitation.ExpiredAt = DateTime.UtcNow.AddMinutes(-5);
+
+        _invitationRepoMock
+            .Setup(x => x.GetByPublicIdAsync(invitation.PublicId, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(invitation);
+
+        var result = await _sut.AcceptInvitationAsync(
+            invitation.PublicId.ToString(),
+            invitation.Version.ToString(),
+            CancellationToken.None);
+
+        result.Success.Should().BeFalse();
+        result.Message.Should().Be("Invitation has expired.");
+    }
+
+    [Fact]
+    public async Task AcceptInvitationAsync_Should_Return_Fail_When_User_Not_Found()
+    {
+        var invitation = BuildPendingInvitation();
+
+        _invitationRepoMock
+            .Setup(x => x.GetByPublicIdAsync(invitation.PublicId, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(invitation);
+
+        _userRepoMock
+            .Setup(x => x.GetUserByEmailAsync(invitation.Email, It.IsAny<CancellationToken>()))
+            .ReturnsAsync((ApplicationUser?)null);
+
+        var result = await _sut.AcceptInvitationAsync(
+            invitation.PublicId.ToString(),
+            invitation.Version.ToString(),
+            CancellationToken.None);
+
+        result.Success.Should().BeFalse();
+        result.Message.Should().Be("Invited user not found.");
+    }
+
+    [Fact]
+    public async Task AcceptInvitationAsync_Should_Return_Fail_When_Membership_Already_Exists()
+    {
+        var invitation = BuildPendingInvitation();
+        var user = new ApplicationUser
+        {
+            Id = 10,
+            PublicId = Guid.NewGuid(),
+            Email = invitation.Email,
+            UserName = invitation.Email
+        };
+
+        _invitationRepoMock
+            .Setup(x => x.GetByPublicIdAsync(invitation.PublicId, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(invitation);
+
+        _userRepoMock
+            .Setup(x => x.GetUserByEmailAsync(invitation.Email, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(user);
+
+        _membershipRepoMock
+            .Setup(x => x.GetMembershipAsync(invitation.TenantId, user.Id, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new TenantMembership
+            {
+                TenantId = invitation.TenantId,
+                UserId = user.Id,
+                IsActive = true
+            });
+
+        var result = await _sut.AcceptInvitationAsync(
+            invitation.PublicId.ToString(),
+            invitation.Version.ToString(),
+            CancellationToken.None);
+
+        result.Success.Should().BeFalse();
+        result.Message.Should().Be("User already belongs to this tenant.");
+    }
+
+    [Fact]
+    public async Task AcceptInvitationAsync_Should_Create_Membership_And_Update_Invitation_When_Request_Is_Valid()
+    {
+        var invitation = BuildPendingInvitation();
+        var user = new ApplicationUser
+        {
+            Id = 10,
+            PublicId = Guid.NewGuid(),
+            Email = invitation.Email,
+            UserName = invitation.Email
+        };
+
+        TenantMembership? savedMembership = null;
+
+        _invitationRepoMock
+            .Setup(x => x.GetByPublicIdAsync(invitation.PublicId, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(invitation);
+
+        _userRepoMock
+            .Setup(x => x.GetUserByEmailAsync(invitation.Email, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(user);
+
+        _membershipRepoMock
+            .Setup(x => x.GetMembershipAsync(invitation.TenantId, user.Id, It.IsAny<CancellationToken>()))
+            .ReturnsAsync((TenantMembership?)null);
+
+        _membershipRepoMock
+            .Setup(x => x.AddMembershipAsync(It.IsAny<TenantMembership>(), It.IsAny<CancellationToken>()))
+            .Callback<TenantMembership, CancellationToken>((m, _) => savedMembership = m)
+            .Returns(Task.CompletedTask);
+
+        var originalVersion = invitation.Version;
+
+        var result = await _sut.AcceptInvitationAsync(
+            invitation.PublicId.ToString(),
+            invitation.Version.ToString(),
+            CancellationToken.None);
+
+        result.Success.Should().BeTrue();
+        result.Data.Should().BeTrue();
+        result.Message.Should().Be("Invitation accepted successfully.");
+
+        savedMembership.Should().NotBeNull();
+        savedMembership!.TenantId.Should().Be(invitation.TenantId);
+        savedMembership.UserId.Should().Be(user.Id);
+        savedMembership.Role.Should().Be(invitation.Role);
+        savedMembership.IsActive.Should().BeTrue();
+
+        invitation.Status.Should().Be(InvitationStatus.Accepted);
+        invitation.AcceptedAt.Should().NotBeNull();
+        invitation.Version.Should().Be(originalVersion + 1);
+
+        _unitOfWorkMock.Verify(x => x.SaveChangesAsync(It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    private static TenantInvitation BuildPendingInvitation(int version = 1)
+    {
+        return new TenantInvitation
+        {
+            Id = 1,
+            PublicId = Guid.NewGuid(),
+            Email = "user@test.com",
+            TenantId = 100,
+            Tenant = new Tenant
+            {
+                Id = 100,
+                PublicId = Guid.NewGuid(),
+                Name = "FinTrack"
+            },
+            Role = TenantRole.Member,
+            Status = InvitationStatus.Pending,
+            CreatedAt = DateTime.UtcNow,
+            ExpiredAt = DateTime.UtcNow.AddDays(7),
+            Version = version,
+            CreatedByUserId = 999,
+            CreatedByUser = new ApplicationUser
+            {
+                Id = 999,
+                PublicId = Guid.NewGuid(),
+                Email = "admin@test.com",
+                UserName = "admin@test.com"
+            }
+        };
+    }
 }

@@ -1,3 +1,4 @@
+using IdentityService.Application.Common.DTOs;
 using IdentityService.Domain.Entities;
 using SharedKernel.Common.Results;
 
@@ -14,6 +15,16 @@ public interface ITenantInvitationService
         string email,
         string role,
         string invitedByUserPublicId,
+        CancellationToken cancellationToken = default);
+    
+    Task<ServiceResult<ResolveTenantInvitationResult>> ResolveInvitationAsync(
+        string invitationPublicId,
+        string invitationVersion,
+        CancellationToken cancellationToken = default);
+
+    Task<ServiceResult<bool>> AcceptInvitationAsync(
+        string invitationPublicId,
+        string invitationVersion,
         CancellationToken cancellationToken = default);
     
 }

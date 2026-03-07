@@ -2,7 +2,7 @@ using MediatR;
 using SharedKernel.Common.DTOs.Auth;
 using SharedKernel.Common.Results;
 
-namespace IdentityService.Application.Commands;
+namespace IdentityService.Application.Commands.Account;
 
 
 public record RefreshUserJwtTokenCommand(
