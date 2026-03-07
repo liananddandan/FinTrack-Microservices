@@ -1,55 +1,86 @@
-import { http } from "./http"
-import type { ApiResponse } from "./types"
+import { http } from "./http";
+import type { ApiResponse } from "./types";
 
 export type LoginMembershipDto = {
-  tenantPublicId: string
-  tenantName: string
-  role: string
-}
+  tenantPublicId: string;
+  tenantName: string;
+  role: string;
+};
 
 export type LoginRequest = {
-  email: string
-  password: string
-}
+  email: string;
+  password: string;
+};
 
-export type LoginResult = {
-  accessToken: string
-  refreshToken: string
-  memberships: LoginMembershipDto[]
-}
+export type RegisterUserRequest = {
+  userName: string;
+  email: string;
+  password: string;
+};
+
+export type RegisterUserResult = {
+  userPublicId: string;
+  email: string;
+  userName: string;
+};
+
+export type UserLoginResult = {
+  tokens: {
+    accessToken: string;
+    refreshToken: string;
+  };
+  memberships: LoginMembershipDto[];
+};
 
 export type CurrentUserResult = {
-  userPublicId: string
-  email: string
-  userName?: string
-  memberships?: LoginMembershipDto[]
-}
+  userPublicId: string;
+  email: string;
+  userName?: string;
+  memberships?: LoginMembershipDto[];
+};
 
-export async function login(request: LoginRequest): Promise<LoginResult> {
-  const response = await http.post<ApiResponse<LoginResult>>(
+export async function login(request: LoginRequest): Promise<UserLoginResult> {
+  const response = await http.post<ApiResponse<UserLoginResult>>(
     "/api/account/login",
     request
-  )
+  );
 
-  const result = response.data
+  const result = response.data;
 
   if (!result.data) {
-    throw new Error(result.message || "Login failed")
+    throw new Error(result.message || "Login failed");
   }
 
-  return result.data
+  return result.data;
+}
+
+export async function registerUser(
+  request: RegisterUserRequest
+): Promise<RegisterUserResult> {
+  const response = await http.post<ApiResponse<RegisterUserResult>>(
+    "/api/account/register",
+    request
+  );
+
+  const result = response.data;
+
+  if (!result.data) {
+    throw new Error(result.message || "User registration failed");
+  }
+
+  return result.data;
 }
 
 export async function getCurrentUser(): Promise<CurrentUserResult> {
   const response = await http.get<ApiResponse<CurrentUserResult>>(
     "/api/account/me"
-  )
+  );
 
-  const result = response.data
+  const result = response.data;
 
   if (!result.data) {
-    throw new Error(result.message || "Failed to fetch current user")
+    throw new Error(result.message || "Failed to fetch current user");
   }
 
-  return result.data
+  return result.data;
 }

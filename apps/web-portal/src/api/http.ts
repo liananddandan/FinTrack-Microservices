@@ -17,6 +17,12 @@ type JwtTokenPair = {
   refreshToken: string;
 };
 
+const anonymousPaths = [
+  "/api/account/login",
+  "/api/account/register",
+  "/api/tenant/register",
+];
+
 export const http = axios.create({
   baseURL: import.meta.env.VITE_API_BASE,
   timeout: 10000,
@@ -46,15 +52,35 @@ http.interceptors.response.use(
     const requestUrl = originalRequest.url ?? "";
 
     const isRefreshRequest = requestUrl.includes("/api/account/refresh-token");
+    const isAnonymousRequest = anonymousPaths.some((path) =>
+      requestUrl.includes(path)
+    );
 
-    if (status !== 401 || isRefreshRequest) {
+    // 不是 401，直接抛出
+    if (status !== 401) {
       return Promise.reject(error);
     }
 
+    // refresh 接口自己报 401，不要再套 refresh
+    if (isRefreshRequest) {
+      auth.logout();
+      await router.push("/login");
+      return Promise.reject(error);
+    }
+
+    // 匿名接口报 401，不要跳登录页，交给页面自己显示错误
+    if (isAnonymousRequest) {
+      return Promise.reject(error);
+    }
+
+    // 已经重试过了，还 401，就真登出
     if (originalRequest._retry) {
+      auth.logout();
+      await router.push("/login");
       return Promise.reject(error);
     }
 
+    // 没有 refresh token，就真登出
     if (!auth.refreshToken) {
       auth.logout();
       await router.push("/login");

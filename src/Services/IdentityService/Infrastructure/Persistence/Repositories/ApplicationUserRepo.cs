@@ -12,7 +12,8 @@ public class ApplicationUserRepo(ApplicationIdentityDbContext dbContext) : IAppl
         return Task.CompletedTask;
     }
 
-    public async Task<ApplicationUser?> GetUserByEmailWithMembershipsAsync(string email, CancellationToken cancellationToken = default)
+    public async Task<ApplicationUser?> GetUserByEmailWithMembershipsAsync(string email,
+        CancellationToken cancellationToken = default)
     {
         return await dbContext.Users
             .Include(u => u.Memberships)
@@ -22,8 +23,11 @@ public class ApplicationUserRepo(ApplicationIdentityDbContext dbContext) : IAppl
 
     public async Task<bool> IsEmailExistsAsync(string email, CancellationToken cancellationToken = default)
     {
+        email = email.Trim().ToLowerInvariant();
+
         return await dbContext.Users
-            .AnyAsync(u => u.Email == email, cancellationToken);    }
+            .AnyAsync(u => u.Email == email, cancellationToken);
+    }
 
     public async Task<ApplicationUser?> GetUserByPublicIdWithMembershipsAsync(
         string userPublicId,

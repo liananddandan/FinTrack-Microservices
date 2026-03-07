@@ -17,4 +17,10 @@ public interface IAccountService
         string jwtVersion,
         string userRoleInTenant,
         CancellationToken cancellationToken = default);
+    
+    Task<ServiceResult<RegisterUserResult>> RegisterUserAsync(
+        string userName,
+        string email,
+        string password,
+        CancellationToken cancellationToken = default);
 }

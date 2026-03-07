@@ -180,4 +180,78 @@ public class AccountService(
                 "Refresh token failed.");
         }
     }
+
+public async Task<ServiceResult<RegisterUserResult>> RegisterUserAsync(
+    string userName,
+    string email,
+    string password,
+    CancellationToken cancellationToken = default)
+{
+    userName = userName.Trim();
+    email = email.Trim().ToLowerInvariant();
+
+    if (string.IsNullOrWhiteSpace(userName))
+    {
+        return ServiceResult<RegisterUserResult>.Fail(
+            ResultCodes.Account.RegisterUserParameterError,
+            "User name is required.");
+    }
+
+    if (string.IsNullOrWhiteSpace(email))
+    {
+        return ServiceResult<RegisterUserResult>.Fail(
+            ResultCodes.Account.RegisterUserParameterError,
+            "Email is required.");
+    }
+
+    if (string.IsNullOrWhiteSpace(password))
+    {
+        return ServiceResult<RegisterUserResult>.Fail(
+            ResultCodes.Account.RegisterUserParameterError,
+            "Password is required.");
+    }
+
+    try
+    {
+        var emailExists = await applicationUserRepo.IsEmailExistsAsync(email, cancellationToken);
+        if (emailExists)
+        {
+            return ServiceResult<RegisterUserResult>.Fail(
+                ResultCodes.Account.RegisterUserEmailExists,
+                "Email already exists.");
+        }
+
+        var user = new ApplicationUser
+        {
+            UserName = userName,
+            Email = email,
+            EmailConfirmed = true
+        };
+
+        var createResult = await userManager.CreateAsync(user, password);
+        if (!createResult.Succeeded)
+        {
+            var error = string.Join(", ", createResult.Errors.Select(e => e.Description));
+            return ServiceResult<RegisterUserResult>.Fail(
+                ResultCodes.Account.RegisterUserCreateFailed,
+                error);
+        }
+
+        return ServiceResult<RegisterUserResult>.Ok(
+            new RegisterUserResult(
+                user.PublicId.ToString(),
+                user.Email!,
+                user.UserName!),
+            ResultCodes.Account.RegisterUserSuccess,
+            "User registered successfully.");
+    }
+    catch (Exception ex)
+    {
+        logger.LogError(ex, "Failed to register user {Email}", email);
+
+        return ServiceResult<RegisterUserResult>.Fail(
+            ResultCodes.Account.RegisterUserException,
+            "User registration failed.");
+    }
+}
 }

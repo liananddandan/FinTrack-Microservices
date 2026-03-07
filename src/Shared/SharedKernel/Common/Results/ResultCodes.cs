@@ -109,7 +109,12 @@ public static class ResultCodes
         public const string UserNotFound = "100005005";
         public const string GetUserInfoException = "100005006";
         public const string LoginMultipleTenantsNotSupported = "100005007";
+        public const string RegisterUserParameterError = "100005008";
+        public const string RegisterUserEmailExists = "100005009";
+        public const string RegisterUserCreateFailed = "100005011";
+        public const string RegisterUserException = "100005012";
         
+        public const string RegisterUserSuccess = "100005097";
         public const string GetUserInfoSuccess = "100005098";
         public const string LoginSuccess = "100005099";
     }

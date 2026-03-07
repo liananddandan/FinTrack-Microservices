@@ -55,6 +55,13 @@ public class AccountController(IMediator mediator) : ControllerBase
         return result.ToActionResult();
     }
     
+    [HttpPost("register")]
+    [AllowAnonymousToken]
+    public async Task<IActionResult> RegisterUserAsync(RegisterUserCommand command)
+    {
+        var result = await mediator.Send(command);
+        return result.ToActionResult();
+    }
     
     
     [HttpGet("confirm-email")]

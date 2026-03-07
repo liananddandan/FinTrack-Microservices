@@ -218,8 +218,8 @@ public class AccountServiceTests
         result.Success.Should().BeFalse();
         result.Message.Should().Be("Login failed.");
     }
-    
-        [Fact]
+
+    [Fact]
     public async Task RefreshTokenAsync_Should_Return_Fail_When_User_Not_Found()
     {
         _applicationUserRepoMock
@@ -373,5 +373,130 @@ public class AccountServiceTests
         result.Success.Should().BeFalse();
         result.Message.Should().Be("Refresh token failed.");
         result.Code.Should().Be(ResultCodes.Token.RefreshJwtTokenFailedTokenInvalid);
+    }
+
+    [Theory]
+    [InlineData("", "test@example.com", "Password123!", "User name is required.")]
+    [InlineData("Emily", "", "Password123!", "Email is required.")]
+    [InlineData("Emily", "test@example.com", "", "Password is required.")]
+    public async Task RegisterUserAsync_Should_Return_Fail_When_Required_Parameter_Is_Missing(
+        string userName,
+        string email,
+        string password,
+        string expectedMessage)
+    {
+        var result = await _sut.RegisterUserAsync(userName, email, password, CancellationToken.None);
+
+        result.Success.Should().BeFalse();
+        result.Message.Should().Be(expectedMessage);
+        result.Data.Should().BeNull();
+    }
+
+    [Fact]
+    public async Task RegisterUserAsync_Should_Return_Fail_When_Email_Already_Exists()
+    {
+        _applicationUserRepoMock
+            .Setup(x => x.IsEmailExistsAsync("test@example.com", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(true);
+
+        var result = await _sut.RegisterUserAsync(
+            "Emily",
+            "test@example.com",
+            "Password123!",
+            CancellationToken.None);
+
+        result.Success.Should().BeFalse();
+        result.Message.Should().Be("Email already exists.");
+    }
+
+    [Fact]
+    public async Task RegisterUserAsync_Should_Return_Fail_When_CreateUser_Fails()
+    {
+        _applicationUserRepoMock
+            .Setup(x => x.IsEmailExistsAsync("test@example.com", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(false);
+
+        _userManagerMock
+            .Setup(x => x.CreateAsync(It.IsAny<ApplicationUser>(), "Password123!"))
+            .ReturnsAsync(IdentityResult.Failed(new IdentityError
+            {
+                Description = "Password is too weak."
+            }));
+
+        var result = await _sut.RegisterUserAsync(
+            "Emily",
+            "test@example.com",
+            "Password123!",
+            CancellationToken.None);
+
+        result.Success.Should().BeFalse();
+        result.Message.Should().Contain("Password is too weak.");
+    }
+
+    [Fact]
+    public async Task RegisterUserAsync_Should_Return_Success_When_Request_Is_Valid()
+    {
+        _applicationUserRepoMock
+            .Setup(x => x.IsEmailExistsAsync("test@example.com", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(false);
+
+        _userManagerMock
+            .Setup(x => x.CreateAsync(It.IsAny<ApplicationUser>(), "Password123!"))
+            .ReturnsAsync(IdentityResult.Success);
+
+        var result = await _sut.RegisterUserAsync(
+            "Emily",
+            "test@example.com",
+            "Password123!",
+            CancellationToken.None);
+
+        result.Success.Should().BeTrue();
+        result.Message.Should().Be("User registered successfully.");
+        result.Data.Should().NotBeNull();
+        result.Data!.Email.Should().Be("test@example.com");
+        result.Data.UserName.Should().Be("Emily");
+        result.Data.UserPublicId.Should().NotBeNullOrWhiteSpace();
+    }
+
+    [Fact]
+    public async Task RegisterUserAsync_Should_Normalize_Email_To_Lowercase()
+    {
+        _applicationUserRepoMock
+            .Setup(x => x.IsEmailExistsAsync("chenli@example.com", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(false);
+
+        ApplicationUser? createdUser = null;
+
+        _userManagerMock
+            .Setup(x => x.CreateAsync(It.IsAny<ApplicationUser>(), "Password123!"))
+            .Callback<ApplicationUser, string>((user, _) => createdUser = user)
+            .ReturnsAsync(IdentityResult.Success);
+
+        var result = await _sut.RegisterUserAsync(
+            "ChenLi",
+            "ChenLi@Example.com",
+            "Password123!",
+            CancellationToken.None);
+
+        result.Success.Should().BeTrue();
+        createdUser.Should().NotBeNull();
+        createdUser!.Email.Should().Be("chenli@example.com");
+    }
+
+    [Fact]
+    public async Task RegisterUserAsync_Should_Return_Fail_When_Exception_Is_Thrown()
+    {
+        _applicationUserRepoMock
+            .Setup(x => x.IsEmailExistsAsync("test@example.com", It.IsAny<CancellationToken>()))
+            .ThrowsAsync(new Exception("db error"));
+
+        var result = await _sut.RegisterUserAsync(
+            "Emily",
+            "test@example.com",
+            "Password123!",
+            CancellationToken.None);
+
+        result.Success.Should().BeFalse();
+        result.Message.Should().Be("User registration failed.");
     }
 }
