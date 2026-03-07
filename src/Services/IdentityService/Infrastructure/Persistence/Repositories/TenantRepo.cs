@@ -19,7 +19,8 @@ public class TenantRepo(ApplicationIdentityDbContext dbContext) : ITenantRepo
         }
 
         return await dbContext.Tenants
-            .FirstOrDefaultAsync(t => t.PublicId == parsedPublicId, cancellationToken);
+            .FirstOrDefaultAsync(t => t.PublicId == parsedPublicId
+                , cancellationToken);
     }
 
     public async Task<bool> IsTenantNameExistsAsync(string tenantName, CancellationToken cancellationToken = default)

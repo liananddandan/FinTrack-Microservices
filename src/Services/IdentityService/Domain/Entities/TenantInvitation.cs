@@ -20,15 +20,4 @@ public class TenantInvitation
     public int Version {get; set;}
     public long CreatedByUserId { get; set; }
     public ApplicationUser CreatedByUser { get; set; } = null!;
-    
-    public void Resend(int expirationDays)
-    {
-        if (Status != InvitationStatus.Pending)
-        {
-            throw new InvalidOperationException("Only pending invitations can be resent.");
-        }
-
-        Version += 1;
-        ExpiredAt = DateTime.UtcNow.AddDays(expirationDays);
-    }
 }

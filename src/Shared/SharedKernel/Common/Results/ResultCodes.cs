@@ -38,7 +38,12 @@ public static class ResultCodes
         public const string ResendInvitationExpired = "100001030";
         public const string ResendInvitationMembershipExists = "100001031";
         public const string ResendInvitationException = "100001032";
+        public const string MemberNotFound = "100001033";
+        public const string MemberAlreadyRemoved = "100001034";
+        public const string MemberNotInTenant = "100001035";
+        public const string CannotRemoveSelf = "100001036";
         // RegisterTenant Success 100 001 999
+        public const string MemberRemoved = "100001991";
         public const string ResendInvitationSuccess = "100001992";
         public const string GetTenantInvitationsSuccess = "100001993";
         public const string AcceptInvitationSuccess = "100001994";

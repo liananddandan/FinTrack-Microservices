@@ -16,4 +16,10 @@ public interface ITenantService
     Task<ServiceResult<List<TenantMemberDto>>> GetTenantMembersAsync(
         string tenantPublicId,
         CancellationToken cancellationToken = default);
+    
+    Task<ServiceResult<bool>> RemoveTenantMemberAsync(
+        string tenantPublicId,
+        string membershipPublicId,
+        string operatorUserPublicId,
+        CancellationToken cancellationToken = default);
 }

@@ -5,8 +5,10 @@ using IdentityService.Domain.Enums;
 using IdentityService.Infrastructure.Persistence.Repositories.Interfaces;
 using MediatR;
 using Microsoft.AspNetCore.Identity;
+using SharedKernel.Common.Constants;
 using SharedKernel.Common.DTOs;
 using SharedKernel.Common.Results;
+using StackExchange.Redis;
 
 namespace IdentityService.Application.Services;
 
@@ -17,6 +19,7 @@ public class TenantService(
     IApplicationUserRepo applicationUserRepo,
     UserManager<ApplicationUser> userManager,
     ITenantMembershipRepo tenantMembershipRepo,
+    IConnectionMultiplexer redis,
     IMediator mediator) : ITenantService
 {
     public async Task<ServiceResult<RegisterTenantResult>> RegisterTenantAsync(
@@ -154,6 +157,7 @@ public class TenantService(
 
             var result = memberships
                 .Select(m => new TenantMemberDto(
+                    m.PublicId.ToString(),
                     m.User.PublicId.ToString(),
                     m.User.Email ?? string.Empty,
                     m.User.UserName ?? string.Empty,
@@ -175,5 +179,67 @@ public class TenantService(
                 ResultCodes.Tenant.GetTenantMembersException,
                 "Failed to get tenant members.");
         }
+    }
+    
+    public async Task<ServiceResult<bool>> RemoveTenantMemberAsync(
+        string tenantPublicId,
+        string membershipPublicId,
+        string operatorUserPublicId,
+        CancellationToken cancellationToken = default)
+    {
+        var membership = await tenantMembershipRepo.GetByPublicIdAsync(
+            membershipPublicId,
+            cancellationToken);
+
+        if (membership == null)
+        {
+            return ServiceResult<bool>.Fail(
+                ResultCodes.Tenant.MemberNotFound,
+                "Membership not found.");
+        }
+
+        if (!membership.IsActive)
+        {
+            return ServiceResult<bool>.Fail(
+                ResultCodes.Tenant.MemberAlreadyRemoved,
+                "Member already removed.");
+        }
+
+        if (membership.Tenant.PublicId.ToString() != tenantPublicId)
+        {
+            return ServiceResult<bool>.Fail(
+                ResultCodes.Tenant.MemberNotInTenant,
+                "Member does not belong to this tenant.");
+        }
+
+        if (membership.User.PublicId.ToString() == operatorUserPublicId)
+        {
+            return ServiceResult<bool>.Fail(
+                ResultCodes.Tenant.CannotRemoveSelf,
+                "You cannot remove yourself.");
+        }
+
+        membership.IsActive = false;
+        membership.LeftAt = DateTime.UtcNow;
+
+        await unitOfWork.SaveChangesAsync(cancellationToken);
+
+        try
+        {
+            var redisKey = Constant.Redis.JwtVersionPrefix + membership.User.PublicId.ToString();         
+            var db = redis.GetDatabase();
+            await db.StringIncrementAsync(redisKey);
+        }
+        catch (Exception ex)
+        {
+            logger.LogWarning(ex,
+                "Failed to increment jwtVersion for user {UserPublicId}",
+                membership.User.PublicId);
+        }
+
+        return ServiceResult<bool>.Ok(
+            true,
+            ResultCodes.Tenant.MemberRemoved,
+            "Member removed successfully.");
     }
 }

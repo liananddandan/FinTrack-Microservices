@@ -10,6 +10,7 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.Logging;
 using Moq;
 using SharedKernel.Common.Results;
+using StackExchange.Redis;
 
 namespace IdentityService.Tests.Application.Services;
 
@@ -25,11 +26,19 @@ public class TenantServiceTests
     private readonly Mock<IMediator> _mediatorMock = new();
 
     private readonly Mock<UserManager<ApplicationUser>> _userManagerMock;
+    private readonly Mock<IConnectionMultiplexer> _connectionMultiplexerMock = new();
 
     private readonly TenantService _sut;
 
     public TenantServiceTests()
     {
+        _fixture.Behaviors
+            .OfType<ThrowingRecursionBehavior>()
+            .ToList()
+            .ForEach(b => _fixture.Behaviors.Remove(b));
+
+        _fixture.Behaviors.Add(new OmitOnRecursionBehavior());
+        
         var userStoreMock = new Mock<IUserStore<ApplicationUser>>();
 
         _userManagerMock = new Mock<UserManager<ApplicationUser>>(
@@ -50,6 +59,7 @@ public class TenantServiceTests
             _applicationUserRepoMock.Object,
             _userManagerMock.Object,
             _tenantMembershipRepoMock.Object,
+            _connectionMultiplexerMock.Object,
             _mediatorMock.Object);
     }
 
@@ -390,5 +400,125 @@ public class TenantServiceTests
         result.Success.Should().BeFalse();
         result.Message.Should().Be("Failed to get tenant members.");
         result.Data.Should().BeNull();
+    }
+    
+    [Fact]
+    public async Task RemoveTenantMemberAsync_Should_Return_Fail_When_Membership_NotFound()
+    {
+        _tenantMembershipRepoMock
+            .Setup(x => x.GetByPublicIdAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((TenantMembership?)null);
+
+        var result = await _sut.RemoveTenantMemberAsync(
+            Guid.NewGuid().ToString(),
+            Guid.NewGuid().ToString(),
+            Guid.NewGuid().ToString(),
+            CancellationToken.None);
+
+        result.Success.Should().BeFalse();
+        result.Code.Should().Be(ResultCodes.Tenant.MemberNotFound);
+    }
+    
+    [Fact]
+    public async Task RemoveTenantMemberAsync_Should_Return_Fail_When_Member_Already_Removed()
+    {
+        var membership = _fixture.Build<TenantMembership>()
+            .With(x => x.IsActive, false)
+            .Create();
+
+        _tenantMembershipRepoMock
+            .Setup(x => x.GetByPublicIdAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(membership);
+
+        var result = await _sut.RemoveTenantMemberAsync(
+            membership.Tenant.PublicId.ToString(),
+            membership.PublicId.ToString(),
+            Guid.NewGuid().ToString(),
+            CancellationToken.None);
+
+        result.Success.Should().BeFalse();
+        result.Code.Should().Be(ResultCodes.Tenant.MemberAlreadyRemoved);
+    }
+    
+    [Fact]
+    public async Task RemoveTenantMemberAsync_Should_Return_Fail_When_Member_Not_In_Tenant()
+    {
+        var membership = _fixture.Build<TenantMembership>()
+            .With(x => x.IsActive, true)
+            .Create();
+
+        _tenantMembershipRepoMock
+            .Setup(x => x.GetByPublicIdAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(membership);
+
+        var result = await _sut.RemoveTenantMemberAsync(
+            Guid.NewGuid().ToString(),
+            membership.PublicId.ToString(),
+            Guid.NewGuid().ToString(),
+            CancellationToken.None);
+
+        result.Success.Should().BeFalse();
+        result.Code.Should().Be(ResultCodes.Tenant.MemberNotInTenant);
+    }
+    
+    [Fact]
+    public async Task RemoveTenantMemberAsync_Should_Return_Fail_When_Remove_Self()
+    {
+        var userId = Guid.NewGuid();
+
+        var membership = _fixture.Build<TenantMembership>()
+            .With(x => x.IsActive, true)
+            .With(x => x.User, new ApplicationUser { PublicId = userId })
+            .Create();
+
+        _tenantMembershipRepoMock
+            .Setup(x => x.GetByPublicIdAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(membership);
+
+        var result = await _sut.RemoveTenantMemberAsync(
+            membership.Tenant.PublicId.ToString(),
+            membership.PublicId.ToString(),
+            userId.ToString(),
+            CancellationToken.None);
+
+        result.Success.Should().BeFalse();
+        result.Code.Should().Be(ResultCodes.Tenant.CannotRemoveSelf);
+    }
+    
+    [Fact]
+    public async Task RemoveTenantMemberAsync_Should_Succeed_When_Valid()
+    {
+        var membership = _fixture.Build<TenantMembership>()
+            .With(x => x.IsActive, true)
+            .Create();
+
+        _tenantMembershipRepoMock
+            .Setup(x => x.GetByPublicIdAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(membership);
+
+        var redisDbMock = new Mock<IDatabase>();
+
+        _connectionMultiplexerMock
+            .Setup(x => x.GetDatabase(It.IsAny<int>(), It.IsAny<object>()))
+            .Returns(redisDbMock.Object);
+
+        var result = await _sut.RemoveTenantMemberAsync(
+            membership.Tenant.PublicId.ToString(),
+            membership.PublicId.ToString(),
+            Guid.NewGuid().ToString(),
+            CancellationToken.None);
+
+        result.Success.Should().BeTrue();
+
+        membership.IsActive.Should().BeFalse();
+        membership.LeftAt.Should().NotBeNull();
+
+        _unitOfWorkMock.Verify(
+            x => x.SaveChangesAsync(It.IsAny<CancellationToken>()),
+            Times.Once);
+
+        redisDbMock.Verify(
+            x => x.StringIncrementAsync(It.IsAny<RedisKey>(), It.IsAny<long>(), It.IsAny<CommandFlags>()),
+            Times.Once);
     }
 }

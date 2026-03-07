@@ -43,12 +43,7 @@
           </div>
 
           <div class="members-toolbar">
-            <el-input
-              v-model="keyword"
-              placeholder="Search by email or name"
-              clearable
-              class="members-search"
-            />
+            <el-input v-model="keyword" placeholder="Search by email or name" clearable class="members-search" />
           </div>
         </div>
       </template>
@@ -56,17 +51,10 @@
       <el-skeleton :rows="6" animated v-if="loading" />
 
       <template v-else>
-        <el-empty
-          v-if="filteredMembers.length === 0"
-          description="No members found."
-        />
+        <el-empty v-if="filteredMembers.length === 0" description="No members found." />
 
         <div v-else class="member-list">
-          <div
-            v-for="member in filteredMembers"
-            :key="member.userPublicId"
-            class="member-item"
-          >
+          <div v-for="member in filteredMembers" :key="member.membershipPublicId" class="member-item">
             <div class="member-main">
               <div class="member-avatar">
                 {{ getInitials(member.userName || member.email) }}
@@ -78,20 +66,11 @@
                     {{ member.userName || "Unnamed user" }}
                   </div>
 
-                  <el-tag
-                    :type="member.role === 'Admin' ? 'danger' : 'primary'"
-                    effect="light"
-                    round
-                  >
+                  <el-tag :type="member.role === 'Admin' ? 'danger' : 'primary'" effect="light" round>
                     {{ member.role }}
                   </el-tag>
 
-                  <el-tag
-                    v-if="member.isActive"
-                    type="success"
-                    effect="light"
-                    round
-                  >
+                  <el-tag v-if="member.isActive" type="success" effect="light" round>
                     Active
                   </el-tag>
                   <el-tag v-else type="info" effect="light" round>
@@ -115,18 +94,17 @@
               <el-button text @click="handleViewLater(member)">
                 Details
               </el-button>
+
+              <el-button text type="danger" :disabled="member.role === 'Admin' || !member.isActive" @click="handleRemove(member)">
+                Remove
+              </el-button>
             </div>
           </div>
         </div>
       </template>
     </el-card>
 
-    <el-dialog
-      v-model="inviteDialogVisible"
-      width="480px"
-      destroy-on-close
-      class="invite-dialog"
-    >
+    <el-dialog v-model="inviteDialogVisible" width="480px" destroy-on-close class="invite-dialog">
       <template #header>
         <div class="invite-dialog-header">
           <div class="invite-dialog-title">Invite member</div>
@@ -138,50 +116,26 @@
 
       <el-form label-position="top" @submit.prevent>
         <el-form-item label="Email">
-          <el-input
-            v-model="inviteForm.email"
-            placeholder="user@example.com"
-            size="large"
-          />
+          <el-input v-model="inviteForm.email" placeholder="user@example.com" size="large" />
         </el-form-item>
 
         <el-form-item label="Role">
-          <el-select
-            v-model="inviteForm.role"
-            placeholder="Select role"
-            size="large"
-            style="width: 100%;"
-          >
+          <el-select v-model="inviteForm.role" placeholder="Select role" size="large" style="width: 100%;">
             <el-option label="Member" value="Member" />
             <el-option label="Admin" value="Admin" />
           </el-select>
         </el-form-item>
 
-        <el-alert
-          v-if="inviteErrorMessage"
-          :title="inviteErrorMessage"
-          type="error"
-          show-icon
-          class="invite-alert"
-        />
+        <el-alert v-if="inviteErrorMessage" :title="inviteErrorMessage" type="error" show-icon class="invite-alert" />
 
-        <el-alert
-          v-if="inviteSuccessMessage"
-          :title="inviteSuccessMessage"
-          type="success"
-          show-icon
-          class="invite-alert"
-        />
+        <el-alert v-if="inviteSuccessMessage" :title="inviteSuccessMessage" type="success" show-icon
+          class="invite-alert" />
       </el-form>
 
       <template #footer>
         <div class="invite-dialog-footer">
           <el-button @click="closeInviteDialog">Cancel</el-button>
-          <el-button
-            type="primary"
-            :loading="inviteSubmitting"
-            @click="submitInvitation"
-          >
+          <el-button type="primary" :loading="inviteSubmitting" @click="submitInvitation">
             Send invitation
           </el-button>
         </div>
@@ -192,8 +146,12 @@
 
 <script setup lang="ts">
 import { computed, onMounted, reactive, ref } from "vue";
-import { ElMessage } from "element-plus";
-import { getTenantMembers, type TenantMemberDto } from "../api/tenant";
+import { ElMessage, ElMessageBox } from "element-plus";
+import {
+  getTenantMembers,
+  removeTenantMember,
+  type TenantMemberDto
+} from "../api/tenant";
 import { createTenantInvitation } from "../api/invitation";
 
 const loading = ref(false);
@@ -243,8 +201,8 @@ async function loadMembers() {
     console.error("Failed to load members:", error);
     ElMessage.error(
       error?.response?.data?.message ??
-        error?.message ??
-        "Failed to load tenant members."
+      error?.message ??
+      "Failed to load tenant members."
     );
   } finally {
     loading.value = false;
@@ -325,7 +283,40 @@ function formatDate(value: string) {
 }
 
 function handleViewLater(member: TenantMemberDto) {
+  console.log("clicked member:", member);
   ElMessage.info(`TODO: view details for ${member.email}`);
+}
+
+async function handleRemove(member: TenantMemberDto) {
+  console.log("remove member:", member);
+  console.log("membershipPublicId:", member.membershipPublicId);
+  try {
+    await ElMessageBox.confirm(
+      `Remove ${member.email} from this organization?`,
+      "Confirm removal",
+      {
+        confirmButtonText: "Remove",
+        cancelButtonText: "Cancel",
+        type: "warning",
+      }
+    );
+
+    await removeTenantMember(member.membershipPublicId);
+
+    ElMessage.success("Member removed successfully.");
+
+    await loadMembers();
+  } catch (error: any) {
+    if (error === "cancel") return;
+
+    console.error("Failed to remove member:", error);
+
+    ElMessage.error(
+      error?.response?.data?.message ??
+      error?.message ??
+      "Failed to remove member."
+    );
+  }
 }
 </script>
 
@@ -531,6 +522,7 @@ function handleViewLater(member: TenantMemberDto) {
 }
 
 @media (max-width: 900px) {
+
   .members-topbar,
   .members-card-header,
   .member-item {

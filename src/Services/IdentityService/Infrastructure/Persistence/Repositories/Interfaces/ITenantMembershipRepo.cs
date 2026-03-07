@@ -12,4 +12,13 @@ public interface ITenantMembershipRepo
         long tenantId,
         long userId,
         CancellationToken cancellationToken = default);
+
+    Task<TenantMembership?> GetByPublicIdAsync(
+        string membershipPublicId,
+        CancellationToken cancellationToken = default);
+
+    Task<TenantMembership?> GetAnyMembershipAsync(
+        long tenantId,
+        long userId,
+        CancellationToken cancellationToken = default);
 }

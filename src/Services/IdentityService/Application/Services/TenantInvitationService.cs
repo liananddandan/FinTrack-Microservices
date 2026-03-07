@@ -286,28 +286,40 @@ public class TenantInvitationService(
                 "Invited user not found.");
         }
 
-        var existingMembership = await membershipRepo.GetMembershipAsync(
+        var existingMembership = await membershipRepo.GetAnyMembershipAsync(
             invitation.TenantId,
             user.Id,
             cancellationToken);
 
         if (existingMembership != null)
         {
-            return ServiceResult<bool>.Fail(
-                ResultCodes.Tenant.AcceptInvitationMembershipExists,
-                "User already belongs to this tenant.");
+            if (existingMembership.IsActive)
+            {
+                return ServiceResult<bool>.Fail(
+                    ResultCodes.Tenant.AcceptInvitationMembershipExists,
+                    "User already belongs to this tenant.");
+            }
+
+            // 重新激活旧 membership
+            existingMembership.IsActive = true;
+            existingMembership.LeftAt = null;
+            existingMembership.JoinedAt = DateTime.UtcNow;
+            existingMembership.Role = invitation.Role;
         }
-
-        var membership = new TenantMembership
+        else
         {
-            TenantId = invitation.TenantId,
-            UserId = user.Id,
-            Role = invitation.Role,
-            IsActive = true,
-            JoinedAt = DateTime.UtcNow
-        };
+            var membership = new TenantMembership
+            {
+                TenantId = invitation.TenantId,
+                UserId = user.Id,
+                Role = invitation.Role,
+                IsActive = true,
+                JoinedAt = DateTime.UtcNow,
+                LeftAt = null
+            };
 
-        await membershipRepo.AddMembershipAsync(membership, cancellationToken);
+            await membershipRepo.AddMembershipAsync(membership, cancellationToken);
+        }
 
         invitation.Status = InvitationStatus.Accepted;
         invitation.AcceptedAt = DateTime.UtcNow;
@@ -446,7 +458,13 @@ public class TenantInvitationService(
             }
         }
         
-        invitation.Resend(7);
+        if (invitation.Status != InvitationStatus.Pending)
+        {
+            throw new InvalidOperationException("Only pending invitations can be resent.");
+        }
+
+        invitation.Version += 1;
+        invitation.ExpiredAt = DateTime.UtcNow.AddDays(7);
         await unitOfWork.SaveChangesAsync(cancellationToken);
 
         await mediator.Publish(new TenantInvitationCreatedEvent(

@@ -35,7 +35,32 @@ public class TenantMembershipRepo(ApplicationIdentityDbContext dbContext) : ITen
     {
         return await dbContext.TenantMemberships
             .FirstOrDefaultAsync(
-                m => m.TenantId == tenantId && m.UserId == userId,
+                m => m.TenantId == tenantId 
+                     && m.UserId == userId
+                     && m.IsActive,
+                cancellationToken);
+    }
+
+    public async Task<TenantMembership?> GetByPublicIdAsync(string memberShipPublicId, CancellationToken cancellationToken = default)
+    {
+        return await dbContext.TenantMemberships
+            .Include(x => x.Tenant)
+            .Include(x => x.User)
+            .FirstOrDefaultAsync(
+                x => x.PublicId.ToString() == memberShipPublicId,
+                cancellationToken);
+        
+    }
+    
+    public async Task<TenantMembership?> GetAnyMembershipAsync(
+        long tenantId,
+        long userId,
+        CancellationToken cancellationToken = default)
+    {
+        return await dbContext.TenantMemberships
+            .FirstOrDefaultAsync(
+                m => m.TenantId == tenantId &&
+                     m.UserId == userId,
                 cancellationToken);
     }
 }
