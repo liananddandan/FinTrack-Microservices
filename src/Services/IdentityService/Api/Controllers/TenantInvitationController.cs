@@ -87,4 +87,22 @@ public class TenantInvitationController(IMediator mediator) : ControllerBase
         var result = await mediator.Send(command);
         return result.ToActionResult();
     }
+    
+    [HttpPost("{invitationPublicId}/resend")]
+    public async Task<IActionResult> ResendInvitationAsync(string invitationPublicId)
+    {
+        var jwtParseResult = HttpContext.GetHttpHeaderJwtParseResult();
+        if (jwtParseResult == null)
+        {
+            return Unauthorized();
+        }
+
+        var command = new ResendTenantInvitationCommand(
+            jwtParseResult.TenantPublicId,
+            invitationPublicId
+        );
+
+        var result = await mediator.Send(command);
+        return result.ToActionResult();
+    }
 }

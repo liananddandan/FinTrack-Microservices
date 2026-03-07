@@ -274,7 +274,7 @@ public class TenantInvitationServiceTests
             x => x.Publish(It.IsAny<TenantInvitationCreatedEvent>(), It.IsAny<CancellationToken>()),
             Times.Once);
     }
-    
+
     [Fact]
     public async Task ResolveInvitationAsync_Should_Return_Fail_When_Invitation_Not_Found()
     {
@@ -567,7 +567,7 @@ public class TenantInvitationServiceTests
             }
         };
     }
-    
+
     [Fact]
     public async Task GetTenantInvitationsAsync_Should_Return_Fail_When_TenantPublicId_Is_Empty()
     {
@@ -697,5 +697,246 @@ public class TenantInvitationServiceTests
         result.Success.Should().BeFalse();
         result.Data.Should().BeNull();
         result.Message.Should().Be("Failed to get tenant invitations.");
+    }
+
+    [Fact]
+    public async Task ResendInvitationAsync_Should_Return_Fail_When_TenantPublicId_Is_Empty()
+    {
+        var result = await _sut.ResendInvitationAsync(
+            "",
+            Guid.NewGuid().ToString(),
+            CancellationToken.None);
+
+        result.Success.Should().BeFalse();
+        result.Data.Should().BeFalse();
+        result.Message.Should().Be("Tenant public id is required.");
+    }
+
+    [Fact]
+    public async Task ResendInvitationAsync_Should_Return_Fail_When_InvitationPublicId_Is_Empty()
+    {
+        var result = await _sut.ResendInvitationAsync(
+            Guid.NewGuid().ToString(),
+            "",
+            CancellationToken.None);
+
+        result.Success.Should().BeFalse();
+        result.Data.Should().BeFalse();
+        result.Message.Should().Be("Invitation public id is required.");
+    }
+
+    [Fact]
+    public async Task ResendInvitationAsync_Should_Return_Fail_When_Invitation_Not_Found()
+    {
+        _invitationRepoMock
+            .Setup(x => x.GetByPublicIdAsync(It.IsAny<Guid>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((TenantInvitation?)null);
+
+        var result = await _sut.ResendInvitationAsync(
+            Guid.NewGuid().ToString(),
+            Guid.NewGuid().ToString(),
+            CancellationToken.None);
+
+        result.Success.Should().BeFalse();
+        result.Data.Should().BeFalse();
+        result.Message.Should().Be("Invitation not found.");
+    }
+
+    [Fact]
+    public async Task ResendInvitationAsync_Should_Return_Fail_When_Invitation_Does_Not_Belong_To_Current_Tenant()
+    {
+        var invitation = BuildPendingInvitation();
+        var otherTenantPublicId = Guid.NewGuid().ToString();
+
+        _invitationRepoMock
+            .Setup(x => x.GetByPublicIdAsync(invitation.PublicId, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(invitation);
+
+        var result = await _sut.ResendInvitationAsync(
+            otherTenantPublicId,
+            invitation.PublicId.ToString(),
+            CancellationToken.None);
+
+        result.Success.Should().BeFalse();
+        result.Data.Should().BeFalse();
+        result.Message.Should().Be("Invitation not found.");
+    }
+
+    [Fact]
+    public async Task ResendInvitationAsync_Should_Return_Fail_When_Status_Is_Not_Pending()
+    {
+        var invitation = BuildPendingInvitation();
+        invitation.Status = InvitationStatus.Accepted;
+
+        _invitationRepoMock
+            .Setup(x => x.GetByPublicIdAsync(invitation.PublicId, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(invitation);
+
+        var result = await _sut.ResendInvitationAsync(
+            invitation.Tenant.PublicId.ToString(),
+            invitation.PublicId.ToString(),
+            CancellationToken.None);
+
+        result.Success.Should().BeFalse();
+        result.Data.Should().BeFalse();
+        result.Message.Should().Be("Only pending invitations can be resent.");
+    }
+
+    [Fact]
+    public async Task ResendInvitationAsync_Should_Return_Fail_When_Invitation_Has_Expired()
+    {
+        var invitation = BuildPendingInvitation();
+        invitation.ExpiredAt = DateTime.UtcNow.AddMinutes(-1);
+
+        _invitationRepoMock
+            .Setup(x => x.GetByPublicIdAsync(invitation.PublicId, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(invitation);
+
+        var result = await _sut.ResendInvitationAsync(
+            invitation.Tenant.PublicId.ToString(),
+            invitation.PublicId.ToString(),
+            CancellationToken.None);
+
+        result.Success.Should().BeFalse();
+        result.Data.Should().BeFalse();
+        result.Message.Should().Be("Invitation has expired.");
+    }
+
+    [Fact]
+    public async Task ResendInvitationAsync_Should_Return_Fail_When_User_Already_Belongs_To_Tenant()
+    {
+        var invitation = BuildPendingInvitation();
+
+        var existingUser = new ApplicationUser
+        {
+            Id = 10,
+            PublicId = Guid.NewGuid(),
+            Email = invitation.Email,
+            UserName = invitation.Email
+        };
+
+        _invitationRepoMock
+            .Setup(x => x.GetByPublicIdAsync(invitation.PublicId, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(invitation);
+
+        _userRepoMock
+            .Setup(x => x.GetUserByEmailAsync(invitation.Email, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(existingUser);
+
+        _membershipRepoMock
+            .Setup(x => x.GetMembershipAsync(invitation.TenantId, existingUser.Id, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new TenantMembership
+            {
+                TenantId = invitation.TenantId,
+                UserId = existingUser.Id,
+                IsActive = true
+            });
+
+        var result = await _sut.ResendInvitationAsync(
+            invitation.Tenant.PublicId.ToString(),
+            invitation.PublicId.ToString(),
+            CancellationToken.None);
+
+        result.Success.Should().BeFalse();
+        result.Data.Should().BeFalse();
+        result.Message.Should().Be("User already belongs to this tenant.");
+    }
+
+    [Fact]
+    public async Task ResendInvitationAsync_Should_Publish_Event_When_Invitation_Is_Valid()
+    {
+        var invitation = BuildPendingInvitation();
+
+        var existingUser = new ApplicationUser
+        {
+            Id = 10,
+            PublicId = Guid.NewGuid(),
+            Email = invitation.Email,
+            UserName = invitation.Email
+        };
+
+        _invitationRepoMock
+            .Setup(x => x.GetByPublicIdAsync(invitation.PublicId, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(invitation);
+
+        _userRepoMock
+            .Setup(x => x.GetUserByEmailAsync(invitation.Email, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(existingUser);
+
+        _membershipRepoMock
+            .Setup(x => x.GetMembershipAsync(invitation.TenantId, existingUser.Id, It.IsAny<CancellationToken>()))
+            .ReturnsAsync((TenantMembership?)null);
+
+        var result = await _sut.ResendInvitationAsync(
+            invitation.Tenant.PublicId.ToString(),
+            invitation.PublicId.ToString(),
+            CancellationToken.None);
+
+        result.Success.Should().BeTrue();
+        result.Data.Should().BeTrue();
+        result.Message.Should().Be("Invitation email resent successfully.");
+
+        _mediatorMock.Verify(
+            x => x.Publish(
+                It.Is<TenantInvitationCreatedEvent>(e =>
+                    e.InvitationPublicId == invitation.PublicId.ToString() &&
+                    e.TenantName == invitation.Tenant.Name &&
+                    e.Email == invitation.Email),
+                It.IsAny<CancellationToken>()),
+            Times.Once);
+    }
+
+    [Fact]
+    public async Task ResendInvitationAsync_Should_Return_Fail_When_Exception_Is_Thrown()
+    {
+        _invitationRepoMock
+            .Setup(x => x.GetByPublicIdAsync(It.IsAny<Guid>(), It.IsAny<CancellationToken>()))
+            .ThrowsAsync(new Exception("db error"));
+
+        var result = await _sut.ResendInvitationAsync(
+            Guid.NewGuid().ToString(),
+            Guid.NewGuid().ToString(),
+            CancellationToken.None);
+
+        result.Success.Should().BeFalse();
+        result.Data.Should().BeFalse();
+        result.Message.Should().Be("Failed to resend invitation.");
+    }
+    
+    [Fact]
+    public async Task ResendInvitationAsync_Should_Increment_Version_When_Request_Is_Valid()
+    {
+        var invitation = BuildPendingInvitation();
+        var originalVersion = invitation.Version;
+
+        var existingUser = new ApplicationUser
+        {
+            Id = 10,
+            PublicId = Guid.NewGuid(),
+            Email = invitation.Email,
+            UserName = invitation.Email
+        };
+
+        _invitationRepoMock
+            .Setup(x => x.GetByPublicIdAsync(invitation.PublicId, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(invitation);
+
+        _userRepoMock
+            .Setup(x => x.GetUserByEmailAsync(invitation.Email, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(existingUser);
+
+        _membershipRepoMock
+            .Setup(x => x.GetMembershipAsync(invitation.TenantId, existingUser.Id, It.IsAny<CancellationToken>()))
+            .ReturnsAsync((TenantMembership?)null);
+
+        var result = await _sut.ResendInvitationAsync(
+            invitation.Tenant.PublicId.ToString(),
+            invitation.PublicId.ToString(),
+            CancellationToken.None);
+
+        result.Success.Should().BeTrue();
+        invitation.Version.Should().Be(originalVersion + 1);
+
+        _unitOfWorkMock.Verify(x => x.SaveChangesAsync(It.IsAny<CancellationToken>()), Times.Once);
     }
 }

@@ -368,4 +368,109 @@ public class TenantInvitationService(
                 "Failed to get tenant invitations.");
         }
     }
+    
+    public async Task<ServiceResult<bool>> ResendInvitationAsync(
+    string tenantPublicId,
+    string invitationPublicId,
+    CancellationToken cancellationToken = default)
+{
+    if (string.IsNullOrWhiteSpace(tenantPublicId))
+    {
+        return ServiceResult<bool>.Fail(
+            ResultCodes.Tenant.ResendInvitationParameterError,
+            "Tenant public id is required.");
+    }
+
+    if (string.IsNullOrWhiteSpace(invitationPublicId))
+    {
+        return ServiceResult<bool>.Fail(
+            ResultCodes.Tenant.ResendInvitationParameterError,
+            "Invitation public id is required.");
+    }
+
+    try
+    {
+        var invitationResult = await GetTenantInvitationByPublicIdAsync(
+            invitationPublicId,
+            cancellationToken);
+
+        if (!invitationResult.Success || invitationResult.Data == null)
+        {
+            return ServiceResult<bool>.Fail(
+                ResultCodes.Tenant.ResendInvitationNotFound,
+                "Invitation not found.");
+        }
+
+        var invitation = invitationResult.Data;
+
+        if (!string.Equals(
+                invitation.Tenant.PublicId.ToString(),
+                tenantPublicId,
+                StringComparison.OrdinalIgnoreCase))
+        {
+            return ServiceResult<bool>.Fail(
+                ResultCodes.Tenant.ResendInvitationNotFound,
+                "Invitation not found.");
+        }
+
+        if (invitation.Status != InvitationStatus.Pending)
+        {
+            return ServiceResult<bool>.Fail(
+                ResultCodes.Tenant.ResendInvitationStatusInvalid,
+                "Only pending invitations can be resent.");
+        }
+
+        if (invitation.ExpiredAt <= DateTime.UtcNow)
+        {
+            return ServiceResult<bool>.Fail(
+                ResultCodes.Tenant.ResendInvitationExpired,
+                "Invitation has expired.");
+        }
+
+        var existingUser = await userRepo.GetUserByEmailAsync(
+            invitation.Email,
+            cancellationToken);
+
+        if (existingUser != null)
+        {
+            var existingMembership = await membershipRepo.GetMembershipAsync(
+                invitation.TenantId,
+                existingUser.Id,
+                cancellationToken);
+
+            if (existingMembership != null)
+            {
+                return ServiceResult<bool>.Fail(
+                    ResultCodes.Tenant.ResendInvitationMembershipExists,
+                    "User already belongs to this tenant.");
+            }
+        }
+        
+        invitation.Resend(7);
+        await unitOfWork.SaveChangesAsync(cancellationToken);
+
+        await mediator.Publish(new TenantInvitationCreatedEvent(
+            invitation.PublicId.ToString(),
+            invitation.Tenant.Name,
+            invitation.Email
+        ), cancellationToken);
+
+        return ServiceResult<bool>.Ok(
+            true,
+            ResultCodes.Tenant.ResendInvitationSuccess,
+            "Invitation email resent successfully.");
+    }
+    catch (Exception ex)
+    {
+        logger.LogError(
+            ex,
+            "Failed to resend invitation {InvitationPublicId} for tenant {TenantPublicId}",
+            invitationPublicId,
+            tenantPublicId);
+
+        return ServiceResult<bool>.Fail(
+            ResultCodes.Tenant.ResendInvitationException,
+            "Failed to resend invitation.");
+    }
+}
 }

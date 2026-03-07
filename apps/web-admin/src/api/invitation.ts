@@ -47,3 +47,19 @@ export async function getTenantInvitations(): Promise<TenantInvitationDto[]> {
 
   return result.data;
 }
+
+export async function resendTenantInvitation(
+  invitationPublicId: string
+): Promise<boolean> {
+  const response = await http.post<ApiResponse<boolean>>(
+    `/api/tenant/invitations/${invitationPublicId}/resend`
+  );
+
+  const result = response.data;
+
+  if (result.data === undefined || result.data === null) {
+    throw new Error(result.message || "Failed to resend invitation.");
+  }
+
+  return result.data;
+}

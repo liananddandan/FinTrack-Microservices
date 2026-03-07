@@ -102,6 +102,16 @@
             </div>
 
             <div class="invitation-side">
+              <el-button
+                v-if="item.status === 'Pending'"
+                text
+                type="primary"
+                :loading="resendingInvitationId === item.invitationPublicId"
+                @click="handleResend(item)"
+              >
+                Resend
+              </el-button>
+
               <el-button text @click="handleViewLater(item)">
                 Details
               </el-button>
@@ -118,12 +128,14 @@ import { computed, onMounted, ref } from "vue";
 import { ElMessage } from "element-plus";
 import {
   getTenantInvitations,
+  resendTenantInvitation,
   type TenantInvitationDto,
 } from "../api/invitation";
 
 const loading = ref(false);
 const keyword = ref("");
 const invitations = ref<TenantInvitationDto[]>([]);
+const resendingInvitationId = ref<string>("");
 
 const filteredInvitations = computed(() => {
   const q = keyword.value.trim().toLowerCase();
@@ -163,6 +175,24 @@ async function loadInvitations() {
     );
   } finally {
     loading.value = false;
+  }
+}
+
+async function handleResend(item: TenantInvitationDto) {
+  resendingInvitationId.value = item.invitationPublicId;
+
+  try {
+    await resendTenantInvitation(item.invitationPublicId);
+    ElMessage.success("Invitation email resent successfully.");
+  } catch (error: any) {
+    console.error("Failed to resend invitation:", error);
+    ElMessage.error(
+      error?.response?.data?.message ??
+        error?.message ??
+        "Failed to resend invitation."
+    );
+  } finally {
+    resendingInvitationId.value = "";
   }
 }
 
@@ -371,6 +401,8 @@ function handleViewLater(item: TenantInvitationDto) {
 
 .invitation-side {
   flex-shrink: 0;
+  display: flex;
+  gap: 8px;
 }
 
 @media (max-width: 900px) {

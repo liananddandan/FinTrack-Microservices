@@ -32,9 +32,14 @@ public static class ResultCodes
         public const string AcceptInvitationMembershipExists = "100001024";
         public const string GetTenantInvitationsParameterError = "100001025";
         public const string GetTenantInvitationsException = "100001026";
+        public const string ResendInvitationParameterError = "100001027";
+        public const string ResendInvitationNotFound = "100001028";
+        public const string ResendInvitationStatusInvalid = "100001029";
+        public const string ResendInvitationExpired = "100001030";
+        public const string ResendInvitationMembershipExists = "100001031";
+        public const string ResendInvitationException = "100001032";
         // RegisterTenant Success 100 001 999
-        public const string GetAllUserInTenantSuccess = "100001992";
-        
+        public const string ResendInvitationSuccess = "100001992";
         public const string GetTenantInvitationsSuccess = "100001993";
         public const string AcceptInvitationSuccess = "100001994";
         public const string ResolveInvitationSuccess = "100001995";
