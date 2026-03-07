@@ -5,7 +5,7 @@ using IdentityService.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 
-namespace IdentityService.Tests.IntegrationTests;
+namespace IdentityService.Tests.Api.IntegrationTests;
 
 [Collection("IntegrationTests")]
 

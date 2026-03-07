@@ -7,9 +7,8 @@ using IdentityService.Domain.Enums;
 using IdentityService.Infrastructure.Persistence;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.DependencyInjection;
-using Xunit;
 
-namespace IdentityService.Tests.IntegrationTests;
+namespace IdentityService.Tests.Api.IntegrationTests;
 
 [Collection("IntegrationTests")]
 public class TenantMembersTests : IClassFixture<IdentityWebApplicationFactory<Program>>

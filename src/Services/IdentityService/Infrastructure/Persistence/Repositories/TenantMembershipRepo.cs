@@ -27,4 +27,15 @@ public class TenantMembershipRepo(ApplicationIdentityDbContext dbContext) : ITen
             .OrderBy(m => m.JoinedAt)
             .ToListAsync(cancellationToken);
     }
+    
+    public async Task<TenantMembership?> GetMembershipAsync(
+        long tenantId,
+        long userId,
+        CancellationToken cancellationToken = default)
+    {
+        return await dbContext.TenantMemberships
+            .FirstOrDefaultAsync(
+                m => m.TenantId == tenantId && m.UserId == userId,
+                cancellationToken);
+    }
 }

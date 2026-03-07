@@ -3,8 +3,8 @@ using MediatR;
 
 namespace IdentityService.Application.Events;
 
-public record TenantInvitationEvent
-(
-    ApplicationUser Admin,
-    List<string> Emails
+public record TenantInvitationCreatedEvent(
+    string InvitationPublicId,
+    string TenantName,
+    string Email
 ) : INotification;

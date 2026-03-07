@@ -14,7 +14,6 @@ public class EmailSendEventHandlerTests
         var handler = new EmailSendEventHandler(mockEmailService.Object);
         var emailEvent = new EmailSendRequestedEvent
         {
-            From = "from@email.com",
             To = "to@test.com",
             ToName = "ToName",
             Subject = "Test",

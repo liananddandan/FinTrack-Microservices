@@ -27,7 +27,6 @@ public class SmtpEmailServiceTests
 
         var emailEvent = new EmailSendRequestedEvent
         {
-            From = "from@test.com",
             To = "to@test.com",
             ToName = "Receiver",
             Subject = "Test Subject",

@@ -10,4 +10,8 @@ public interface IApplicationUserRepo
     Task<ApplicationUser?> GetUserByPublicIdWithMembershipsAsync(
         string userPublicId,
         CancellationToken cancellationToken = default);
+    Task<ApplicationUser?> GetUserByEmailAsync(string email, CancellationToken cancellationToken = default);
+    Task<ApplicationUser?> GetUserByPublicIdAsync(
+        string publicId,
+        CancellationToken cancellationToken = default);
 }

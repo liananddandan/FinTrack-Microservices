@@ -8,7 +8,7 @@ using Microsoft.Extensions.Logging;
 using Moq;
 using SharedKernel.Common.Results;
 
-namespace IdentityService.Tests.Services;
+namespace IdentityService.Tests.Application.Services;
 
 public class UserAppServiceTests
 {

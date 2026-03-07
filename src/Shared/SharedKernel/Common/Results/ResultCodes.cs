@@ -12,23 +12,22 @@ public static class ResultCodes
         public const string RegisterTenantException = "100001004";
         public const string GetTenantMembersParameterError = "100001005";
         public const string GetTenantMembersException= "100001006";
-        
-        public const string InvitationRevoked= "100001007";
-        public const string InvitationRevoked1 = "100001008";
-        public const string InvitationHasAccepted = "100001009";
-        public const string InvitationWithAInvalidTenant = "100001010";
-        public const string InvitationCreateFailed = "100001011";
-        public const string UserDoNotHavePermissionToQueryTenant = "100001012";
-        public const string UserDoNotBelongToTenant = "100001013";
-        public const string InvitationUsingWrongRole = "100001014";
+        public const string CreateInvitationParameterError= "100001007";
+        public const string CreateInvitationTenantNotFound = "100001008";
+        public const string CreateInvitationUserNotFound = "100001009";
+        public const string CreateInvitationUserAlreadyExists = "100001010";
+        public const string CreateInvitationInviterNotFound = "100001011";
+        public const string CreateInvitationException = "100001012";
+        public const string InvitationInvalidPublicId = "100001013";
+        public const string InvitationNotFound = "100001014";
         // RegisterTenant Success 100 001 999
         public const string GetAllUserInTenantSuccess = "100001992";
         public const string InvitationReceiveSuccess = "100001993";
         public const string InvitationRecordUpdateSuccess = "100001994";
         public const string InvitationRecordFoundByEmailSuccess = "100001995";
-        public const string InvitationRecordFoundByPublicIdSuccess = "100001996";
-        public const string InvitationRecordAddSuccess = "100001997";
         
+        public const string InvitationSuccess = "100001996";
+        public const string CreateInvitationSuccess = "100001997";
         public const string GetTenantMembersSuccess = "100001998";
         public const string RegisterTenantSuccess = "100001999";
     }

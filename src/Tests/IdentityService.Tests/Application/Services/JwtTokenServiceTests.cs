@@ -6,8 +6,6 @@ using FluentAssertions;
 using IdentityService.Application.Common.DTOs;
 using IdentityService.Application.Common.Status;
 using IdentityService.Application.Services;
-using IdentityService.Application.Services.Interfaces;
-using IdentityService.Domain.Entities;
 using IdentityService.Tests.Attributes;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
@@ -15,7 +13,7 @@ using Moq;
 using SharedKernel.Common.Options;
 using SharedKernel.Common.Results;
 
-namespace IdentityService.Tests.Services;
+namespace IdentityService.Tests.Application.Services;
 
 public class JwtTokenServiceTests
 {

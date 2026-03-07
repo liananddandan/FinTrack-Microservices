@@ -91,6 +91,11 @@
     &lt;TestId&gt;xUnit::634E2A0D-EE3E-4F9F-9F60-D97B140815D8::net9.0::IdentityService.Tests.IntegrationTests.RefreshTokenTests&lt;/TestId&gt;
     &lt;TestId&gt;xUnit::634E2A0D-EE3E-4F9F-9F60-D97B140815D8::net9.0::IdentityService.Tests.IntegrationTests.AccountRegisterTests&lt;/TestId&gt;
     &lt;TestId&gt;xUnit::634E2A0D-EE3E-4F9F-9F60-D97B140815D8::net9.0::IdentityService.Tests.IntegrationTests.TenantMembersTests&lt;/TestId&gt;
+    &lt;TestId&gt;xUnit::634E2A0D-EE3E-4F9F-9F60-D97B140815D8::net9.0::IdentityService.Tests.EventHandlers.TenantInvitationEventHandlerTests&lt;/TestId&gt;
+    &lt;TestId&gt;xUnit::634E2A0D-EE3E-4F9F-9F60-D97B140815D8::net9.0::IdentityService.Tests.Application.EventHandlers.TenantInvitationEventHandlerTests&lt;/TestId&gt;
+    &lt;TestId&gt;xUnit::634E2A0D-EE3E-4F9F-9F60-D97B140815D8::net9.0::IdentityService.Tests.Application.Services.TenantInvitationServiceTests&lt;/TestId&gt;
+    &lt;TestId&gt;xUnit::634E2A0D-EE3E-4F9F-9F60-D97B140815D8::net9.0::IdentityService.Tests.Api.IntegrationTests.TenantInvitationTests&lt;/TestId&gt;
+    &lt;TestId&gt;xUnit::AF11EA61-0F3E-4A44-9EC4-95B27AF31D11::net9.0::NotificationService.Tests.Handlers.TenantInvitationEmailEventHandlerTests&lt;/TestId&gt;
   &lt;/TestAncestor&gt;
 &lt;/SessionState&gt;</s:String>
 	<s:String x:Key="/Default/Environment/UnitTesting/UnitTestSessionStore/Sessions/=d845880b_002D3308_002D4a2a_002Da74e_002Ddcd8de9101b1/@EntryIndexedValue">&lt;SessionState ContinuousTestingMode="0" Name="InviteUserAsync_ShouldReturnSuccess" xmlns="urn:schemas-jetbrains-com:jetbrains-ut-session"&gt;

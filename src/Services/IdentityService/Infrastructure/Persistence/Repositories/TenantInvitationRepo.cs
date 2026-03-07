@@ -6,10 +6,21 @@ namespace IdentityService.Infrastructure.Persistence.Repositories;
 
 public class TenantInvitationRepo(ApplicationIdentityDbContext dbContext) : ITenantInvitationRepo
 {
-    public Task AddAsync(TenantInvitation invitation)
+    public async Task AddAsync(TenantInvitation invitation, CancellationToken cancellationToken = default)
     {
-        dbContext.TenantInvitations.Add(invitation);
-        return Task.CompletedTask;
+        await dbContext.TenantInvitations.AddAsync(invitation, cancellationToken);
+    }
+
+    public async Task<TenantInvitation?> GetByPublicIdAsync(
+        Guid publicId,
+        CancellationToken cancellationToken = default)
+    {
+        return await dbContext.TenantInvitations
+            .Include(x => x.Tenant)
+            .Include(x => x.CreatedByUser)
+            .FirstOrDefaultAsync(
+                x => x.PublicId == publicId,
+                cancellationToken);
     }
 
     public async Task<TenantInvitation?> FindByPublicIdAsync(Guid publicId)

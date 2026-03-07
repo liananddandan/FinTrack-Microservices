@@ -35,28 +35,6 @@ public class TenantController(IMediator mediator) : ControllerBase
         return result.ToActionResult();
     }
     
-    
-    
-    
-    
-
-    [HttpPost("invite")]
-    public async Task<IActionResult> InviteUserAsync(InviteUserRequest request)
-    {
-        if (request.Emails.Count <= 0)
-        {
-            return BadRequest("Invalid request without email address");
-        }
-        var jwtParseResult = HttpContext.GetHttpHeaderJwtParseResult();
-        if (jwtParseResult == null)
-        {
-            return Unauthorized("Request Without valid token");
-        }
-
-        var command = new InviteUserCommand(request.Emails, jwtParseResult.UserPublicId, jwtParseResult.TenantPublicId, jwtParseResult.UserRoleInTenant);
-        var result = await mediator.Send(command);
-        return result.ToActionResult();
-    }
 
     [HttpGet("receive-invite")]
     [RequireTokenType(JwtTokenType.InvitationToken)]

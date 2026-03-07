@@ -9,7 +9,7 @@
       </div>
 
       <div class="members-actions">
-        <el-button type="primary" @click="handleInviteLater">
+        <el-button type="primary" @click="openInviteDialog">
           Invite member
         </el-button>
       </div>
@@ -120,17 +120,95 @@
         </div>
       </template>
     </el-card>
+
+    <el-dialog
+      v-model="inviteDialogVisible"
+      width="480px"
+      destroy-on-close
+      class="invite-dialog"
+    >
+      <template #header>
+        <div class="invite-dialog-header">
+          <div class="invite-dialog-title">Invite member</div>
+          <div class="invite-dialog-subtitle">
+            Send an invitation to an already registered user.
+          </div>
+        </div>
+      </template>
+
+      <el-form label-position="top" @submit.prevent>
+        <el-form-item label="Email">
+          <el-input
+            v-model="inviteForm.email"
+            placeholder="user@example.com"
+            size="large"
+          />
+        </el-form-item>
+
+        <el-form-item label="Role">
+          <el-select
+            v-model="inviteForm.role"
+            placeholder="Select role"
+            size="large"
+            style="width: 100%;"
+          >
+            <el-option label="Member" value="Member" />
+            <el-option label="Admin" value="Admin" />
+          </el-select>
+        </el-form-item>
+
+        <el-alert
+          v-if="inviteErrorMessage"
+          :title="inviteErrorMessage"
+          type="error"
+          show-icon
+          class="invite-alert"
+        />
+
+        <el-alert
+          v-if="inviteSuccessMessage"
+          :title="inviteSuccessMessage"
+          type="success"
+          show-icon
+          class="invite-alert"
+        />
+      </el-form>
+
+      <template #footer>
+        <div class="invite-dialog-footer">
+          <el-button @click="closeInviteDialog">Cancel</el-button>
+          <el-button
+            type="primary"
+            :loading="inviteSubmitting"
+            @click="submitInvitation"
+          >
+            Send invitation
+          </el-button>
+        </div>
+      </template>
+    </el-dialog>
   </div>
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, ref } from "vue";
+import { computed, onMounted, reactive, ref } from "vue";
 import { ElMessage } from "element-plus";
 import { getTenantMembers, type TenantMemberDto } from "../api/tenant";
+import { createTenantInvitation } from "../api/invitation";
 
 const loading = ref(false);
 const keyword = ref("");
 const members = ref<TenantMemberDto[]>([]);
+
+const inviteDialogVisible = ref(false);
+const inviteSubmitting = ref(false);
+const inviteErrorMessage = ref("");
+const inviteSuccessMessage = ref("");
+
+const inviteForm = reactive({
+  email: "",
+  role: "Member",
+});
 
 const filteredMembers = computed(() => {
   const q = keyword.value.trim().toLowerCase();
@@ -140,7 +218,6 @@ const filteredMembers = computed(() => {
   return members.value.filter((member) => {
     const email = member.email?.toLowerCase() ?? "";
     const userName = member.userName?.toLowerCase() ?? "";
-
     return email.includes(q) || userName.includes(q);
   });
 });
@@ -174,6 +251,58 @@ async function loadMembers() {
   }
 }
 
+function openInviteDialog() {
+  inviteDialogVisible.value = true;
+  inviteErrorMessage.value = "";
+  inviteSuccessMessage.value = "";
+}
+
+function closeInviteDialog() {
+  inviteDialogVisible.value = false;
+  inviteSubmitting.value = false;
+  inviteErrorMessage.value = "";
+  inviteSuccessMessage.value = "";
+  inviteForm.email = "";
+  inviteForm.role = "Member";
+}
+
+async function submitInvitation() {
+  inviteErrorMessage.value = "";
+  inviteSuccessMessage.value = "";
+
+  if (!inviteForm.email.trim()) {
+    inviteErrorMessage.value = "Email is required.";
+    return;
+  }
+
+  if (!inviteForm.role.trim()) {
+    inviteErrorMessage.value = "Role is required.";
+    return;
+  }
+
+  inviteSubmitting.value = true;
+
+  try {
+    await createTenantInvitation({
+      email: inviteForm.email.trim(),
+      role: inviteForm.role,
+    });
+
+    inviteSuccessMessage.value =
+      "Invitation created successfully. The email has been queued for delivery.";
+
+    ElMessage.success("Invitation created successfully.");
+  } catch (error: any) {
+    console.error("Failed to create invitation:", error);
+    inviteErrorMessage.value =
+      error?.response?.data?.message ??
+      error?.message ??
+      "Failed to create invitation.";
+  } finally {
+    inviteSubmitting.value = false;
+  }
+}
+
 function getInitials(value: string) {
   const trimmed = value.trim();
   if (!trimmed) return "U";
@@ -193,10 +322,6 @@ function formatDate(value: string) {
   if (Number.isNaN(date.getTime())) return value;
 
   return date.toLocaleDateString();
-}
-
-function handleInviteLater() {
-  ElMessage.info("TODO: invite member flow.");
 }
 
 function handleViewLater(member: TenantMemberDto) {
@@ -376,6 +501,33 @@ function handleViewLater(member: TenantMemberDto) {
 
 .member-side {
   flex-shrink: 0;
+}
+
+.invite-dialog-header {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.invite-dialog-title {
+  font-size: 18px;
+  font-weight: 700;
+  color: #111827;
+}
+
+.invite-dialog-subtitle {
+  font-size: 13px;
+  color: #6b7280;
+}
+
+.invite-alert {
+  margin-top: 12px;
+}
+
+.invite-dialog-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
 }
 
 @media (max-width: 900px) {

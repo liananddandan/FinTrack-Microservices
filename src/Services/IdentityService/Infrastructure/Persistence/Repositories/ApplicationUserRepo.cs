@@ -43,4 +43,29 @@ public class ApplicationUserRepo(ApplicationIdentityDbContext dbContext) : IAppl
             .ThenInclude(m => m.Tenant)
             .FirstOrDefaultAsync(u => u.PublicId == parsedUserPublicId, cancellationToken);
     }
+
+    public async Task<ApplicationUser?> GetUserByEmailAsync(
+        string email,
+        CancellationToken cancellationToken = default)
+    {
+        email = email.Trim().ToLowerInvariant();
+
+        return await dbContext.Users
+            .FirstOrDefaultAsync(u => u.Email == email, cancellationToken);
+    }
+
+    public async Task<ApplicationUser?> GetUserByPublicIdAsync(
+        string publicId,
+        CancellationToken cancellationToken = default)
+    {
+        if (!Guid.TryParse(publicId, out var parsedPublicId))
+        {
+            return null;
+        }
+
+        return await dbContext.Users
+            .FirstOrDefaultAsync(
+                u => u.PublicId == parsedPublicId,
+                cancellationToken);
+    }
 }

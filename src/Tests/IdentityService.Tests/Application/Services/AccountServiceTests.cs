@@ -1,6 +1,5 @@
 using AutoFixture;
 using FluentAssertions;
-using IdentityService.Application.Common.DTOs;
 using IdentityService.Application.Services;
 using IdentityService.Application.Services.Interfaces;
 using IdentityService.Domain.Entities;
@@ -10,9 +9,8 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.Logging;
 using Moq;
 using SharedKernel.Common.Results;
-using Xunit;
 
-namespace IdentityService.Tests.Services;
+namespace IdentityService.Tests.Application.Services;
 
 public class AccountServiceTests
 {
