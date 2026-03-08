@@ -99,12 +99,15 @@ jobs:
 
       - name: Run tests
         run: |
-          dotnet test \
+          dotnet test FinTrack.sln \
             --no-build \
             --configuration Release \
             --verbosity minimal \
-            --logger "trx;LogFileName=test-results.trx"
-
+            -m:1 \
+            --logger "console;verbosity=minimal" \
+            --logger trx \
+            --results-directory ./TestResults
+        
       - name: Upload test results
         if: always()
         uses: actions/upload-artifact@v4
