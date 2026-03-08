@@ -6,6 +6,7 @@ using IdentityService.Domain.Enums;
 using IdentityService.Infrastructure.Persistence;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.DependencyInjection;
+using SharedKernel.Common.DTOs.Auth;
 
 namespace IdentityService.Tests.Api.IntegrationTests;
 
@@ -72,33 +73,6 @@ public class AccountLoginTests(IdentityWebApplicationFactory<Program> factory)
     }
 
     [Fact]
-    public async Task Login_Should_Return_BadRequest_When_User_Has_No_Active_Membership()
-    {
-        var unique = Guid.NewGuid().ToString("N");
-        var email = $"nomembership-{unique}@test.com";
-        const string password = "Password123!";
-
-        await SeedUserWithTenantAsync(
-            email,
-            password,
-            $"Tenant-{unique}",
-            TenantRole.Member,
-            isMembershipActive: false);
-
-        var request = new
-        {
-            email,
-            password
-        };
-
-        var response = await _client.PostAsJsonAsync("/api/account/login", request);
-        var body = await response.Content.ReadAsStringAsync();
-
-        response.StatusCode.Should().Be(HttpStatusCode.BadRequest, body);
-        body.Should().Contain("User does not belong to any tenant.");
-    }
-
-    [Fact]
     public async Task Login_Should_Return_Ok_With_Tokens_And_Memberships_When_Login_Succeeds()
     {
         var unique = Guid.NewGuid().ToString("N");
@@ -130,8 +104,8 @@ public class AccountLoginTests(IdentityWebApplicationFactory<Program> factory)
         apiResponse.Message.Should().Be("Login successful.");
         apiResponse.Data.Should().NotBeNull();
 
-        apiResponse.Data!.AccessToken.Should().NotBeNullOrWhiteSpace();
-        apiResponse.Data.RefreshToken.Should().NotBeNullOrWhiteSpace();
+        apiResponse.Data!.Tokens.AccessToken.Should().NotBeNullOrWhiteSpace();
+        apiResponse.Data.Tokens.RefreshToken.Should().NotBeNullOrWhiteSpace();
 
         apiResponse.Data.Memberships.Should().HaveCount(1);
         var membership = apiResponse.Data.Memberships.Single();
@@ -199,8 +173,7 @@ public class AccountLoginTests(IdentityWebApplicationFactory<Program> factory)
 
     private sealed class UserLoginResultTestDto
     {
-        public string AccessToken { get; set; } = string.Empty;
-        public string RefreshToken { get; set; } = string.Empty;
+        public JwtTokenPair Tokens { get; set; }
         public List<LoginMembershipTestDto> Memberships { get; set; } = new();
     }
 

@@ -9,7 +9,7 @@ using IdentityService.Infrastructure.Persistence;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.DependencyInjection;
 
-namespace IdentityService.Tests.IntegrationTests;
+namespace IdentityService.Tests.Api.IntegrationTests;
 
 [Collection("IntegrationTests")]
 public class TenantInvitationResendTests : IClassFixture<IdentityWebApplicationFactory<Program>>
@@ -45,28 +45,18 @@ public class TenantInvitationResendTests : IClassFixture<IdentityWebApplicationF
         const string password = "Password123!";
         var tenantName = $"Tenant-{unique}";
 
-        var invitation = await SeedPendingInvitationAsync(adminEmail, password, tenantName);
+        var seed = await SeedPendingInvitationAsync(adminEmail, password, tenantName);
 
-        var loginResponse = await _client.PostAsJsonAsync("/api/account/login", new
-        {
-            email = adminEmail,
-            password
-        });
-
-        var loginBody = await loginResponse.Content.ReadAsStringAsync();
-        loginResponse.StatusCode.Should().Be(HttpStatusCode.OK, loginBody);
-
-        var loginResult = await loginResponse.Content.ReadFromJsonAsync<ApiResponse<UserLoginResultTestDto>>();
-        loginResult.Should().NotBeNull();
-        loginResult!.Data.Should().NotBeNull();
-        loginResult.Data!.Tokens.Should().NotBeNull();
-        loginResult.Data.Tokens.AccessToken.Should().NotBeNullOrWhiteSpace();
+        var tenantToken = await LoginAndSelectTenantAsync(
+            adminEmail,
+            password,
+            seed.TenantPublicId);
 
         _client.DefaultRequestHeaders.Authorization =
-            new AuthenticationHeaderValue("Bearer", loginResult.Data.Tokens.AccessToken);
+            new AuthenticationHeaderValue("Bearer", tenantToken);
 
         var response = await _client.PostAsync(
-            $"/api/tenant/invitations/{invitation.PublicId}/resend",
+            $"/api/tenant/invitations/{seed.InvitationPublicId}/resend",
             null);
 
         var body = await response.Content.ReadAsStringAsync();
@@ -86,11 +76,34 @@ public class TenantInvitationResendTests : IClassFixture<IdentityWebApplicationF
         const string password = "Password123!";
         var tenantName = $"Tenant-{unique}";
 
-        var invitation = await SeedAcceptedInvitationAsync(adminEmail, password, tenantName);
+        var seed = await SeedAcceptedInvitationAsync(adminEmail, password, tenantName);
 
+        var tenantToken = await LoginAndSelectTenantAsync(
+            adminEmail,
+            password,
+            seed.TenantPublicId);
+
+        _client.DefaultRequestHeaders.Authorization =
+            new AuthenticationHeaderValue("Bearer", tenantToken);
+
+        var response = await _client.PostAsync(
+            $"/api/tenant/invitations/{seed.InvitationPublicId}/resend",
+            null);
+
+        var body = await response.Content.ReadAsStringAsync();
+
+        response.StatusCode.Should().Be(HttpStatusCode.BadRequest, body);
+        body.Should().Contain("Only pending invitations can be resent.");
+    }
+
+    private async Task<string> LoginAndSelectTenantAsync(
+        string email,
+        string password,
+        string tenantPublicId)
+    {
         var loginResponse = await _client.PostAsJsonAsync("/api/account/login", new
         {
-            email = adminEmail,
+            email,
             password
         });
 
@@ -100,21 +113,30 @@ public class TenantInvitationResendTests : IClassFixture<IdentityWebApplicationF
         var loginResult = await loginResponse.Content.ReadFromJsonAsync<ApiResponse<UserLoginResultTestDto>>();
         loginResult.Should().NotBeNull();
         loginResult!.Data.Should().NotBeNull();
+        loginResult.Data!.Tokens.Should().NotBeNull();
+        loginResult.Data.Tokens.AccessToken.Should().NotBeNullOrWhiteSpace();
 
         _client.DefaultRequestHeaders.Authorization =
-            new AuthenticationHeaderValue("Bearer", loginResult.Data!.Tokens.AccessToken);
+            new AuthenticationHeaderValue("Bearer", loginResult.Data.Tokens.AccessToken);
 
-        var response = await _client.PostAsync(
-            $"/api/tenant/invitations/{invitation.PublicId}/resend",
-            null);
+        var selectTenantResponse = await _client.PostAsJsonAsync(
+            "/api/account/select-tenant",
+            new
+            {
+                tenantPublicId
+            });
 
-        var body = await response.Content.ReadAsStringAsync();
+        var selectTenantBody = await selectTenantResponse.Content.ReadAsStringAsync();
+        selectTenantResponse.StatusCode.Should().Be(HttpStatusCode.OK, selectTenantBody);
 
-        response.StatusCode.Should().Be(HttpStatusCode.BadRequest, body);
-        body.Should().Contain("Only pending invitations can be resent.");
+        var selectTenantResult = await selectTenantResponse.Content.ReadFromJsonAsync<ApiResponse<string>>();
+        selectTenantResult.Should().NotBeNull();
+        selectTenantResult!.Data.Should().NotBeNullOrWhiteSpace();
+
+        return selectTenantResult.Data;
     }
 
-    private async Task<TenantInvitation> SeedPendingInvitationAsync(
+    private async Task<(string TenantPublicId, string InvitationPublicId)> SeedPendingInvitationAsync(
         string adminEmail,
         string password,
         string tenantName)
@@ -168,10 +190,10 @@ public class TenantInvitationResendTests : IClassFixture<IdentityWebApplicationF
         db.TenantInvitations.Add(invitation);
         await db.SaveChangesAsync();
 
-        return invitation;
+        return (tenant.PublicId.ToString(), invitation.PublicId.ToString());
     }
 
-    private async Task<TenantInvitation> SeedAcceptedInvitationAsync(
+    private async Task<(string TenantPublicId, string InvitationPublicId)> SeedAcceptedInvitationAsync(
         string adminEmail,
         string password,
         string tenantName)
@@ -226,7 +248,7 @@ public class TenantInvitationResendTests : IClassFixture<IdentityWebApplicationF
         db.TenantInvitations.Add(invitation);
         await db.SaveChangesAsync();
 
-        return invitation;
+        return (tenant.PublicId.ToString(), invitation.PublicId.ToString());
     }
 
     private sealed class ApiResponse<T>

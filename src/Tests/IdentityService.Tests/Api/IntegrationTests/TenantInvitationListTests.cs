@@ -41,8 +41,9 @@ public class TenantInvitationListTests : IClassFixture<IdentityWebApplicationFac
         const string password = "Password123!";
         var tenantName = $"Tenant-{unique}";
 
-        await SeedTenantWithAdminAndInvitationsAsync(adminEmail, password, tenantName);
+        var tenantPublicId = await SeedTenantWithAdminAndInvitationsAsync(adminEmail, password, tenantName);
 
+        // login -> account token
         var loginResponse = await _client.PostAsJsonAsync("/api/account/login", new
         {
             email = adminEmail,
@@ -61,6 +62,25 @@ public class TenantInvitationListTests : IClassFixture<IdentityWebApplicationFac
         _client.DefaultRequestHeaders.Authorization =
             new AuthenticationHeaderValue("Bearer", loginResult.Data.Tokens.AccessToken);
 
+        // select tenant -> tenant token
+        var selectTenantResponse = await _client.PostAsJsonAsync(
+            "/api/account/select-tenant",
+            new
+            {
+                tenantPublicId
+            });
+
+        var selectTenantBody = await selectTenantResponse.Content.ReadAsStringAsync();
+        selectTenantResponse.StatusCode.Should().Be(HttpStatusCode.OK, selectTenantBody);
+
+        var selectTenantResult = await selectTenantResponse.Content.ReadFromJsonAsync<ApiResponse<string>>();
+        selectTenantResult.Should().NotBeNull();
+        selectTenantResult!.Data.Should().NotBeNullOrWhiteSpace();
+
+        _client.DefaultRequestHeaders.Authorization =
+            new AuthenticationHeaderValue("Bearer", selectTenantResult.Data);
+
+        // tenant api
         var response = await _client.GetAsync("/api/tenant/invitations");
         var body = await response.Content.ReadAsStringAsync();
 
@@ -82,7 +102,7 @@ public class TenantInvitationListTests : IClassFixture<IdentityWebApplicationFac
             x.CreatedByUserEmail == adminEmail);
     }
 
-    private async Task SeedTenantWithAdminAndInvitationsAsync(
+    private async Task<string> SeedTenantWithAdminAndInvitationsAsync(
         string adminEmail,
         string password,
         string tenantName)
@@ -150,6 +170,8 @@ public class TenantInvitationListTests : IClassFixture<IdentityWebApplicationFac
             });
 
         await db.SaveChangesAsync();
+
+        return tenant.PublicId.ToString();
     }
 
     private sealed class ApiResponse<T>

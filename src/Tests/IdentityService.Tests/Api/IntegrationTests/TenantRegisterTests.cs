@@ -20,11 +20,14 @@ public class TenantRegisterTests(IdentityWebApplicationFactory<Program> factory)
     {
         var unique = Guid.NewGuid().ToString("N");
 
+        var tenantName = $"FinTrack-{unique}";
+        var adminEmail = $"emily-{unique}@test.com";
+
         var request = new
         {
-            tenantName = $"FinTrack-{unique}",
+            tenantName,
             adminName = "Emily",
-            adminEmail = $"emily-{unique}@test.com",
+            adminEmail,
             adminPassword = "Password123!"
         };
 
@@ -38,19 +41,18 @@ public class TenantRegisterTests(IdentityWebApplicationFactory<Program> factory)
         using var scope = _factory.Services.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<ApplicationIdentityDbContext>();
 
-        db.Tenants.Count().Should().Be(1);
-        db.Users.Count().Should().Be(1);
-        db.TenantMemberships.Count().Should().Be(1);
+        var tenant = db.Tenants.SingleOrDefault(x => x.Name == tenantName);
+        tenant.Should().NotBeNull();
 
-        var tenant = db.Tenants.Single();
-        tenant.Name.Should().Be($"FinTrack-{unique}");
+        var user = db.Users.SingleOrDefault(x => x.Email == adminEmail);
+        user.Should().NotBeNull();
 
-        var user = db.Users.Single();
-        user.Email.Should().Be($"emily-{unique}@test.com");
+        var membership = db.TenantMemberships.SingleOrDefault(x =>
+            x.TenantId == tenant!.Id &&
+            x.UserId == user!.Id);
 
-        var membership = db.TenantMemberships.Single();
-        membership.TenantId.Should().Be(tenant.Id);
-        membership.UserId.Should().Be(user.Id);
+        membership.Should().NotBeNull();
+        membership!.IsActive.Should().BeTrue();
     }
 
     [Fact]

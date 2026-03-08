@@ -466,7 +466,7 @@ public class TenantInvitationServiceTests
             .ReturnsAsync(user);
 
         _membershipRepoMock
-            .Setup(x => x.GetMembershipAsync(invitation.TenantId, user.Id, It.IsAny<CancellationToken>()))
+            .Setup(x => x.GetAnyMembershipAsync(invitation.TenantId, user.Id, It.IsAny<CancellationToken>()))
             .ReturnsAsync(new TenantMembership
             {
                 TenantId = invitation.TenantId,

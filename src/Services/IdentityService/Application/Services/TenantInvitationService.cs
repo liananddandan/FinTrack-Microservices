@@ -300,7 +300,6 @@ public class TenantInvitationService(
                     "User already belongs to this tenant.");
             }
 
-            // 重新激活旧 membership
             existingMembership.IsActive = true;
             existingMembership.LeftAt = null;
             existingMembership.JoinedAt = DateTime.UtcNow;

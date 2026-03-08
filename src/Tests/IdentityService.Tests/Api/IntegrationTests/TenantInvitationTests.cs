@@ -48,8 +48,9 @@ public class TenantInvitationTests : IClassFixture<IdentityWebApplicationFactory
         const string password = "Password123!";
         var tenantName = $"Tenant-{unique}";
 
-        await SeedAdminAndUserAsync(adminEmail, memberEmail, password, tenantName);
+        var tenantPublicId = await SeedAdminAndUserAsync(adminEmail, memberEmail, password, tenantName);
 
+        // login -> account token
         var loginResponse = await _client.PostAsJsonAsync("/api/account/login", new
         {
             email = adminEmail,
@@ -63,10 +64,30 @@ public class TenantInvitationTests : IClassFixture<IdentityWebApplicationFactory
         loginResult.Should().NotBeNull();
         loginResult!.Data.Should().NotBeNull();
         loginResult.Data!.Tokens.Should().NotBeNull();
+        loginResult.Data.Tokens.AccessToken.Should().NotBeNullOrWhiteSpace();
 
         _client.DefaultRequestHeaders.Authorization =
             new AuthenticationHeaderValue("Bearer", loginResult.Data.Tokens.AccessToken);
 
+        // select tenant -> tenant token
+        var selectTenantResponse = await _client.PostAsJsonAsync(
+            "/api/account/select-tenant",
+            new
+            {
+                tenantPublicId
+            });
+
+        var selectTenantBody = await selectTenantResponse.Content.ReadAsStringAsync();
+        selectTenantResponse.StatusCode.Should().Be(HttpStatusCode.OK, selectTenantBody);
+
+        var selectTenantResult = await selectTenantResponse.Content.ReadFromJsonAsync<ApiResponse<string>>();
+        selectTenantResult.Should().NotBeNull();
+        selectTenantResult!.Data.Should().NotBeNullOrWhiteSpace();
+
+        _client.DefaultRequestHeaders.Authorization =
+            new AuthenticationHeaderValue("Bearer", selectTenantResult.Data);
+
+        // create invitation with tenant token
         var request = new
         {
             email = memberEmail,
@@ -87,7 +108,7 @@ public class TenantInvitationTests : IClassFixture<IdentityWebApplicationFactory
         invitation.Role.Should().Be(TenantRole.Member);
     }
 
-    private async Task SeedAdminAndUserAsync(
+    private async Task<string> SeedAdminAndUserAsync(
         string adminEmail,
         string memberEmail,
         string password,
@@ -101,6 +122,7 @@ public class TenantInvitationTests : IClassFixture<IdentityWebApplicationFactory
         {
             Name = tenantName
         };
+
         db.Tenants.Add(tenant);
         await db.SaveChangesAsync();
 
@@ -120,8 +142,13 @@ public class TenantInvitationTests : IClassFixture<IdentityWebApplicationFactory
             JwtVersion = 1
         };
 
-        (await userManager.CreateAsync(admin, password)).Succeeded.Should().BeTrue();
-        (await userManager.CreateAsync(member, password)).Succeeded.Should().BeTrue();
+        var createAdminResult = await userManager.CreateAsync(admin, password);
+        createAdminResult.Succeeded.Should().BeTrue(
+            string.Join(", ", createAdminResult.Errors.Select(x => x.Description)));
+
+        var createMemberResult = await userManager.CreateAsync(member, password);
+        createMemberResult.Succeeded.Should().BeTrue(
+            string.Join(", ", createMemberResult.Errors.Select(x => x.Description)));
 
         db.TenantMemberships.Add(new TenantMembership
         {
@@ -133,6 +160,8 @@ public class TenantInvitationTests : IClassFixture<IdentityWebApplicationFactory
         });
 
         await db.SaveChangesAsync();
+
+        return tenant.PublicId.ToString();
     }
 
     private sealed class ApiResponse<T>

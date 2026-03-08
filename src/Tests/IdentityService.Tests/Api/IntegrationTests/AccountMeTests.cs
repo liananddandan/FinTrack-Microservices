@@ -7,6 +7,7 @@ using IdentityService.Domain.Enums;
 using IdentityService.Infrastructure.Persistence;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.DependencyInjection;
+using SharedKernel.Common.DTOs.Auth;
 
 namespace IdentityService.Tests.Api.IntegrationTests;
 
@@ -55,7 +56,7 @@ public class AccountMeTests : IClassFixture<IdentityWebApplicationFactory<Progra
         loginResult!.Data.Should().NotBeNull();
 
         _client.DefaultRequestHeaders.Authorization =
-            new AuthenticationHeaderValue("Bearer", loginResult.Data!.AccessToken);
+            new AuthenticationHeaderValue("Bearer", loginResult.Data!.Tokens.AccessToken);
 
         var response = await _client.GetAsync("/api/account/me");
         var body = await response.Content.ReadAsStringAsync();
@@ -139,8 +140,7 @@ public class AccountMeTests : IClassFixture<IdentityWebApplicationFactory<Progra
 
     private sealed class UserLoginResultTestDto
     {
-        public string AccessToken { get; set; } = string.Empty;
-        public string RefreshToken { get; set; } = string.Empty;
+        public JwtTokenPair Tokens { get; set; }
         public List<LoginMembershipTestDto> Memberships { get; set; } = new();
     }
 

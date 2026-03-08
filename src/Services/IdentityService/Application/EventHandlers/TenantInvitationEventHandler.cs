@@ -30,8 +30,21 @@ public class TenantInvitationEventHandler(
 
         var invitation = invitationResult.Data;
 
-        var invitationToken = jwtTokenService.GenerateInvitationToken(invitation);
-
+        string invitationToken;
+        
+        try
+        {
+            invitationToken = jwtTokenService.GenerateInvitationToken(invitation);
+        }
+        catch (Exception ex)
+        {
+            logger.LogWarning(
+                ex,
+                "Could not generate invitation token for invitation {InvitationPublicId}.",
+                notification.InvitationPublicId);
+            return;
+        }
+        
         if (string.IsNullOrWhiteSpace(invitationToken))
         {
             logger.LogWarning(

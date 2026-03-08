@@ -7,6 +7,7 @@ on:
       - feature/identity-service
       - feature/transaction-service
       - feature/gateway-service
+      - feature/web-portal
   pull_request:
     branches:
       - main

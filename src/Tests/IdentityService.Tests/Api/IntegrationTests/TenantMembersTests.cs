@@ -39,8 +39,9 @@ public class TenantMembersTests : IClassFixture<IdentityWebApplicationFactory<Pr
         const string password = "Password123!";
         var tenantName = $"Tenant-{unique}";
 
-        await SeedTenantWithTwoMembersAsync(adminEmail, password, tenantName);
+        var tenantPublicId = await SeedTenantWithTwoMembersAsync(adminEmail, password, tenantName);
 
+        // login -> account token
         var loginResponse = await _client.PostAsJsonAsync("/api/account/login", new
         {
             email = adminEmail,
@@ -59,6 +60,25 @@ public class TenantMembersTests : IClassFixture<IdentityWebApplicationFactory<Pr
         _client.DefaultRequestHeaders.Authorization =
             new AuthenticationHeaderValue("Bearer", loginResult.Data.Tokens.AccessToken);
 
+        // select tenant -> tenant token
+        var selectTenantResponse = await _client.PostAsJsonAsync(
+            "/api/account/select-tenant",
+            new
+            {
+                tenantPublicId
+            });
+
+        var selectTenantBody = await selectTenantResponse.Content.ReadAsStringAsync();
+        selectTenantResponse.StatusCode.Should().Be(HttpStatusCode.OK, selectTenantBody);
+
+        var selectTenantResult = await selectTenantResponse.Content.ReadFromJsonAsync<ApiResponse<string>>();
+        selectTenantResult.Should().NotBeNull();
+        selectTenantResult!.Data.Should().NotBeNullOrWhiteSpace();
+
+        _client.DefaultRequestHeaders.Authorization =
+            new AuthenticationHeaderValue("Bearer", selectTenantResult.Data);
+
+        // tenant api
         var response = await _client.GetAsync("/api/tenant/members");
         var body = await response.Content.ReadAsStringAsync();
 
@@ -76,12 +96,10 @@ public class TenantMembersTests : IClassFixture<IdentityWebApplicationFactory<Pr
     [Fact]
     public async Task GetTenantMembers_Should_Return_Empty_List_When_Tenant_Has_No_Members()
     {
-        // 这个场景理论上在当前系统不太自然，因为能登录就至少自己有 membership。
-        // 所以 V1 可先不写。如果一定要写，通常要构造特殊 token / 特殊数据。
         await Task.CompletedTask;
     }
 
-    private async Task SeedTenantWithTwoMembersAsync(
+    private async Task<string> SeedTenantWithTwoMembersAsync(
         string adminEmail,
         string password,
         string tenantName)
@@ -106,20 +124,21 @@ public class TenantMembersTests : IClassFixture<IdentityWebApplicationFactory<Pr
             JwtVersion = 1
         };
 
-        var memberEmail = $"member-{Guid.NewGuid():N}@test.com";
         var member = new ApplicationUser
         {
-            UserName = memberEmail,
-            Email = memberEmail,
+            UserName = $"member-{Guid.NewGuid():N}@test.com",
+            Email = $"member-{Guid.NewGuid():N}@test.com",
             EmailConfirmed = true,
             JwtVersion = 1
         };
 
-        var adminCreateResult = await userManager.CreateAsync(admin, password);
-        adminCreateResult.Succeeded.Should().BeTrue(string.Join(", ", adminCreateResult.Errors.Select(e => e.Description)));
+        var createAdminResult = await userManager.CreateAsync(admin, password);
+        createAdminResult.Succeeded.Should().BeTrue(
+            string.Join(", ", createAdminResult.Errors.Select(x => x.Description)));
 
-        var memberCreateResult = await userManager.CreateAsync(member, password);
-        memberCreateResult.Succeeded.Should().BeTrue(string.Join(", ", memberCreateResult.Errors.Select(e => e.Description)));
+        var createMemberResult = await userManager.CreateAsync(member, password);
+        createMemberResult.Succeeded.Should().BeTrue(
+            string.Join(", ", createMemberResult.Errors.Select(x => x.Description)));
 
         db.TenantMemberships.AddRange(
             new TenantMembership
@@ -140,6 +159,8 @@ public class TenantMembersTests : IClassFixture<IdentityWebApplicationFactory<Pr
             });
 
         await db.SaveChangesAsync();
+
+        return tenant.PublicId.ToString();
     }
 
     private sealed class ApiResponse<T>

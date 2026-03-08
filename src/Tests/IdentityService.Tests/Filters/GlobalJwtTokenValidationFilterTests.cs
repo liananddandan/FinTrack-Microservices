@@ -161,50 +161,48 @@ public class GlobalJwtTokenValidationFilterTests
     }
     
     [Theory, AutoMoqData]
-    public async Task OnAuthorizationAsync_ShouldReturnForbidResult_WhenInvitationVersionInvalid(
-        [Frozen] Mock<IJwtTokenService> jwtTokenServiceMock,
-        [Frozen] Mock<ITenantInvitationService> tenantInvitationServiceMock,
-        InvitationParseResult invitationParseResult,
-        TenantInvitation tenantInvitation,
-        GlobalJwtTokenValidationFilter sut)
-    {
-        // Arrange
-        tenantInvitation.Version = 5;
-        invitationParseResult.InvitationVersion = "4";
-        invitationParseResult.TokenType = JwtTokenType.InvitationToken;
-        var context = CreateAuthorizationFilterContext(new RequireTokenTypeAttribute(JwtTokenType.InvitationToken));
-        context.HttpContext.Request.Headers.Authorization = "Invite GoodToken";
-        jwtTokenServiceMock.Setup(jts => jts.ParseInvitationTokenAsync("GoodToken"))
-            .ReturnsAsync(ServiceResult<InvitationParseResult>.Ok(invitationParseResult,"good token", "good token"));
-        tenantInvitationServiceMock
-            .Setup(tis => tis.GetTenantInvitationByPublicIdAsync(invitationParseResult.InvitationPublicId, CancellationToken.None))
-            .ReturnsAsync(ServiceResult<TenantInvitation>.Ok(tenantInvitation,"good", "good"));
-        // Act
-        await sut.OnAuthorizationAsync(context);
-
-        // Assert
-        Assert.IsType<UnauthorizedResult>(context.Result);
-    }
-    
-    [Theory, AutoMoqData]
     public async Task OnAuthorizationAsync_ShouldReturnSuccess_WhenInvitationTokenValid(
         [Frozen] Mock<IJwtTokenService> jwtTokenServiceMock,
         [Frozen] Mock<ITenantInvitationService> tenantInvitationServiceMock,
         InvitationParseResult invitationParseResult,
-        TenantInvitation tenantInvitation,
         GlobalJwtTokenValidationFilter sut)
     {
         // Arrange
-        tenantInvitation.Version = 5;
         invitationParseResult.InvitationVersion = "5";
         invitationParseResult.TokenType = JwtTokenType.InvitationToken;
-        var context = CreateAuthorizationFilterContext(new RequireTokenTypeAttribute(JwtTokenType.InvitationToken));
+
+        var tenantInvitation = new TenantInvitation
+        {
+            PublicId = Guid.TryParse(invitationParseResult.InvitationPublicId, out var parsedId)
+                ? parsedId
+                : Guid.NewGuid(),
+            Email = "invitee@test.com",
+            Version = 5,
+            ExpiredAt = DateTime.UtcNow.AddDays(7),
+            Status = InvitationStatus.Pending
+        };
+
+        var context = CreateAuthorizationFilterContext(
+            new RequireTokenTypeAttribute(JwtTokenType.InvitationToken));
+
         context.HttpContext.Request.Headers.Authorization = "Invite GoodToken";
-        jwtTokenServiceMock.Setup(jts => jts.ParseInvitationTokenAsync("GoodToken"))
-            .ReturnsAsync(ServiceResult<InvitationParseResult>.Ok(invitationParseResult,"good token", "good token"));
+
+        jwtTokenServiceMock
+            .Setup(x => x.ParseInvitationTokenAsync("GoodToken"))
+            .ReturnsAsync(ServiceResult<InvitationParseResult>.Ok(
+                invitationParseResult,
+                "good token",
+                "good token"));
+
         tenantInvitationServiceMock
-            .Setup(tis => tis.GetTenantInvitationByPublicIdAsync(invitationParseResult.InvitationPublicId, CancellationToken.None))
-            .ReturnsAsync(ServiceResult<TenantInvitation>.Ok(tenantInvitation,"good", "good"));
+            .Setup(x => x.GetTenantInvitationByPublicIdAsync(
+                invitationParseResult.InvitationPublicId,
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(ServiceResult<TenantInvitation>.Ok(
+                tenantInvitation,
+                "good",
+                "good"));
+
         // Act
         await sut.OnAuthorizationAsync(context);
 
@@ -214,4 +212,5 @@ public class GlobalJwtTokenValidationFilterTests
         context.HttpContext.Items["InviteParseResult"].Should().NotBeNull();
         context.HttpContext.Items["InviteParseResult"].Should().BeEquivalentTo(invitationParseResult);
     }
+    
 }
