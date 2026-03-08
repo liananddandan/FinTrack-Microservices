@@ -81,7 +81,7 @@ jobs:
         run: dotnet restore
 
       - name: Build solution
-        run: dotnet build --no-restore
+        run: dotnet build --no-restore --configuration Release
 
       - name: Create required databases
         run: |
@@ -98,10 +98,4 @@ jobs:
             -- --connectionString "server=127.0.0.1;port=3307;database=identity_test;user=root;password=123456"
 
       - name: Run tests
-        run: |
-          set -e
-
-          dotnet test src/Tests/NotificationService.Tests/NotificationService.Tests.csproj --configuration Release
-          dotnet test src/Tests/IdentityService.Tests/IdentityService.Tests.csproj --configuration Release
-          dotnet test src/Tests/TransactionService.Tests/TransactionService.Tests.csproj --configuration Release
-          dotnet test src/Tests/GatewayService.Tests/GatewayService.Tests.csproj --configuration Release
+        run: dotnet test --configuration Release
