@@ -101,7 +101,7 @@ jobs:
         run: |
           set -e
 
-          dotnet test src/Tests/NotificationService.Tests/NotificationService.Tests.csproj --no-build --configuration Release
-          dotnet test src/Tests/IdentityService.Tests/IdentityService.Tests.csproj --no-build --configuration Release
-          dotnet test src/Tests/TransactionService.Tests/TransactionService.Tests.csproj --no-build --configuration Release
-          dotnet test src/Tests/GatewayService.Tests/GatewayService.Tests.csproj --no-build --configuration Release
+          dotnet test src/Tests/NotificationService.Tests/NotificationService.Tests.csproj --configuration Release
+          dotnet test src/Tests/IdentityService.Tests/IdentityService.Tests.csproj --configuration Release
+          dotnet test src/Tests/TransactionService.Tests/TransactionService.Tests.csproj --configuration Release
+          dotnet test src/Tests/GatewayService.Tests/GatewayService.Tests.csproj --configuration Release
