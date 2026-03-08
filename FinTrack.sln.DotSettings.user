@@ -39,12 +39,14 @@
 	<s:String x:Key="/Default/CodeInspection/ExcludedFiles/FilesAndFoldersToSkip2/=7020124F_002D9FFC_002D4AC3_002D8F3D_002DAAB8E0240759_002Ff_003AReturnsExtensions_002Ecs_002Fl_003A_002E_002E_003F_002E_002E_003F_002E_002E_003FLibrary_003FApplication_0020Support_003FJetBrains_003FRider2024_002E3_003Fresharper_002Dhost_003FSourcesCache_003F2defb41d87a48ff143adc586b639ba3a80759c1971fd26591e7d4249a31b7c_003FReturnsExtensions_002Ecs/@EntryIndexedValue">ForceIncluded</s:String>
 	<s:String x:Key="/Default/CodeInspection/ExcludedFiles/FilesAndFoldersToSkip2/=7020124F_002D9FFC_002D4AC3_002D8F3D_002DAAB8E0240759_002Ff_003ARoleManager_002Ecs_002Fl_003A_002E_002E_003F_002E_002E_003F_002E_002E_003FLibrary_003FApplication_0020Support_003FJetBrains_003FRider2024_002E3_003Fresharper_002Dhost_003FSourcesCache_003F4c2f36bb24b4a6a0bab2298023c8c8e87198654bd5240582784f93bfaa1d04c_003FRoleManager_002Ecs/@EntryIndexedValue">ForceIncluded</s:String>
 	<s:String x:Key="/Default/CodeInspection/ExcludedFiles/FilesAndFoldersToSkip2/=7020124F_002D9FFC_002D4AC3_002D8F3D_002DAAB8E0240759_002Ff_003ARuntimeHelpers_002ECoreCLR_002Ecs_002Fl_003A_002E_002E_003F_002E_002E_003F_002E_002E_003FLibrary_003FApplication_0020Support_003FJetBrains_003FRider2024_002E3_003Fresharper_002Dhost_003FSourcesCache_003F5ef9e37e2f99ef2688a1586afed1cff6eef912a11aa9b20a56943a255a6e6b_003FRuntimeHelpers_002ECoreCLR_002Ecs/@EntryIndexedValue">ForceIncluded</s:String>
+	<s:String x:Key="/Default/CodeInspection/ExcludedFiles/FilesAndFoldersToSkip2/=7020124F_002D9FFC_002D4AC3_002D8F3D_002DAAB8E0240759_002Ff_003ATestInvoker_002Ecs_002Fl_003A_002E_002E_003F_002E_002E_003F_002E_002E_003FLibrary_003FApplication_0020Support_003FJetBrains_003FRider2024_002E3_003Fresharper_002Dhost_003FSourcesCache_003F5e14a4e27990972fa4ae94975603bd298aaf328ee083c03b10569ee4724d57_003FTestInvoker_002Ecs/@EntryIndexedValue">ForceIncluded</s:String>
 	<s:String x:Key="/Default/CodeInspection/ExcludedFiles/FilesAndFoldersToSkip2/=7020124F_002D9FFC_002D4AC3_002D8F3D_002DAAB8E0240759_002Ff_003ATimeSpan_002Ecs_002Fl_003A_002E_002E_003F_002E_002E_003F_002E_002E_003FLibrary_003FApplication_0020Support_003FJetBrains_003FRider2024_002E3_003Fresharper_002Dhost_003FSourcesCache_003Fbeddeff37c98b229d327244022153ac805ac655dfbdd82cef21632e916df678_003FTimeSpan_002Ecs/@EntryIndexedValue">ForceIncluded</s:String>
 	<s:String x:Key="/Default/CodeInspection/ExcludedFiles/FilesAndFoldersToSkip2/=7020124F_002D9FFC_002D4AC3_002D8F3D_002DAAB8E0240759_002Ff_003ATokenOptions_002Ecs_002Fl_003A_002E_002E_003F_002E_002E_003F_002E_002E_003FLibrary_003FApplication_0020Support_003FJetBrains_003FRider2024_002E3_003Fresharper_002Dhost_003FSourcesCache_003F9eaf4b91d3dbcc674c69b263a1551d2451e1551419f55134586d98f0b4f2fb_003FTokenOptions_002Ecs/@EntryIndexedValue">ForceIncluded</s:String>
 	<s:String x:Key="/Default/CodeInspection/ExcludedFiles/FilesAndFoldersToSkip2/=7020124F_002D9FFC_002D4AC3_002D8F3D_002DAAB8E0240759_002Ff_003ATransactionStatus_002Ecs_002Fl_003A_002E_002E_003F_002E_002E_003F_002E_002E_003FLibrary_003FApplication_0020Support_003FJetBrains_003FRider2024_002E3_003Fresharper_002Dhost_003FDecompilerCache_003Fdecompiler_003F2cafd407817543678a052d69ca420b2460e00_003F48_003F302ba436_003FTransactionStatus_002Ecs/@EntryIndexedValue">ForceIncluded</s:String>
 	<s:String x:Key="/Default/CodeInspection/ExcludedFiles/FilesAndFoldersToSkip2/=7020124F_002D9FFC_002D4AC3_002D8F3D_002DAAB8E0240759_002Ff_003AUnauthorizedResult_002Ecs_002Fl_003A_002E_002E_003F_002E_002E_003F_002E_002E_003FLibrary_003FApplication_0020Support_003FJetBrains_003FRider2024_002E3_003Fresharper_002Dhost_003FSourcesCache_003F848c629dd035d9535248fad9944522c1b9cfaa290d4c1af25857955bc955ac8_003FUnauthorizedResult_002Ecs/@EntryIndexedValue">ForceIncluded</s:String>
 	<s:String x:Key="/Default/CodeInspection/ExcludedFiles/FilesAndFoldersToSkip2/=7020124F_002D9FFC_002D4AC3_002D8F3D_002DAAB8E0240759_002Ff_003AUserManager_002Ecs_002Fl_003A_002E_002E_003F_002E_002E_003F_002E_002E_003FLibrary_003FApplication_0020Support_003FJetBrains_003FRider2024_002E3_003Fresharper_002Dhost_003FSourcesCache_003F1622b8f95d27187bc1fb39bac49bd64e928773df4fda6fcf6271680be54a2_003FUserManager_002Ecs/@EntryIndexedValue">ForceIncluded</s:String>
 	<s:String x:Key="/Default/CodeInspection/ExcludedFiles/FilesAndFoldersToSkip2/=7020124F_002D9FFC_002D4AC3_002D8F3D_002DAAB8E0240759_002Ff_003AWebApplicationFactory_002Ecs_002Fl_003A_002E_002E_003F_002E_002E_003F_002E_002E_003FLibrary_003FApplication_0020Support_003FJetBrains_003FRider2024_002E3_003Fresharper_002Dhost_003FSourcesCache_003F255f916e5a2d424ef01b291afc761e049b367614440bf4b216824ec479064b_003FWebApplicationFactory_002Ecs/@EntryIndexedValue">ForceIncluded</s:String>
+	<s:String x:Key="/Default/CodeInspection/ExcludedFiles/FilesAndFoldersToSkip2/=7020124F_002D9FFC_002D4AC3_002D8F3D_002DAAB8E0240759_002Ff_003AXunitException_002Ecs_002Fl_003A_002E_002E_003F_002E_002E_003F_002E_002E_003FLibrary_003FApplication_0020Support_003FJetBrains_003FRider2024_002E3_003Fresharper_002Dhost_003FSourcesCache_003F32d0fc351fcbc05e85edf1ea9697248d195b86de1aaa7ecba598f939c25ee9d_003FXunitException_002Ecs/@EntryIndexedValue">ForceIncluded</s:String>
 	<s:String x:Key="/Default/Environment/UnitTesting/UnitTestSessionStore/Sessions/=b0d5d89b_002D67c6_002D4406_002D9b3e_002Dd14c556b0501/@EntryIndexedValue">&lt;SessionState ContinuousTestingMode="0" Name="ReceiveInviteAsync_ShouldReturnSuccess" xmlns="urn:schemas-jetbrains-com:jetbrains-ut-session"&gt;
   &lt;TestAncestor&gt;
     &lt;TestId&gt;xUnit::634E2A0D-EE3E-4F9F-9F60-D97B140815D8::net9.0::IdentityService.Tests.Controllers.TenantControllerTests.ReceiveInviteAsync_ShouldReturnSuccess&lt;/TestId&gt;
@@ -80,22 +82,31 @@
     &lt;TestId&gt;xUnit::BF21F950-4CD4-4585-A52F-2438B1FA1FF1::net9.0::GatewayService.Tests.Middlewares.BasicJwtTokenValidationMiddlewareTests.Invoke_WithInvalidJwtTokenType_ReturnUnauthorized&lt;/TestId&gt;
     &lt;TestId&gt;xUnit::BF21F950-4CD4-4585-A52F-2438B1FA1FF1::net9.0::GatewayService.Tests.Middlewares.BasicJwtTokenValidationMiddlewareTests&lt;/TestId&gt;
     &lt;TestId&gt;xUnit::634E2A0D-EE3E-4F9F-9F60-D97B140815D8::net9.0::IdentityService.Tests.Services.UserDomainServiceTests.IncreaseUserJwtVersionInnerAsync_Should_Invoke_Repo_Method&lt;/TestId&gt;
+    &lt;TestId&gt;xUnit::634E2A0D-EE3E-4F9F-9F60-D97B140815D8::net9.0::IdentityService.Tests.Services.TenantServiceTests&lt;/TestId&gt;
+    &lt;TestId&gt;xUnit::634E2A0D-EE3E-4F9F-9F60-D97B140815D8::net9.0::IdentityService.Tests.Controllers.TenantControllerTests&lt;/TestId&gt;
+    &lt;TestId&gt;xUnit::634E2A0D-EE3E-4F9F-9F60-D97B140815D8::net9.0::IdentityService.Tests.IntegrationTests.TenantControllerTests&lt;/TestId&gt;
+    &lt;TestId&gt;xUnit::634E2A0D-EE3E-4F9F-9F60-D97B140815D8::net9.0::IdentityService.Tests.Services.AccountServiceTests&lt;/TestId&gt;
+    &lt;TestId&gt;xUnit::634E2A0D-EE3E-4F9F-9F60-D97B140815D8::net9.0::IdentityService.Tests.IntegrationTests.AccountControllerTests&lt;/TestId&gt;
+    &lt;TestId&gt;xUnit::634E2A0D-EE3E-4F9F-9F60-D97B140815D8::net9.0::IdentityService.Tests.Services.UserAppServiceTests&lt;/TestId&gt;
+    &lt;TestId&gt;xUnit::634E2A0D-EE3E-4F9F-9F60-D97B140815D8::net9.0::IdentityService.Tests.IntegrationTests.AccountMeTests&lt;/TestId&gt;
+    &lt;TestId&gt;xUnit::634E2A0D-EE3E-4F9F-9F60-D97B140815D8::net9.0::IdentityService.Tests.IntegrationTests.RefreshTokenTests&lt;/TestId&gt;
+    &lt;TestId&gt;xUnit::634E2A0D-EE3E-4F9F-9F60-D97B140815D8::net9.0::IdentityService.Tests.IntegrationTests.AccountRegisterTests&lt;/TestId&gt;
+    &lt;TestId&gt;xUnit::634E2A0D-EE3E-4F9F-9F60-D97B140815D8::net9.0::IdentityService.Tests.IntegrationTests.TenantMembersTests&lt;/TestId&gt;
+    &lt;TestId&gt;xUnit::634E2A0D-EE3E-4F9F-9F60-D97B140815D8::net9.0::IdentityService.Tests.EventHandlers.TenantInvitationEventHandlerTests&lt;/TestId&gt;
+    &lt;TestId&gt;xUnit::634E2A0D-EE3E-4F9F-9F60-D97B140815D8::net9.0::IdentityService.Tests.Application.EventHandlers.TenantInvitationEventHandlerTests&lt;/TestId&gt;
+    &lt;TestId&gt;xUnit::634E2A0D-EE3E-4F9F-9F60-D97B140815D8::net9.0::IdentityService.Tests.Application.Services.TenantInvitationServiceTests&lt;/TestId&gt;
+    &lt;TestId&gt;xUnit::634E2A0D-EE3E-4F9F-9F60-D97B140815D8::net9.0::IdentityService.Tests.Api.IntegrationTests.TenantInvitationTests&lt;/TestId&gt;
+    &lt;TestId&gt;xUnit::AF11EA61-0F3E-4A44-9EC4-95B27AF31D11::net9.0::NotificationService.Tests.Handlers.TenantInvitationEmailEventHandlerTests&lt;/TestId&gt;
+    &lt;TestId&gt;xUnit::634E2A0D-EE3E-4F9F-9F60-D97B140815D8::net9.0::IdentityService.Tests.Api.IntegrationTests.TenantInvitationResolveAcceptTests&lt;/TestId&gt;
+    &lt;TestId&gt;xUnit::634E2A0D-EE3E-4F9F-9F60-D97B140815D8::net9.0::IdentityService.Tests.Api.IntegrationTests.TenantInvitationListTests&lt;/TestId&gt;
+    &lt;TestId&gt;xUnit::634E2A0D-EE3E-4F9F-9F60-D97B140815D8::net9.0::IdentityService.Tests.IntegrationTests.TenantInvitationResendTests&lt;/TestId&gt;
+    &lt;TestId&gt;xUnit::634E2A0D-EE3E-4F9F-9F60-D97B140815D8::net9.0::IdentityService.Tests.Application.Services.AccountServiceTests&lt;/TestId&gt;
+    &lt;TestId&gt;xUnit::634E2A0D-EE3E-4F9F-9F60-D97B140815D8::net9.0::IdentityService.Tests.Api.IntegrationTests.AccountSelectTenantTests&lt;/TestId&gt;
+    &lt;TestId&gt;xUnit::634E2A0D-EE3E-4F9F-9F60-D97B140815D8::net9.0::IdentityService.Tests.Application.Services.TenantServiceTests&lt;/TestId&gt;
   &lt;/TestAncestor&gt;
 &lt;/SessionState&gt;</s:String>
 	<s:String x:Key="/Default/Environment/UnitTesting/UnitTestSessionStore/Sessions/=d845880b_002D3308_002D4a2a_002Da74e_002Ddcd8de9101b1/@EntryIndexedValue">&lt;SessionState ContinuousTestingMode="0" IsActive="True" Name="InviteUserAsync_ShouldReturnSuccess" xmlns="urn:schemas-jetbrains-com:jetbrains-ut-session"&gt;
-  &lt;Or&gt;
-    &lt;Project Location="/Users/lichen/Documents/vsCode/FinTrack-Microservices/Tests/IdentityService.Tests" Presentation="&amp;lt;Tests&amp;gt;\&amp;lt;IdentityService.Tests&amp;gt;" /&gt;
-    &lt;TestAncestor&gt;
-      &lt;TestId&gt;xUnit::6C190E35-19C4-4C14-8449-9AC7178ABCE2::net9.0::TransactionService.Tests.Services.TransactionServiceTests.QueryTransactionByPageAsync_ShouldReturnEmpty_WhenTransactionNotExist&lt;/TestId&gt;
-      &lt;TestId&gt;xUnit::6C190E35-19C4-4C14-8449-9AC7178ABCE2::net9.0::TransactionService.Tests.Services.TransactionServiceTests.QueryTransactionByPageAsync_ShouldReturnResult_WhenTransactionsExist&lt;/TestId&gt;
-      &lt;TestId&gt;xUnit::6C190E35-19C4-4C14-8449-9AC7178ABCE2::net9.0::TransactionService.Tests.Controllers.TransactionControllerTests.GetTransactionByPageAsync_ShouldQueryResult&lt;/TestId&gt;
-      &lt;TestId&gt;xUnit::6C190E35-19C4-4C14-8449-9AC7178ABCE2::net9.0::TransactionService.Tests.Repositories.TransactionRepoTests.GetTransactionsByPageAsync_ShouldReturnNull_IfNoExistInPublicIdOrTenantId&lt;/TestId&gt;
-      &lt;TestId&gt;xUnit::BF21F950-4CD4-4585-A52F-2438B1FA1FF1::net9.0::GatewayService.Tests.Middlewares.BasicJwtTokenValidationMiddlewareTests.Invoke_WithEmptyJwtToken_CallsNextMiddleware&lt;/TestId&gt;
-    &lt;/TestAncestor&gt;
-    &lt;Project Location="/Users/lichen/Documents/vsCode/FinTrack-Microservices/Tests/NotificationService.Tests" Presentation="&amp;lt;Tests&amp;gt;\&amp;lt;NotificationService.Tests&amp;gt;" /&gt;
-    &lt;Project Location="/Users/lichen/Documents/vsCode/FinTrack-Microservices/Tests/TransactionService.Tests" Presentation="&amp;lt;Tests&amp;gt;\&amp;lt;TransactionService.Tests&amp;gt;" /&gt;
-    &lt;Project Location="/Users/lichen/Documents/vsCode/FinTrack-Microservices/Tests/GatewayService.Tests" Presentation="&amp;lt;Tests&amp;gt;\&amp;lt;GatewayService.Tests&amp;gt;" /&gt;
-  &lt;/Or&gt;
+  &lt;Project Location="/Users/lichen/Documents/vsCode/FinTrack-Microservices" Presentation="&amp;lt;Tests&amp;gt;" /&gt;
 &lt;/SessionState&gt;</s:String>
 	
 	
