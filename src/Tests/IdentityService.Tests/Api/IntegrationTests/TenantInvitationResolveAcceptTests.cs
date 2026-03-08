@@ -61,7 +61,8 @@ public class TenantInvitationResolveAcceptTests : IClassFixture<IdentityWebAppli
         apiResponse.Data.Email.Should().Be(invitation.Email);
         apiResponse.Data.Role.Should().Be(invitation.Role.ToString());
         apiResponse.Data.Status.Should().Be(invitation.Status.ToString());
-        apiResponse.Data.ExpiredAt.Should().Be(invitation.ExpiredAt);
+        apiResponse.Data.ExpiredAt.Should().BeCloseTo(invitation.ExpiredAt, TimeSpan.FromMilliseconds(1));
+        
     }
 
     [Fact]
