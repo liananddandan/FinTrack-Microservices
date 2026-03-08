@@ -106,25 +106,7 @@
   &lt;/TestAncestor&gt;
 &lt;/SessionState&gt;</s:String>
 	<s:String x:Key="/Default/Environment/UnitTesting/UnitTestSessionStore/Sessions/=d845880b_002D3308_002D4a2a_002Da74e_002Ddcd8de9101b1/@EntryIndexedValue">&lt;SessionState ContinuousTestingMode="0" IsActive="True" Name="InviteUserAsync_ShouldReturnSuccess" xmlns="urn:schemas-jetbrains-com:jetbrains-ut-session"&gt;
-  &lt;Or&gt;
-    &lt;Project Location="/Users/lichen/Documents/vsCode/FinTrack-Microservices/Tests/IdentityService.Tests" Presentation="&amp;lt;Tests&amp;gt;\&amp;lt;IdentityService.Tests&amp;gt;" /&gt;
-    &lt;TestAncestor&gt;
-      &lt;TestId&gt;xUnit::6C190E35-19C4-4C14-8449-9AC7178ABCE2::net9.0::TransactionService.Tests.Services.TransactionServiceTests.QueryTransactionByPageAsync_ShouldReturnEmpty_WhenTransactionNotExist&lt;/TestId&gt;
-      &lt;TestId&gt;xUnit::6C190E35-19C4-4C14-8449-9AC7178ABCE2::net9.0::TransactionService.Tests.Services.TransactionServiceTests.QueryTransactionByPageAsync_ShouldReturnResult_WhenTransactionsExist&lt;/TestId&gt;
-      &lt;TestId&gt;xUnit::6C190E35-19C4-4C14-8449-9AC7178ABCE2::net9.0::TransactionService.Tests.Controllers.TransactionControllerTests.GetTransactionByPageAsync_ShouldQueryResult&lt;/TestId&gt;
-      &lt;TestId&gt;xUnit::6C190E35-19C4-4C14-8449-9AC7178ABCE2::net9.0::TransactionService.Tests.Repositories.TransactionRepoTests.GetTransactionsByPageAsync_ShouldReturnNull_IfNoExistInPublicIdOrTenantId&lt;/TestId&gt;
-      &lt;TestId&gt;xUnit::BF21F950-4CD4-4585-A52F-2438B1FA1FF1::net9.0::GatewayService.Tests.Middlewares.BasicJwtTokenValidationMiddlewareTests.Invoke_WithEmptyJwtToken_CallsNextMiddleware&lt;/TestId&gt;
-      &lt;TestId&gt;xUnit::634E2A0D-EE3E-4F9F-9F60-D97B140815D8::net9.0::IdentityService.Tests.Services.TenantServiceTests&lt;/TestId&gt;
-      &lt;TestId&gt;xUnit::634E2A0D-EE3E-4F9F-9F60-D97B140815D8::net9.0::IdentityService.Tests.Application.Services.TenantServiceTests&lt;/TestId&gt;
-      &lt;TestId&gt;xUnit::634E2A0D-EE3E-4F9F-9F60-D97B140815D8::net9.0::IdentityService.Tests.IntegrationTests.TenantMemberRemoveTests&lt;/TestId&gt;
-      &lt;TestId&gt;xUnit::634E2A0D-EE3E-4F9F-9F60-D97B140815D8::net9.0::IdentityService.Tests.Api.IntegrationTests.TenantMemberRemoveTests&lt;/TestId&gt;
-      &lt;TestId&gt;xUnit::634E2A0D-EE3E-4F9F-9F60-D97B140815D8::net9.0::IdentityService.Tests.Api.IntegrationTests.TenantMemberChangeRoleTests&lt;/TestId&gt;
-    &lt;/TestAncestor&gt;
-    &lt;Project Location="/Users/lichen/Documents/vsCode/FinTrack-Microservices/Tests/NotificationService.Tests" Presentation="&amp;lt;Tests&amp;gt;\&amp;lt;NotificationService.Tests&amp;gt;" /&gt;
-    &lt;Project Location="/Users/lichen/Documents/vsCode/FinTrack-Microservices/Tests/TransactionService.Tests" Presentation="&amp;lt;Tests&amp;gt;\&amp;lt;TransactionService.Tests&amp;gt;" /&gt;
-    &lt;Project Location="/Users/lichen/Documents/vsCode/FinTrack-Microservices/Tests/GatewayService.Tests" Presentation="&amp;lt;Tests&amp;gt;\&amp;lt;GatewayService.Tests&amp;gt;" /&gt;
-    &lt;Project Location="/Users/lichen/Documents/vsCode/FinTrack-Microservices/src/Tests/IdentityService.Tests" Presentation="&amp;lt;Tests&amp;gt;\&amp;lt;IdentityService.Tests&amp;gt;" /&gt;
-  &lt;/Or&gt;
+  &lt;Project Location="/Users/lichen/Documents/vsCode/FinTrack-Microservices" Presentation="&amp;lt;Tests&amp;gt;" /&gt;
 &lt;/SessionState&gt;</s:String>
 	
 	

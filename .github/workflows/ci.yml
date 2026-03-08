@@ -28,7 +28,7 @@ jobs:
           --health-interval=10s
           --health-timeout=5s
           --health-retries=5
-          
+      
       mailhog:
         image: mailhog/mailhog
         ports:
@@ -45,12 +45,12 @@ jobs:
           --health-interval 10s
           --health-timeout 5s
           --health-retries 5
-          
+      
       redis:
         image: redis
         ports:
           - 6379:6379
-          
+    
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -59,13 +59,13 @@ jobs:
         uses: actions/setup-dotnet@v4
         with:
           dotnet-version: 9.0.300
-          
+
       - name: Install dotnet-ef tool
         run: dotnet tool install --global dotnet-ef
 
       - name: Add dotnet tools to PATH
         run: echo "$HOME/.dotnet/tools" >> $GITHUB_PATH
-          
+
       - name: Wait for MySQL to be healthy
         run: |
           for i in {1..30}; do
@@ -82,13 +82,13 @@ jobs:
 
       - name: Build solution
         run: dotnet build --no-restore
-        
+
       - name: Create required databases
         run: |
           mysql -h 127.0.0.1 -P 3307 -uroot -p123456 -e "
             CREATE DATABASE IF NOT EXISTS identity_test;
           "
-          
+
       - name: Apply EF Core migration to identity_test
         run: |
           dotnet ef database update \
@@ -96,6 +96,18 @@ jobs:
             --startup-project src/Services/IdentityService/IdentityService.csproj \
             --context IdentityService.Infrastructure.Persistence.ApplicationIdentityDbContext \
             -- --connectionString "server=127.0.0.1;port=3307;database=identity_test;user=root;password=123456"
-      
+
       - name: Run tests
-        run: dotnet test --no-build --verbosity normal
+        run: |
+          dotnet test \
+            --no-build \
+            --configuration Release \
+            --verbosity minimal \
+            --logger "trx;LogFileName=test-results.trx"
+
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-results
+          path: '**/*.trx'
