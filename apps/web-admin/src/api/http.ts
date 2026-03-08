@@ -24,6 +24,7 @@ export const http = axios.create({
 
 http.interceptors.request.use((config) => {
   const auth = useAuthStore();
+  console.log("tenantAccessToken:", auth.tenantAccessToken);
 
   if (auth.tenantAccessToken) {
     config.headers.Authorization = `Bearer ${auth.tenantAccessToken}`;

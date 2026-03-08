@@ -2,6 +2,7 @@ using AutoFixture;
 using FluentAssertions;
 using IdentityService.Application.Common.DTOs;
 using IdentityService.Application.Services;
+using IdentityService.Application.Services.Interfaces;
 using IdentityService.Domain.Entities;
 using IdentityService.Domain.Enums;
 using IdentityService.Infrastructure.Persistence.Repositories.Interfaces;
@@ -23,10 +24,9 @@ public class TenantServiceTests
     private readonly Mock<ITenantRepo> _tenantRepoMock = new();
     private readonly Mock<IApplicationUserRepo> _applicationUserRepoMock = new();
     private readonly Mock<ITenantMembershipRepo> _tenantMembershipRepoMock = new();
-    private readonly Mock<IMediator> _mediatorMock = new();
-
     private readonly Mock<UserManager<ApplicationUser>> _userManagerMock;
     private readonly Mock<IConnectionMultiplexer> _connectionMultiplexerMock = new();
+    private readonly Mock<IAuditLogPublisher> _auditLogPublisherMock = new();
 
     private readonly TenantService _sut;
 
@@ -60,7 +60,7 @@ public class TenantServiceTests
             _userManagerMock.Object,
             _tenantMembershipRepoMock.Object,
             _connectionMultiplexerMock.Object,
-            _mediatorMock.Object);
+            _auditLogPublisherMock.Object);
     }
 
     [Theory]

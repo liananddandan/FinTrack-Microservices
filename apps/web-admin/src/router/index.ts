@@ -38,6 +38,11 @@ const router = createRouter({
           name: "invitations",
           component: () => import("../views/InvitationsView.vue"),
         },
+        {
+          path: "/audit-logs",
+          name: "audit-logs",
+          component: () => import("../views/AuditLogsView.vue"),
+        }
       ],
     },
   ],

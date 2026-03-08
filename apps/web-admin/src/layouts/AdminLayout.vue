@@ -8,11 +8,7 @@
         </div>
       </div>
 
-      <el-menu
-        :default-active="active"
-        router
-        class="admin-menu"
-      >
+      <el-menu :default-active="active" router class="admin-menu">
         <el-menu-item index="/dashboard">
           <span>Dashboard</span>
         </el-menu-item>
@@ -27,6 +23,10 @@
 
         <el-menu-item index="/invitations">
           <span>Invitations</span>
+        </el-menu-item>
+
+        <el-menu-item index="/audit-logs">
+          <span>Audit Logs</span>
         </el-menu-item>
       </el-menu>
     </el-aside>

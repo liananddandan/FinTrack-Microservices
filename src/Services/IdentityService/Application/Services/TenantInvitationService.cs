@@ -7,6 +7,8 @@ using IdentityService.Domain.Enums;
 using IdentityService.Infrastructure.Persistence.Repositories.Interfaces;
 using MediatR;
 using SharedKernel.Common.Results;
+using SharedKernel.Contracts.AuditLogs;
+using SharedKernel.Topics;
 
 namespace IdentityService.Application.Services;
 
@@ -17,7 +19,8 @@ public class TenantInvitationService(
     ITenantInvitationRepo invitationRepo,
     IUnitOfWork unitOfWork,
     ILogger<TenantInvitationService> logger,
-    IMediator mediator) : ITenantInvitationService
+    IMediator mediator,
+    IAuditLogPublisher auditLogPublisher) : ITenantInvitationService
 {
     public async Task<ServiceResult<TenantInvitation>> GetTenantInvitationByPublicIdAsync(
         string publicId,
@@ -165,6 +168,29 @@ public class TenantInvitationService(
                 tenant.Name,
                 email
             ), cancellationToken);
+
+            await auditLogPublisher.PublishAsync(
+                AuditLogTopics.MembershipInvited,
+                new AuditLogMessage
+                {
+                    TenantPublicId = tenantPublicId,
+                    ActorUserPublicId = inviter.PublicId.ToString(),
+                    ActorDisplayName = inviter.UserName,
+                    ActionType = "Membership.Invited",
+                    Category = "Membership",
+                    TargetType = "Invitation",
+                    TargetPublicId = invitation.PublicId.ToString(),
+                    TargetDisplay = invitation.Email,
+                    Source = "IdentityService",
+                    OccurredAtUtc = DateTime.UtcNow,
+                    Metadata =
+                    [
+                        new AuditMetadataItem("role", invitation.Role.ToString()),
+                        new AuditMetadataItem("email", invitation.Email)
+                    ]
+                },
+                cancellationToken);
+
             return ServiceResult<bool>.Ok(
                 true,
                 ResultCodes.Tenant.CreateInvitationSuccess,
@@ -290,7 +316,7 @@ public class TenantInvitationService(
             invitation.TenantId,
             user.Id,
             cancellationToken);
-
+        TenantMembership membership;
         if (existingMembership != null)
         {
             if (existingMembership.IsActive)
@@ -304,10 +330,11 @@ public class TenantInvitationService(
             existingMembership.LeftAt = null;
             existingMembership.JoinedAt = DateTime.UtcNow;
             existingMembership.Role = invitation.Role;
+            membership = existingMembership;
         }
         else
         {
-            var membership = new TenantMembership
+            membership = new TenantMembership
             {
                 TenantId = invitation.TenantId,
                 UserId = user.Id,
@@ -326,6 +353,21 @@ public class TenantInvitationService(
 
         await unitOfWork.SaveChangesAsync(cancellationToken);
 
+        await auditLogPublisher.PublishAsync(
+            AuditLogTopics.MembershipAccepted,
+            new AuditLogMessage
+            {
+                TenantPublicId = invitation.Tenant.PublicId.ToString(),
+                ActorUserPublicId = user.PublicId.ToString(),
+                ActorDisplayName = user.UserName,
+                ActionType = "Membership.Accepted",
+                Category = "Membership",
+                TargetType = "Membership",
+                TargetPublicId = membership.PublicId.ToString(),
+                TargetDisplay = user.Email,
+                Source = "IdentityService"
+            },
+            cancellationToken);
         return ServiceResult<bool>.Ok(
             true,
             ResultCodes.Tenant.AcceptInvitationSuccess,
@@ -379,115 +421,135 @@ public class TenantInvitationService(
                 "Failed to get tenant invitations.");
         }
     }
-    
+
     public async Task<ServiceResult<bool>> ResendInvitationAsync(
-    string tenantPublicId,
-    string invitationPublicId,
-    CancellationToken cancellationToken = default)
-{
-    if (string.IsNullOrWhiteSpace(tenantPublicId))
+        string tenantPublicId,
+        string invitationPublicId,
+        CancellationToken cancellationToken = default)
     {
-        return ServiceResult<bool>.Fail(
-            ResultCodes.Tenant.ResendInvitationParameterError,
-            "Tenant public id is required.");
-    }
-
-    if (string.IsNullOrWhiteSpace(invitationPublicId))
-    {
-        return ServiceResult<bool>.Fail(
-            ResultCodes.Tenant.ResendInvitationParameterError,
-            "Invitation public id is required.");
-    }
-
-    try
-    {
-        var invitationResult = await GetTenantInvitationByPublicIdAsync(
-            invitationPublicId,
-            cancellationToken);
-
-        if (!invitationResult.Success || invitationResult.Data == null)
+        if (string.IsNullOrWhiteSpace(tenantPublicId))
         {
             return ServiceResult<bool>.Fail(
-                ResultCodes.Tenant.ResendInvitationNotFound,
-                "Invitation not found.");
+                ResultCodes.Tenant.ResendInvitationParameterError,
+                "Tenant public id is required.");
         }
 
-        var invitation = invitationResult.Data;
-
-        if (!string.Equals(
-                invitation.Tenant.PublicId.ToString(),
-                tenantPublicId,
-                StringComparison.OrdinalIgnoreCase))
+        if (string.IsNullOrWhiteSpace(invitationPublicId))
         {
             return ServiceResult<bool>.Fail(
-                ResultCodes.Tenant.ResendInvitationNotFound,
-                "Invitation not found.");
+                ResultCodes.Tenant.ResendInvitationParameterError,
+                "Invitation public id is required.");
         }
 
-        if (invitation.Status != InvitationStatus.Pending)
+        try
         {
-            return ServiceResult<bool>.Fail(
-                ResultCodes.Tenant.ResendInvitationStatusInvalid,
-                "Only pending invitations can be resent.");
-        }
-
-        if (invitation.ExpiredAt <= DateTime.UtcNow)
-        {
-            return ServiceResult<bool>.Fail(
-                ResultCodes.Tenant.ResendInvitationExpired,
-                "Invitation has expired.");
-        }
-
-        var existingUser = await userRepo.GetUserByEmailAsync(
-            invitation.Email,
-            cancellationToken);
-
-        if (existingUser != null)
-        {
-            var existingMembership = await membershipRepo.GetMembershipAsync(
-                invitation.TenantId,
-                existingUser.Id,
+            var invitationResult = await GetTenantInvitationByPublicIdAsync(
+                invitationPublicId,
                 cancellationToken);
 
-            if (existingMembership != null)
+            if (!invitationResult.Success || invitationResult.Data == null)
             {
                 return ServiceResult<bool>.Fail(
-                    ResultCodes.Tenant.ResendInvitationMembershipExists,
-                    "User already belongs to this tenant.");
+                    ResultCodes.Tenant.ResendInvitationNotFound,
+                    "Invitation not found.");
             }
+
+            var invitation = invitationResult.Data;
+
+            if (!string.Equals(
+                    invitation.Tenant.PublicId.ToString(),
+                    tenantPublicId,
+                    StringComparison.OrdinalIgnoreCase))
+            {
+                return ServiceResult<bool>.Fail(
+                    ResultCodes.Tenant.ResendInvitationNotFound,
+                    "Invitation not found.");
+            }
+
+            if (invitation.Status != InvitationStatus.Pending)
+            {
+                return ServiceResult<bool>.Fail(
+                    ResultCodes.Tenant.ResendInvitationStatusInvalid,
+                    "Only pending invitations can be resent.");
+            }
+
+            if (invitation.ExpiredAt <= DateTime.UtcNow)
+            {
+                return ServiceResult<bool>.Fail(
+                    ResultCodes.Tenant.ResendInvitationExpired,
+                    "Invitation has expired.");
+            }
+
+            var existingUser = await userRepo.GetUserByEmailAsync(
+                invitation.Email,
+                cancellationToken);
+
+            if (existingUser != null)
+            {
+                var existingMembership = await membershipRepo.GetMembershipAsync(
+                    invitation.TenantId,
+                    existingUser.Id,
+                    cancellationToken);
+
+                if (existingMembership != null)
+                {
+                    return ServiceResult<bool>.Fail(
+                        ResultCodes.Tenant.ResendInvitationMembershipExists,
+                        "User already belongs to this tenant.");
+                }
+            }
+
+            if (invitation.Status != InvitationStatus.Pending)
+            {
+                throw new InvalidOperationException("Only pending invitations can be resent.");
+            }
+
+            invitation.Version += 1;
+            invitation.ExpiredAt = DateTime.UtcNow.AddDays(7);
+            await unitOfWork.SaveChangesAsync(cancellationToken);
+
+            await mediator.Publish(new TenantInvitationCreatedEvent(
+                invitation.PublicId.ToString(),
+                invitation.Tenant.Name,
+                invitation.Email
+            ), cancellationToken);
+            await auditLogPublisher.PublishAsync(
+                AuditLogTopics.MembershipInvitationResent,
+                new AuditLogMessage
+                {
+                    TenantPublicId = tenantPublicId,
+                    ActorUserPublicId = invitation.CreatedByUser.PublicId.ToString(),
+                    ActorDisplayName = invitation.CreatedByUser.UserName,
+                    ActionType = "Membership.InvitationResent",
+                    Category = "Membership",
+                    TargetType = "Invitation",
+                    TargetPublicId = invitation.PublicId.ToString(),
+                    TargetDisplay = invitation.Email,
+                    Source = "IdentityService",
+                    OccurredAtUtc = DateTime.UtcNow,
+                    Metadata =
+                    [
+                        new AuditMetadataItem("role", invitation.Role.ToString()),
+                        new AuditMetadataItem("email", invitation.Email)
+                    ]
+                },
+                cancellationToken);
+            return ServiceResult<bool>.Ok(
+                true,
+                ResultCodes.Tenant.ResendInvitationSuccess,
+                "Invitation email resent successfully.");
         }
-        
-        if (invitation.Status != InvitationStatus.Pending)
+        catch (Exception ex)
         {
-            throw new InvalidOperationException("Only pending invitations can be resent.");
+            logger.LogError(
+                ex,
+                "Failed to resend invitation {InvitationPublicId} for tenant {TenantPublicId}",
+                invitationPublicId,
+                tenantPublicId);
+
+            return ServiceResult<bool>.Fail(
+                ResultCodes.Tenant.ResendInvitationException,
+                "Failed to resend invitation.");
         }
-
-        invitation.Version += 1;
-        invitation.ExpiredAt = DateTime.UtcNow.AddDays(7);
-        await unitOfWork.SaveChangesAsync(cancellationToken);
-
-        await mediator.Publish(new TenantInvitationCreatedEvent(
-            invitation.PublicId.ToString(),
-            invitation.Tenant.Name,
-            invitation.Email
-        ), cancellationToken);
-
-        return ServiceResult<bool>.Ok(
-            true,
-            ResultCodes.Tenant.ResendInvitationSuccess,
-            "Invitation email resent successfully.");
     }
-    catch (Exception ex)
-    {
-        logger.LogError(
-            ex,
-            "Failed to resend invitation {InvitationPublicId} for tenant {TenantPublicId}",
-            invitationPublicId,
-            tenantPublicId);
-
-        return ServiceResult<bool>.Fail(
-            ResultCodes.Tenant.ResendInvitationException,
-            "Failed to resend invitation.");
-    }
-}
 }
