@@ -95,7 +95,12 @@
                 Details
               </el-button>
 
-              <el-button text type="danger" :disabled="member.role === 'Admin' || !member.isActive" @click="handleRemove(member)">
+              <el-button text type="primary" @click="openRoleDialog(member)">
+                Change role
+              </el-button>
+
+              <el-button text type="danger" :disabled="member.role === 'Admin' || !member.isActive"
+                @click="handleRemove(member)">
                 Remove
               </el-button>
             </div>
@@ -141,6 +146,41 @@
         </div>
       </template>
     </el-dialog>
+
+    <el-dialog v-model="roleDialogVisible" width="480px" destroy-on-close>
+      <template #header>
+        <div class="invite-dialog-header">
+          <div class="invite-dialog-title">Change member role</div>
+          <div class="invite-dialog-subtitle">
+            Update the role for the selected organization member.
+          </div>
+        </div>
+      </template>
+
+      <el-form label-position="top" @submit.prevent>
+        <el-form-item label="Member">
+          <el-input :model-value="selectedMember?.email || ''" disabled size="large" />
+        </el-form-item>
+
+        <el-form-item label="Role">
+          <el-select v-model="roleForm.role" placeholder="Select role" size="large" style="width: 100%;">
+            <el-option label="Member" value="Member" />
+            <el-option label="Admin" value="Admin" />
+          </el-select>
+        </el-form-item>
+
+        <el-alert v-if="roleErrorMessage" :title="roleErrorMessage" type="error" show-icon class="invite-alert" />
+      </el-form>
+
+      <template #footer>
+        <div class="invite-dialog-footer">
+          <el-button @click="closeRoleDialog">Cancel</el-button>
+          <el-button type="primary" :loading="roleSubmitting" @click="submitRoleChange">
+            Save
+          </el-button>
+        </div>
+      </template>
+    </el-dialog>
   </div>
 </template>
 
@@ -150,6 +190,7 @@ import { ElMessage, ElMessageBox } from "element-plus";
 import {
   getTenantMembers,
   removeTenantMember,
+  changeTenantMemberRole,
   type TenantMemberDto
 } from "../api/tenant";
 import { createTenantInvitation } from "../api/invitation";
@@ -162,6 +203,15 @@ const inviteDialogVisible = ref(false);
 const inviteSubmitting = ref(false);
 const inviteErrorMessage = ref("");
 const inviteSuccessMessage = ref("");
+
+const roleDialogVisible = ref(false);
+const roleSubmitting = ref(false);
+const roleErrorMessage = ref("");
+const selectedMember = ref<TenantMemberDto | null>(null);
+
+const roleForm = reactive({
+  role: "Member",
+});
 
 const inviteForm = reactive({
   email: "",
@@ -316,6 +366,57 @@ async function handleRemove(member: TenantMemberDto) {
       error?.message ??
       "Failed to remove member."
     );
+  }
+}
+
+function openRoleDialog(member: TenantMemberDto) {
+  selectedMember.value = member;
+  roleForm.role = member.role;
+  roleErrorMessage.value = "";
+  roleDialogVisible.value = true;
+}
+
+function closeRoleDialog() {
+  roleDialogVisible.value = false;
+  roleSubmitting.value = false;
+  roleErrorMessage.value = "";
+  selectedMember.value = null;
+  roleForm.role = "Member";
+}
+
+async function submitRoleChange() {
+  roleErrorMessage.value = "";
+
+  if (!selectedMember.value) {
+    roleErrorMessage.value = "No member selected.";
+    return;
+  }
+
+  if (!roleForm.role.trim()) {
+    roleErrorMessage.value = "Role is required.";
+    return;
+  }
+
+  roleSubmitting.value = true;
+
+  try {
+    await changeTenantMemberRole(
+      selectedMember.value.membershipPublicId,
+      roleForm.role
+    );
+
+    ElMessage.success("Member role updated successfully.");
+
+    closeRoleDialog();
+    await loadMembers();
+  } catch (error: any) {
+    console.error("Failed to change member role:", error);
+    roleErrorMessage.value =
+      error?.response?.data?.message ??
+      error?.message ??
+      "Failed to change member role.";
+  } finally {
+    roleSubmitting.value = false;
   }
 }
 </script>

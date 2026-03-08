@@ -40,3 +40,21 @@ export async function removeTenantMember(
 
   return result.data;
 }
+
+export async function changeTenantMemberRole(
+  membershipPublicId: string,
+  role: string
+): Promise<boolean> {
+  const response = await http.patch<ApiResponse<boolean>>(
+    `/api/tenant/members/${membershipPublicId}/role`,
+    { role }
+  );
+
+  const result = response.data;
+
+  if (!result.data) {
+    throw new Error(result.message || "Failed to change member role.");
+  }
+
+  return result.data;
+}

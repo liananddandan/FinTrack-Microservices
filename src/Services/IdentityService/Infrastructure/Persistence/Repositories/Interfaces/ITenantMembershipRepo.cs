@@ -21,4 +21,10 @@ public interface ITenantMembershipRepo
         long tenantId,
         long userId,
         CancellationToken cancellationToken = default);
+    
+    Task<int> CountActiveAdminsAsync(
+        long tenantId,
+        CancellationToken cancellationToken = default);
+    
+    
 }

@@ -521,4 +521,284 @@ public class TenantServiceTests
             x => x.StringIncrementAsync(It.IsAny<RedisKey>(), It.IsAny<long>(), It.IsAny<CommandFlags>()),
             Times.Once);
     }
+    
+    [Fact]
+    public async Task ChangeTenantMemberRoleAsync_Should_Return_Fail_When_Role_Is_Invalid()
+    {
+        var result = await _sut.ChangeTenantMemberRoleAsync(
+            Guid.NewGuid().ToString(),
+            Guid.NewGuid().ToString(),
+            Guid.NewGuid().ToString(),
+            "SuperAdmin",
+            CancellationToken.None);
+
+        result.Success.Should().BeFalse();
+        result.Code.Should().Be(ResultCodes.Tenant.ChangeMemberRoleInvalidRole);
+    }
+    
+    [Fact]
+    public async Task ChangeTenantMemberRoleAsync_Should_Return_Fail_When_Membership_NotFound()
+    {
+        _tenantMembershipRepoMock
+            .Setup(x => x.GetByPublicIdAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((TenantMembership?)null);
+
+        var result = await _sut.ChangeTenantMemberRoleAsync(
+            Guid.NewGuid().ToString(),
+            Guid.NewGuid().ToString(),
+            Guid.NewGuid().ToString(),
+            "Admin",
+            CancellationToken.None);
+
+        result.Success.Should().BeFalse();
+        result.Code.Should().Be(ResultCodes.Tenant.MemberNotFound);
+    }
+    
+    [Fact]
+    public async Task ChangeTenantMemberRoleAsync_Should_Return_Fail_When_Member_Not_In_Tenant()
+    {
+        var membership = new TenantMembership
+        {
+            PublicId = Guid.NewGuid(),
+            IsActive = true,
+            Role = TenantRole.Member,
+            Tenant = new Tenant { PublicId = Guid.NewGuid() },
+            User = new ApplicationUser { PublicId = Guid.NewGuid() }
+        };
+
+        _tenantMembershipRepoMock
+            .Setup(x => x.GetByPublicIdAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(membership);
+
+        var result = await _sut.ChangeTenantMemberRoleAsync(
+            Guid.NewGuid().ToString(),
+            membership.PublicId.ToString(),
+            Guid.NewGuid().ToString(),
+            "Admin",
+            CancellationToken.None);
+
+        result.Success.Should().BeFalse();
+        result.Code.Should().Be(ResultCodes.Tenant.MemberNotInTenant);
+    }
+    
+    [Fact]
+    public async Task ChangeTenantMemberRoleAsync_Should_Return_Fail_When_Membership_Is_Inactive()
+    {
+        var tenantId = Guid.NewGuid();
+
+        var membership = new TenantMembership
+        {
+            PublicId = Guid.NewGuid(),
+            IsActive = false,
+            Role = TenantRole.Member,
+            Tenant = new Tenant { PublicId = tenantId },
+            User = new ApplicationUser { PublicId = Guid.NewGuid() }
+        };
+
+        _tenantMembershipRepoMock
+            .Setup(x => x.GetByPublicIdAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(membership);
+
+        var result = await _sut.ChangeTenantMemberRoleAsync(
+            tenantId.ToString(),
+            membership.PublicId.ToString(),
+            Guid.NewGuid().ToString(),
+            "Admin",
+            CancellationToken.None);
+
+        result.Success.Should().BeFalse();
+        result.Code.Should().Be(ResultCodes.Tenant.ChangeMemberRoleInactiveMembership);
+    }
+    
+    [Fact]
+    public async Task ChangeTenantMemberRoleAsync_Should_Return_Fail_When_Changing_Own_Role()
+    {
+        var tenantId = Guid.NewGuid();
+        var operatorUserId = Guid.NewGuid();
+
+        var membership = new TenantMembership
+        {
+            PublicId = Guid.NewGuid(),
+            IsActive = true,
+            Role = TenantRole.Admin,
+            Tenant = new Tenant { PublicId = tenantId },
+            User = new ApplicationUser { PublicId = operatorUserId }
+        };
+
+        _tenantMembershipRepoMock
+            .Setup(x => x.GetByPublicIdAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(membership);
+
+        var result = await _sut.ChangeTenantMemberRoleAsync(
+            tenantId.ToString(),
+            membership.PublicId.ToString(),
+            operatorUserId.ToString(),
+            "Member",
+            CancellationToken.None);
+
+        result.Success.Should().BeFalse();
+        result.Code.Should().Be(ResultCodes.Tenant.CannotChangeOwnRole);
+    }
+    
+    [Fact]
+    public async Task ChangeTenantMemberRoleAsync_Should_Return_Fail_When_Demoting_Last_Admin()
+    {
+        var tenantId = Guid.NewGuid();
+
+        var membership = new TenantMembership
+        {
+            PublicId = Guid.NewGuid(),
+            IsActive = true,
+            Role = TenantRole.Admin,
+            TenantId = 100,
+            Tenant = new Tenant { PublicId = tenantId },
+            User = new ApplicationUser { PublicId = Guid.NewGuid() }
+        };
+
+        _tenantMembershipRepoMock
+            .Setup(x => x.GetByPublicIdAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(membership);
+
+        _tenantMembershipRepoMock
+            .Setup(x => x.CountActiveAdminsAsync(membership.TenantId, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(1);
+
+        var result = await _sut.ChangeTenantMemberRoleAsync(
+            tenantId.ToString(),
+            membership.PublicId.ToString(),
+            Guid.NewGuid().ToString(),
+            "Member",
+            CancellationToken.None);
+
+        result.Success.Should().BeFalse();
+        result.Code.Should().Be(ResultCodes.Tenant.CannotDemoteLastAdmin);
+    }
+    
+    [Fact]
+    public async Task ChangeTenantMemberRoleAsync_Should_Return_Ok_When_No_Change_Is_Required()
+    {
+        var tenantId = Guid.NewGuid();
+
+        var membership = new TenantMembership
+        {
+            PublicId = Guid.NewGuid(),
+            IsActive = true,
+            Role = TenantRole.Member,
+            TenantId = 100,
+            Tenant = new Tenant { PublicId = tenantId },
+            User = new ApplicationUser { PublicId = Guid.NewGuid() }
+        };
+
+        _tenantMembershipRepoMock
+            .Setup(x => x.GetByPublicIdAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(membership);
+
+        var result = await _sut.ChangeTenantMemberRoleAsync(
+            tenantId.ToString(),
+            membership.PublicId.ToString(),
+            Guid.NewGuid().ToString(),
+            "Member",
+            CancellationToken.None);
+
+        result.Success.Should().BeTrue();
+        result.Code.Should().Be(ResultCodes.Tenant.ChangeMemberRoleNoChange);
+
+        _unitOfWorkMock.Verify(
+            x => x.SaveChangesAsync(It.IsAny<CancellationToken>()),
+            Times.Never);
+    }
+    
+    [Fact]
+    public async Task ChangeTenantMemberRoleAsync_Should_Promote_Member_To_Admin()
+    {
+        var tenantId = Guid.NewGuid();
+
+        var membership = new TenantMembership
+        {
+            PublicId = Guid.NewGuid(),
+            IsActive = true,
+            Role = TenantRole.Member,
+            TenantId = 100,
+            Tenant = new Tenant { PublicId = tenantId },
+            User = new ApplicationUser { PublicId = Guid.NewGuid() }
+        };
+
+        _tenantMembershipRepoMock
+            .Setup(x => x.GetByPublicIdAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(membership);
+
+        var redisDbMock = new Mock<IDatabase>();
+        _connectionMultiplexerMock
+            .Setup(x => x.GetDatabase(It.IsAny<int>(), It.IsAny<object>()))
+            .Returns(redisDbMock.Object);
+
+        var result = await _sut.ChangeTenantMemberRoleAsync(
+            tenantId.ToString(),
+            membership.PublicId.ToString(),
+            Guid.NewGuid().ToString(),
+            "Admin",
+            CancellationToken.None);
+
+        result.Success.Should().BeTrue();
+        result.Code.Should().Be(ResultCodes.Tenant.ChangeMemberRoleSuccess);
+        membership.Role.Should().Be(TenantRole.Admin);
+
+        _unitOfWorkMock.Verify(
+            x => x.SaveChangesAsync(It.IsAny<CancellationToken>()),
+            Times.Once);
+
+        redisDbMock.Verify(
+            x => x.StringIncrementAsync(It.IsAny<RedisKey>(), It.IsAny<long>(), It.IsAny<CommandFlags>()),
+            Times.Once);
+    }
+    
+    [Fact]
+    public async Task ChangeTenantMemberRoleAsync_Should_Demote_Admin_When_Not_Last_Admin()
+    {
+        var tenantId = Guid.NewGuid();
+
+        var membership = new TenantMembership
+        {
+            PublicId = Guid.NewGuid(),
+            IsActive = true,
+            Role = TenantRole.Admin,
+            TenantId = 100,
+            Tenant = new Tenant { PublicId = tenantId },
+            User = new ApplicationUser { PublicId = Guid.NewGuid() }
+        };
+
+        _tenantMembershipRepoMock
+            .Setup(x => x.GetByPublicIdAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(membership);
+
+        _tenantMembershipRepoMock
+            .Setup(x => x.CountActiveAdminsAsync(membership.TenantId, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(2);
+
+        var redisDbMock = new Mock<IDatabase>();
+        _connectionMultiplexerMock
+            .Setup(x => x.GetDatabase(It.IsAny<int>(), It.IsAny<object>()))
+            .Returns(redisDbMock.Object);
+
+        var result = await _sut.ChangeTenantMemberRoleAsync(
+            tenantId.ToString(),
+            membership.PublicId.ToString(),
+            Guid.NewGuid().ToString(),
+            "Member",
+            CancellationToken.None);
+
+        result.Success.Should().BeTrue();
+        result.Code.Should().Be(ResultCodes.Tenant.ChangeMemberRoleSuccess);
+        membership.Role.Should().Be(TenantRole.Member);
+
+        _unitOfWorkMock.Verify(
+            x => x.SaveChangesAsync(It.IsAny<CancellationToken>()),
+            Times.Once);
+
+        redisDbMock.Verify(
+            x => x.StringIncrementAsync(It.IsAny<RedisKey>(), It.IsAny<long>(), It.IsAny<CommandFlags>()),
+            Times.Once);
+    }
+    
+    
 }

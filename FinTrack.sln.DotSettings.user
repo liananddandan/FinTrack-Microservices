@@ -117,6 +117,7 @@
       &lt;TestId&gt;xUnit::634E2A0D-EE3E-4F9F-9F60-D97B140815D8::net9.0::IdentityService.Tests.Application.Services.TenantServiceTests&lt;/TestId&gt;
       &lt;TestId&gt;xUnit::634E2A0D-EE3E-4F9F-9F60-D97B140815D8::net9.0::IdentityService.Tests.IntegrationTests.TenantMemberRemoveTests&lt;/TestId&gt;
       &lt;TestId&gt;xUnit::634E2A0D-EE3E-4F9F-9F60-D97B140815D8::net9.0::IdentityService.Tests.Api.IntegrationTests.TenantMemberRemoveTests&lt;/TestId&gt;
+      &lt;TestId&gt;xUnit::634E2A0D-EE3E-4F9F-9F60-D97B140815D8::net9.0::IdentityService.Tests.Api.IntegrationTests.TenantMemberChangeRoleTests&lt;/TestId&gt;
     &lt;/TestAncestor&gt;
     &lt;Project Location="/Users/lichen/Documents/vsCode/FinTrack-Microservices/Tests/NotificationService.Tests" Presentation="&amp;lt;Tests&amp;gt;\&amp;lt;NotificationService.Tests&amp;gt;" /&gt;
     &lt;Project Location="/Users/lichen/Documents/vsCode/FinTrack-Microservices/Tests/TransactionService.Tests" Presentation="&amp;lt;Tests&amp;gt;\&amp;lt;TransactionService.Tests&amp;gt;" /&gt;

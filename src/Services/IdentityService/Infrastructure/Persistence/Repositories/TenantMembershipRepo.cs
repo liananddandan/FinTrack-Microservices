@@ -1,4 +1,5 @@
 using IdentityService.Domain.Entities;
+using IdentityService.Domain.Enums;
 using IdentityService.Infrastructure.Persistence.Repositories.Interfaces;
 using Microsoft.EntityFrameworkCore;
 
@@ -61,6 +62,18 @@ public class TenantMembershipRepo(ApplicationIdentityDbContext dbContext) : ITen
             .FirstOrDefaultAsync(
                 m => m.TenantId == tenantId &&
                      m.UserId == userId,
+                cancellationToken);
+    }
+    
+    public async Task<int> CountActiveAdminsAsync(
+        long tenantId,
+        CancellationToken cancellationToken = default)
+    {
+        return await dbContext.TenantMemberships
+            .CountAsync(
+                m => m.TenantId == tenantId &&
+                     m.IsActive &&
+                     m.Role == TenantRole.Admin,
                 cancellationToken);
     }
 }

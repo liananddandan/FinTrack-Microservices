@@ -42,7 +42,14 @@ public static class ResultCodes
         public const string MemberAlreadyRemoved = "100001034";
         public const string MemberNotInTenant = "100001035";
         public const string CannotRemoveSelf = "100001036";
+        public const string ChangeMemberRoleParameterError = "100001037";
+        public const string ChangeMemberRoleInvalidRole = "100001038";
+        public const string ChangeMemberRoleInactiveMembership = "100001039";
+        public const string CannotChangeOwnRole = "100001040";
+        public const string ChangeMemberRoleNoChange = "100001041";
+        public const string CannotDemoteLastAdmin = "100001042";
         // RegisterTenant Success 100 001 999
+        public const string ChangeMemberRoleSuccess = "100001990";
         public const string MemberRemoved = "100001991";
         public const string ResendInvitationSuccess = "100001992";
         public const string GetTenantInvitationsSuccess = "100001993";

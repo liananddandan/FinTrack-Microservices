@@ -22,4 +22,11 @@ public interface ITenantService
         string membershipPublicId,
         string operatorUserPublicId,
         CancellationToken cancellationToken = default);
+    
+    Task<ServiceResult<bool>> ChangeTenantMemberRoleAsync(
+        string tenantPublicId,
+        string membershipPublicId,
+        string operatorUserPublicId,
+        string role,
+        CancellationToken cancellationToken = default);
 }
