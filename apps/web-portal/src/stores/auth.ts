@@ -74,6 +74,10 @@ export const useAuthStore = defineStore("auth", {
       }
     },
 
+    clearProfile() {
+      this.profile = null;
+    },
+
     setAccountTokens(accessToken: string, refreshToken: string) {
       this.accountAccessToken = accessToken;
       this.refreshToken = refreshToken;
@@ -101,15 +105,15 @@ export const useAuthStore = defineStore("auth", {
     },
 
     async activateSingleTenantIfPossible() {
-     const memberships = this.resolvedMemberships;
+      const memberships = this.resolvedMemberships;
 
-     if (memberships.length !== 1) {
-       this.clearTenantAccessToken();
-       return;
+      if (memberships.length !== 1) {
+        this.clearTenantAccessToken();
+        return;
       }
 
-     const tenantToken = await selectTenant({
-       tenantPublicId: memberships[0].tenantPublicId,
+      const tenantToken = await selectTenant({
+        tenantPublicId: memberships[0].tenantPublicId,
       });
 
       this.setTenantAccessToken(tenantToken);

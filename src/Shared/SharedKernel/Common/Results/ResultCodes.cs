@@ -89,40 +89,12 @@ public static class ResultCodes
         public const string VerifyTokenSuccess = "100002998";
         public const string VerifyTokenGenerateSuccess = "100002999";
     }
-
-    public static class User
-    {
-        // user faild 100 003 001
-        public const string UserNotFound = "100003001";
-        public const string UserEmailVerificationFailed = "100003002";
-        public const string UserPublicIdInvalid = "100003003";
-        public const string UserEmailNotVerified = "100003004";
-        public const string UserEmailOrPasswordInvalid = "100003005";
-        public const string UserCouldNotFindRole = "100003006";
-        public const string UserSetPasswordFailed = "100003007";
-        public const string UserResetPasswordBeforeSetPasswordFailed = "100003008";
-        public const string UserTenantInfoMissed = "100003009";
-        public const string UserWithoutAdminRolePermission = "100003010";
-        public const string RoleCreatedFailed = "100003011";
-        public const string RoleGrantUserFailed = "100003012";
-        
-        public const string UserRegisterSuccess = "100003991";
-        public const string UserGetInfoSuccess = "100003992";
-        public const string UserRefreshTokenSuccess = "100003993";
-        public const string UserCheckPublicIdAndJwtVersionSuccess = "100003994";
-        public const string UserChangePasswordSuccess = "100003995";
-        public const string UserLoginSuccess = "100003996";
-        public const string UserLoginSuccessButFirstLogin = "100003997";
-        public const string UserEmailVerificationSuccess = "100003998";
-        public const string UserGetByIdSuccess = "100003999";
-    }
-
+    
     public static class Transaction
     {
         public const string TransactionCreateFailed = "100004001";
-        public const string TransactionNotFound = "100004002";
-        public const string TransactionNotBelongToCurrentUser = "100004003";
-        public const string TransactionQueryByPageSuccess = "100004997";
+        public const string TransactionCreateException = "100004002";
+        public const string TransactionNotFound = "100004003";
         public const string TransactionQuerySuccess = "100004998";
         public const string TransactionCreateSuccess = "100004999";
     }

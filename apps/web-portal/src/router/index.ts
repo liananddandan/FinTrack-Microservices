@@ -46,6 +46,14 @@ const router = createRouter({
       component: HomeView,
       meta: { requiresAuth: true, requiresTenant: true },
     },
+    {
+      path: "/donate",
+      component: () => import("../views/DonationView.vue")
+    },
+    {
+      path: "/my-donations",
+      component: () => import("../views/MyDonationsView.vue")
+    }
   ],
 });
 

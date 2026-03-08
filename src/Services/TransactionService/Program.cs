@@ -1,17 +1,13 @@
 using System.Text;
-using IdentityService.Middlewares;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
-using Microsoft.AspNetCore.Mvc.Authorization;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Scalar.AspNetCore;
 using SharedKernel.Common.Options;
-using TransactionService.ExternalServices;
-using TransactionService.ExternalServices.Interfaces;
-using TransactionService.Filters;
-using TransactionService.Infrastructure;
-using TransactionService.Services;
-using TransactionService.Services.Interfaces;
+using TransactionService.Application.Middlewares;
+using TransactionService.Infrastructure.Persistence;
+using TransactionService.Infrastructure.Persistence.Repositories;
+using TransactionService.Infrastructure.Persistence.Repositories.Interfaces;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -25,6 +21,7 @@ builder.Services.Configure<JwtOptions>(
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>
     {
+        options.MapInboundClaims = false;
         var jwtTokenOptions = builder.Configuration.GetSection("JwtSettings").Get<JwtOptions>();
         options.RequireHttpsMetadata = false;
         options.SaveToken = true;
@@ -43,6 +40,7 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
 
 builder.Services.AddAuthorization();
 
+builder.Services.AddScoped<ITransactionRepo, TransactionRepo>();
 builder.Services.AddDbContext<TransactionDbContext>(options =>
 {
     string connectionString = builder.Configuration.GetConnectionString("DefaultConnection")!;
@@ -55,22 +53,12 @@ builder.Services.AddMediatR(configuration =>
 builder.Services.Scan(scan => scan
     .FromAssemblyOf<Program>() // 你也可以换成 typeof(Program) 或任何所在程序集的类型
     .AddClasses(classes => classes.InNamespaces(
-        "TransactionService.Services",
-        "TransactionService.Repositories"))
-    .AsMatchingInterface() // 如 UserService -> IUserService
+        "TransactionService.Application.Services",
+        "TransactionService.Infrastructure.Persistence.Repositories"))
+    .AsImplementedInterfaces()
     .WithScopedLifetime());
 
-builder.Services.AddControllers(options =>
-{
-    options.Filters.Add(new AuthorizeFilter());
-    options.Filters.Add(new RequireClaimsFilter());
-});
-
-builder.Services.AddHttpClient<IIdentityClientService, IdentityClientService>(client =>
-    {
-        client.BaseAddress = new Uri(builder.Configuration.GetSection("IdentityService").GetValue<string>("BaseUrl")!);
-    }
-);
+builder.Services.AddControllers();
 
 var app = builder.Build();
 

@@ -1,4 +1,4 @@
-import axios from "axios";
+import { publicHttp } from "./http";
 import type { ApiResponse } from "./types";
 
 export type ResolveTenantInvitationResult = {
@@ -13,13 +13,12 @@ export type ResolveTenantInvitationResult = {
 export async function resolveTenantInvitation(
   token: string
 ): Promise<ResolveTenantInvitationResult> {
-  const response = await axios.get<ApiResponse<ResolveTenantInvitationResult>>(
-    `${import.meta.env.VITE_API_BASE_URL}/api/tenant/invitations/resolve`,
+  const response = await publicHttp.get<ApiResponse<ResolveTenantInvitationResult>>(
+    "/api/tenant/invitations/resolve",
     {
       headers: {
         Authorization: `Invite ${token}`,
       },
-      timeout: 15000,
     }
   );
 
@@ -33,14 +32,13 @@ export async function resolveTenantInvitation(
 }
 
 export async function acceptTenantInvitation(token: string): Promise<boolean> {
-  const response = await axios.post<ApiResponse<boolean>>(
-    `${import.meta.env.VITE_API_BASE_URL}/api/tenant/invitations/accept`,
+  const response = await publicHttp.post<ApiResponse<boolean>>(
+    "/api/tenant/invitations/accept",
     null,
     {
       headers: {
         Authorization: `Invite ${token}`,
       },
-      timeout: 15000,
     }
   );
 

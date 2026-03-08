@@ -1,14 +1,9 @@
 using Microsoft.AspNetCore.Hosting;
-using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using TransactionService.ExternalServices;
-using TransactionService.ExternalServices.Interfaces;
-using TransactionService.Infrastructure;
-using TransactionService.Services.Interfaces;
-using TransactionService.Tests.Seeds;
+using TransactionService.Infrastructure.Persistence;
 
 namespace TransactionService.Tests;
 
@@ -43,20 +38,9 @@ public class TransactionWebApplicationFactory<TProgram> : WebApplicationFactory<
                     db.Database.Migrate();
                     db.Database.ExecuteSqlRaw("DELETE FROM Transactions");
                     _dbInitialized = true;
-                    SeedMaker.InitializeAsync(db).GetAwaiter().GetResult();
                 }
             }
             
-            var descriptors = services.Where(d => d.ServiceType == typeof(IIdentityClientService)).ToList();
-            foreach (var descriptor in descriptors)
-            {
-                services.Remove(descriptor);
-            }
-
-            services.AddHttpClient<IIdentityClientService, IdentityClientService>(client =>
-            {
-                client.BaseAddress = new Uri(_mockBaseUrl);
-            });
         });
     }
 }
