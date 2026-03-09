@@ -6,6 +6,7 @@ using FluentAssertions;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Moq;
+using SharedKernel.Common.DTOs;
 
 namespace AuditLogService.Tests.Api.IntegrationTests;
 
@@ -68,10 +69,11 @@ public class AuditLogsGetTests
             cancellationToken: CancellationToken.None);
 
         var okResult = result.Should().BeOfType<OkObjectResult>().Subject;
-        var payload = okResult.Value.Should().BeOfType<PagedResult<AuditLogDto>>().Subject;
+        var payload = okResult.Value.Should().BeOfType<ApiResponse<PagedResult<AuditLogDto>>>().Subject;
 
-        payload.TotalCount.Should().Be(1);
-        payload.Items.Should().HaveCount(1);
+        payload.Data.Should().NotBeNull();
+        payload.Data!.TotalCount.Should().Be(1);
+        payload.Data.Items.Should().HaveCount(1);
 
         readerMock.Verify(x => x.QueryAsync(
                 It.Is<AuditLogQueryRequest>(q => q.TenantPublicId == "tenant-001"),
