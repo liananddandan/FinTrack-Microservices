@@ -46,11 +46,9 @@
 import { ref } from "vue"
 import { useRouter } from "vue-router"
 import { ElMessage } from "element-plus"
-import { useAuthStore } from "../stores/auth"
 import { createDonation } from "../api/transactions";
 
 const router = useRouter()
-const auth = useAuthStore()
 
 const loading = ref(false)
 
@@ -75,7 +73,7 @@ async function submitDonation() {
 
     try {
 
-        const res = await createDonation({
+        await createDonation({
             title: "Donation",
             description: form.value.description,
             amount: form.value.amount,

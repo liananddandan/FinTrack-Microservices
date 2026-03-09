@@ -41,4 +41,9 @@ public interface ITransactionRepo
         Guid tenantPublicId,
         Guid transactionPublicId,
         CancellationToken cancellationToken = default);
+
+    Task<Transaction?> GetByTenantAndTitleAsync(
+        Guid tenantPublicId,
+        string title,
+        CancellationToken cancellationToken = default);
 }

@@ -19,7 +19,7 @@ app.mount("#app");
 
 const auth = useAuthStore();
 
-if (auth.accessToken) {
+if (auth.accountAccessToken) {
   getCurrentUser()
     .then((profile) => {
       auth.setProfile(profile);

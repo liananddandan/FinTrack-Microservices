@@ -148,4 +148,17 @@ public class TransactionRepo(TransactionDbContext dbContext) : ITransactionRepo
                     x.Type == TransactionType.Procurement,
                 cancellationToken);
     }
+
+    public async Task<Transaction?> GetByTenantAndTitleAsync(
+        Guid tenantPublicId,
+        string title,
+        CancellationToken cancellationToken = default)
+    {
+        title = title.Trim();
+
+        return await dbContext.Transactions
+            .FirstOrDefaultAsync(
+                x => x.TenantPublicId == tenantPublicId && x.Title == title,
+                cancellationToken);
+    }
 }

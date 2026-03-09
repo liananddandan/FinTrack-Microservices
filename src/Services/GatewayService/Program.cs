@@ -1,6 +1,8 @@
 using System.Text;
 using GatewayService.Common.Options;
 using GatewayService.Middlewares;
+using GatewayService.Services;
+using GatewayService.Services.Interfaces;
 using Microsoft.IdentityModel.Tokens;
 using SharedKernel.Common.Options;
 using StackExchange.Redis;
@@ -52,11 +54,16 @@ builder.Services.AddCors(options =>
     });
 });
 
+builder.Services.AddHttpClient();
+builder.Services.AddScoped<IDevSeedOrchestrator, DevSeedOrchestrator>();
+builder.Services.AddControllers();
+
 var app = builder.Build();
 
 app.UseCors("FrontendDev");
 app.UseAuthentication();
 app.UseAuthorization();
 app.UseMiddleware<BasicJwtTokenValidationMiddleware>();
+app.MapControllers();
 app.MapReverseProxy();
 app.Run();

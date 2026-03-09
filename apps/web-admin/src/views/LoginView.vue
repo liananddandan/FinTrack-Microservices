@@ -38,6 +38,42 @@
           style="margin-top: 16px;"
         />
       </el-form>
+
+      <el-divider />
+
+      <el-button
+        type="warning"
+        plain
+        size="large"
+        style="width: 100%;"
+        :loading="seedLoading"
+        @click="onSeedDemoData"
+      >
+        Seed Demo Data
+      </el-button>
+
+      <el-alert
+        v-if="seedMessage"
+        :title="seedMessage"
+        type="success"
+        show-icon
+        style="margin-top: 16px;"
+      />
+
+      <el-alert
+        v-if="seedErrorMessage"
+        :title="seedErrorMessage"
+        type="error"
+        show-icon
+        style="margin-top: 16px;"
+      />
+
+      <div v-if="demoSeedResult" class="demo-credentials">
+        <h3>Demo Accounts</h3>
+        <p>Tenant: {{ demoSeedResult.tenantName }}</p>
+        <p>Admin: {{ demoSeedResult.adminEmail }} / {{ demoSeedResult.adminPassword }}</p>
+        <p>Member: {{ demoSeedResult.memberEmail }} / {{ demoSeedResult.memberPassword }}</p>
+      </div>
     </el-card>
   </div>
 </template>
@@ -46,6 +82,7 @@
 import { reactive, ref } from "vue";
 import { useRouter } from "vue-router";
 import { getCurrentUser, login } from "../api/account";
+import { seedDemoData, type DevSeedResult } from "../api/dev";
 import { useAuthStore } from "../stores/auth";
 
 const router = useRouter();
@@ -53,6 +90,10 @@ const auth = useAuthStore();
 
 const loading = ref(false);
 const errorMessage = ref("");
+const seedLoading = ref(false);
+const seedMessage = ref("");
+const seedErrorMessage = ref("");
+const demoSeedResult = ref<DevSeedResult | null>(null);
 
 const form = reactive({
   email: "",
@@ -122,6 +163,29 @@ async function onLogin() {
     loading.value = false;
   }
 }
+
+async function onSeedDemoData() {
+  seedMessage.value = "";
+  seedErrorMessage.value = "";
+  seedLoading.value = true;
+
+  try {
+    const result = await seedDemoData();
+    demoSeedResult.value = result;
+
+    form.email = result.adminEmail;
+    form.password = result.adminPassword;
+
+    seedMessage.value = "Demo data seeded. Admin credentials are ready to use.";
+  } catch (err: any) {
+    seedErrorMessage.value =
+      err?.response?.data?.message ??
+      err?.message ??
+      "Seed demo data failed.";
+  } finally {
+    seedLoading.value = false;
+  }
+}
 </script>
 
 <style scoped>
@@ -151,5 +215,21 @@ async function onLogin() {
 .login-header p {
   margin: 0;
   color: #6b7280;
+}
+
+.demo-credentials {
+  margin-top: 12px;
+  font-size: 14px;
+  color: #1f2937;
+  line-height: 1.7;
+}
+
+.demo-credentials h3 {
+  margin: 0 0 6px;
+  font-size: 15px;
+}
+
+.demo-credentials p {
+  margin: 0;
 }
 </style>
