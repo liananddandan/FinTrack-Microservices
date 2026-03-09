@@ -35,6 +35,30 @@ export interface TransactionListItem {
   createdAtUtc: string;
 }
 
+export interface TransactionDetail {
+  transactionPublicId: string;
+  tenantPublicId: string;
+  tenantName: string;
+  type: string;
+  title: string;
+  description?: string;
+  amount: number;
+  currency: string;
+  status: string;
+  paymentStatus: string;
+  riskStatus: string;
+  createdByUserPublicId: string;
+  createdAtUtc: string;
+  approvedByUserPublicId?: string;
+  approvedAtUtc?: string;
+  paidByUserPublicId?: string;
+  paidAtUtc?: string;
+  paymentReference?: string;
+  failureReason?: string;
+  refundedByUserPublicId?: string;
+  refundedAtUtc?: string;
+}
+
 export interface PagedResult<T> {
   items: T[];
   totalCount: number;
@@ -77,6 +101,22 @@ export async function getMyTransactions(
 
   if (!result.data) {
     throw new Error(result.message || "Failed to fetch transactions");
+  }
+
+  return result.data;
+}
+
+export async function getTransactionDetail(
+  transactionPublicId: string
+): Promise<TransactionDetail> {
+  const response = await tenantHttp.get<ApiResponse<TransactionDetail>>(
+    `/api/transactions/${transactionPublicId}`
+  );
+
+  const result = response.data;
+
+  if (!result.data) {
+    throw new Error(result.message || "Failed to fetch transaction detail");
   }
 
   return result.data;

@@ -16,30 +16,30 @@ const router = createRouter({
       children: [
         {
           path: "",
-          redirect: "/dashboard",
+          redirect: "/admin/overview",
         },
         {
-          path: "/dashboard",
-          name: "dashboard",
-          component: () => import("../views/DashboardView.vue"),
+          path: "admin/overview",
+          name: "admin-overview",
+          component: () => import("../views/OverviewView.vue"),
         },
         {
-          path: "/members",
+          path: "admin/members",
           name: "members",
           component: () => import("../views/MembersView.vue"),
         },
         {
-          path: "/transactions",
+          path: "admin/transactions",
           name: "transactions",
           component: () => import("../views/TransactionsView.vue"),
         },
         {
-          path: "/invitations",
+          path: "admin/invitations",
           name: "invitations",
           component: () => import("../views/InvitationsView.vue"),
         },
         {
-          path: "/audit-logs",
+          path: "admin/audit-logs",
           name: "audit-logs",
           component: () => import("../views/AuditLogsView.vue"),
         }

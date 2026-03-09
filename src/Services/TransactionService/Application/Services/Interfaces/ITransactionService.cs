@@ -20,4 +20,11 @@ public interface ITransactionService
         int pageNumber,
         int pageSize,
         CancellationToken cancellationToken = default);
+    
+    Task<ServiceResult<TransactionDetailDto>> GetTransactionDetailAsync(
+        string tenantPublicId,
+        string userPublicId,
+        string role,
+        string transactionPublicId,
+        CancellationToken cancellationToken = default);
 }

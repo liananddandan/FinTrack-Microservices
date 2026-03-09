@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from "vue";
+import { useRouter } from "vue-router";
 import { ElMessage } from "element-plus";
 import { getMyTransactions } from "../api/transactions";
 
@@ -16,6 +17,8 @@ type TransactionItem = {
   riskStatus: string;
   createdAtUtc: string;
 };
+
+const router = useRouter();
 
 const items = ref<TransactionItem[]>([]);
 const loading = ref(false);
@@ -118,6 +121,10 @@ function paymentTagType(status: string) {
       return "info";
   }
 }
+
+function goDetail(row: TransactionItem) {
+  router.push(`/transactions/${row.transactionPublicId}`);
+}
 </script>
 
 <template>
@@ -195,6 +202,8 @@ function paymentTagType(status: string) {
         :data="filteredItems"
         empty-text="No transactions found."
         class="transaction-table"
+        row-class-name="clickable-row"
+        @row-click="goDetail"
       >
         <el-table-column prop="tenantName" label="Tenant" min-width="180" />
         <el-table-column prop="title" label="Title" min-width="180" />
@@ -231,6 +240,14 @@ function paymentTagType(status: string) {
         <el-table-column prop="createdAtUtc" label="Created At" min-width="180">
           <template #default="{ row }">
             {{ formatDateTime(row.createdAtUtc) }}
+          </template>
+        </el-table-column>
+
+        <el-table-column label="Action" width="110" fixed="right">
+          <template #default="{ row }">
+            <el-button link type="primary" @click.stop="goDetail(row)">
+              View
+            </el-button>
           </template>
         </el-table-column>
       </el-table>
@@ -318,6 +335,10 @@ function paymentTagType(status: string) {
 .transaction-table :deep(.el-table__cell) {
   padding-top: 14px;
   padding-bottom: 14px;
+}
+
+.transaction-table :deep(.clickable-row) {
+  cursor: pointer;
 }
 
 @media (max-width: 768px) {

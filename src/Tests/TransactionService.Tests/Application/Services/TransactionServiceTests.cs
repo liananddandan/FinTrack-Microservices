@@ -454,4 +454,255 @@ public class TransactionServiceTests
         result.Code.Should().Be(ResultCodes.Transaction.TransactionQueryFailed);
         result.Message.Should().Be("Failed to query transactions.");
     }
+
+    [Fact]
+    public async Task GetTransactionDetailAsync_Should_Return_Fail_When_Tenant_Is_Invalid()
+    {
+        var result = await _sut.GetTransactionDetailAsync(
+            tenantPublicId: "invalid-tenant",
+            userPublicId: Guid.NewGuid().ToString(),
+            role: "Member",
+            transactionPublicId: Guid.NewGuid().ToString(),
+            cancellationToken: CancellationToken.None);
+
+        result.Success.Should().BeFalse();
+        result.Code.Should().Be(ResultCodes.Transaction.TransactionQueryFailed);
+        result.Message.Should().Be("Tenant is invalid.");
+    }
+
+    [Fact]
+    public async Task GetTransactionDetailAsync_Should_Return_Fail_When_User_Is_Invalid()
+    {
+        var result = await _sut.GetTransactionDetailAsync(
+            tenantPublicId: Guid.NewGuid().ToString(),
+            userPublicId: "invalid-user",
+            role: "Member",
+            transactionPublicId: Guid.NewGuid().ToString(),
+            cancellationToken: CancellationToken.None);
+
+        result.Success.Should().BeFalse();
+        result.Code.Should().Be(ResultCodes.Transaction.TransactionQueryFailed);
+        result.Message.Should().Be("User is invalid.");
+    }
+
+    [Fact]
+    public async Task GetTransactionDetailAsync_Should_Return_Fail_When_TransactionPublicId_Is_Invalid()
+    {
+        var result = await _sut.GetTransactionDetailAsync(
+            tenantPublicId: Guid.NewGuid().ToString(),
+            userPublicId: Guid.NewGuid().ToString(),
+            role: "Member",
+            transactionPublicId: "invalid-id",
+            cancellationToken: CancellationToken.None);
+
+        result.Success.Should().BeFalse();
+        result.Code.Should().Be(ResultCodes.Transaction.TransactionQueryFailed);
+        result.Message.Should().Be("Transaction public id is invalid.");
+    }
+
+    [Fact]
+    public async Task GetTransactionDetailAsync_Should_Return_NotFound_When_Transaction_Does_Not_Exist()
+    {
+        _transactionRepoMock
+            .Setup(x => x.GetByPublicIdAsync(It.IsAny<Guid>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((Transaction?)null);
+
+        var result = await _sut.GetTransactionDetailAsync(
+            tenantPublicId: Guid.NewGuid().ToString(),
+            userPublicId: Guid.NewGuid().ToString(),
+            role: "Member",
+            transactionPublicId: Guid.NewGuid().ToString(),
+            cancellationToken: CancellationToken.None);
+
+        result.Success.Should().BeFalse();
+        result.Code.Should().Be(ResultCodes.Transaction.TransactionNotFound);
+        result.Message.Should().Be("Transaction not found.");
+    }
+
+    [Fact]
+    public async Task GetTransactionDetailAsync_Should_Return_NotFound_When_Transaction_Belongs_To_Another_Tenant()
+    {
+        var currentTenantId = Guid.NewGuid();
+        var anotherTenantId = Guid.NewGuid();
+
+        var transaction = new Transaction
+        {
+            PublicId = Guid.NewGuid(),
+            TenantPublicId = anotherTenantId,
+            TenantNameSnapshot = "Another Tenant",
+            CreatedByUserPublicId = Guid.NewGuid(),
+            Type = TransactionType.Donation,
+            Title = "Donation",
+            Amount = 100,
+            Currency = "NZD",
+            Status = TransactionStatus.Completed,
+            PaymentStatus = PaymentStatus.Succeeded,
+            RiskStatus = RiskStatus.NotChecked,
+            CreatedAtUtc = DateTime.UtcNow
+        };
+
+        _transactionRepoMock
+            .Setup(x => x.GetByPublicIdAsync(transaction.PublicId, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(transaction);
+
+        var result = await _sut.GetTransactionDetailAsync(
+            tenantPublicId: currentTenantId.ToString(),
+            userPublicId: Guid.NewGuid().ToString(),
+            role: "Member",
+            transactionPublicId: transaction.PublicId.ToString(),
+            cancellationToken: CancellationToken.None);
+
+        result.Success.Should().BeFalse();
+        result.Code.Should().Be(ResultCodes.Transaction.TransactionNotFound);
+        result.Message.Should().Be("Transaction not found.");
+    }
+
+    [Fact]
+    public async Task GetTransactionDetailAsync_Should_Return_Fail_When_Transaction_Does_Not_Belong_To_Current_User_And_User_Is_Not_Admin()
+    {
+        var tenantId = Guid.NewGuid();
+        var currentUserId = Guid.NewGuid();
+        var ownerUserId = Guid.NewGuid();
+
+        var transaction = new Transaction
+        {
+            PublicId = Guid.NewGuid(),
+            TenantPublicId = tenantId,
+            TenantNameSnapshot = "Demo Tenant",
+            CreatedByUserPublicId = ownerUserId,
+            Type = TransactionType.Donation,
+            Title = "Donation",
+            Amount = 100,
+            Currency = "NZD",
+            Status = TransactionStatus.Completed,
+            PaymentStatus = PaymentStatus.Succeeded,
+            RiskStatus = RiskStatus.NotChecked,
+            CreatedAtUtc = DateTime.UtcNow
+        };
+
+        _transactionRepoMock
+            .Setup(x => x.GetByPublicIdAsync(transaction.PublicId, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(transaction);
+
+        var result = await _sut.GetTransactionDetailAsync(
+            tenantPublicId: tenantId.ToString(),
+            userPublicId: currentUserId.ToString(),
+            role: "Member",
+            transactionPublicId: transaction.PublicId.ToString(),
+            cancellationToken: CancellationToken.None);
+
+        result.Success.Should().BeFalse();
+        result.Code.Should().Be(ResultCodes.Transaction.TransactionNotBelongToCurrentUser);
+        result.Message.Should().Be("Transaction does not belong to current user.");
+    }
+
+    [Fact]
+    public async Task GetTransactionDetailAsync_Should_Return_Success_When_Current_User_Is_Owner()
+    {
+        var tenantId = Guid.NewGuid();
+        var userId = Guid.NewGuid();
+
+        var transaction = new Transaction
+        {
+            PublicId = Guid.NewGuid(),
+            TenantPublicId = tenantId,
+            TenantNameSnapshot = "Demo Tenant",
+            CreatedByUserPublicId = userId,
+            Type = TransactionType.Donation,
+            Title = "Support Donation",
+            Description = "Monthly support",
+            Amount = 100,
+            Currency = "NZD",
+            Status = TransactionStatus.Completed,
+            PaymentStatus = PaymentStatus.Succeeded,
+            RiskStatus = RiskStatus.NotChecked,
+            CreatedAtUtc = DateTime.UtcNow,
+            PaymentReference = "MOCK-PAY-001"
+        };
+
+        _transactionRepoMock
+            .Setup(x => x.GetByPublicIdAsync(transaction.PublicId, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(transaction);
+
+        var result = await _sut.GetTransactionDetailAsync(
+            tenantPublicId: tenantId.ToString(),
+            userPublicId: userId.ToString(),
+            role: "Member",
+            transactionPublicId: transaction.PublicId.ToString(),
+            cancellationToken: CancellationToken.None);
+
+        result.Success.Should().BeTrue();
+        result.Code.Should().Be(ResultCodes.Transaction.TransactionQuerySuccess);
+        result.Data.Should().NotBeNull();
+        result.Data!.TransactionPublicId.Should().Be(transaction.PublicId.ToString());
+        result.Data.TenantPublicId.Should().Be(tenantId.ToString());
+        result.Data.TenantName.Should().Be("Demo Tenant");
+        result.Data.Type.Should().Be("Donation");
+        result.Data.Title.Should().Be("Support Donation");
+        result.Data.Description.Should().Be("Monthly support");
+        result.Data.Amount.Should().Be(100);
+        result.Data.Currency.Should().Be("NZD");
+        result.Data.Status.Should().Be("Completed");
+        result.Data.PaymentStatus.Should().Be("Succeeded");
+        result.Data.PaymentReference.Should().Be("MOCK-PAY-001");
+    }
+
+    [Fact]
+    public async Task GetTransactionDetailAsync_Should_Return_Success_When_Current_User_Is_Admin()
+    {
+        var tenantId = Guid.NewGuid();
+        var adminUserId = Guid.NewGuid();
+        var ownerUserId = Guid.NewGuid();
+
+        var transaction = new Transaction
+        {
+            PublicId = Guid.NewGuid(),
+            TenantPublicId = tenantId,
+            TenantNameSnapshot = "Demo Tenant",
+            CreatedByUserPublicId = ownerUserId,
+            Type = TransactionType.Procurement,
+            Title = "Buy Stationery",
+            Amount = 50,
+            Currency = "NZD",
+            Status = TransactionStatus.Submitted,
+            PaymentStatus = PaymentStatus.NotStarted,
+            RiskStatus = RiskStatus.Pending,
+            CreatedAtUtc = DateTime.UtcNow
+        };
+
+        _transactionRepoMock
+            .Setup(x => x.GetByPublicIdAsync(transaction.PublicId, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(transaction);
+
+        var result = await _sut.GetTransactionDetailAsync(
+            tenantPublicId: tenantId.ToString(),
+            userPublicId: adminUserId.ToString(),
+            role: "Admin",
+            transactionPublicId: transaction.PublicId.ToString(),
+            cancellationToken: CancellationToken.None);
+
+        result.Success.Should().BeTrue();
+        result.Data.Should().NotBeNull();
+        result.Data!.Type.Should().Be("Procurement");
+        result.Data.Title.Should().Be("Buy Stationery");
+    }
+
+    [Fact]
+    public async Task GetTransactionDetailAsync_Should_Return_Fail_When_Repository_Throws()
+    {
+        _transactionRepoMock
+            .Setup(x => x.GetByPublicIdAsync(It.IsAny<Guid>(), It.IsAny<CancellationToken>()))
+            .ThrowsAsync(new Exception("db error"));
+
+        var result = await _sut.GetTransactionDetailAsync(
+            tenantPublicId: Guid.NewGuid().ToString(),
+            userPublicId: Guid.NewGuid().ToString(),
+            role: "Member",
+            transactionPublicId: Guid.NewGuid().ToString(),
+            cancellationToken: CancellationToken.None);
+
+        result.Success.Should().BeFalse();
+        result.Code.Should().Be(ResultCodes.Transaction.TransactionQueryFailed);
+        result.Message.Should().Be("Failed to query transaction.");
+    }
 }

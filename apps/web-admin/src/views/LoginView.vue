@@ -112,7 +112,7 @@ async function onLogin() {
       return;
     }
 
-    await router.push("/dashboard");
+    await router.push("/admin/overview");
   } catch (err: any) {
     errorMessage.value =
       err?.response?.data?.message ??

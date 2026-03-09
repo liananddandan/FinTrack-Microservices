@@ -1,18 +1,18 @@
-import { http } from "./http";
+import { tenantHttp } from "./http";
 import type { ApiResponse } from "./types";
 
 export type TenantMemberDto = {
-  membershipPublicId: string
-  userPublicId: string
-  email: string
-  userName?: string
-  role: "Admin" | "Member"
-  isActive: boolean
-  joinedAt: string
-}
+  membershipPublicId: string;
+  userPublicId: string;
+  email: string;
+  userName?: string;
+  role: "Admin" | "Member";
+  isActive: boolean;
+  joinedAt: string;
+};
 
 export async function getTenantMembers(): Promise<TenantMemberDto[]> {
-  const response = await http.get<ApiResponse<TenantMemberDto[]>>(
+  const response = await tenantHttp.get<ApiResponse<TenantMemberDto[]>>(
     "/api/tenant/members"
   );
 
@@ -28,7 +28,7 @@ export async function getTenantMembers(): Promise<TenantMemberDto[]> {
 export async function removeTenantMember(
   membershipPublicId: string
 ): Promise<boolean> {
-  const response = await http.delete<ApiResponse<boolean>>(
+  const response = await tenantHttp.delete<ApiResponse<boolean>>(
     `/api/tenant/members/${membershipPublicId}`
   );
 
@@ -45,7 +45,7 @@ export async function changeTenantMemberRole(
   membershipPublicId: string,
   role: string
 ): Promise<boolean> {
-  const response = await http.patch<ApiResponse<boolean>>(
+  const response = await tenantHttp.patch<ApiResponse<boolean>>(
     `/api/tenant/members/${membershipPublicId}/role`,
     { role }
   );

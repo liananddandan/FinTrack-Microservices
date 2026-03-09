@@ -9,23 +9,24 @@
       </div>
 
       <el-menu :default-active="active" router class="admin-menu">
-        <el-menu-item index="/dashboard">
-          <span>Dashboard</span>
+
+        <el-menu-item index="/admin/overview">
+          <span>Overview</span>
         </el-menu-item>
 
-        <el-menu-item index="/transactions">
+        <el-menu-item index="/admin/transactions">
           <span>Transactions</span>
         </el-menu-item>
 
-        <el-menu-item index="/members">
+        <el-menu-item index="/admin/members">
           <span>Members</span>
         </el-menu-item>
 
-        <el-menu-item index="/invitations">
+        <el-menu-item index="/admin/invitations">
           <span>Invitations</span>
         </el-menu-item>
 
-        <el-menu-item index="/audit-logs">
+        <el-menu-item index="/admin/audit-logs">
           <span>Audit Logs</span>
         </el-menu-item>
       </el-menu>

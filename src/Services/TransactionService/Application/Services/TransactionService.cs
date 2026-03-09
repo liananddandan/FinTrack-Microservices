@@ -259,4 +259,109 @@ public class TransactionService(
                 "Failed to query transactions.");
         }
     }
+    
+    public async Task<ServiceResult<TransactionDetailDto>> GetTransactionDetailAsync(
+        string tenantPublicId,
+        string userPublicId,
+        string role,
+        string transactionPublicId,
+        CancellationToken cancellationToken = default)
+    {
+        if (string.IsNullOrWhiteSpace(tenantPublicId) ||
+            !Guid.TryParse(tenantPublicId, out var parsedTenantPublicId))
+        {
+            return ServiceResult<TransactionDetailDto>.Fail(
+                ResultCodes.Transaction.TransactionQueryFailed,
+                "Tenant is invalid.");
+        }
+
+        if (string.IsNullOrWhiteSpace(userPublicId) ||
+            !Guid.TryParse(userPublicId, out var parsedUserPublicId))
+        {
+            return ServiceResult<TransactionDetailDto>.Fail(
+                ResultCodes.Transaction.TransactionQueryFailed,
+                "User is invalid.");
+        }
+
+        if (string.IsNullOrWhiteSpace(transactionPublicId) ||
+            !Guid.TryParse(transactionPublicId, out var parsedTransactionPublicId))
+        {
+            return ServiceResult<TransactionDetailDto>.Fail(
+                ResultCodes.Transaction.TransactionQueryFailed,
+                "Transaction public id is invalid.");
+        }
+
+        try
+        {
+            var transaction = await transactionRepo.GetByPublicIdAsync(
+                parsedTransactionPublicId,
+                cancellationToken);
+
+            if (transaction == null)
+            {
+                return ServiceResult<TransactionDetailDto>.Fail(
+                    ResultCodes.Transaction.TransactionNotFound,
+                    "Transaction not found.");
+            }
+
+            if (transaction.TenantPublicId != parsedTenantPublicId)
+            {
+                return ServiceResult<TransactionDetailDto>.Fail(
+                    ResultCodes.Transaction.TransactionNotFound,
+                    "Transaction not found.");
+            }
+
+            var isAdmin = string.Equals(role, "Admin", StringComparison.OrdinalIgnoreCase);
+
+            if (!isAdmin && transaction.CreatedByUserPublicId != parsedUserPublicId)
+            {
+                return ServiceResult<TransactionDetailDto>.Fail(
+                    ResultCodes.Transaction.TransactionNotBelongToCurrentUser,
+                    "Transaction does not belong to current user.");
+            }
+
+            var result = new TransactionDetailDto
+            {
+                TransactionPublicId = transaction.PublicId.ToString(),
+                TenantPublicId = transaction.TenantPublicId.ToString(),
+                TenantName = transaction.TenantNameSnapshot,
+                Type = transaction.Type.ToString(),
+                Title = transaction.Title,
+                Description = transaction.Description,
+                Amount = transaction.Amount,
+                Currency = transaction.Currency,
+                Status = transaction.Status.ToString(),
+                PaymentStatus = transaction.PaymentStatus.ToString(),
+                RiskStatus = transaction.RiskStatus.ToString(),
+                CreatedByUserPublicId = transaction.CreatedByUserPublicId.ToString(),
+                CreatedAtUtc = transaction.CreatedAtUtc,
+                ApprovedByUserPublicId = transaction.ApprovedByUserPublicId?.ToString(),
+                ApprovedAtUtc = transaction.ApprovedAtUtc,
+                PaidByUserPublicId = transaction.PaidByUserPublicId?.ToString(),
+                PaidAtUtc = transaction.PaidAtUtc,
+                PaymentReference = transaction.PaymentReference,
+                FailureReason = transaction.FailureReason,
+                RefundedByUserPublicId = transaction.RefundedByUserPublicId?.ToString(),
+                RefundedAtUtc = transaction.RefundedAtUtc
+            };
+
+            return ServiceResult<TransactionDetailDto>.Ok(
+                result,
+                ResultCodes.Transaction.TransactionQuerySuccess,
+                "Transaction retrieved successfully.");
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(
+                ex,
+                "Failed to query transaction detail. Tenant={TenantPublicId}, User={UserPublicId}, Transaction={TransactionPublicId}",
+                tenantPublicId,
+                userPublicId,
+                transactionPublicId);
+
+            return ServiceResult<TransactionDetailDto>.Fail(
+                ResultCodes.Transaction.TransactionQueryFailed,
+                "Failed to query transaction.");
+        }
+    }
 }

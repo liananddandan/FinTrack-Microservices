@@ -12,4 +12,8 @@ public interface ITransactionRepo
         int pageNumber,
         int pageSize,
         CancellationToken cancellationToken = default);
+    
+    Task<Transaction?> GetByPublicIdAsync(
+        Guid transactionPublicId,
+        CancellationToken cancellationToken = default);
 }

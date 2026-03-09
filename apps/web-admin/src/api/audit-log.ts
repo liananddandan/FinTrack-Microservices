@@ -1,4 +1,4 @@
-import { http } from "./http";
+import { tenantHttp } from "./http";
 import type { ApiResponse } from "./types";
 
 export type AuditLogItem = {
@@ -38,7 +38,7 @@ export type AuditLogQuery = {
 export async function getAuditLogs(
   query: AuditLogQuery
 ): Promise<PagedResult<AuditLogItem>> {
-  const response = await http.get<ApiResponse<PagedResult<AuditLogItem>>>(
+  const response = await tenantHttp.get<ApiResponse<PagedResult<AuditLogItem>>>(
     "/api/audit-logs",
     { params: query }
   );

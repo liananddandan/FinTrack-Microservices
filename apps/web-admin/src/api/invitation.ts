@@ -1,4 +1,4 @@
-import { http } from "./http";
+import { tenantHttp } from "./http";
 import type { ApiResponse } from "./types";
 
 export type CreateTenantInvitationRequest = {
@@ -20,7 +20,7 @@ export type TenantInvitationDto = {
 export async function createTenantInvitation(
   request: CreateTenantInvitationRequest
 ): Promise<boolean> {
-  const response = await http.post<ApiResponse<boolean>>(
+  const response = await tenantHttp.post<ApiResponse<boolean>>(
     "/api/tenant/invitations",
     request
   );
@@ -35,7 +35,7 @@ export async function createTenantInvitation(
 }
 
 export async function getTenantInvitations(): Promise<TenantInvitationDto[]> {
-  const response = await http.get<ApiResponse<TenantInvitationDto[]>>(
+  const response = await tenantHttp.get<ApiResponse<TenantInvitationDto[]>>(
     "/api/tenant/invitations"
   );
 
@@ -51,7 +51,7 @@ export async function getTenantInvitations(): Promise<TenantInvitationDto[]> {
 export async function resendTenantInvitation(
   invitationPublicId: string
 ): Promise<boolean> {
-  const response = await http.post<ApiResponse<boolean>>(
+  const response = await tenantHttp.post<ApiResponse<boolean>>(
     `/api/tenant/invitations/${invitationPublicId}/resend`
   );
 

@@ -33,4 +33,13 @@ public class TransactionRepo(TransactionDbContext dbContext) : ITransactionRepo
 
         return (items, totalCount);
     }
+    
+    public async Task<Transaction?> GetByPublicIdAsync(
+        Guid transactionPublicId,
+        CancellationToken cancellationToken = default)
+    {
+        return await dbContext.Transactions
+            .AsNoTracking()
+            .FirstOrDefaultAsync(x => x.PublicId == transactionPublicId, cancellationToken);
+    }
 }

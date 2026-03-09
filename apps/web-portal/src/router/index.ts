@@ -53,6 +53,10 @@ const router = createRouter({
     {
       path: "/my-transactions",
       component: () => import("../views/MyTransactionsView.vue")
+    },
+    {
+      path: "/transactions/:transactionPublicId",
+      component: () => import("../views/TransactionDetailView.vue"),
     }
   ],
 });
