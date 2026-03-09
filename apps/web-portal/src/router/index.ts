@@ -9,7 +9,10 @@ import { useAuthStore } from "../stores/auth";
 const router = createRouter({
   history: createWebHistory(),
   routes: [
-    { path: "/", redirect: "/login" },
+    {
+      path: "/",
+      redirect: "/login",
+    },
     {
       path: "/login",
       name: "login",
@@ -46,6 +49,30 @@ const router = createRouter({
       component: HomeView,
       meta: { requiresAuth: true, requiresTenant: true },
     },
+    {
+      path: "/donate",
+      name: "donate",
+      component: () => import("../views/DonationView.vue"),
+      meta: { requiresAuth: true, requiresTenant: true },
+    },
+    {
+      path: "/procurements/new",
+      name: "procurement-create",
+      component: () => import("../views/ProcurementDraftView.vue"),
+      meta: { requiresAuth: true, requiresTenant: true },
+    },
+    {
+      path: "/my-transactions",
+      name: "my-transactions",
+      component: () => import("../views/MyTransactionsView.vue"),
+      meta: { requiresAuth: true, requiresTenant: true },
+    },
+    {
+      path: "/transactions/:transactionPublicId",
+      name: "transaction-detail",
+      component: () => import("../views/TransactionDetailView.vue"),
+      meta: { requiresAuth: true, requiresTenant: true },
+    },
   ],
 });
 
@@ -58,16 +85,16 @@ router.beforeEach(async (to) => {
 
   await auth.initialize();
 
+  if (to.path === "/login" && auth.accountAccessToken) {
+    return auth.tenantAccessToken ? "/home" : "/waiting-membership";
+  }
+
   if (to.meta.requiresAuth && !auth.accountAccessToken) {
     return "/login";
   }
 
   if (to.meta.requiresTenant && !auth.tenantAccessToken) {
     return "/waiting-membership";
-  }
-
-  if (to.path === "/login" && auth.accountAccessToken) {
-    return auth.tenantAccessToken ? "/home" : "/waiting-membership";
   }
 
   return true;

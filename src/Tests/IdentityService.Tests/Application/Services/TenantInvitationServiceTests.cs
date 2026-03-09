@@ -2,6 +2,7 @@ using FluentAssertions;
 using IdentityService.Application.Common.Status;
 using IdentityService.Application.Events;
 using IdentityService.Application.Services;
+using IdentityService.Application.Services.Interfaces;
 using IdentityService.Domain.Entities;
 using IdentityService.Domain.Enums;
 using IdentityService.Infrastructure.Persistence.Repositories.Interfaces;
@@ -20,7 +21,7 @@ public class TenantInvitationServiceTests
     private readonly Mock<IUnitOfWork> _unitOfWorkMock = new();
     private readonly Mock<ILogger<TenantInvitationService>> _loggerMock = new();
     private readonly Mock<IMediator> _mediatorMock = new();
-
+    private readonly Mock<IAuditLogPublisher> _auditlogPubliser = new();
     private readonly TenantInvitationService _sut;
 
     public TenantInvitationServiceTests()
@@ -32,7 +33,8 @@ public class TenantInvitationServiceTests
             _invitationRepoMock.Object,
             _unitOfWorkMock.Object,
             _loggerMock.Object,
-            _mediatorMock.Object);
+            _mediatorMock.Object,
+            _auditlogPubliser.Object);
     }
 
     [Fact]

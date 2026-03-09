@@ -8,6 +8,8 @@ using Microsoft.AspNetCore.Identity;
 using SharedKernel.Common.Constants;
 using SharedKernel.Common.DTOs;
 using SharedKernel.Common.Results;
+using SharedKernel.Contracts.AuditLogs;
+using SharedKernel.Topics;
 using StackExchange.Redis;
 
 namespace IdentityService.Application.Services;
@@ -20,7 +22,7 @@ public class TenantService(
     UserManager<ApplicationUser> userManager,
     ITenantMembershipRepo tenantMembershipRepo,
     IConnectionMultiplexer redis,
-    IMediator mediator) : ITenantService
+    IAuditLogPublisher auditLogPublisher) : ITenantService
 {
     public async Task<ServiceResult<RegisterTenantResult>> RegisterTenantAsync(
         string tenantName,
@@ -180,7 +182,7 @@ public class TenantService(
                 "Failed to get tenant members.");
         }
     }
-    
+
     public async Task<ServiceResult<bool>> RemoveTenantMemberAsync(
         string tenantPublicId,
         string membershipPublicId,
@@ -226,7 +228,7 @@ public class TenantService(
 
         try
         {
-            var redisKey = Constant.Redis.JwtVersionPrefix + membership.User.PublicId.ToString();         
+            var redisKey = Constant.Redis.JwtVersionPrefix + membership.User.PublicId.ToString();
             var db = redis.GetDatabase();
             await db.StringIncrementAsync(redisKey);
         }
@@ -237,124 +239,168 @@ public class TenantService(
                 membership.User.PublicId);
         }
 
+        await auditLogPublisher.PublishAsync(
+            AuditLogTopics.MembershipRemoved,
+            new AuditLogMessage
+            {
+                TenantPublicId = tenantPublicId,
+                ActorUserPublicId = operatorUserPublicId,
+                ActorDisplayName = operatorUserPublicId,
+                ActionType = "Membership.Removed",
+                Category = "Membership",
+                TargetType = "Membership",
+                TargetPublicId = membership.PublicId.ToString(),
+                TargetDisplay = membership.User.Email,
+                Source = "IdentityService",
+                OccurredAtUtc = DateTime.UtcNow,
+                Metadata =
+                [
+                    new AuditMetadataItem("role", membership.Role.ToString()),
+                    new AuditMetadataItem("isActive", "false")
+                ]
+            },
+            cancellationToken);
+
         return ServiceResult<bool>.Ok(
             true,
             ResultCodes.Tenant.MemberRemoved,
             "Member removed successfully.");
     }
-    
+
     public async Task<ServiceResult<bool>> ChangeTenantMemberRoleAsync(
-    string tenantPublicId,
-    string membershipPublicId,
-    string operatorUserPublicId,
-    string role,
-    CancellationToken cancellationToken = default)
-{
-    if (string.IsNullOrWhiteSpace(tenantPublicId))
+        string tenantPublicId,
+        string membershipPublicId,
+        string operatorUserPublicId,
+        string role,
+        CancellationToken cancellationToken = default)
     {
-        return ServiceResult<bool>.Fail(
-            ResultCodes.Tenant.ChangeMemberRoleParameterError,
-            "Tenant public id is required.");
-    }
-
-    if (string.IsNullOrWhiteSpace(membershipPublicId))
-    {
-        return ServiceResult<bool>.Fail(
-            ResultCodes.Tenant.ChangeMemberRoleParameterError,
-            "Membership public id is required.");
-    }
-
-    if (string.IsNullOrWhiteSpace(operatorUserPublicId))
-    {
-        return ServiceResult<bool>.Fail(
-            ResultCodes.Tenant.ChangeMemberRoleParameterError,
-            "Operator user public id is required.");
-    }
-
-    if (!Enum.TryParse<TenantRole>(role, true, out var targetRole) ||
-        (targetRole != TenantRole.Admin && targetRole != TenantRole.Member))
-    {
-        return ServiceResult<bool>.Fail(
-            ResultCodes.Tenant.ChangeMemberRoleInvalidRole,
-            "Invalid role.");
-    }
-
-    var membership = await tenantMembershipRepo.GetByPublicIdAsync(
-        membershipPublicId,
-        cancellationToken);
-
-    if (membership == null)
-    {
-        return ServiceResult<bool>.Fail(
-            ResultCodes.Tenant.MemberNotFound,
-            "Membership not found.");
-    }
-
-    if (membership.Tenant.PublicId.ToString() != tenantPublicId)
-    {
-        return ServiceResult<bool>.Fail(
-            ResultCodes.Tenant.MemberNotInTenant,
-            "Member does not belong to this tenant.");
-    }
-
-    if (!membership.IsActive)
-    {
-        return ServiceResult<bool>.Fail(
-            ResultCodes.Tenant.ChangeMemberRoleInactiveMembership,
-            "Cannot change role for an inactive member.");
-    }
-
-    if (membership.User.PublicId.ToString() == operatorUserPublicId)
-    {
-        return ServiceResult<bool>.Fail(
-            ResultCodes.Tenant.CannotChangeOwnRole,
-            "You cannot change your own role.");
-    }
-
-    if (membership.Role == targetRole)
-    {
-        return ServiceResult<bool>.Ok(
-            true,
-            ResultCodes.Tenant.ChangeMemberRoleNoChange,
-            "Member role is already set to the requested value.");
-    }
-
-    // 如果要把 Admin 降级为 Member，需要检查是否是最后一个 Admin
-    if (membership.Role == TenantRole.Admin && targetRole == TenantRole.Member)
-    {
-        var activeAdminCount = await tenantMembershipRepo.CountActiveAdminsAsync(
-            membership.TenantId,
-            cancellationToken);
-
-        if (activeAdminCount <= 1)
+        if (string.IsNullOrWhiteSpace(tenantPublicId))
         {
             return ServiceResult<bool>.Fail(
-                ResultCodes.Tenant.CannotDemoteLastAdmin,
-                "You cannot demote the last admin of the tenant.");
+                ResultCodes.Tenant.ChangeMemberRoleParameterError,
+                "Tenant public id is required.");
         }
+
+        if (string.IsNullOrWhiteSpace(membershipPublicId))
+        {
+            return ServiceResult<bool>.Fail(
+                ResultCodes.Tenant.ChangeMemberRoleParameterError,
+                "Membership public id is required.");
+        }
+
+        if (string.IsNullOrWhiteSpace(operatorUserPublicId))
+        {
+            return ServiceResult<bool>.Fail(
+                ResultCodes.Tenant.ChangeMemberRoleParameterError,
+                "Operator user public id is required.");
+        }
+
+        if (!Enum.TryParse<TenantRole>(role, true, out var targetRole) ||
+            (targetRole != TenantRole.Admin && targetRole != TenantRole.Member))
+        {
+            return ServiceResult<bool>.Fail(
+                ResultCodes.Tenant.ChangeMemberRoleInvalidRole,
+                "Invalid role.");
+        }
+
+        var membership = await tenantMembershipRepo.GetByPublicIdAsync(
+            membershipPublicId,
+            cancellationToken);
+
+        if (membership == null)
+        {
+            return ServiceResult<bool>.Fail(
+                ResultCodes.Tenant.MemberNotFound,
+                "Membership not found.");
+        }
+
+        if (membership.Tenant.PublicId.ToString() != tenantPublicId)
+        {
+            return ServiceResult<bool>.Fail(
+                ResultCodes.Tenant.MemberNotInTenant,
+                "Member does not belong to this tenant.");
+        }
+
+        if (!membership.IsActive)
+        {
+            return ServiceResult<bool>.Fail(
+                ResultCodes.Tenant.ChangeMemberRoleInactiveMembership,
+                "Cannot change role for an inactive member.");
+        }
+
+        if (membership.User.PublicId.ToString() == operatorUserPublicId)
+        {
+            return ServiceResult<bool>.Fail(
+                ResultCodes.Tenant.CannotChangeOwnRole,
+                "You cannot change your own role.");
+        }
+
+        if (membership.Role == targetRole)
+        {
+            return ServiceResult<bool>.Ok(
+                true,
+                ResultCodes.Tenant.ChangeMemberRoleNoChange,
+                "Member role is already set to the requested value.");
+        }
+
+        if (membership.Role == TenantRole.Admin && targetRole == TenantRole.Member)
+        {
+            var activeAdminCount = await tenantMembershipRepo.CountActiveAdminsAsync(
+                membership.TenantId,
+                cancellationToken);
+
+            if (activeAdminCount <= 1)
+            {
+                return ServiceResult<bool>.Fail(
+                    ResultCodes.Tenant.CannotDemoteLastAdmin,
+                    "You cannot demote the last admin of the tenant.");
+            }
+        }
+        
+        var oldRole = membership.Role;
+        membership.Role = targetRole;
+
+        await unitOfWork.SaveChangesAsync(cancellationToken);
+
+        try
+        {
+            var redisKey = Constant.Redis.JwtVersionPrefix + membership.User.PublicId.ToString();
+            var db = redis.GetDatabase();
+            await db.StringIncrementAsync(redisKey);
+        }
+        catch (Exception ex)
+        {
+            logger.LogWarning(
+                ex,
+                "Failed to increment jwtVersion for user {UserPublicId} after role change.",
+                membership.User.PublicId);
+        }
+
+        await auditLogPublisher.PublishAsync(
+            AuditLogTopics.MembershipRoleChanged,
+            new AuditLogMessage
+            {
+                TenantPublicId = tenantPublicId,
+                ActorUserPublicId = operatorUserPublicId,
+                ActorDisplayName = operatorUserPublicId,
+                ActionType = "Membership.RoleChanged",
+                Category = "Membership",
+                TargetType = "Membership",
+                TargetPublicId = membership.PublicId.ToString(),
+                TargetDisplay = membership.User.Email,
+                Source = "IdentityService",
+                OccurredAtUtc = DateTime.UtcNow,
+                Metadata =
+                [
+                    new AuditMetadataItem("oldRole", oldRole.ToString()),
+                    new AuditMetadataItem("newRole", targetRole.ToString())
+                ]
+            },
+            cancellationToken);
+        
+        return ServiceResult<bool>.Ok(
+            true,
+            ResultCodes.Tenant.ChangeMemberRoleSuccess,
+            "Member role updated successfully.");
     }
-
-    membership.Role = targetRole;
-
-    await unitOfWork.SaveChangesAsync(cancellationToken);
-
-    try
-    {
-        var redisKey = Constant.Redis.JwtVersionPrefix + membership.User.PublicId.ToString();
-        var db = redis.GetDatabase();
-        await db.StringIncrementAsync(redisKey);
-    }
-    catch (Exception ex)
-    {
-        logger.LogWarning(
-            ex,
-            "Failed to increment jwtVersion for user {UserPublicId} after role change.",
-            membership.User.PublicId);
-    }
-
-    return ServiceResult<bool>.Ok(
-        true,
-        ResultCodes.Tenant.ChangeMemberRoleSuccess,
-        "Member role updated successfully.");
-}
 }

@@ -1,5 +1,5 @@
-import { http } from "./http";
-import type { ApiResponse } from "./types"
+import { publicHttp } from "./http";
+import type { ApiResponse } from "./types";
 
 export type RegisterTenantRequest = {
   tenantName: string;
@@ -9,25 +9,24 @@ export type RegisterTenantRequest = {
 };
 
 export type RegisterTenantResult = {
-  tenantPublicId: string
-  userPublicId: string
-  adminEmail: string
-}
+  tenantPublicId: string;
+  userPublicId: string;
+  adminEmail: string;
+};
 
 export async function registerTenant(
   request: RegisterTenantRequest
 ): Promise<RegisterTenantResult> {
-
-  const response = await http.post<ApiResponse<RegisterTenantResult>>(
+  const response = await publicHttp.post<ApiResponse<RegisterTenantResult>>(
     "/api/tenant/register",
     request
-  )
+  );
 
-  const result = response.data
+  const result = response.data;
 
   if (!result.data) {
-    throw new Error(result.message || "Register tenant failed")
+    throw new Error(result.message || "Register tenant failed");
   }
 
-  return result.data
+  return result.data;
 }

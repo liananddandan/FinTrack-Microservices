@@ -1,5 +1,4 @@
-import axios from "axios";
-import { useAuthStore } from "../stores/auth";
+import { accountHttp, publicHttp } from "./http";
 import type { ApiResponse } from "./types";
 
 export type LoginMembershipDto = {
@@ -32,21 +31,10 @@ export type SelectTenantRequest = {
   tenantPublicId: string;
 };
 
-function getAccountAuthHeader() {
-  const auth = useAuthStore();
-
-  return {
-    Authorization: `Bearer ${auth.accountAccessToken}`,
-  };
-}
-
 export async function login(request: LoginRequest): Promise<UserLoginResult> {
-  const response = await axios.post<ApiResponse<UserLoginResult>>(
-    `${import.meta.env.VITE_API_BASE_URL}/api/account/login`,
-    request,
-    {
-      timeout: 15000,
-    }
+  const response = await publicHttp.post<ApiResponse<UserLoginResult>>(
+    "/api/account/login",
+    request
   );
 
   const result = response.data;
@@ -59,12 +47,8 @@ export async function login(request: LoginRequest): Promise<UserLoginResult> {
 }
 
 export async function getCurrentUser(): Promise<CurrentUserResult> {
-  const response = await axios.get<ApiResponse<CurrentUserResult>>(
-    `${import.meta.env.VITE_API_BASE_URL}/api/account/me`,
-    {
-      headers: getAccountAuthHeader(),
-      timeout: 15000,
-    }
+  const response = await accountHttp.get<ApiResponse<CurrentUserResult>>(
+    "/api/account/me"
   );
 
   const result = response.data;
@@ -79,13 +63,9 @@ export async function getCurrentUser(): Promise<CurrentUserResult> {
 export async function selectTenant(
   request: SelectTenantRequest
 ): Promise<string> {
-  const response = await axios.post<ApiResponse<string>>(
-    `${import.meta.env.VITE_API_BASE_URL}/api/account/select-tenant`,
-    request,
-    {
-      headers: getAccountAuthHeader(),
-      timeout: 15000,
-    }
+  const response = await accountHttp.post<ApiResponse<string>>(
+    "/api/account/select-tenant",
+    request
   );
 
   const result = response.data;
