@@ -8,6 +8,7 @@ using SharedKernel.Common.Results;
 using System.Security.Claims;
 using SharedKernel.Common.DTOs.Auth;
 using TransactionService.Api.Controllers;
+using TransactionService.Application.Commands;
 using TransactionService.Application.Common.DTOs;
 using TransactionService.Application.Queries;
 using Xunit;
@@ -170,7 +171,7 @@ public partial class TransactionsControllerTests
             }
         };
     }
-    
+
     [Fact]
     public async Task GetTransactionsAsync_Should_Return_Unauthorized_When_Tenant_Claim_Is_Missing()
     {
@@ -227,11 +228,12 @@ public partial class TransactionsControllerTests
             }
         };
 
-        var result = await sut.GetTransactionsAsync("Donation", "Completed", "Succeeded", 1, 10, CancellationToken.None);
+        var result =
+            await sut.GetTransactionsAsync("Donation", "Completed", "Succeeded", 1, 10, CancellationToken.None);
 
         result.Should().BeOfType<OkObjectResult>();
     }
-    
+
     [Fact]
     public async Task GetTransactionSummaryAsync_Should_Return_Unauthorized_When_Tenant_Claim_Is_Missing()
     {
@@ -293,5 +295,92 @@ public partial class TransactionsControllerTests
         var result = await sut.GetTransactionSummaryAsync(CancellationToken.None);
 
         result.Should().BeOfType<OkObjectResult>();
+    }
+
+    [Fact]
+    public async Task CreateProcurementAsync_Should_Return_Unauthorized_When_Claims_Are_Missing()
+    {
+        var mediatorMock = new Mock<IMediator>();
+        var sut = new TransactionsController(mediatorMock.Object)
+        {
+            ControllerContext = new ControllerContext
+            {
+                HttpContext = new DefaultHttpContext()
+            }
+        };
+
+        var result = await sut.CreateProcurementAsync(
+            new CreateProcurementRequest
+            {
+                Title = "Buy Laptop",
+                Amount = 100,
+                Currency = "NZD"
+            },
+            CancellationToken.None);
+
+        result.Should().BeOfType<UnauthorizedResult>();
+    }
+
+    [Fact]
+    public async Task CreateProcurementAsync_Should_Return_Ok_When_Command_Succeeds()
+    {
+        var mediatorMock = new Mock<IMediator>();
+
+        mediatorMock
+            .Setup(x => x.Send(It.IsAny<CreateProcurementCommand>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(ServiceResult<CreateTransactionResult>.Ok(
+                new CreateTransactionResult
+                {
+                    TransactionPublicId = Guid.NewGuid().ToString(),
+                    TenantPublicId = Guid.NewGuid().ToString(),
+                    TenantName = "Demo Tenant",
+                    Type = "Procurement",
+                    Amount = 100,
+                    Currency = "NZD",
+                    Status = "Draft",
+                    PaymentStatus = "NotStarted"
+                },
+                ResultCodes.Transaction.ProcurementCreateSuccess,
+                "ok"));
+
+        var sut = new TransactionsController(mediatorMock.Object)
+        {
+            ControllerContext = BuildControllerContextForProcurement(
+                Guid.NewGuid().ToString(),
+                Guid.NewGuid().ToString(),
+                "Member")
+        };
+
+        var result = await sut.CreateProcurementAsync(
+            new CreateProcurementRequest
+            {
+                Title = "Buy Laptop",
+                Amount = 100,
+                Currency = "NZD"
+            },
+            CancellationToken.None);
+
+        result.Should().BeOfType<OkObjectResult>();
+    }
+
+    private static ControllerContext BuildControllerContextForProcurement(
+        string tenantPublicId,
+        string userPublicId,
+        string role)
+    {
+        var claims = new List<Claim>
+        {
+            new(JwtClaimNames.Tenant, tenantPublicId),
+            new(JwtClaimNames.UserId, userPublicId),
+            new(ClaimTypes.Role, role)
+        };
+
+        return new ControllerContext
+        {
+            HttpContext = new DefaultHttpContext
+            {
+                User = new ClaimsPrincipal(new ClaimsIdentity(claims, "TestAuthType"))
+            }
+        };
     }
 }

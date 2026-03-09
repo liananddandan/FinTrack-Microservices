@@ -892,4 +892,199 @@ public class TransactionServiceTests
         result.Code.Should().Be(ResultCodes.Transaction.TransactionQueryFailed);
         result.Message.Should().Be("Failed to query tenant transaction summary.");
     }
+
+    [Fact]
+    public async Task CreateProcurementAsync_Should_Create_Draft_Procurement()
+    {
+        var tenantPublicId = Guid.NewGuid().ToString();
+        var userPublicId = Guid.NewGuid().ToString();
+
+        _tenantInfoClientMock
+            .Setup(x => x.GetTenantSummaryAsync(tenantPublicId, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(ServiceResult<TenantSummaryDto>.Ok(
+                new TenantSummaryDto
+                {
+                    TenantPublicId = tenantPublicId,
+                    TenantName = "Demo Tenant"
+                },
+                ResultCodes.Transaction.TransactionQuerySuccess,
+                "ok"));
+
+        Transaction? capturedTransaction = null;
+
+        _transactionRepoMock
+            .Setup(x => x.AddAsync(It.IsAny<Transaction>(), It.IsAny<CancellationToken>()))
+            .Callback<Transaction, CancellationToken>((t, _) => capturedTransaction = t)
+            .Returns(Task.CompletedTask);
+
+        var result = await _sut.CreateProcurementAsync(
+            tenantPublicId,
+            userPublicId,
+            new CreateProcurementRequest
+            {
+                Title = "Buy Laptop",
+                Description = "Procurement draft",
+                Amount = 2000,
+                Currency = "NZD"
+            },
+            CancellationToken.None);
+
+        result.Success.Should().BeTrue();
+        result.Code.Should().Be(ResultCodes.Transaction.ProcurementCreateSuccess);
+
+        capturedTransaction.Should().NotBeNull();
+        capturedTransaction!.Type.Should().Be(TransactionType.Procurement);
+        capturedTransaction.Status.Should().Be(TransactionStatus.Draft);
+        capturedTransaction.PaymentStatus.Should().Be(PaymentStatus.NotStarted);
+    }
+
+    [Fact]
+    public async Task UpdateProcurementAsync_Should_Update_Draft_Procurement()
+    {
+        var tenantId = Guid.NewGuid();
+        var userId = Guid.NewGuid();
+        var transactionId = Guid.NewGuid();
+
+        var transaction = new Transaction
+        {
+            PublicId = transactionId,
+            TenantPublicId = tenantId,
+            CreatedByUserPublicId = userId,
+            Type = TransactionType.Procurement,
+            Title = "Old Title",
+            Description = "Old",
+            Amount = 100,
+            Currency = "NZD",
+            Status = TransactionStatus.Draft,
+            PaymentStatus = PaymentStatus.NotStarted
+        };
+
+        _transactionRepoMock
+            .Setup(x => x.GetProcurementForOwnerAsync(
+                tenantId,
+                userId,
+                transactionId,
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(transaction);
+
+        var result = await _sut.UpdateProcurementAsync(
+            tenantId.ToString(),
+            userId.ToString(),
+            transactionId.ToString(),
+            new UpdateProcurementRequest
+            {
+                Title = "New Title",
+                Description = "New Desc",
+                Amount = 200,
+                Currency = "USD"
+            },
+            CancellationToken.None);
+
+        result.Success.Should().BeTrue();
+        transaction.Title.Should().Be("New Title");
+        transaction.Description.Should().Be("New Desc");
+        transaction.Amount.Should().Be(200);
+        transaction.Currency.Should().Be("USD");
+    }
+
+    [Fact]
+    public async Task SubmitProcurementAsync_Should_Change_Status_From_Draft_To_Submitted()
+    {
+        var tenantId = Guid.NewGuid();
+        var userId = Guid.NewGuid();
+        var transactionId = Guid.NewGuid();
+
+        var transaction = new Transaction
+        {
+            PublicId = transactionId,
+            TenantPublicId = tenantId,
+            CreatedByUserPublicId = userId,
+            Type = TransactionType.Procurement,
+            Status = TransactionStatus.Draft
+        };
+
+        _transactionRepoMock
+            .Setup(x => x.GetProcurementForOwnerAsync(
+                tenantId,
+                userId,
+                transactionId,
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(transaction);
+
+        var result = await _sut.SubmitProcurementAsync(
+            tenantId.ToString(),
+            userId.ToString(),
+            transactionId.ToString(),
+            CancellationToken.None);
+
+        result.Success.Should().BeTrue();
+        transaction.Status.Should().Be(TransactionStatus.Submitted);
+    }
+
+    [Fact]
+    public async Task ApproveProcurementAsync_Should_Approve_Submitted_Procurement()
+    {
+        var tenantId = Guid.NewGuid();
+        var transactionId = Guid.NewGuid();
+
+        var transaction = new Transaction
+        {
+            PublicId = transactionId,
+            TenantPublicId = tenantId,
+            Type = TransactionType.Procurement,
+            Status = TransactionStatus.Submitted
+        };
+
+        _transactionRepoMock
+            .Setup(x => x.GetProcurementForTenantAsync(
+                tenantId,
+                transactionId,
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(transaction);
+
+        var result = await _sut.ApproveProcurementAsync(
+            tenantId.ToString(),
+            "Admin",
+            transactionId.ToString(),
+            CancellationToken.None);
+
+        result.Success.Should().BeTrue();
+        transaction.Status.Should().Be(TransactionStatus.Approved);
+    }
+
+    [Fact]
+    public async Task RejectProcurementAsync_Should_Reject_Submitted_Procurement()
+    {
+        var tenantId = Guid.NewGuid();
+        var transactionId = Guid.NewGuid();
+
+        var transaction = new Transaction
+        {
+            PublicId = transactionId,
+            TenantPublicId = tenantId,
+            Type = TransactionType.Procurement,
+            Status = TransactionStatus.Submitted
+        };
+
+        _transactionRepoMock
+            .Setup(x => x.GetProcurementForTenantAsync(
+                tenantId,
+                transactionId,
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(transaction);
+
+        var result = await _sut.RejectProcurementAsync(
+            tenantId.ToString(),
+            "Admin",
+            transactionId.ToString(),
+            new RejectProcurementRequest
+            {
+                Reason = "Budget exceeded"
+            },
+            CancellationToken.None);
+
+        result.Success.Should().BeTrue();
+        transaction.Status.Should().Be(TransactionStatus.Rejected);
+        transaction.FailureReason.Should().Be("Budget exceeded");
+    }
 }

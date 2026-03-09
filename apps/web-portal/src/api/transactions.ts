@@ -121,3 +121,106 @@ export async function getTransactionDetail(
 
   return result.data;
 }
+
+export interface CreateProcurementRequest {
+  title: string;
+  description?: string;
+  amount: number;
+  currency: string;
+}
+
+export interface UpdateProcurementRequest {
+  title: string;
+  description?: string;
+  amount: number;
+  currency: string;
+}
+
+export interface RejectProcurementRequest {
+  reason: string;
+}
+
+export async function createProcurement(
+  payload: CreateProcurementRequest
+): Promise<CreateTransactionResult> {
+  const response = await tenantHttp.post<ApiResponse<CreateTransactionResult>>(
+    "/api/transactions/procurements",
+    payload
+  );
+
+  const result = response.data;
+
+  if (!result.data) {
+    throw new Error(result.message || "Failed to create procurement");
+  }
+
+  return result.data;
+}
+
+export async function updateProcurement(
+  transactionPublicId: string,
+  payload: UpdateProcurementRequest
+): Promise<boolean> {
+  const response = await tenantHttp.put<ApiResponse<boolean>>(
+    `/api/transactions/procurements/${transactionPublicId}`,
+    payload
+  );
+
+  const result = response.data;
+
+  if (result.data === undefined || result.data === null) {
+    throw new Error(result.message || "Failed to update procurement");
+  }
+
+  return result.data;
+}
+
+export async function submitProcurement(
+  transactionPublicId: string
+): Promise<boolean> {
+  const response = await tenantHttp.post<ApiResponse<boolean>>(
+    `/api/transactions/${transactionPublicId}/submit`
+  );
+
+  const result = response.data;
+
+  if (result.data === undefined || result.data === null) {
+    throw new Error(result.message || "Failed to submit procurement");
+  }
+
+  return result.data;
+}
+
+export async function approveProcurement(
+  transactionPublicId: string
+): Promise<boolean> {
+  const response = await tenantHttp.post<ApiResponse<boolean>>(
+    `/api/transactions/${transactionPublicId}/approve`
+  );
+
+  const result = response.data;
+
+  if (result.data === undefined || result.data === null) {
+    throw new Error(result.message || "Failed to approve procurement");
+  }
+
+  return result.data;
+}
+
+export async function rejectProcurement(
+  transactionPublicId: string,
+  payload: RejectProcurementRequest
+): Promise<boolean> {
+  const response = await tenantHttp.post<ApiResponse<boolean>>(
+    `/api/transactions/${transactionPublicId}/reject`,
+    payload
+  );
+
+  const result = response.data;
+
+  if (result.data === undefined || result.data === null) {
+    throw new Error(result.message || "Failed to reject procurement");
+  }
+
+  return result.data;
+}

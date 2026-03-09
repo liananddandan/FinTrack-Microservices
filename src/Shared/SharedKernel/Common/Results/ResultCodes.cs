@@ -96,6 +96,11 @@ public static class ResultCodes
         public const string TransactionNotFound = "100004002";
         public const string TransactionNotBelongToCurrentUser = "100004003";
         public const string TransactionQueryFailed = "100004004";
+        public const string ProcurementCreateSuccess = "100004101";
+        public const string ProcurementUpdateSuccess = "100004102";
+        public const string ProcurementSubmitSuccess = "100004103";
+        public const string ProcurementApproveSuccess = "100004104";
+        public const string ProcurementRejectSuccess = "100004105";
         public const string TransactionQueryByPageSuccess = "100004997";
         public const string TransactionQuerySuccess = "100004998";
         public const string TransactionCreateSuccess = "100004999";

@@ -120,4 +120,32 @@ public class TransactionRepo(TransactionDbContext dbContext) : ITransactionRepo
             TotalTransactionCount = totalTransactionCount
         };
     }
+    
+    public async Task<Transaction?> GetProcurementForOwnerAsync(
+        Guid tenantPublicId,
+        Guid userPublicId,
+        Guid transactionPublicId,
+        CancellationToken cancellationToken = default)
+    {
+        return await dbContext.Transactions
+            .FirstOrDefaultAsync(x =>
+                    x.PublicId == transactionPublicId &&
+                    x.TenantPublicId == tenantPublicId &&
+                    x.CreatedByUserPublicId == userPublicId &&
+                    x.Type == TransactionType.Procurement,
+                cancellationToken);
+    }
+
+    public async Task<Transaction?> GetProcurementForTenantAsync(
+        Guid tenantPublicId,
+        Guid transactionPublicId,
+        CancellationToken cancellationToken = default)
+    {
+        return await dbContext.Transactions
+            .FirstOrDefaultAsync(x =>
+                    x.PublicId == transactionPublicId &&
+                    x.TenantPublicId == tenantPublicId &&
+                    x.Type == TransactionType.Procurement,
+                cancellationToken);
+    }
 }

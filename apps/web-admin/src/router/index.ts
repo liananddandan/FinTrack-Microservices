@@ -34,6 +34,11 @@ const router = createRouter({
           component: () => import("../views/TransactionsView.vue"),
         },
         {
+          path: "admin/transactions/:transactionPublicId",
+          name: "admin-transaction-detail",
+          component: () => import("../views/TransactionDetailView.vue"),
+        },
+        {
           path: "admin/invitations",
           name: "invitations",
           component: () => import("../views/InvitationsView.vue"),

@@ -8,6 +8,7 @@ on:
       - feature/transaction-service
       - feature/gateway-service
       - feature/web-portal
+      - feature/audit-log-service
   pull_request:
     branches:
       - main

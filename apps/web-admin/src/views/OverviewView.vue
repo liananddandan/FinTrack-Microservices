@@ -2,7 +2,7 @@
 import { onMounted, ref } from "vue";
 import { useRouter } from "vue-router";
 import { ElMessage } from "element-plus";
-import { getTenantTransactionSummary, getTenantTransactions } from "../api/transaction-admin";
+import { getTenantTransactionSummary, getTenantTransactions} from "../api/transaction-admin";
 import { useAuthStore } from "../stores/auth";
 
 type SummaryDto = {
@@ -34,6 +34,7 @@ const auth = useAuthStore();
 const loading = ref(false);
 const summary = ref<SummaryDto | null>(null);
 const recentTransactions = ref<TransactionListItem[]>([]);
+
 
 async function load() {
   loading.value = true;

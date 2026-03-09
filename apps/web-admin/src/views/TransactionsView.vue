@@ -1,7 +1,46 @@
 <script setup lang="ts">
 import { onMounted, ref } from "vue";
 import { ElMessage } from "element-plus";
-import { getTenantTransactions } from "../api/transaction-admin";
+import { getTenantTransactions, approveProcurement, rejectProcurement } from "../api/transaction-admin";
+import { ElMessageBox } from "element-plus";
+import { useRouter } from "vue-router";
+
+const router = useRouter();
+
+function goTransactionDetail(row: TransactionItem) {
+  router.push(`/admin/transactions/${row.transactionPublicId}`);
+}
+
+async function handleApprove(row: TransactionItem) {
+  try {
+    await approveProcurement(row.transactionPublicId);
+    ElMessage.success("Procurement approved.");
+    await load();
+  } catch (err: any) {
+    ElMessage.error(err.message || "Failed to approve.");
+  }
+}
+
+async function handleReject(row: TransactionItem) {
+  try {
+    const { value } = await ElMessageBox.prompt(
+      "Please enter reject reason",
+      "Reject Procurement",
+      {
+        confirmButtonText: "Reject",
+        cancelButtonText: "Cancel",
+        inputPattern: /.+/,
+        inputErrorMessage: "Reason is required",
+      }
+    );
+
+    await rejectProcurement(row.transactionPublicId, { reason: value });
+    ElMessage.success("Procurement rejected.");
+    await load();
+  } catch {
+    // user cancel or error
+  }
+}
 
 type TransactionItem = {
   transactionPublicId: string;
@@ -128,12 +167,7 @@ onMounted(load);
           <el-option label="Rejected" value="Rejected" />
         </el-select>
 
-        <el-select
-          v-model="query.paymentStatus"
-          placeholder="Payment"
-          clearable
-          class="filter-item"
-        >
+        <el-select v-model="query.paymentStatus" placeholder="Payment" clearable class="filter-item">
           <el-option label="NotStarted" value="NotStarted" />
           <el-option label="Processing" value="Processing" />
           <el-option label="Succeeded" value="Succeeded" />
@@ -146,7 +180,7 @@ onMounted(load);
     </el-card>
 
     <el-card class="table-card" shadow="never">
-      <el-table v-loading="loading" :data="items" empty-text="No transactions found.">
+      <el-table v-loading="loading" :data="items" empty-text="No transactions found." @row-click="goTransactionDetail">
         <el-table-column prop="title" label="Title" min-width="180" />
         <el-table-column prop="type" label="Type" width="130">
           <template #default="{ row }">
@@ -181,17 +215,28 @@ onMounted(load);
             {{ formatDateTime(row.createdAtUtc) }}
           </template>
         </el-table-column>
+        <el-table-column label="Action" width="180" fixed="right">
+          <template #default="{ row }">
+            <div v-if="row.type === 'Procurement' && row.status === 'Submitted'" class="action-buttons">
+              <el-button link type="success" @click="handleApprove(row)">Approve</el-button>
+              <el-button link type="danger" @click="handleReject(row)">Reject</el-button>
+            </div>
+            <span v-else>-</span>
+          </template>
+        </el-table-column>
+
+        <el-table-column label="View" width="100" fixed="right">
+          <template #default="{ row }">
+            <el-button link type="primary" @click.stop="goTransactionDetail(row)">
+              View
+            </el-button>
+          </template>
+        </el-table-column>
       </el-table>
 
       <div class="pagination-wrap">
-        <el-pagination
-          background
-          layout="prev, pager, next, total"
-          :current-page="query.pageNumber"
-          :page-size="query.pageSize"
-          :total="totalCount"
-          @current-change="handlePageChange"
-        />
+        <el-pagination background layout="prev, pager, next, total" :current-page="query.pageNumber"
+          :page-size="query.pageSize" :total="totalCount" @current-change="handlePageChange" />
       </div>
     </el-card>
   </div>
@@ -243,5 +288,10 @@ onMounted(load);
   margin-top: 18px;
   display: flex;
   justify-content: flex-end;
+}
+
+.action-buttons {
+  display: flex;
+  gap: 8px;
 }
 </style>
