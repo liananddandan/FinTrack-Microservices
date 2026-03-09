@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using TransactionService.Domain.Entities;
+using TransactionService.Domain.Enums;
 using TransactionService.Infrastructure.Persistence.Repositories.Interfaces;
 
 namespace TransactionService.Infrastructure.Persistence.Repositories;
@@ -41,5 +42,47 @@ public class TransactionRepo(TransactionDbContext dbContext) : ITransactionRepo
         return await dbContext.Transactions
             .AsNoTracking()
             .FirstOrDefaultAsync(x => x.PublicId == transactionPublicId, cancellationToken);
+    }
+    
+    public async Task<(IReadOnlyList<Transaction> Items, int TotalCount)> GetTransactionsAsync(
+        Guid tenantPublicId,
+        string? type,
+        string? status,
+        string? paymentStatus,
+        int pageNumber,
+        int pageSize,
+        CancellationToken cancellationToken = default)
+    {
+        var query = dbContext.Transactions
+            .AsNoTracking()
+            .Where(x => x.TenantPublicId == tenantPublicId);
+
+        if (!string.IsNullOrWhiteSpace(type) &&
+            Enum.TryParse<TransactionType>(type, true, out var parsedType))
+        {
+            query = query.Where(x => x.Type == parsedType);
+        }
+
+        if (!string.IsNullOrWhiteSpace(status) &&
+            Enum.TryParse<TransactionStatus>(status, true, out var parsedStatus))
+        {
+            query = query.Where(x => x.Status == parsedStatus);
+        }
+
+        if (!string.IsNullOrWhiteSpace(paymentStatus) &&
+            Enum.TryParse<PaymentStatus>(paymentStatus, true, out var parsedPaymentStatus))
+        {
+            query = query.Where(x => x.PaymentStatus == parsedPaymentStatus);
+        }
+
+        var totalCount = await query.CountAsync(cancellationToken);
+
+        var items = await query
+            .OrderByDescending(x => x.CreatedAtUtc)
+            .Skip((pageNumber - 1) * pageSize)
+            .Take(pageSize)
+            .ToListAsync(cancellationToken);
+
+        return (items, totalCount);
     }
 }

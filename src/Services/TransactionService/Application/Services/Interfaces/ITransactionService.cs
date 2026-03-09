@@ -27,4 +27,14 @@ public interface ITransactionService
         string role,
         string transactionPublicId,
         CancellationToken cancellationToken = default);
+    
+    Task<ServiceResult<PagedResult<TransactionListItemDto>>> GetTransactionsAsync(
+        string tenantPublicId,
+        string role,
+        string? type,
+        string? status,
+        string? paymentStatus,
+        int pageNumber,
+        int pageSize,
+        CancellationToken cancellationToken = default);
 }

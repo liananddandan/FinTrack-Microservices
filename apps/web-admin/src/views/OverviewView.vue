@@ -39,18 +39,29 @@ async function load() {
   loading.value = true;
 
   try {
-    const [summaryResult, transactionResult] = await Promise.all([
-      getTenantTransactionSummary(),
-      getTenantTransactions({
-        pageNumber: 1,
-        pageSize: 5,
-      }),
-    ]);
+    const transactionResult = await getTenantTransactions({
+      pageNumber: 1,
+      pageSize: 5,
+    });
 
-    summary.value = summaryResult;
     recentTransactions.value = transactionResult.items;
   } catch (err: any) {
-    ElMessage.error(err.message || "Failed to load overview.");
+    ElMessage.error(err.message || "Failed to load recent transactions.");
+  }
+
+  try {
+    const summaryResult = await getTenantTransactionSummary();
+    summary.value = summaryResult;
+  } catch {
+    // summary 接口还没做好时，先静默降级
+    summary.value = {
+      tenantPublicId: auth.currentTenantPublicId || "",
+      tenantName: auth.currentTenantName || "",
+      currentBalance: 0,
+      totalDonationAmount: 0,
+      totalProcurementAmount: 0,
+      totalTransactionCount: recentTransactions.value.length,
+    };
   } finally {
     loading.value = false;
   }

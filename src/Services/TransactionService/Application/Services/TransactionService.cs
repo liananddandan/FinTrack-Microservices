@@ -172,7 +172,7 @@ public class TransactionService(
                 "Failed to create donation transaction.");
         }
     }
-    
+
     public async Task<ServiceResult<PagedResult<TransactionListItemDto>>> GetMyTransactionsAsync(
         string tenantPublicId,
         string userPublicId,
@@ -259,7 +259,7 @@ public class TransactionService(
                 "Failed to query transactions.");
         }
     }
-    
+
     public async Task<ServiceResult<TransactionDetailDto>> GetTransactionDetailAsync(
         string tenantPublicId,
         string userPublicId,
@@ -362,6 +362,96 @@ public class TransactionService(
             return ServiceResult<TransactionDetailDto>.Fail(
                 ResultCodes.Transaction.TransactionQueryFailed,
                 "Failed to query transaction.");
+        }
+    }
+
+    public async Task<ServiceResult<PagedResult<TransactionListItemDto>>> GetTransactionsAsync(
+        string tenantPublicId,
+        string role,
+        string? type,
+        string? status,
+        string? paymentStatus,
+        int pageNumber,
+        int pageSize,
+        CancellationToken cancellationToken = default)
+    {
+        if (string.IsNullOrWhiteSpace(tenantPublicId) ||
+            !Guid.TryParse(tenantPublicId, out var parsedTenantPublicId))
+        {
+            return ServiceResult<PagedResult<TransactionListItemDto>>.Fail(
+                ResultCodes.Transaction.TransactionQueryFailed,
+                "Tenant is invalid.");
+        }
+
+        if (!string.Equals(role, "Admin", StringComparison.OrdinalIgnoreCase))
+        {
+            return ServiceResult<PagedResult<TransactionListItemDto>>.Fail(
+                ResultCodes.Transaction.TransactionNotBelongToCurrentUser,
+                "Only admin can query tenant transactions.");
+        }
+
+        if (pageNumber <= 0)
+        {
+            pageNumber = 1;
+        }
+
+        if (pageSize <= 0)
+        {
+            pageSize = 10;
+        }
+
+        if (pageSize > 100)
+        {
+            pageSize = 100;
+        }
+
+        try
+        {
+            var (items, totalCount) = await transactionRepo.GetTransactionsAsync(
+                parsedTenantPublicId,
+                type,
+                status,
+                paymentStatus,
+                pageNumber,
+                pageSize,
+                cancellationToken);
+
+            var result = new PagedResult<TransactionListItemDto>
+            {
+                Items = items.Select(x => new TransactionListItemDto
+                {
+                    TransactionPublicId = x.PublicId.ToString(),
+                    TenantPublicId = x.TenantPublicId.ToString(),
+                    TenantName = x.TenantNameSnapshot,
+                    Type = x.Type.ToString(),
+                    Title = x.Title,
+                    Amount = x.Amount,
+                    Currency = x.Currency,
+                    Status = x.Status.ToString(),
+                    PaymentStatus = x.PaymentStatus.ToString(),
+                    RiskStatus = x.RiskStatus.ToString(),
+                    CreatedAtUtc = x.CreatedAtUtc
+                }).ToList(),
+                TotalCount = totalCount,
+                PageNumber = pageNumber,
+                PageSize = pageSize
+            };
+
+            return ServiceResult<PagedResult<TransactionListItemDto>>.Ok(
+                result,
+                ResultCodes.Transaction.TransactionQueryByPageSuccess,
+                "Tenant transactions retrieved successfully.");
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(
+                ex,
+                "Failed to query tenant transactions. Tenant={TenantPublicId}",
+                tenantPublicId);
+
+            return ServiceResult<PagedResult<TransactionListItemDto>>.Fail(
+                ResultCodes.Transaction.TransactionQueryFailed,
+                "Failed to query tenant transactions.");
         }
     }
 }

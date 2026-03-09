@@ -170,4 +170,65 @@ public partial class TransactionsControllerTests
             }
         };
     }
+    
+    [Fact]
+    public async Task GetTransactionsAsync_Should_Return_Unauthorized_When_Tenant_Claim_Is_Missing()
+    {
+        var mediatorMock = new Mock<IMediator>();
+
+        var sut = new TransactionsController(mediatorMock.Object)
+        {
+            ControllerContext = new ControllerContext
+            {
+                HttpContext = new DefaultHttpContext
+                {
+                    User = new ClaimsPrincipal(new ClaimsIdentity())
+                }
+            }
+        };
+
+        var result = await sut.GetTransactionsAsync(null, null, null, 1, 10, CancellationToken.None);
+
+        result.Should().BeOfType<UnauthorizedResult>();
+    }
+
+    [Fact]
+    public async Task GetTransactionsAsync_Should_Return_Ok_When_Query_Succeeds()
+    {
+        var mediatorMock = new Mock<IMediator>();
+
+        mediatorMock
+            .Setup(x => x.Send(It.IsAny<GetTransactionsQuery>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(ServiceResult<PagedResult<TransactionListItemDto>>.Ok(
+                new PagedResult<TransactionListItemDto>
+                {
+                    Items = [],
+                    TotalCount = 0,
+                    PageNumber = 1,
+                    PageSize = 10
+                },
+                ResultCodes.Transaction.TransactionQueryByPageSuccess,
+                "ok"));
+
+        var claims = new List<Claim>
+        {
+            new(JwtClaimNames.Tenant, Guid.NewGuid().ToString()),
+            new(ClaimTypes.Role, "Admin")
+        };
+
+        var sut = new TransactionsController(mediatorMock.Object)
+        {
+            ControllerContext = new ControllerContext
+            {
+                HttpContext = new DefaultHttpContext
+                {
+                    User = new ClaimsPrincipal(new ClaimsIdentity(claims, "TestAuthType"))
+                }
+            }
+        };
+
+        var result = await sut.GetTransactionsAsync("Donation", "Completed", "Succeeded", 1, 10, CancellationToken.None);
+
+        result.Should().BeOfType<OkObjectResult>();
+    }
 }

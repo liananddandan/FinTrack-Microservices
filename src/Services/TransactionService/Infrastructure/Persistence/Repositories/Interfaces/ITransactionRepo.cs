@@ -16,4 +16,13 @@ public interface ITransactionRepo
     Task<Transaction?> GetByPublicIdAsync(
         Guid transactionPublicId,
         CancellationToken cancellationToken = default);
+    
+    Task<(IReadOnlyList<Transaction> Items, int TotalCount)> GetTransactionsAsync(
+        Guid tenantPublicId,
+        string? type,
+        string? status,
+        string? paymentStatus,
+        int pageNumber,
+        int pageSize,
+        CancellationToken cancellationToken = default);
 }
