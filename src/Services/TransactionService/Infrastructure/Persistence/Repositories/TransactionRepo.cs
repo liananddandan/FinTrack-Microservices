@@ -2,6 +2,7 @@ using Microsoft.EntityFrameworkCore;
 using TransactionService.Domain.Entities;
 using TransactionService.Domain.Enums;
 using TransactionService.Infrastructure.Persistence.Repositories.Interfaces;
+using TransactionService.Infrastructure.Persistence.Repositories.Models;
 
 namespace TransactionService.Infrastructure.Persistence.Repositories;
 
@@ -84,5 +85,39 @@ public class TransactionRepo(TransactionDbContext dbContext) : ITransactionRepo
             .ToListAsync(cancellationToken);
 
         return (items, totalCount);
+    }
+    
+    public async Task<TenantTransactionSummaryModel> GetTransactionSummaryAsync(
+        Guid tenantPublicId,
+        CancellationToken cancellationToken = default)
+    {
+        var transactions = dbContext.Transactions
+            .AsNoTracking()
+            .Where(x => x.TenantPublicId == tenantPublicId);
+
+        var tenantName = await transactions
+            .Select(x => x.TenantNameSnapshot)
+            .FirstOrDefaultAsync(cancellationToken) ?? string.Empty;
+
+        var totalDonationAmount = await transactions
+            .Where(x => x.Type == TransactionType.Donation &&
+                        x.PaymentStatus == PaymentStatus.Succeeded)
+            .SumAsync(x => (decimal?)x.Amount, cancellationToken) ?? 0m;
+
+        var totalProcurementAmount = await transactions
+            .Where(x => x.Type == TransactionType.Procurement &&
+                        x.PaymentStatus == PaymentStatus.Succeeded)
+            .SumAsync(x => (decimal?)x.Amount, cancellationToken) ?? 0m;
+
+        var totalTransactionCount = await transactions.CountAsync(cancellationToken);
+
+        return new TenantTransactionSummaryModel
+        {
+            TenantName = tenantName,
+            CurrentBalance = totalDonationAmount - totalProcurementAmount,
+            TotalDonationAmount = totalDonationAmount,
+            TotalProcurementAmount = totalProcurementAmount,
+            TotalTransactionCount = totalTransactionCount
+        };
     }
 }

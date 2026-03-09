@@ -38,33 +38,27 @@ const recentTransactions = ref<TransactionListItem[]>([]);
 async function load() {
   loading.value = true;
 
-  try {
-    const transactionResult = await getTenantTransactions({
+  const [summaryResult, transactionResult] = await Promise.allSettled([
+    getTenantTransactionSummary(),
+    getTenantTransactions({
       pageNumber: 1,
       pageSize: 5,
-    });
+    }),
+  ]);
 
-    recentTransactions.value = transactionResult.items;
-  } catch (err: any) {
-    ElMessage.error(err.message || "Failed to load recent transactions.");
+  if (summaryResult.status === "fulfilled") {
+    summary.value = summaryResult.value;
+  } else {
+    ElMessage.error("Failed to load summary.");
   }
 
-  try {
-    const summaryResult = await getTenantTransactionSummary();
-    summary.value = summaryResult;
-  } catch {
-    // summary 接口还没做好时，先静默降级
-    summary.value = {
-      tenantPublicId: auth.currentTenantPublicId || "",
-      tenantName: auth.currentTenantName || "",
-      currentBalance: 0,
-      totalDonationAmount: 0,
-      totalProcurementAmount: 0,
-      totalTransactionCount: recentTransactions.value.length,
-    };
-  } finally {
-    loading.value = false;
+  if (transactionResult.status === "fulfilled") {
+    recentTransactions.value = transactionResult.value.items;
+  } else {
+    ElMessage.error("Failed to load recent transactions.");
   }
+
+  loading.value = false;
 }
 
 function formatAmount(value: number) {

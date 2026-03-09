@@ -231,4 +231,67 @@ public partial class TransactionsControllerTests
 
         result.Should().BeOfType<OkObjectResult>();
     }
+    
+    [Fact]
+    public async Task GetTransactionSummaryAsync_Should_Return_Unauthorized_When_Tenant_Claim_Is_Missing()
+    {
+        var mediatorMock = new Mock<IMediator>();
+
+        var sut = new TransactionsController(mediatorMock.Object)
+        {
+            ControllerContext = new ControllerContext
+            {
+                HttpContext = new DefaultHttpContext
+                {
+                    User = new ClaimsPrincipal(new ClaimsIdentity())
+                }
+            }
+        };
+
+        var result = await sut.GetTransactionSummaryAsync(CancellationToken.None);
+
+        result.Should().BeOfType<UnauthorizedResult>();
+    }
+
+    [Fact]
+    public async Task GetTransactionSummaryAsync_Should_Return_Ok_When_Query_Succeeds()
+    {
+        var mediatorMock = new Mock<IMediator>();
+
+        mediatorMock
+            .Setup(x => x.Send(It.IsAny<GetTransactionSummaryQuery>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(ServiceResult<TenantTransactionSummaryDto>.Ok(
+                new TenantTransactionSummaryDto
+                {
+                    TenantPublicId = Guid.NewGuid().ToString(),
+                    TenantName = "Demo Tenant",
+                    CurrentBalance = 150,
+                    TotalDonationAmount = 200,
+                    TotalProcurementAmount = 50,
+                    TotalTransactionCount = 3
+                },
+                ResultCodes.Transaction.TransactionQuerySuccess,
+                "ok"));
+
+        var claims = new List<Claim>
+        {
+            new(JwtClaimNames.Tenant, Guid.NewGuid().ToString()),
+            new(ClaimTypes.Role, "Admin")
+        };
+
+        var sut = new TransactionsController(mediatorMock.Object)
+        {
+            ControllerContext = new ControllerContext
+            {
+                HttpContext = new DefaultHttpContext
+                {
+                    User = new ClaimsPrincipal(new ClaimsIdentity(claims, "TestAuthType"))
+                }
+            }
+        };
+
+        var result = await sut.GetTransactionSummaryAsync(CancellationToken.None);
+
+        result.Should().BeOfType<OkObjectResult>();
+    }
 }

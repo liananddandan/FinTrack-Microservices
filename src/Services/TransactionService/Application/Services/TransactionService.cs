@@ -454,4 +454,58 @@ public class TransactionService(
                 "Failed to query tenant transactions.");
         }
     }
+    
+    public async Task<ServiceResult<TenantTransactionSummaryDto>> GetTransactionSummaryAsync(
+        string tenantPublicId,
+        string role,
+        CancellationToken cancellationToken = default)
+    {
+        if (string.IsNullOrWhiteSpace(tenantPublicId) ||
+            !Guid.TryParse(tenantPublicId, out var parsedTenantPublicId))
+        {
+            return ServiceResult<TenantTransactionSummaryDto>.Fail(
+                ResultCodes.Transaction.TransactionQueryFailed,
+                "Tenant is invalid.");
+        }
+
+        if (!string.Equals(role, "Admin", StringComparison.OrdinalIgnoreCase))
+        {
+            return ServiceResult<TenantTransactionSummaryDto>.Fail(
+                ResultCodes.Transaction.TransactionNotBelongToCurrentUser,
+                "Only admin can query tenant summary.");
+        }
+
+        try
+        {
+            var summary = await transactionRepo.GetTransactionSummaryAsync(
+                parsedTenantPublicId,
+                cancellationToken);
+
+            var result = new TenantTransactionSummaryDto
+            {
+                TenantPublicId = parsedTenantPublicId.ToString(),
+                TenantName = summary.TenantName,
+                CurrentBalance = summary.CurrentBalance,
+                TotalDonationAmount = summary.TotalDonationAmount,
+                TotalProcurementAmount = summary.TotalProcurementAmount,
+                TotalTransactionCount = summary.TotalTransactionCount
+            };
+
+            return ServiceResult<TenantTransactionSummaryDto>.Ok(
+                result,
+                ResultCodes.Transaction.TransactionQuerySuccess,
+                "Tenant transaction summary retrieved successfully.");
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(
+                ex,
+                "Failed to query tenant transaction summary. Tenant={TenantPublicId}",
+                tenantPublicId);
+
+            return ServiceResult<TenantTransactionSummaryDto>.Fail(
+                ResultCodes.Transaction.TransactionQueryFailed,
+                "Failed to query tenant transaction summary.");
+        }
+    }
 }

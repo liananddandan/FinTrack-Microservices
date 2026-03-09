@@ -1,4 +1,5 @@
 using TransactionService.Domain.Entities;
+using TransactionService.Infrastructure.Persistence.Repositories.Models;
 
 namespace TransactionService.Infrastructure.Persistence.Repositories.Interfaces;
 
@@ -24,5 +25,9 @@ public interface ITransactionRepo
         string? paymentStatus,
         int pageNumber,
         int pageSize,
+        CancellationToken cancellationToken = default);
+    
+    Task<TenantTransactionSummaryModel> GetTransactionSummaryAsync(
+        Guid tenantPublicId,
         CancellationToken cancellationToken = default);
 }

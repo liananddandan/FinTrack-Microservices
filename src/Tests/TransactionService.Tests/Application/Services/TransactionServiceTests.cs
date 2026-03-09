@@ -810,4 +810,86 @@ public class TransactionServiceTests
         result.Data!.Items.Should().HaveCount(2);
         result.Data.TotalCount.Should().Be(2);
     }
+
+    [Fact]
+    public async Task GetTransactionSummaryAsync_Should_Return_Fail_When_Tenant_Is_Invalid()
+    {
+        var result = await _sut.GetTransactionSummaryAsync(
+            tenantPublicId: "invalid-tenant",
+            role: "Admin",
+            cancellationToken: CancellationToken.None);
+
+        result.Success.Should().BeFalse();
+        result.Code.Should().Be(ResultCodes.Transaction.TransactionQueryFailed);
+        result.Message.Should().Be("Tenant is invalid.");
+    }
+
+    [Fact]
+    public async Task GetTransactionSummaryAsync_Should_Return_Fail_When_User_Is_Not_Admin()
+    {
+        var result = await _sut.GetTransactionSummaryAsync(
+            tenantPublicId: Guid.NewGuid().ToString(),
+            role: "Member",
+            cancellationToken: CancellationToken.None);
+
+        result.Success.Should().BeFalse();
+        result.Code.Should().Be(ResultCodes.Transaction.TransactionNotBelongToCurrentUser);
+        result.Message.Should().Be("Only admin can query tenant summary.");
+    }
+
+    [Fact]
+    public async Task GetTransactionSummaryAsync_Should_Return_Summary_When_Request_Is_Valid()
+    {
+        var tenantId = Guid.NewGuid();
+
+        _transactionRepoMock
+            .Setup(x => x.GetTransactionSummaryAsync(
+                tenantId,
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(
+                new TransactionService.Infrastructure.Persistence.Repositories.Models.TenantTransactionSummaryModel
+                {
+                    TenantName = "Demo Tenant",
+                    CurrentBalance = 150,
+                    TotalDonationAmount = 200,
+                    TotalProcurementAmount = 50,
+                    TotalTransactionCount = 3
+                });
+
+        var result = await _sut.GetTransactionSummaryAsync(
+            tenantPublicId: tenantId.ToString(),
+            role: "Admin",
+            cancellationToken: CancellationToken.None);
+
+        result.Success.Should().BeTrue();
+        result.Code.Should().Be(ResultCodes.Transaction.TransactionQuerySuccess);
+        result.Data.Should().NotBeNull();
+        result.Data!.TenantPublicId.Should().Be(tenantId.ToString());
+        result.Data.TenantName.Should().Be("Demo Tenant");
+        result.Data.CurrentBalance.Should().Be(150);
+        result.Data.TotalDonationAmount.Should().Be(200);
+        result.Data.TotalProcurementAmount.Should().Be(50);
+        result.Data.TotalTransactionCount.Should().Be(3);
+    }
+
+    [Fact]
+    public async Task GetTransactionSummaryAsync_Should_Return_Fail_When_Repository_Throws()
+    {
+        var tenantId = Guid.NewGuid();
+
+        _transactionRepoMock
+            .Setup(x => x.GetTransactionSummaryAsync(
+                tenantId,
+                It.IsAny<CancellationToken>()))
+            .ThrowsAsync(new Exception("db error"));
+
+        var result = await _sut.GetTransactionSummaryAsync(
+            tenantPublicId: tenantId.ToString(),
+            role: "Admin",
+            cancellationToken: CancellationToken.None);
+
+        result.Success.Should().BeFalse();
+        result.Code.Should().Be(ResultCodes.Transaction.TransactionQueryFailed);
+        result.Message.Should().Be("Failed to query tenant transaction summary.");
+    }
 }

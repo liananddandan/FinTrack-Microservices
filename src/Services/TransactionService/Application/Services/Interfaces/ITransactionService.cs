@@ -37,4 +37,9 @@ public interface ITransactionService
         int pageNumber,
         int pageSize,
         CancellationToken cancellationToken = default);
+    
+    Task<ServiceResult<TenantTransactionSummaryDto>> GetTransactionSummaryAsync(
+        string tenantPublicId,
+        string role,
+        CancellationToken cancellationToken = default);
 }

@@ -126,4 +126,25 @@ public class TransactionsController(IMediator mediator) : ControllerBase
 
         return result.ToActionResult();
     }
+    
+    [HttpGet("summary")]
+    public async Task<IActionResult> GetTransactionSummaryAsync(
+        CancellationToken cancellationToken = default)
+    {
+        var tenantPublicId = User.FindFirst(JwtClaimNames.Tenant)?.Value;
+        var role = User.FindFirst(ClaimTypes.Role)?.Value ?? string.Empty;
+
+        if (string.IsNullOrWhiteSpace(tenantPublicId))
+        {
+            return Unauthorized();
+        }
+
+        var result = await mediator.Send(
+            new GetTransactionSummaryQuery(
+                tenantPublicId,
+                role),
+            cancellationToken);
+
+        return result.ToActionResult();
+    }
 }
