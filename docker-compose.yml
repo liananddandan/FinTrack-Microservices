@@ -1,9 +1,184 @@
-version: '3.9'
-
 services:
-  identity:
+
+  mysql:
+    image: mysql:8.0
+    container_name: fintrack-mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: 123456
+      MYSQL_DATABASE: fintrack_identity
+    ports:
+      - "3307:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD","mysqladmin","ping","-h","localhost","-p123456"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  redis:
+    image: redis:latest
+    container_name: fintrack-redis
+    ports:
+      - "6379:6379"
+
+  rabbitmq:
+    image: rabbitmq:3-management
+    container_name: fintrack-rabbitmq
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    environment:
+      RABBITMQ_DEFAULT_USER: guest
+      RABBITMQ_DEFAULT_PASS: guest
+    healthcheck:
+      test: ["CMD","rabbitmq-diagnostics","ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  mailhog:
+    image: mailhog/mailhog
+    container_name: fintrack-mailhog
+    ports:
+      - "1025:1025"
+      - "8025:8025"
+  
+  # ========================
+  # Backend services
+  # ========================
+
+  identity-service:
     build:
       context: .
-      dockerfile: Services/IdentityService/Dockerfile
+      dockerfile: src/Services/IdentityService/Dockerfile
+    container_name: fintrack-identity
+    depends_on:
+      mysql:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+      redis:
+        condition: service_started
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      ASPNETCORE_URLS: http://+:8080
+      ConnectionStrings__DefaultConnection: server=mysql;port=3306;database=fintrack_identity;user=root;password=123456
+      ConnectionStrings__Redis: redis:6379
+      RabbitMQ__Host: rabbitmq
     ports:
-      - "5001:80"
+      - "5100:8080"
+
+  transaction-service:
+    build:
+      context: .
+      dockerfile: src/Services/TransactionService/Dockerfile
+    container_name: fintrack-transaction
+    depends_on:
+      mysql:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      ASPNETCORE_URLS: http://+:8080
+      ConnectionStrings__DefaultConnection: server=mysql;port=3306;database=fintrack_transaction;user=root;password=123456
+      RabbitMQ__Host: rabbitmq
+    ports:
+      - "5101:8080"
+
+  auditlog-service:
+    build:
+      context: .
+      dockerfile: src/Services/AuditLogService/Dockerfile
+    container_name: fintrack-auditlog
+    depends_on:
+      mysql:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      ASPNETCORE_URLS: http://+:8080
+      ConnectionStrings__DefaultConnection: server=mysql;port=3306;database=fintrack_auditlog;user=root;password=123456
+      RabbitMQ__Host: rabbitmq
+    ports:
+      - "5102:8080"
+
+  notification-service:
+    build:
+      context: .
+      dockerfile: src/Services/NotificationService/Dockerfile
+    container_name: fintrack-notification
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+      mailhog:
+        condition: service_started
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      ASPNETCORE_URLS: http://+:8080
+      RabbitMQ__Host: rabbitmq
+      SMTP__Host: mailhog
+      SMTP__Port: 1025
+    ports:
+      - "5103:8080"
+  
+  # ========================
+  # API Gateway
+  # ========================
+
+  gateway:
+    build:
+      context: .
+      dockerfile: src/Services/GatewayService/Dockerfile
+    container_name: fintrack-gateway
+    depends_on:
+      identity-service:
+        condition: service_started
+      transaction-service:
+        condition: service_started
+      auditlog-service:
+        condition: service_started
+      notification-service:
+        condition: service_started
+      redis:
+        condition: service_started
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      ASPNETCORE_URLS: http://+:8080
+      ConnectionStrings__Redis: redis:6379
+      ReverseProxy__Clusters__identityCluster__Destinations__identity__Address: http://identity-service:8080/
+      ReverseProxy__Clusters__transactionCluster__Destinations__transaction__Address: http://transaction-service:8080/
+      ReverseProxy__Clusters__auditlogCluster__Destinations__destination1__Address: http://auditlog-service:8080/
+    ports:
+      - "5193:8080"
+  
+  # ========================
+  # Frontend
+  # ========================
+
+  web-portal:
+    build:
+      context: ./apps/web-portal
+      dockerfile: Dockerfile
+    container_name: fintrack-web-portal
+    depends_on:
+      gateway:
+        condition: service_started
+    ports:
+      - "3000:80"
+
+  web-admin:
+    build:
+      context: ./apps/web-admin
+      dockerfile: Dockerfile
+    container_name: fintrack-web-admin
+    depends_on:
+      gateway:
+        condition: service_started
+    ports:
+      - "3001:80"
+
+volumes:
+  mysql_data:

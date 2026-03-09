@@ -90,6 +90,32 @@ builder.Services.Scan(scan => scan
 
 var app = builder.Build();
 
+// Apply database migrations before serving requests.
+await using (var scope = app.Services.CreateAsyncScope())
+{
+    try
+    {
+        app.Logger.LogInformation(
+            "Applying EF Core migrations for {DbContext}...",
+            nameof(ApplicationIdentityDbContext));
+
+        var dbContext = scope.ServiceProvider.GetRequiredService<ApplicationIdentityDbContext>();
+        await dbContext.Database.MigrateAsync();
+
+        app.Logger.LogInformation(
+            "EF Core migrations applied for {DbContext}.",
+            nameof(ApplicationIdentityDbContext));
+    }
+    catch (Exception ex)
+    {
+        app.Logger.LogCritical(
+            ex,
+            "Failed to apply EF Core migrations for {DbContext}. Service startup aborted.",
+            nameof(ApplicationIdentityDbContext));
+        throw;
+    }
+}
+
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {

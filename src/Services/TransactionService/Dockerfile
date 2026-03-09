@@ -1,15 +1,35 @@
-FROM mcr.microsoft.com/dotnet/aspnet:9.0.7 AS base
-WORKDIR /app
-EXPOSE 80
-
+# ---------- build stage ----------
 FROM mcr.microsoft.com/dotnet/sdk:9.0 AS build
 WORKDIR /src
 
-COPY . .
-RUN dotnet restore
-RUN dotnet publish TransactionService.csproj -c Release -o /app/publish
+# copy solution
+COPY FinTrack.sln ./
 
-FROM base AS final
+# copy project files for restore cache
+COPY src/Services/TransactionService/TransactionService.csproj src/Services/TransactionService/
+COPY src/Shared/SharedKernel/SharedKernel.csproj src/Shared/SharedKernel/
+
+# restore
+RUN dotnet restore src/Services/TransactionService/TransactionService.csproj
+
+# copy full source
+COPY . .
+
+# publish
+RUN dotnet publish src/Services/TransactionService/TransactionService.csproj \
+    -c Release \
+    -o /app/publish \
+    /p:UseAppHost=false
+
+
+# ---------- runtime stage ----------
+FROM mcr.microsoft.com/dotnet/aspnet:9.0
 WORKDIR /app
+
 COPY --from=build /app/publish .
+
+ENV ASPNETCORE_URLS=http://+:8080
+
+EXPOSE 8080
+
 ENTRYPOINT ["dotnet", "TransactionService.dll"]

@@ -45,7 +45,7 @@ export const useAuthStore = defineStore("auth", {
           ? this.profile.memberships
           : this.memberships;
 
-      return memberships.length > 0 ? memberships[0] : null;
+      return memberships.length > 0 ? memberships[0] ?? null : null;
     },
 
     currentTenantName(): string {
@@ -112,8 +112,15 @@ export const useAuthStore = defineStore("auth", {
         return;
       }
 
+      const firstMembership = memberships[0];
+
+      if (!firstMembership) {
+        this.clearTenantAccessToken();
+        return;
+      }
+
       const tenantToken = await selectTenant({
-        tenantPublicId: memberships[0].tenantPublicId,
+        tenantPublicId: firstMembership.tenantPublicId,
       });
 
       this.setTenantAccessToken(tenantToken);

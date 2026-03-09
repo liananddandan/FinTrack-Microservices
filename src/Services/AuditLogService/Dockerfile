@@ -6,17 +6,17 @@ WORKDIR /src
 COPY FinTrack.sln ./
 
 # copy project files for restore cache
-COPY src/Services/NotificationService/NotificationService.csproj src/Services/NotificationService/
+COPY src/Services/AuditLogService/AuditLogService.csproj src/Services/AuditLogService/
 COPY src/Shared/SharedKernel/SharedKernel.csproj src/Shared/SharedKernel/
 
 # restore
-RUN dotnet restore src/Services/NotificationService/NotificationService.csproj
+RUN dotnet restore src/Services/AuditLogService/AuditLogService.csproj
 
-# copy full source
+# copy all source
 COPY . .
 
 # publish
-RUN dotnet publish src/Services/NotificationService/NotificationService.csproj \
+RUN dotnet publish src/Services/AuditLogService/AuditLogService.csproj \
     -c Release \
     -o /app/publish \
     /p:UseAppHost=false
@@ -32,4 +32,4 @@ ENV ASPNETCORE_URLS=http://+:8080
 
 EXPOSE 8080
 
-ENTRYPOINT ["dotnet", "NotificationService.dll"]
+ENTRYPOINT ["dotnet", "AuditLogService.dll"]

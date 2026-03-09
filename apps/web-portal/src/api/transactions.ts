@@ -140,6 +140,19 @@ export interface RejectProcurementRequest {
   reason: string;
 }
 
+export interface CreateTransactionResult {
+  transactionPublicId: string;
+  tenantPublicId: string;
+  tenantName: string;
+  type: string;
+  amount: number;
+  currency: string;
+  status: string;
+  paymentStatus: string;
+  paymentReference?: string;
+  failureReason?: string;
+}
+
 export async function createProcurement(
   payload: CreateProcurementRequest
 ): Promise<CreateTransactionResult> {

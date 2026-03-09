@@ -23,6 +23,14 @@ public class TenantRepo(ApplicationIdentityDbContext dbContext) : ITenantRepo
                 , cancellationToken);
     }
 
+    public async Task<Tenant?> GetTenantByNameAsync(string tenantName, CancellationToken cancellationToken = default)
+    {
+        tenantName = tenantName.Trim();
+
+        return await dbContext.Tenants
+            .FirstOrDefaultAsync(t => t.Name == tenantName, cancellationToken);
+    }
+
     public async Task<bool> IsTenantNameExistsAsync(string tenantName, CancellationToken cancellationToken = default)
     {
         return await dbContext.Tenants
