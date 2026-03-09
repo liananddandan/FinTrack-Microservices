@@ -51,8 +51,8 @@ const router = createRouter({
       component: () => import("../views/DonationView.vue")
     },
     {
-      path: "/my-donations",
-      component: () => import("../views/MyDonationsView.vue")
+      path: "/my-transactions",
+      component: () => import("../views/MyTransactionsView.vue")
     }
   ],
 });

@@ -22,14 +22,16 @@ export interface CreateDonationResult {
 }
 
 export interface TransactionListItem {
-  publicId: string;
+  transactionPublicId: string;
   tenantPublicId: string;
   tenantName: string;
   type: string;
+  title: string;
   amount: number;
   currency: string;
   status: string;
   paymentStatus: string;
+  riskStatus: string;
   createdAtUtc: string;
 }
 
@@ -57,9 +59,18 @@ export async function createDonation(
   return result.data;
 }
 
-export async function getMyTransactions(): Promise<PagedResult<TransactionListItem>> {
+export async function getMyTransactions(
+  pageNumber = 1,
+  pageSize = 10
+): Promise<PagedResult<TransactionListItem>> {
   const response = await tenantHttp.get<ApiResponse<PagedResult<TransactionListItem>>>(
-    "/api/transactions/my"
+    "/api/transactions/my",
+    {
+      params: {
+        pageNumber,
+        pageSize,
+      },
+    }
   );
 
   const result = response.data;

@@ -7,40 +7,47 @@ using TransactionService.Infrastructure.Persistence;
 
 namespace TransactionService.Tests;
 
-public class TransactionWebApplicationFactory<TProgram> : WebApplicationFactory<TProgram> where TProgram : class
+public class TransactionWebApplicationFactory<TProgram> : WebApplicationFactory<TProgram>
+    where TProgram : class
 {
-    private static bool _dbInitialized = false;
-    private static readonly object _lock = new();
-    private readonly string _mockBaseUrl;
-
-    public TransactionWebApplicationFactory(string mockBaseUrl)
-    {
-        _mockBaseUrl = mockBaseUrl;
-    }
+    private static readonly object LockObject = new();
+    private static bool _databaseMigrated;
 
     protected override void ConfigureWebHost(IWebHostBuilder builder)
     {
         builder.UseEnvironment("Test");
-        builder.ConfigureAppConfiguration((context, config) =>
+
+        builder.ConfigureAppConfiguration((_, config) =>
         {
-            config.AddJsonFile("appsettings.Test.json");
+            config.AddJsonFile("appsettings.Test.json", optional: false);
             config.AddEnvironmentVariables();
         });
+
         builder.ConfigureServices(services =>
         {
-            lock (_lock)
+            lock (LockObject)
             {
-                if (!_dbInitialized)
+                if (_databaseMigrated)
                 {
-                    var sp = services.BuildServiceProvider();
-                    using var scope = sp.CreateScope();
-                    var db = scope.ServiceProvider.GetRequiredService<TransactionDbContext>();
-                    db.Database.Migrate();
-                    db.Database.ExecuteSqlRaw("DELETE FROM Transactions");
-                    _dbInitialized = true;
+                    return;
                 }
+
+                using var scope = services.BuildServiceProvider().CreateScope();
+                var db = scope.ServiceProvider.GetRequiredService<TransactionDbContext>();
+                db.Database.EnsureDeleted();
+                db.Database.Migrate();
+
+                _databaseMigrated = true;
             }
-            
         });
+    }
+
+    public async Task ResetDatabaseAsync()
+    {
+        using var scope = Services.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<TransactionDbContext>();
+
+        await db.Database.ExecuteSqlRawAsync("DELETE FROM TenantAccounts");
+        await db.Database.ExecuteSqlRawAsync("DELETE FROM Transactions");
     }
 }

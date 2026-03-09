@@ -13,4 +13,11 @@ public interface ITransactionService
         decimal amount,
         string currency,
         CancellationToken cancellationToken = default);
+    
+    Task<ServiceResult<PagedResult<TransactionListItemDto>>> GetMyTransactionsAsync(
+        string tenantPublicId,
+        string userPublicId,
+        int pageNumber,
+        int pageSize,
+        CancellationToken cancellationToken = default);
 }
