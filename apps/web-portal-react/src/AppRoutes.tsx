@@ -2,7 +2,7 @@ import { Routes, Route, Navigate } from "react-router-dom"
 import AuthGuard from "./components/AuthGuard"
 
 import Login from "./pages/Login"
-// import RegisterUser from "./pages/RegisterUser"
+import RegisterUser from "./pages/Registeruser"
 // import RegisterTenant from "./pages/RegisterTenant"
 import WaitingMembership from "./pages/WaitingMembership"
 import Home from "./pages/Home"
@@ -27,14 +27,14 @@ export default function AppRoutes() {
                 }
             />
 
-            {/* <Route
+            <Route
         path="/register-user"
         element={
           <AuthGuard public>
             <RegisterUser />
           </AuthGuard>
         }
-      /> */}
+      />
 
             {/* <Route
         path="/register-tenant"
