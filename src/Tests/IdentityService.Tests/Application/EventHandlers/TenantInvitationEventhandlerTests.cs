@@ -119,6 +119,9 @@ public class TenantInvitationEventHandlerTests
         _jwtTokenServiceMock
             .Setup(x => x.GenerateInvitationToken(It.IsAny<TenantInvitation>()))
             .Returns("fake-invitation-token");
+        _configurationMock
+            .Setup(x => x["Frontend:PortalBaseUrl"])
+            .Returns("http://localhost:3002");
 
         await _sut.Handle(notification, CancellationToken.None);
 
@@ -158,6 +161,9 @@ public class TenantInvitationEventHandlerTests
         _jwtTokenServiceMock
             .Setup(x => x.GenerateInvitationToken(It.IsAny<TenantInvitation>()))
             .Returns(rawToken);
+        _configurationMock
+            .Setup(x => x["Frontend:PortalBaseUrl"])
+            .Returns("http://localhost:3002");
 
         var encodedToken = Uri.EscapeDataString(rawToken);
 
