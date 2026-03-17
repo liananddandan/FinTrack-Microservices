@@ -9,6 +9,7 @@ import Home from "./pages/Home"
 import Donation from "./pages/Donation"
 import MyTransactions from "./pages/MyTransactions"
 import TransactionDetail from "./pages/TransactionDetail"
+import NewProcurement from "./pages/NewProcurement"
 
 export default function AppRoutes() {
     return (
@@ -85,6 +86,14 @@ export default function AppRoutes() {
                 element={
                     <AuthGuard requireAuth requireTenant>
                         <TransactionDetail />
+                    </AuthGuard>
+                }
+            />
+            <Route
+                path="/procurements/new"
+                element={
+                    <AuthGuard requireAuth requireTenant>
+                        <NewProcurement />
                     </AuthGuard>
                 }
             />
