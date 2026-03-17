@@ -2,7 +2,7 @@ import { Routes, Route, Navigate } from "react-router-dom"
 import AuthGuard from "./components/AuthGuard"
 
 import Login from "./pages/Login"
-import RegisterUser from "./pages/Registeruser"
+import RegisterUser from "./pages/RegisterUser"
 import RegisterTenant from "./pages/RegisterTenant"
 import WaitingMembership from "./pages/WaitingMembership"
 import Home from "./pages/Home"
