@@ -10,6 +10,8 @@ services:
       - "3307:3306"
     volumes:
       - mysql_data:/var/lib/mysql
+      - ./docker/mysql/init:/docker-entrypoint-initdb.d
+
     healthcheck:
       test: ["CMD","mysqladmin","ping","-h","localhost","-p123456"]
       interval: 10s
@@ -114,6 +116,8 @@ services:
       dockerfile: src/Services/NotificationService/Dockerfile
     container_name: fintrack-notification
     depends_on:
+      mysql:
+        condition: service_healthy
       rabbitmq:
         condition: service_healthy
       mailhog:
@@ -121,10 +125,12 @@ services:
     environment:
       ASPNETCORE_ENVIRONMENT: Development
       ASPNETCORE_URLS: http://+:8080
+      Frontend__PortalBaseUrl: http://localhost:3002
       CAP__RabbitMQ__HostName: rabbitmq
       CAP__DefaultGroup: notification.service
       SMTP__Host: mailhog
       SMTP__Port: 1025
+      ConnectionStrings__DefaultConnection: server=mysql;port=3306;database=fintrack_notification;user=root;password=123456
     ports:
       - "5103:8080"
   

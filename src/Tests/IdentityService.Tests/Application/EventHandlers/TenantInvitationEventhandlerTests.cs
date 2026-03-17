@@ -6,6 +6,7 @@ using IdentityService.Application.Events;
 using IdentityService.Application.Services.Interfaces;
 using IdentityService.Domain.Entities;
 using IdentityService.Domain.Enums;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using Moq;
 using SharedKernel.Common.Results;
@@ -21,6 +22,7 @@ public class TenantInvitationEventHandlerTests
     private readonly Mock<IJwtTokenService> _jwtTokenServiceMock = new();
     private readonly Mock<ICapPublisher> _capPublisherMock = new();
     private readonly Mock<ILogger<TenantInvitationEventHandler>> _loggerMock = new();
+    private readonly Mock<IConfiguration> _configurationMock = new();
 
     private readonly TenantInvitationEventHandler _sut;
 
@@ -30,7 +32,8 @@ public class TenantInvitationEventHandlerTests
             _tenantInvitationServiceMock.Object,
             _jwtTokenServiceMock.Object,
             _capPublisherMock.Object,
-            _loggerMock.Object);
+            _loggerMock.Object,
+            _configurationMock.Object);
     }
 
     [Fact]

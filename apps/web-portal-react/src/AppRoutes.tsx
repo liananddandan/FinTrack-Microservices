@@ -10,6 +10,7 @@ import Donation from "./pages/Donation"
 import MyTransactions from "./pages/MyTransactions"
 import TransactionDetail from "./pages/TransactionDetail"
 import NewProcurement from "./pages/NewProcurement"
+import AcceptInvitation from "./pages/AcceptInvitation"
 
 export default function AppRoutes() {
     return (
@@ -94,6 +95,14 @@ export default function AppRoutes() {
                 element={
                     <AuthGuard requireAuth requireTenant>
                         <NewProcurement />
+                    </AuthGuard>
+                }
+            />
+            <Route
+                path="/invitations/accept"
+                element={
+                    <AuthGuard public>
+                        <AcceptInvitation />
                     </AuthGuard>
                 }
             />

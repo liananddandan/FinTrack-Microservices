@@ -12,7 +12,8 @@ public class TenantInvitationEventHandler(
     ITenantInvitationService tenantInvitationService,
     IJwtTokenService jwtTokenService,
     ICapPublisher capPublisher,
-    ILogger<TenantInvitationEventHandler> logger)
+    ILogger<TenantInvitationEventHandler> logger,
+    IConfiguration configuration)
     : INotificationHandler<TenantInvitationCreatedEvent>
 {
     public async Task Handle(TenantInvitationCreatedEvent notification, CancellationToken cancellationToken)
@@ -52,9 +53,18 @@ public class TenantInvitationEventHandler(
                 notification.InvitationPublicId);
             return;
         }
+        var portalBaseUrl = configuration["Frontend:PortalBaseUrl"];
+
+        if (string.IsNullOrWhiteSpace(portalBaseUrl))
+        {
+            logger.LogError(
+                "Frontend:PortalBaseUrl is not configured. Invitation link cannot be generated for invitation {InvitationPublicId}.",
+                notification.InvitationPublicId);
+            return;
+        }
 
         var invitationLink =
-            $"http://localhost:5174/invitations/accept?token={Uri.EscapeDataString(invitationToken)}";
+            $"{portalBaseUrl.TrimEnd('/')}/invitations/accept?token={Uri.EscapeDataString(invitationToken)}";
 
         var message = new TenantInvitationEmailRequestedEvent(
             invitation.Email,
