@@ -9,6 +9,7 @@ on:
       - feature/gateway-service
       - feature/web-portal
       - feature/audit-log-service
+      - feature/vue-to-react-migration
   pull_request:
     branches:
       - main
