@@ -1,20 +1,17 @@
-import './App.css'
-import { useState } from 'react'
-import WelcomeCard from './components/WelcomeCard'
+import { BrowserRouter, Routes, Route, Link } from "react-router-dom"
+import Home from "./pages/Home"
+import Register from "./pages/Register"
 
-function App() {
-  const [count, setCount] = useState<number>(0)
+export default function App() {
   return (
-    <div>
-      <h1>Hello React 19 + TypeScript</h1>
-      <p>Project is running!</p>
-      <WelcomeCard title="First component" message="This is a typed functional component." />
-      <div>
-        <p>Count: {count}</p>
-        <button onClick={() => setCount(count + 1)}>Increment</button>
-      </div>
-    </div>
+    <BrowserRouter>
+      <nav>
+        <Link to="/">Home</Link> | <Link to="/register">Register</Link>
+      </nav>
+      <Routes>
+        <Route path="/" element={<Home />} />
+        <Route path="/register" element={<Register />} />
+      </Routes>
+    </BrowserRouter>
   )
 }
-
-export default App
