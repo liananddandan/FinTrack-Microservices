@@ -6,24 +6,25 @@ import Login from "./pages/Login"
 // import RegisterTenant from "./pages/RegisterTenant"
 // import WaitingMembership from "./pages/WaitingMembership"
 import Home from "./pages/Home"
+import Donation from "./pages/Donation"
 
 export default function AppRoutes() {
-  return (
-    <Routes>
-      {/* redirect */}
-      <Route path="/" element={<Navigate to="/login" />} />
+    return (
+        <Routes>
+            {/* redirect */}
+            <Route path="/" element={<Navigate to="/login" />} />
 
-      {/* public */}
-      <Route
-        path="/login"
-        element={
-          <AuthGuard public>
-            <Login />
-          </AuthGuard>
-        }
-      />
+            {/* public */}
+            <Route
+                path="/login"
+                element={
+                    <AuthGuard public>
+                        <Login />
+                    </AuthGuard>
+                }
+            />
 
-      {/* <Route
+            {/* <Route
         path="/register-user"
         element={
           <AuthGuard public>
@@ -32,7 +33,7 @@ export default function AppRoutes() {
         }
       /> */}
 
-      {/* <Route
+            {/* <Route
         path="/register-tenant"
         element={
           <AuthGuard public>
@@ -41,8 +42,8 @@ export default function AppRoutes() {
         }
       /> */}
 
-      {/* auth only */}
-      {/* <Route
+            {/* auth only */}
+            {/* <Route
         path="/waiting-membership"
         element={
           <AuthGuard requireAuth>
@@ -51,15 +52,24 @@ export default function AppRoutes() {
         }
       /> */}
 
-      {/* auth + tenant */}
-      <Route
-        path="/home"
-        element={
-          <AuthGuard requireAuth requireTenant>
-            <Home />
-          </AuthGuard>
-        }
-      />
-    </Routes>
-  )
+            {/* auth + tenant */}
+            <Route
+                path="/home"
+                element={
+                    <AuthGuard requireAuth requireTenant>
+                        <Home />
+                    </AuthGuard>
+                }
+            />
+
+            <Route
+                path="/donate"
+                element={
+                    <AuthGuard requireAuth requireTenant>
+                        <Donation />
+                    </AuthGuard>
+                }
+            />
+        </Routes>
+    )
 }
