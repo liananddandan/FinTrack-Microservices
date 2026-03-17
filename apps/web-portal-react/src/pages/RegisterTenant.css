@@ -1,0 +1,147 @@
+.portal-page {
+  padding: 24px;
+}
+
+.portal-shell {
+  max-width: 720px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.portal-badge {
+  font-size: 12px;
+  font-weight: 700;
+  color: #6366f1;
+}
+
+.portal-title {
+  font-size: 28px;
+  font-weight: 800;
+  margin: 6px 0;
+  color: #111827;
+}
+
+.portal-description {
+  color: #6b7280;
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+.portal-card {
+  padding: 24px;
+  border-radius: 20px;
+  box-shadow: 0 10px 28px rgba(15, 23, 42, 0.06);
+  background: rgba(255, 255, 255, 0.96);
+}
+
+.portal-card-header {
+  margin-bottom: 16px;
+}
+
+.portal-card-title {
+  font-size: 18px;
+  font-weight: 800;
+  color: #111827;
+}
+
+.portal-card-subtitle {
+  font-size: 13px;
+  color: #6b7280;
+}
+
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.form-item {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.form-item label {
+  font-size: 13px;
+  color: #6b7280;
+}
+
+.form-item input {
+  border: 1px solid #d1d5db;
+  border-radius: 10px;
+  padding: 10px 12px;
+  font-size: 14px;
+  background: white;
+}
+
+.form-item input:focus {
+  outline: none;
+  border-color: #60a5fa;
+  box-shadow: 0 0 0 3px rgba(96, 165, 250, 0.18);
+}
+
+.portal-primary-btn {
+  margin-top: 10px;
+  border: none;
+  border-radius: 10px;
+  padding: 12px;
+  background: linear-gradient(135deg, #3b82f6, #6366f1);
+  color: white;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.portal-primary-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.portal-alert {
+  margin-top: 12px;
+  padding: 10px;
+  border-radius: 10px;
+  font-size: 13px;
+}
+
+.portal-alert.success {
+  background: #ecfdf5;
+  color: #047857;
+}
+
+.portal-alert.error {
+  background: #fff1f2;
+  color: #b91c1c;
+}
+
+.portal-info-box {
+  margin-top: 20px;
+  padding: 12px 14px;
+  border-radius: 10px;
+  background: #f8fafc;
+  color: #475569;
+  font-size: 13px;
+  line-height: 1.6;
+  border: 1px solid #eef2f7;
+}
+
+.portal-footer-link {
+  margin-top: 16px;
+  font-size: 13px;
+}
+
+.portal-footer-link a {
+  color: #2563eb;
+  text-decoration: none;
+}
+
+.portal-footer-link a:hover {
+  text-decoration: underline;
+}
+
+@media (max-width: 640px) {
+  .portal-page {
+    padding: 16px;
+  }
+}

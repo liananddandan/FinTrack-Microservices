@@ -3,7 +3,7 @@ import AuthGuard from "./components/AuthGuard"
 
 import Login from "./pages/Login"
 import RegisterUser from "./pages/Registeruser"
-// import RegisterTenant from "./pages/RegisterTenant"
+import RegisterTenant from "./pages/RegisterTenant"
 import WaitingMembership from "./pages/WaitingMembership"
 import Home from "./pages/Home"
 import Donation from "./pages/Donation"
@@ -28,22 +28,22 @@ export default function AppRoutes() {
             />
 
             <Route
-        path="/register-user"
-        element={
-          <AuthGuard public>
-            <RegisterUser />
-          </AuthGuard>
-        }
-      />
+                path="/register-user"
+                element={
+                    <AuthGuard public>
+                        <RegisterUser />
+                    </AuthGuard>
+                }
+            />
 
-            {/* <Route
-        path="/register-tenant"
-        element={
-          <AuthGuard public>
-            <RegisterTenant />
-          </AuthGuard>
-        }
-      /> */}
+            <Route
+                path="/register-tenant"
+                element={
+                    <AuthGuard public>
+                        <RegisterTenant />
+                    </AuthGuard>
+                }
+            />
 
             {/* auth only */}
             <Route
