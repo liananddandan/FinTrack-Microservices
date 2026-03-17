@@ -4,7 +4,7 @@ import AuthGuard from "./components/AuthGuard"
 import Login from "./pages/Login"
 // import RegisterUser from "./pages/RegisterUser"
 // import RegisterTenant from "./pages/RegisterTenant"
-// import WaitingMembership from "./pages/WaitingMembership"
+import WaitingMembership from "./pages/WaitingMembership"
 import Home from "./pages/Home"
 import Donation from "./pages/Donation"
 import MyTransactions from "./pages/MyTransactions"
@@ -46,14 +46,14 @@ export default function AppRoutes() {
       /> */}
 
             {/* auth only */}
-            {/* <Route
-        path="/waiting-membership"
-        element={
-          <AuthGuard requireAuth>
-            <WaitingMembership />
-          </AuthGuard>
-        }
-      /> */}
+            <Route
+                path="/waiting-membership"
+                element={
+                    <AuthGuard requireAuth>
+                        <WaitingMembership />
+                    </AuthGuard>
+                }
+            />
 
             {/* auth + tenant */}
             <Route
