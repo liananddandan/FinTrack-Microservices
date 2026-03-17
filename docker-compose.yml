@@ -65,7 +65,8 @@ services:
       ASPNETCORE_URLS: http://+:8080
       ConnectionStrings__DefaultConnection: server=mysql;port=3306;database=fintrack_identity;user=root;password=123456
       ConnectionStrings__Redis: redis:6379
-      RabbitMQ__Host: rabbitmq
+      CAP__RabbitMQ__HostName: rabbitmq
+      CAP__DefaultGroup: identity.service
     ports:
       - "5100:8080"
 
@@ -83,7 +84,8 @@ services:
       ASPNETCORE_ENVIRONMENT: Development
       ASPNETCORE_URLS: http://+:8080
       ConnectionStrings__DefaultConnection: server=mysql;port=3306;database=fintrack_transaction;user=root;password=123456
-      RabbitMQ__Host: rabbitmq
+      CAP__RabbitMQ__HostName: rabbitmq
+      CAP__DefaultGroup: transaction.service
     ports:
       - "5101:8080"
 
@@ -101,7 +103,8 @@ services:
       ASPNETCORE_ENVIRONMENT: Development
       ASPNETCORE_URLS: http://+:8080
       ConnectionStrings__DefaultConnection: server=mysql;port=3306;database=fintrack_auditlog;user=root;password=123456
-      RabbitMQ__Host: rabbitmq
+      CAP__RabbitMQ__HostName: rabbitmq
+      CAP__DefaultGroup: audit-log.service
     ports:
       - "5102:8080"
 
@@ -118,7 +121,8 @@ services:
     environment:
       ASPNETCORE_ENVIRONMENT: Development
       ASPNETCORE_URLS: http://+:8080
-      RabbitMQ__Host: rabbitmq
+      CAP__RabbitMQ__HostName: rabbitmq
+      CAP__DefaultGroup: notification.service
       SMTP__Host: mailhog
       SMTP__Port: 1025
     ports:
@@ -179,6 +183,17 @@ services:
         condition: service_started
     ports:
       - "3001:80"
+    
+  web-portal-react:
+    build:
+      context: ./apps/web-portal-react
+      dockerfile: Dockerfile
+    container_name: fintrack-web-portal-react
+    depends_on:
+      gateway:
+        condition: service_started
+    ports:
+      - "3002:80"
 
 volumes:
   mysql_data:

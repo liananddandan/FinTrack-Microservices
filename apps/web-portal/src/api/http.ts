@@ -18,6 +18,8 @@ type JwtTokenPair = {
 };
 
 const baseURL = import.meta.env.VITE_API_BASE_URL;
+console.log("[env] VITE_API_BASE_URL =", import.meta.env.VITE_API_BASE_URL)
+console.log("[env] API_BASE_URL =", baseURL)
 
 export const publicHttp = axios.create({
   baseURL,
