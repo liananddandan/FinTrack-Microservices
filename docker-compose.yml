@@ -65,6 +65,7 @@ services:
     environment:
       ASPNETCORE_ENVIRONMENT: Development
       ASPNETCORE_URLS: http://+:8080
+      Frontend__PortalBaseUrl: http://localhost:3001
       ConnectionStrings__DefaultConnection: server=mysql;port=3306;database=fintrack_identity;user=root;password=123456
       ConnectionStrings__Redis: redis:6379
       CAP__RabbitMQ__HostName: rabbitmq
@@ -125,7 +126,6 @@ services:
     environment:
       ASPNETCORE_ENVIRONMENT: Development
       ASPNETCORE_URLS: http://+:8080
-      Frontend__PortalBaseUrl: http://localhost:3002
       CAP__RabbitMQ__HostName: rabbitmq
       CAP__DefaultGroup: notification.service
       SMTP__Host: mailhog
@@ -168,27 +168,37 @@ services:
   # Frontend
   # ========================
 
-  web-portal:
+#  web-portal:
+#    build:
+#      context: ./apps/web-portal
+#      dockerfile: Dockerfile
+#    container_name: fintrack-web-portal
+#    depends_on:
+#      gateway:
+#        condition: service_started
+#    ports:
+#      - "3000:80"
+#
+#  web-admin:
+#    build:
+#      context: ./apps/web-admin
+#      dockerfile: Dockerfile
+#    container_name: fintrack-web-admin
+#    depends_on:
+#      gateway:
+#        condition: service_started
+#    ports:
+#      - "3001:80"
+  web-admin-react:
     build:
-      context: ./apps/web-portal
+      context: ./apps/web-admin-react
       dockerfile: Dockerfile
-    container_name: fintrack-web-portal
+    container_name: fintrack-web-admin-react
     depends_on:
       gateway:
         condition: service_started
     ports:
       - "3000:80"
-
-  web-admin:
-    build:
-      context: ./apps/web-admin
-      dockerfile: Dockerfile
-    container_name: fintrack-web-admin
-    depends_on:
-      gateway:
-        condition: service_started
-    ports:
-      - "3001:80"
     
   web-portal-react:
     build:
@@ -199,7 +209,8 @@ services:
       gateway:
         condition: service_started
     ports:
-      - "3002:80"
+      - "3001:80"
+
 
 volumes:
   mysql_data:
