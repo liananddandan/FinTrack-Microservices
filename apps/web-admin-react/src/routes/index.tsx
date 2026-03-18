@@ -2,6 +2,7 @@ import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom"
 
 import Login from "../pages/Login"
 import Overview from "../pages/Overview"
+import Transactions from "../pages/Transactions"
 
 import AuthGuard from "./guards/AuthGuard"
 import AdminLayout from "../components/AdminLayout"
@@ -26,7 +27,7 @@ export default function AppRouter() {
           <Route path="overview" element={<Overview />} />
 
           {/* 先占位，后面再实现 */}
-          <Route path="transactions" element={<div>Transactions</div>} />
+          <Route path="transactions" element={<Transactions />} />
           <Route path="members" element={<div>Members</div>} />
           <Route path="invitations" element={<div>Invitations</div>} />
           <Route path="audit-logs" element={<div>Audit Logs</div>} />
