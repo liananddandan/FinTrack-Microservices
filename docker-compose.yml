@@ -69,6 +69,8 @@ services:
       ConnectionStrings__DefaultConnection: server=mysql;port=3306;database=fintrack_identity;user=root;password=123456
       ConnectionStrings__Redis: redis:6379
       CAP__RabbitMQ__HostName: rabbitmq
+      CAP__RabbitMQ__UserName: fintrack
+      CAP__RabbitMQ__Password: fintrack123
       CAP__DefaultGroup: identity.service
     ports:
       - "5100:8080"
@@ -88,6 +90,8 @@ services:
       ASPNETCORE_URLS: http://+:8080
       ConnectionStrings__DefaultConnection: server=mysql;port=3306;database=fintrack_transaction;user=root;password=123456
       CAP__RabbitMQ__HostName: rabbitmq
+      CAP__RabbitMQ__UserName: fintrack
+      CAP__RabbitMQ__Password: fintrack123
       CAP__DefaultGroup: transaction.service
     ports:
       - "5101:8080"
@@ -107,6 +111,8 @@ services:
       ASPNETCORE_URLS: http://+:8080
       ConnectionStrings__DefaultConnection: server=mysql;port=3306;database=fintrack_auditlog;user=root;password=123456
       CAP__RabbitMQ__HostName: rabbitmq
+      CAP__RabbitMQ__UserName: fintrack
+      CAP__RabbitMQ__Password: fintrack123
       CAP__DefaultGroup: audit-log.service
     ports:
       - "5102:8080"
@@ -127,6 +133,8 @@ services:
       ASPNETCORE_ENVIRONMENT: Development
       ASPNETCORE_URLS: http://+:8080
       CAP__RabbitMQ__HostName: rabbitmq
+      CAP__RabbitMQ__UserName: fintrack
+      CAP__RabbitMQ__Password: fintrack123
       CAP__DefaultGroup: notification.service
       SMTP__Host: mailhog
       SMTP__Port: 1025
