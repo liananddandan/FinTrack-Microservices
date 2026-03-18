@@ -123,9 +123,8 @@ docker compose up -d
 Services will start automatically and apply database migrations on startup.
 
 Web interfaces:
-- Admin: http://localhost:3001
-- Portal: http://localhost:3000
-- Portal React: http://localhost:3002
+- Admin: http://localhost:3000
+- Portal: http://localhost:3001
 
 API Gateway:
 - http://localhost:5193
