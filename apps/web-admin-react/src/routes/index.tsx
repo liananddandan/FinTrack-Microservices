@@ -4,6 +4,7 @@ import Login from "../pages/Login"
 import Overview from "../pages/Overview"
 import Transactions from "../pages/Transactions"
 import Members from "../pages/Members"
+import Invitations from "../pages/Invitations"
 
 import AuthGuard from "./guards/AuthGuard"
 import AdminLayout from "../components/AdminLayout"
@@ -30,7 +31,7 @@ export default function AppRouter() {
           {/* 先占位，后面再实现 */}
           <Route path="transactions" element={<Transactions />} />
           <Route path="members" element={<Members />} />
-          <Route path="invitations" element={<div>Invitations</div>} />
+          <Route path="invitations" element={<Invitations />} />
           <Route path="audit-logs" element={<div>Audit Logs</div>} />
         </Route>
 
