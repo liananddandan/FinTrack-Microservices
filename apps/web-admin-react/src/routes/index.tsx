@@ -1,12 +1,42 @@
-import { BrowserRouter, Routes, Route } from "react-router-dom"
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom"
+
 import Login from "../pages/Login"
+import Overview from "../pages/Overview"
+
+import AuthGuard from "./guards/AuthGuard"
+import AdminLayout from "../components/AdminLayout"
 
 export default function AppRouter() {
   return (
     <BrowserRouter>
       <Routes>
+
         {/* public */}
         <Route path="/login" element={<Login />} />
+
+        {/* protected */}
+        <Route
+          path="/admin"
+          element={
+            <AuthGuard>
+              <AdminLayout />
+            </AuthGuard>
+          }
+        >
+          <Route path="overview" element={<Overview />} />
+
+          {/* 先占位，后面再实现 */}
+          <Route path="transactions" element={<div>Transactions</div>} />
+          <Route path="members" element={<div>Members</div>} />
+          <Route path="invitations" element={<div>Invitations</div>} />
+          <Route path="audit-logs" element={<div>Audit Logs</div>} />
+        </Route>
+
+        {/* 默认跳转 */}
+        <Route path="/" element={<Navigate to="/admin/overview" replace />} />
+
+        {/* 兜底 */}
+        <Route path="*" element={<Navigate to="/admin/overview" replace />} />
 
       </Routes>
     </BrowserRouter>
