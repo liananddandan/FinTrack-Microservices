@@ -10,7 +10,16 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Check config
+      - name: Debug GitHub context
+        run: |
+          echo "event_name=${{ github.event_name }}"
+          echo "repository=${{ github.repository }}"
+          echo "ref=${{ github.ref }}"
+          echo "ref_name=${{ github.ref_name }}"
+          echo "head_ref=${{ github.head_ref }}"
+          echo "base_ref=${{ github.base_ref }}"
+
+      - name: Check config presence
         run: |
           [ -n "${{ vars.VPS_HOST }}" ] && echo "VPS_HOST exists" || echo "VPS_HOST missing"
           [ -n "${{ vars.VPS_USERNAME }}" ] && echo "VPS_USERNAME exists" || echo "VPS_USERNAME missing"
