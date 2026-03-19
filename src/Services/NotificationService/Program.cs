@@ -13,7 +13,8 @@ builder.Services.AddLogging(options => options.AddConsole());
 builder.Services.AddDbContext<CapDbContext>(options =>
 {
     var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
-    options.UseMySql(connectionString, ServerVersion.AutoDetect(connectionString));
+    options.UseMySql(connectionString,
+        ServerVersion.AutoDetect(connectionString));
 });
 
 builder.Services.AddCap(options =>

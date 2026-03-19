@@ -44,10 +44,11 @@ builder.Services.AddScoped<ITransactionRepo, TransactionRepo>();
 builder.Services.AddDbContext<TransactionDbContext>(options =>
 {
     string connectionString = builder.Configuration.GetConnectionString("DefaultConnection")!;
-    options.UseMySql(connectionString, ServerVersion.AutoDetect(connectionString));
+    options.UseMySql(connectionString,
+        ServerVersion.AutoDetect(connectionString));
 });
 
-builder.Services.AddMediatR(configuration => 
+builder.Services.AddMediatR(configuration =>
     configuration.RegisterServicesFromAssembly(typeof(Program).Assembly));
 
 builder.Services.Scan(scan => scan
@@ -62,14 +63,21 @@ builder.Services.AddControllers();
 
 var app = builder.Build();
 
-// Apply database migrations before serving requests.
-await using (var scope = app.Services.CreateAsyncScope())
+// Apply database migrations before serving requests, with retry.
+const int maxRetries = 10;
+var delay = TimeSpan.FromSeconds(5);
+
+for (var attempt = 1; attempt <= maxRetries; attempt++)
 {
     try
     {
+        await using var scope = app.Services.CreateAsyncScope();
+
         app.Logger.LogInformation(
-            "Applying EF Core migrations for {DbContext}...",
-            nameof(TransactionDbContext));
+            "Applying EF Core migrations for {DbContext}. Attempt {Attempt}/{MaxRetries}...",
+            nameof(TransactionDbContext),
+            attempt,
+            maxRetries);
 
         var dbContext = scope.ServiceProvider.GetRequiredService<TransactionDbContext>();
         await dbContext.Database.MigrateAsync();
@@ -77,14 +85,30 @@ await using (var scope = app.Services.CreateAsyncScope())
         app.Logger.LogInformation(
             "EF Core migrations applied for {DbContext}.",
             nameof(TransactionDbContext));
+
+        break;
     }
     catch (Exception ex)
     {
-        app.Logger.LogCritical(
+        app.Logger.LogWarning(
             ex,
-            "Failed to apply EF Core migrations for {DbContext}. Service startup aborted.",
-            nameof(TransactionDbContext));
-        throw;
+            "Failed to apply EF Core migrations for {DbContext} on attempt {Attempt}/{MaxRetries}.",
+            nameof(TransactionDbContext),
+            attempt,
+            maxRetries);
+
+        if (attempt == maxRetries)
+        {
+            app.Logger.LogCritical(
+                ex,
+                "Failed to apply EF Core migrations for {DbContext} after {MaxRetries} attempts. Service startup aborted.",
+                nameof(TransactionDbContext),
+                maxRetries);
+
+            throw;
+        }
+
+        await Task.Delay(delay);
     }
 }
 
@@ -102,4 +126,7 @@ app.UseAuthorization();
 app.MapControllers();
 
 app.Run();
-public partial class Program { }
+
+public partial class Program
+{
+}
