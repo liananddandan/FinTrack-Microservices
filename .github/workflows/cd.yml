@@ -10,29 +10,20 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Debug GitHub context
+      - name: Check secrets presence
         run: |
-          echo "event_name=${{ github.event_name }}"
-          echo "repository=${{ github.repository }}"
-          echo "ref=${{ github.ref }}"
-          echo "ref_name=${{ github.ref_name }}"
-          echo "head_ref=${{ github.head_ref }}"
-          echo "base_ref=${{ github.base_ref }}"
-
-      - name: Check config presence
-        run: |
-          [ -n "${{ vars.VPS_HOST }}" ] && echo "VPS_HOST exists" || echo "VPS_HOST missing"
-          [ -n "${{ vars.VPS_USERNAME }}" ] && echo "VPS_USERNAME exists" || echo "VPS_USERNAME missing"
-          [ -n "${{ vars.VPS_PORT }}" ] && echo "VPS_PORT exists" || echo "VPS_PORT missing"
+          [ -n "${{ secrets.VPS_HOST }}" ] && echo "VPS_HOST exists" || echo "VPS_HOST missing"
+          [ -n "${{ secrets.VPS_USERNAME }}" ] && echo "VPS_USERNAME exists" || echo "VPS_USERNAME missing"
+          [ -n "${{ secrets.VPS_PORT }}" ] && echo "VPS_PORT exists" || echo "VPS_PORT missing"
           [ -n "${{ secrets.VPS_SSH_KEY }}" ] && echo "VPS_SSH_KEY exists" || echo "VPS_SSH_KEY missing"
 
       - name: Deploy via SSH
         uses: appleboy/ssh-action@v1.0.3
         with:
-          host: ${{ vars.VPS_HOST }}
-          username: ${{ vars.VPS_USERNAME }}
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USERNAME }}
+          port: ${{ secrets.VPS_PORT }}
           key: ${{ secrets.VPS_SSH_KEY }}
-          port: ${{ vars.VPS_PORT }}
           script: |
             set -e
             cd ~/FinTrack-Microservices
