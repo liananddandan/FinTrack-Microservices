@@ -22,14 +22,7 @@ builder.Services.AddDbContext<AuditLogDbContext>(options =>
 {
     var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
     options.UseMySql(connectionString,
-        ServerVersion.AutoDetect(connectionString),
-        mySqlOptions =>
-        {
-            mySqlOptions.EnableRetryOnFailure(
-                maxRetryCount: 5,
-                maxRetryDelay: TimeSpan.FromSeconds(10),
-                errorNumbersToAdd: null);
-        });
+        ServerVersion.AutoDetect(connectionString));
 });
 
 builder.Services.AddCap(x =>
