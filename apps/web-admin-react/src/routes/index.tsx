@@ -13,9 +13,8 @@ import AdminLayout from "../components/AdminLayout"
 
 export default function AppRouter() {
   return (
-    <BrowserRouter>
+    <BrowserRouter basename="/admin">
       <Routes>
-
         {/* public */}
         <Route path="/login" element={<Login />} />
 
@@ -28,9 +27,8 @@ export default function AppRouter() {
             </AuthGuard>
           }
         >
+          <Route index element={<Navigate to="overview" replace />} />
           <Route path="overview" element={<Overview />} />
-
-          {/* 先占位，后面再实现 */}
           <Route path="transactions" element={<Transactions />} />
           <Route path="transactions/:transactionPublicId" element={<TransactionDetail />} />
           <Route path="members" element={<Members />} />
@@ -38,12 +36,8 @@ export default function AppRouter() {
           <Route path="audit-logs" element={<AuditLogs />} />
         </Route>
 
-        {/* 默认跳转 */}
-        <Route path="/" element={<Navigate to="/overview" replace />} />
-
-        {/* 兜底 */}
+        {/* fallback */}
         <Route path="*" element={<Navigate to="/overview" replace />} />
-
       </Routes>
     </BrowserRouter>
   )
