@@ -13,7 +13,7 @@ import AdminLayout from "../components/AdminLayout"
 
 export default function AppRouter() {
   return (
-    <BrowserRouter>
+    <BrowserRouter basename="/admin">
       <Routes>
 
         {/* public */}
@@ -21,7 +21,7 @@ export default function AppRouter() {
 
         {/* protected */}
         <Route
-          path="/admin"
+          path="/"
           element={
             <AuthGuard>
               <AdminLayout />
@@ -39,10 +39,10 @@ export default function AppRouter() {
         </Route>
 
         {/* 默认跳转 */}
-        <Route path="/" element={<Navigate to="/admin/overview" replace />} />
+        <Route path="/" element={<Navigate to="/overview" replace />} />
 
         {/* 兜底 */}
-        <Route path="*" element={<Navigate to="/admin/overview" replace />} />
+        <Route path="*" element={<Navigate to="/overview" replace />} />
 
       </Routes>
     </BrowserRouter>

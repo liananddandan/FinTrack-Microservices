@@ -15,7 +15,7 @@ export default function WaitingMembership() {
 
   async function redirectIfTenantReady() {
     if (authStore.hasTenantContext) {
-      navigate("/home", { replace: true })
+      navigate("/portal/home", { replace: true })
       return
     }
 
@@ -26,7 +26,7 @@ export default function WaitingMembership() {
         await authStore.activateSingleTenantIfPossible()
 
         if (authStore.hasTenantContext) {
-          navigate("/home", { replace: true })
+          navigate("/portal/home", { replace: true })
         }
       } catch {
         // stay on waiting page
@@ -53,7 +53,7 @@ export default function WaitingMembership() {
       }
 
       if (authStore.hasTenantContext) {
-        navigate("/home", { replace: true })
+        navigate("/portal/home", { replace: true })
         return
       }
 
@@ -71,7 +71,7 @@ export default function WaitingMembership() {
 
   function logout() {
     authStore.logout()
-    navigate("/login")
+    navigate("/portal/login")
   }
 
   return (

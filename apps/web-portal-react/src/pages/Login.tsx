@@ -61,7 +61,7 @@ export default function Login() {
       const memberships = profile.memberships ?? []
 
       if (memberships.length === 0) {
-        navigate("/waiting-membership")
+        navigate("/portal/waiting-membership")
         return
       }
 
@@ -69,15 +69,15 @@ export default function Login() {
         await authStore.activateSingleTenantIfPossible()
 
         if (authStore.hasTenantContext) {
-          navigate("/home")
+          navigate("/portal/home")
           return
         }
 
-        navigate("/waiting-membership")
+        navigate("/portal/waiting-membership")
         return
       }
 
-      navigate("/waiting-membership")
+      navigate("/portal/waiting-membership")
     } catch (err: unknown) {
       const message =
         typeof err === "object" &&
@@ -161,8 +161,8 @@ export default function Login() {
           <div className="portal-divider"></div>
 
           <div className="portal-links">
-            <Link to="/register-tenant">Create organization</Link>
-            <Link to="/register-user">Register as individual user</Link>
+            <Link to="/portal/register-tenant">Create organization</Link>
+            <Link to="/portal/register-user">Register as individual user</Link>
           </div>
         </div>
       </div>

@@ -77,7 +77,7 @@ export default function RegisterTenant() {
       )
 
       setTimeout(() => {
-        navigate("/login")
+        navigate("/portal/login")
       }, 1200)
     } catch (err) {
       const msg =
@@ -186,7 +186,7 @@ export default function RegisterTenant() {
           </div>
 
           <div className="portal-footer-link">
-            <Link to="/login">Back to login</Link>
+            <Link to="/portal/login">Back to login</Link>
           </div>
         </div>
       </div>

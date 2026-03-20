@@ -7,20 +7,20 @@ export default function Home() {
   const auth = useAuth()
 
   function goDonate() {
-    navigate("/donate")
+    navigate("/portal/donate")
   }
 
   function goProcurement() {
-    navigate("/procurements/new")
+    navigate("/portal/procurements/new")
   }
 
   function goMyTransactions() {
-    navigate("/my-transactions")
+    navigate("/portal/my-transactions")
   }
 
   function logout() {
     auth.logout()
-    navigate("/login")
+    navigate("/portal/login")
   }
 
   return (
