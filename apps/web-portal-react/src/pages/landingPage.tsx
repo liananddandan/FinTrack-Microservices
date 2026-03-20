@@ -22,7 +22,7 @@ const item = {
         y: 0,
         transition: {
             duration: 1,
-            ease: [0.22, 1, 0.36, 1],
+            ease: [0.22, 1, 0.36, 1] as const,
         },
     },
 }
@@ -35,7 +35,7 @@ const motto = {
         transition: {
             duration: 1.2,
             delay: 0.9,
-            ease: [0.22, 1, 0.36, 1],
+            ease: [0.22, 1, 0.36, 1] as const,
         },
     },
 }
