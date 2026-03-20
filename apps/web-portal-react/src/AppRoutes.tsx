@@ -1,4 +1,4 @@
-import { Routes, Route, Navigate } from "react-router-dom"
+import { Routes, Route } from "react-router-dom"
 import AuthGuard from "./components/AuthGuard"
 
 import Login from "./pages/Login"
@@ -11,12 +11,13 @@ import MyTransactions from "./pages/MyTransactions"
 import TransactionDetail from "./pages/TransactionDetail"
 import NewProcurement from "./pages/NewProcurement"
 import AcceptInvitation from "./pages/AcceptInvitation"
+import LandingPage from "./pages/LandingPage"
 
 export default function AppRoutes() {
     return (
         <Routes>
             {/* redirect */}
-            <Route path="/" element={<Navigate to="/login" />} />
+            <Route path="/" element={<LandingPage />} />
 
             {/* public */}
             <Route
