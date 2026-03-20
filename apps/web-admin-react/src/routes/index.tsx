@@ -13,7 +13,7 @@ import AdminLayout from "../components/AdminLayout"
 
 export default function AppRouter() {
   return (
-    <BrowserRouter basename="/admin">
+    <BrowserRouter>
       <Routes>
 
         {/* public */}
