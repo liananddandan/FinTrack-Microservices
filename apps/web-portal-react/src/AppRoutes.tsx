@@ -11,13 +11,12 @@ import MyTransactions from "./pages/MyTransactions"
 import TransactionDetail from "./pages/TransactionDetail"
 import NewProcurement from "./pages/NewProcurement"
 import AcceptInvitation from "./pages/AcceptInvitation"
-import LandingPage from "./pages/LandingPage"
 
 export default function AppRoutes() {
     return (
         <Routes>
             {/* redirect */}
-            <Route path="/" element={<LandingPage />} />
+            <Route path="/" element={<Login />} />
 
             {/* public */}
             <Route
