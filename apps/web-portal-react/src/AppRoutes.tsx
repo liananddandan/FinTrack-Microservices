@@ -1,4 +1,4 @@
-import { Routes, Route, Navigate } from "react-router-dom"
+import { Routes, Route } from "react-router-dom"
 import AuthGuard from "./components/AuthGuard"
 
 import Login from "./pages/Login"
