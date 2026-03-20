@@ -70,7 +70,7 @@ export default function RegisterUser() {
       )
 
       setTimeout(() => {
-        navigate("/login")
+        navigate("/portal/login")
       }, 1200)
     } catch (err) {
       const msg =
@@ -177,8 +177,8 @@ export default function RegisterUser() {
           <div className="portal-divider"></div>
 
           <div className="portal-links">
-            <Link to="/login">Back to login</Link>
-            <Link to="/register-tenant">
+            <Link to="/portal/login">Back to login</Link>
+            <Link to="/portal/register-tenant">
               Create organization instead
             </Link>
           </div>

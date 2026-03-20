@@ -54,7 +54,7 @@ export default function Donation() {
             })
 
             setSuccessMessage("Donation successful")
-            navigate("/home")
+            navigate("/portal/home")
         } catch {
             setErrorMessage("Donation request failed")
         } finally {
@@ -63,7 +63,7 @@ export default function Donation() {
     }
 
     function goBack() {
-        navigate("/home")
+        navigate("/portal/home")
     }
 
     return (

@@ -24,11 +24,11 @@ export default function AuthGuard({
   }
 
   if (requireAuth && !accountAccessToken) {
-    return <Navigate to="/login" state={{ from: location }} replace />
+    return <Navigate to="/portal/login" state={{ from: location }} replace />
   }
 
   if (requireTenant && !tenantAccessToken) {
-    return <Navigate to="/waiting-membership" replace />
+    return <Navigate to="/portal/waiting-membership" replace />
   }
 
   return <>{children}</>

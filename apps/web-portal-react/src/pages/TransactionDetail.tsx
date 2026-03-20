@@ -59,7 +59,7 @@ export default function TransactionDetail() {
   async function load() {
     if (!transactionPublicId) {
       setErrorMessage("Transaction id is missing.")
-      navigate("/my-transactions")
+      navigate("/portal/my-transactions")
       return
     }
 
@@ -74,7 +74,7 @@ export default function TransactionDetail() {
       const message =
         err instanceof Error ? err.message : "Failed to load transaction detail"
       setErrorMessage(message)
-      navigate("/my-transactions")
+      navigate("/portal/my-transactions")
     } finally {
       setLoading(false)
     }
@@ -118,7 +118,7 @@ export default function TransactionDetail() {
           <button
             type="button"
             className="secondary-btn"
-            onClick={() => navigate("/my-transactions")}
+            onClick={() => navigate("/portal/my-transactions")}
           >
             Back to list
           </button>

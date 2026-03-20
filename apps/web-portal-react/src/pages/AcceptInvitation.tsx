@@ -93,7 +93,7 @@ export default function AcceptInvitation() {
   }
 
   function goLogin() {
-    navigate("/login")
+    navigate("/portal/login")
   }
 
   function formatDate(value: string) {
@@ -205,7 +205,7 @@ export default function AcceptInvitation() {
           )}
 
           <div className="portal-footer-link">
-            <Link to="/login">Back to login</Link>
+            <Link to="/portal/login">Back to login</Link>
           </div>
         </div>
       </div>

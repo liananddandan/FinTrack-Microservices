@@ -176,13 +176,13 @@ const attach401Handler = (client: typeof accountHttp, clientName: string) => {
 
       if (isRefreshRequest) {
         authManager.logout()
-        await navigateTo("/login")
+        await navigateTo("/portal/login")
         return Promise.reject(error)
       }
 
       if (originalRequest._retry) {
         authManager.logout()
-        await navigateTo("/login")
+        await navigateTo("/portal/login")
         return Promise.reject(error)
       }
 
@@ -190,7 +190,7 @@ const attach401Handler = (client: typeof accountHttp, clientName: string) => {
 
       if (!refreshToken) {
         authManager.logout()
-        await navigateTo("/login")
+        await navigateTo("/portal/login")
         return Promise.reject(error)
       }
 
@@ -216,11 +216,11 @@ const attach401Handler = (client: typeof accountHttp, clientName: string) => {
         authStore.clearTenantAccessToken()
         authStore.clearProfile()
 
-        await navigateTo("/waiting-membership")
+        await navigateTo("/portal/waiting-membership")
         return Promise.reject(error)
       } catch (refreshError) {
         authManager.logout()
-        await navigateTo("/login")
+        await navigateTo("/portal/login")
         return Promise.reject(refreshError)
       }
     }
