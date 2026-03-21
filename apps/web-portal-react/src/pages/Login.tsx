@@ -61,7 +61,7 @@ export default function Login() {
       const memberships = profile.memberships ?? []
 
       if (memberships.length === 0) {
-        navigate("/portal/waiting-membership")
+        navigate("/portal/waiting-membership", { replace: true })
         return
       }
 
@@ -69,15 +69,15 @@ export default function Login() {
         await authStore.activateSingleTenantIfPossible()
 
         if (authStore.hasTenantContext) {
-          navigate("/portal/home")
+          navigate("/portal/home", { replace: true })
           return
         }
 
-        navigate("/portal/waiting-membership")
+        navigate("/portal/waiting-membership", { replace: true })
         return
       }
 
-      navigate("/portal/waiting-membership")
+      navigate("/portal/waiting-membership", { replace: true })
     } catch (err: unknown) {
       const message =
         typeof err === "object" &&
@@ -170,8 +170,8 @@ export default function Login() {
 
             <button
               type="submit"
+              className="!inline-flex !h-11 !w-full !items-center !justify-center !rounded-xl !bg-indigo-600 !text-sm !font-semibold !text-white transition hover:!bg-indigo-500 disabled:cursor-not-allowed disabled:opacity-60"
               disabled={loading}
-              className="inline-flex h-11 w-full items-center justify-center rounded-xl bg-indigo-600 text-sm font-semibold text-white transition hover:bg-indigo-500 disabled:cursor-not-allowed disabled:opacity-60"
             >
               {loading ? "Signing in..." : "Sign in"}
             </button>
