@@ -4,10 +4,10 @@ import { useAuth } from "../hooks/useAuth"
 import "./AdminLayout.css"
 
 function getPageTitle(path: string): string {
-  if (path.startsWith("/admin/members")) return "Members"
-  if (path.startsWith("/admin/transactions")) return "Transactions"
-  if (path.startsWith("/admin/invitations")) return "Invitations"
-  if (path.startsWith("/admin/audit-logs")) return "Audit Logs"
+  if (path.startsWith("/members")) return "Members"
+  if (path.startsWith("/transactions")) return "Transactions"
+  if (path.startsWith("/invitations")) return "Invitations"
+  if (path.startsWith("/audit-logs")) return "Audit Logs"
   return "Dashboard"
 }
 
@@ -35,7 +35,7 @@ export default function AdminLayout() {
 
         <nav className="admin-menu">
           <NavLink
-            to="/admin/overview"
+            to="/overview"
             className={({ isActive }) =>
               `admin-menu-item ${isActive ? "active" : ""}`
             }
@@ -44,7 +44,7 @@ export default function AdminLayout() {
           </NavLink>
 
           <NavLink
-            to="/admin/transactions"
+            to="/transactions"
             className={({ isActive }) =>
               `admin-menu-item ${isActive ? "active" : ""}`
             }
@@ -53,7 +53,7 @@ export default function AdminLayout() {
           </NavLink>
 
           <NavLink
-            to="/admin/members"
+            to="/members"
             className={({ isActive }) =>
               `admin-menu-item ${isActive ? "active" : ""}`
             }
@@ -62,7 +62,7 @@ export default function AdminLayout() {
           </NavLink>
 
           <NavLink
-            to="/admin/invitations"
+            to="/invitations"
             className={({ isActive }) =>
               `admin-menu-item ${isActive ? "active" : ""}`
             }
@@ -71,7 +71,7 @@ export default function AdminLayout() {
           </NavLink>
 
           <NavLink
-            to="/admin/audit-logs"
+            to="/audit-logs"
             className={({ isActive }) =>
               `admin-menu-item ${isActive ? "active" : ""}`
             }
