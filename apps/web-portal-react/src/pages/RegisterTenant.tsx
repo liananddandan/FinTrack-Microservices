@@ -1,7 +1,7 @@
 import { useState } from "react"
 import { Link, useNavigate } from "react-router-dom"
+import { HiOutlineBuildingOffice2, HiOutlineArrowUpRight } from "react-icons/hi2"
 import { registerTenant } from "../api/tenant"
-import "./RegisterTenant.css"
 
 export default function RegisterTenant() {
   const navigate = useNavigate()
@@ -77,7 +77,7 @@ export default function RegisterTenant() {
       )
 
       setTimeout(() => {
-        navigate("/portal/login")
+        navigate("/portal/login", { replace: true })
       }, 1200)
     } catch (err) {
       const msg =
@@ -91,104 +91,153 @@ export default function RegisterTenant() {
   }
 
   return (
-    <div className="portal-page">
-      <div className="portal-shell">
-        <div className="portal-brand">
-          <div className="portal-badge">Organization Setup</div>
-          <h1 className="portal-title">Create your organization workspace.</h1>
-          <p className="portal-description">
-            Register a tenant and create its first administrator account in one
-            step.
-          </p>
-        </div>
+    <div className="min-h-screen bg-slate-50 px-6 py-10">
+      <div className="mx-auto grid max-w-5xl items-center gap-12 lg:grid-cols-[0.85fr_1.15fr]">
+        <section className="max-w-md">
+          <div className="flex items-center gap-4">
+            <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-indigo-100 text-indigo-600">
+              <HiOutlineBuildingOffice2 className="h-7 w-7" />
+            </div>
 
-        <div className="portal-card">
-          <div className="portal-card-header">
-            <h2 className="portal-card-title">Register organization</h2>
-            <p className="portal-card-subtitle">
+            <div>
+              <p className="text-lg font-semibold text-slate-800">
+                Transaction & Workflow Platform
+              </p>
+              <p className="mt-1 text-sm text-slate-500">
+                Organization workspace setup
+              </p>
+            </div>
+          </div>
+
+          <p className="mt-6 text-sm font-medium uppercase tracking-wide text-indigo-600">
+            Workspace setup
+          </p>
+
+          <h1 className="mt-3 text-3xl font-semibold tracking-tight text-slate-800">
+            Create your organization workspace
+          </h1>
+
+          <p className="mt-4 text-base leading-7 text-slate-600">
+            Register a tenant and create its first administrator account in one step.
+          </p>
+        </section>
+
+        <section className="rounded-3xl border border-slate-200 border-t-4 border-t-indigo-200 bg-white p-8 shadow-sm sm:p-10">
+          <div>
+            <h2 className="text-2xl font-semibold text-slate-800">
+              Register organization
+            </h2>
+            <p className="mt-2 text-sm leading-6 text-slate-500">
               This creates a tenant and its first administrator account.
             </p>
           </div>
 
-          <div className="form">
-            <div className="form-item">
-              <label>Organization name</label>
+          <div className="mt-8 space-y-5">
+            <div>
+              <label className="mb-2 block text-sm font-medium text-slate-700">
+                Organization name
+              </label>
               <input
                 type="text"
-                placeholder="e.g. Demo Church"
+                placeholder="e.g. Acme Corp"
                 value={form.tenantName}
                 onChange={(e) => updateField("tenantName", e.target.value)}
+                className="!block !h-11 !w-full !rounded-xl !border !border-slate-300 !bg-white !px-3 !text-sm !text-slate-800 !opacity-100 outline-none placeholder:!text-slate-400 focus:!border-indigo-500 focus:!ring-2 focus:!ring-indigo-100"
               />
             </div>
 
-            <div className="form-item">
-              <label>Administrator name</label>
+            <div>
+              <label className="mb-2 block text-sm font-medium text-slate-700">
+                Administrator name
+              </label>
               <input
                 type="text"
                 placeholder="e.g. Emily"
                 value={form.adminName}
                 onChange={(e) => updateField("adminName", e.target.value)}
+                className="!block !h-11 !w-full !rounded-xl !border !border-slate-300 !bg-white !px-3 !text-sm !text-slate-800 !opacity-100 outline-none placeholder:!text-slate-400 focus:!border-indigo-500 focus:!ring-2 focus:!ring-indigo-100"
               />
             </div>
 
-            <div className="form-item">
-              <label>Administrator email</label>
+            <div>
+              <label className="mb-2 block text-sm font-medium text-slate-700">
+                Administrator email
+              </label>
               <input
                 type="email"
                 placeholder="admin@example.com"
                 value={form.adminEmail}
                 onChange={(e) => updateField("adminEmail", e.target.value)}
+                className="!block !h-11 !w-full !rounded-xl !border !border-slate-300 !bg-white !px-3 !text-sm !text-slate-800 !opacity-100 outline-none placeholder:!text-slate-400 focus:!border-indigo-500 focus:!ring-2 focus:!ring-indigo-100"
               />
             </div>
 
-            <div className="form-item">
-              <label>Password</label>
+            <div>
+              <label className="mb-2 block text-sm font-medium text-slate-700">
+                Password
+              </label>
               <input
                 type="password"
                 placeholder="At least 8 characters"
                 value={form.adminPassword}
                 onChange={(e) => updateField("adminPassword", e.target.value)}
+                className="!block !h-11 !w-full !rounded-xl !border !border-slate-300 !bg-white !px-3 !text-sm !text-slate-800 !opacity-100 outline-none placeholder:!text-slate-400 focus:!border-indigo-500 focus:!ring-2 focus:!ring-indigo-100"
               />
             </div>
 
-            <div className="form-item">
-              <label>Confirm password</label>
+            <div>
+              <label className="mb-2 block text-sm font-medium text-slate-700">
+                Confirm password
+              </label>
               <input
                 type="password"
                 placeholder="Re-enter password"
                 value={form.confirmPassword}
-                onChange={(e) =>
-                  updateField("confirmPassword", e.target.value)
-                }
+                onChange={(e) => updateField("confirmPassword", e.target.value)}
+                className="!block !h-11 !w-full !rounded-xl !border !border-slate-300 !bg-white !px-3 !text-sm !text-slate-800 !opacity-100 outline-none placeholder:!text-slate-400 focus:!border-indigo-500 focus:!ring-2 focus:!ring-indigo-100"
               />
             </div>
 
             <button
-              className="portal-primary-btn"
+              type="button"
               disabled={loading}
               onClick={onSubmit}
+              className="!inline-flex !h-11 !w-full !items-center !justify-center !rounded-xl !bg-indigo-600 !text-sm !font-semibold !text-white transition hover:!bg-indigo-500 disabled:cursor-not-allowed disabled:opacity-60"
             >
               {loading ? "Creating..." : "Create organization"}
             </button>
 
             {successMessage ? (
-              <div className="portal-alert success">{successMessage}</div>
+              <div className="rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700">
+                {successMessage}
+              </div>
             ) : null}
 
             {errorMessage ? (
-              <div className="portal-alert error">{errorMessage}</div>
+              <div className="rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">
+                {errorMessage}
+              </div>
             ) : null}
           </div>
 
-          <div className="portal-info-box">
-            In V1, registering an organization creates the tenant and its first
-            administrator directly.
-          </div>
+          <div className="mt-8 flex flex-wrap gap-3">
+            <Link
+              to="/portal/login"
+              className="group inline-flex items-center gap-2 rounded-full border border-slate-200 px-4 py-2 text-sm text-slate-700 transition hover:border-indigo-500 hover:text-indigo-600"
+            >
+              <span>Back to login</span>
+              <HiOutlineArrowUpRight className="h-4 w-4 text-slate-400 transition group-hover:text-indigo-600" />
+            </Link>
 
-          <div className="portal-footer-link">
-            <Link to="/portal/login">Back to login</Link>
+            <Link
+              to="/portal/register-user"
+              className="group inline-flex items-center gap-2 rounded-full border border-slate-200 px-4 py-2 text-sm text-slate-700 transition hover:border-indigo-500 hover:text-indigo-600"
+            >
+              <span>Create user account instead</span>
+              <HiOutlineArrowUpRight className="h-4 w-4 text-slate-400 transition group-hover:text-indigo-600" />
+            </Link>
           </div>
-        </div>
+        </section>
       </div>
     </div>
   )
