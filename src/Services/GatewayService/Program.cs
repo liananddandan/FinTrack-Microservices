@@ -92,7 +92,7 @@ app.MapScalarApiReference("/api/swagger", options =>
 {
     options.WithTitle("Transaction & Workflow Platform API Docs");
     options.WithTheme(ScalarTheme.Default);
-    options.OpenApiRoutePattern = "/openapi/all.json";
+    options.OpenApiRoutePattern = "/api/openapi/all.json";
 });
 app.MapReverseProxy();
 app.Run();
