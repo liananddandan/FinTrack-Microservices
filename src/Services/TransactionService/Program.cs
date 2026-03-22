@@ -113,11 +113,8 @@ for (var attempt = 1; attempt <= maxRetries; attempt++)
 }
 
 // Configure the HTTP request pipeline.
-if (app.Environment.IsDevelopment())
-{
-    app.MapOpenApi();
-    app.MapScalarApiReference();
-}
+app.MapOpenApi();
+
 
 app.UseMiddleware<GlobalExceptionMiddleware>();
 app.UseRouting();
