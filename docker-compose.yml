@@ -74,7 +74,7 @@ services:
       - "5100:8080"
 
   transaction-service:
-    image: ghcr.io/liananddandan/identity-service:${IDENTITY_SERVICE_VERSION}
+    image: ghcr.io/liananddandan/transaction-service:${TRANSACTION_SERVICE_VERSION}
     container_name: fintrack-transaction
     depends_on:
       mysql:
