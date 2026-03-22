@@ -46,7 +46,7 @@ builder.Services.AddCap(x =>
 
 builder.Services.AddScoped<IAuditLogWriter, AuditLogWriter>();
 builder.Services.AddScoped<IAuditLogReader, AuditLogReader>();
-// Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
+
 builder.Services.AddOpenApi();
 
 builder.Services.AddAuthentication().AddJwtBearer(options =>
@@ -119,10 +119,7 @@ for (var attempt = 1; attempt <= maxRetries; attempt++)
 }
 
 // Configure the HTTP request pipeline.
-if (app.Environment.IsDevelopment())
-{
-    app.MapOpenApi();
-}
+app.MapOpenApi();
 
 app.UseHttpsRedirection();
 

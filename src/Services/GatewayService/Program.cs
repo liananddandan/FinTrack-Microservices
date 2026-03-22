@@ -1,9 +1,11 @@
 using System.Text;
-using GatewayService.Common.Options;
-using GatewayService.Middlewares;
-using GatewayService.Services;
-using GatewayService.Services.Interfaces;
+using GatewayService.Application.Common.Options;
+using GatewayService.Application.Middlewares;
+using GatewayService.Application.Services;
+using GatewayService.Application.Services.Interfaces;
+using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
+using Scalar.AspNetCore;
 using SharedKernel.Common.Options;
 using StackExchange.Redis;
 
@@ -18,6 +20,8 @@ builder.Services.AddReverseProxy()
 
 builder.Services.Configure<JwtOptions>(
     builder.Configuration.GetSection("JwtSettings"));
+builder.Services.Configure<OpenApiServicesOptions>(
+    builder.Configuration.GetSection("OpenApiServices"));
 
 builder.Services.AddAuthentication().AddJwtBearer(options =>
 {
@@ -31,7 +35,8 @@ builder.Services.AddAuthentication().AddJwtBearer(options =>
         ValidateIssuerSigningKey = true,
         ValidIssuer = builder.Configuration["JwtSettings:Issuer"],
         ValidAudience = builder.Configuration["JwtSettings:Audience"],
-        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(builder.Configuration["JwtSettings:Secret"]!))
+        IssuerSigningKey =
+            new SymmetricSecurityKey(Encoding.UTF8.GetBytes(builder.Configuration["JwtSettings:Secret"]!))
     };
 });
 
@@ -48,9 +53,9 @@ builder.Services.AddCors(options =>
     options.AddPolicy("FrontendDev", policy =>
     {
         policy
-            .WithOrigins("http://localhost:5173", 
-                "http://localhost:5174", 
-                "http://localhost:5175", 
+            .WithOrigins("http://localhost:5173",
+                "http://localhost:5174",
+                "http://localhost:5175",
                 "http://localhost:5176")
             .AllowAnyHeader()
             .AllowAnyMethod();
@@ -59,6 +64,7 @@ builder.Services.AddCors(options =>
 
 builder.Services.AddHttpClient();
 builder.Services.AddScoped<IDevSeedOrchestrator, DevSeedOrchestrator>();
+builder.Services.AddSingleton<IOpenApiDocumentMerger, OpenApiDocumentMerger>();
 builder.Services.AddControllers();
 
 var app = builder.Build();
@@ -66,7 +72,41 @@ var app = builder.Build();
 app.UseCors("FrontendDev");
 app.UseAuthentication();
 app.UseAuthorization();
+
 app.UseMiddleware<BasicJwtTokenValidationMiddleware>();
 app.MapControllers();
+app.MapGet("/api/openapi/all.json", async (
+    IHttpClientFactory httpClientFactory,
+    IOptions<OpenApiServicesOptions> options,
+    IOpenApiDocumentMerger merger) =>
+{
+    var client = httpClientFactory.CreateClient();
+    var config = options.Value;
+    var identityUrl = $"{config.Identity}/openapi/v1.json";
+    var transactionUrl = $"{config.Transaction}/openapi/v1.json";
+    var auditLogUrl = $"{config.AuditLog}/openapi/v1.json";
+
+    Console.WriteLine($"[OpenAPI] Identity URL: {identityUrl}");
+    Console.WriteLine($"[OpenAPI] Transaction URL: {transactionUrl}");
+    Console.WriteLine($"[OpenAPI] AuditLog URL: {auditLogUrl}");
+
+    var identityJson = await client.GetStringAsync(identityUrl);
+    var transactionJson = await client.GetStringAsync(transactionUrl);
+    var auditLogJson = await client.GetStringAsync(auditLogUrl);
+    var merged = merger.Merge(
+        ("Identity API", identityJson),
+        ("Transaction API", transactionJson),
+        ("AuditLog API", auditLogJson));
+
+    return Results.Content(merged, "application/json");
+});
+
+app.MapScalarApiReference("/api/swagger", options =>
+{
+    options.WithTitle("Transaction & Workflow Platform API Docs");
+    options.WithTheme(ScalarTheme.Default);
+    options.OpenApiRoutePattern = "/api/openapi/all.json";
+});
+
 app.MapReverseProxy();
 app.Run();

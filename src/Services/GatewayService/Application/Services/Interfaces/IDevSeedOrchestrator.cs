@@ -1,6 +1,6 @@
-using GatewayService.DTOs;
+using GatewayService.Application.DTOs;
 
-namespace GatewayService.Services.Interfaces;
+namespace GatewayService.Application.Services.Interfaces;
 
 public interface IDevSeedOrchestrator
 {

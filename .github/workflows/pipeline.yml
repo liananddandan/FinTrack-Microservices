@@ -1,0 +1,133 @@
+name: Pipeline
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+    inputs:
+      force_deploy_all:
+        description: Force build and deploy all services
+        required: false
+        default: false
+        type: boolean
+        
+permissions:
+  contents: read
+  packages: write
+
+jobs:
+  ci:
+    uses: ./.github/workflows/ci-reusable.yml
+
+  changes:
+    runs-on: ubuntu-latest
+    needs: ci
+    outputs:
+      web_portal: ${{ steps.filter.outputs.web_portal }}
+      web_admin: ${{ steps.filter.outputs.web_admin }}
+      gateway: ${{ steps.filter.outputs.gateway }}
+      notification_service: ${{ steps.filter.outputs.notification_service }}
+      auditlog_service: ${{ steps.filter.outputs.auditlog_service }}
+      identity_service: ${{ steps.filter.outputs.identity_service }}
+      transaction_service: ${{ steps.filter.outputs.transaction_service }}
+      
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Detect changed paths
+        id: filter
+        uses: dorny/paths-filter@v3
+        with:
+          filters: |
+            web_portal:
+              - 'apps/web-portal-react/**'
+            web_admin:
+              - 'apps/web-admin-react/**'
+            gateway:
+              - 'src/Services/GatewayService/**'
+            notification_service:
+              - 'src/Services/NotificationService/**'
+            auditlog_service:
+              - 'src/Services/AuditLogService/**'
+            identity_service:
+              - 'src/Services/IdentityService/**'
+            transaction_service:
+              - 'src/Services/TransactionService/**'
+
+  build-web-portal:
+    needs: changes
+    if: ${{ needs.changes.outputs.web_portal == 'true' || github.event.inputs.force_deploy_all == 'true' }}
+    uses: ./.github/workflows/web-portal-react-image.yml
+      
+  build-web-admin:
+    needs: changes
+    if: ${{ needs.changes.outputs.web_admin == 'true' || github.event.inputs.force_deploy_all == 'true' }}
+    uses: ./.github/workflows/web-admin-react-image.yml
+          
+  build-gateway:
+    needs: changes
+    if: ${{ needs.changes.outputs.gateway == 'true' || github.event.inputs.force_deploy_all == 'true' }}
+    uses: ./.github/workflows/gateway-image.yml
+    
+  build-notification-service:
+    needs: changes
+    if: ${{ needs.changes.outputs.notification_service == 'true' || github.event.inputs.force_deploy_all == 'true' }}
+    uses: ./.github/workflows/notification-service-image.yml
+  
+  build-auditlog-service:
+    needs: changes
+    if: ${{ needs.changes.outputs.auditlog_service == 'true' || github.event.inputs.force_deploy_all == 'true' }}
+    uses: ./.github/workflows/auditlog-service-image.yml
+    
+  build-identity-service:
+    needs: changes
+    if: ${{ needs.changes.outputs.identity_service == 'true' || github.event.inputs.force_deploy_all == 'true' }}
+    uses: ./.github/workflows/identity-service-image.yml
+
+  build-transaction-service:
+    needs: changes
+    if: ${{ needs.changes.outputs.transaction_service == 'true' || github.event.inputs.force_deploy_all == 'true' }}
+    uses: ./.github/workflows/transaction-service-image.yml
+      
+  deploy:
+    needs:
+      - ci
+      - changes
+      - build-web-portal
+      - build-web-admin
+      - build-gateway
+      - build-notification-service
+      - build-auditlog-service
+      - build-identity-service
+      - build-transaction-service
+    if: ${{
+      always() &&
+      needs.ci.result == 'success' &&
+      (
+      needs.changes.outputs.web_portal == 'true' ||
+      needs.changes.outputs.web_admin == 'true' ||
+      needs.changes.outputs.gateway == 'true' ||
+      needs.changes.outputs.notification_service == 'true' ||
+      needs.changes.outputs.auditlog_service == 'true' ||
+      needs.changes.outputs.identity_service == 'true' ||
+      needs.changes.outputs.transaction_service == 'true' ||
+      github.event.inputs.force_deploy_all == 'true'
+      )
+      }}
+
+    uses: ./.github/workflows/cd.yml
+    with:
+      deploy_web_portal: ${{ needs.changes.outputs.web_portal == 'true' || github.event.inputs.force_deploy_all == 'true' }}
+      deploy_web_admin: ${{ needs.changes.outputs.web_admin == 'true' || github.event.inputs.force_deploy_all == 'true' }}
+      deploy_gateway: ${{ needs.changes.outputs.gateway == 'true' || github.event.inputs.force_deploy_all == 'true' }}
+      deploy_notification_service: ${{ needs.changes.outputs.notification_service == 'true' || github.event.inputs.force_deploy_all == 'true' }}
+      deploy_auditlog_service: ${{ needs.changes.outputs.auditlog_service == 'true' || github.event.inputs.force_deploy_all == 'true' }}
+      deploy_identity_service: ${{ needs.changes.outputs.identity_service == 'true' || github.event.inputs.force_deploy_all == 'true' }}
+      deploy_transaction_service: ${{ needs.changes.outputs.transaction_service == 'true' || github.event.inputs.force_deploy_all == 'true' }}
+    secrets:
+      VPS_HOST: ${{ secrets.VPS_HOST }}
+      VPS_USERNAME: ${{ secrets.VPS_USERNAME }}
+      VPS_PORT: ${{ secrets.VPS_PORT }}
+      VPS_SSH_KEY: ${{ secrets.VPS_SSH_KEY }}

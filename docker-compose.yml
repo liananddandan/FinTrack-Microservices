@@ -51,9 +51,7 @@ services:
   # ========================
 
   identity-service:
-    build:
-      context: .
-      dockerfile: src/Services/IdentityService/Dockerfile
+    image: ghcr.io/liananddandan/identity-service:${IDENTITY_SERVICE_VERSION}
     container_name: fintrack-identity
     depends_on:
       mysql:
@@ -65,7 +63,7 @@ services:
     environment:
       ASPNETCORE_ENVIRONMENT: Development
       ASPNETCORE_URLS: http://+:8080
-      Frontend__PortalBaseUrl: http://localhost:3001
+      Frontend__PortalBaseUrl: https://fintrack.chenlis.com/portal
       ConnectionStrings__DefaultConnection: server=mysql;port=3306;database=fintrack_identity;user=root;password=123456
       ConnectionStrings__Redis: redis:6379
       CAP__RabbitMQ__HostName: rabbitmq
@@ -76,9 +74,7 @@ services:
       - "5100:8080"
 
   transaction-service:
-    build:
-      context: .
-      dockerfile: src/Services/TransactionService/Dockerfile
+    image: ghcr.io/liananddandan/transaction-service:${TRANSACTION_SERVICE_VERSION}
     container_name: fintrack-transaction
     depends_on:
       mysql:
@@ -97,9 +93,7 @@ services:
       - "5101:8080"
 
   auditlog-service:
-    build:
-      context: .
-      dockerfile: src/Services/AuditLogService/Dockerfile
+    image: ghcr.io/liananddandan/auditlog-service:${AUDITLOG_SERVICE_VERSION}
     container_name: fintrack-auditlog
     depends_on:
       mysql:
@@ -118,9 +112,7 @@ services:
       - "5102:8080"
 
   notification-service:
-    build:
-      context: .
-      dockerfile: src/Services/NotificationService/Dockerfile
+    image: ghcr.io/liananddandan/notification-service:${NOTIFICATION_SERVICE_VERSION}
     container_name: fintrack-notification
     depends_on:
       mysql:
@@ -147,9 +139,7 @@ services:
   # ========================
 
   gateway:
-    build:
-      context: .
-      dockerfile: src/Services/GatewayService/Dockerfile
+    image: ghcr.io/liananddandan/gateway:${GATEWAY_VERSION}
     container_name: fintrack-gateway
     depends_on:
       identity-service:
@@ -169,38 +159,17 @@ services:
       ReverseProxy__Clusters__identityCluster__Destinations__identity__Address: http://identity-service:8080/
       ReverseProxy__Clusters__transactionCluster__Destinations__transaction__Address: http://transaction-service:8080/
       ReverseProxy__Clusters__auditlogCluster__Destinations__destination1__Address: http://auditlog-service:8080/
+      OpenApiServices__Identity: http://identity-service:8080
+      OpenApiServices__Transaction: http://transaction-service:8080
+      OpenApiServices__AuditLog: http://auditlog-service:8080
     ports:
       - "5193:8080"
   
   # ========================
   # Frontend
   # ========================
-
-#  web-portal:
-#    build:
-#      context: ./apps/web-portal
-#      dockerfile: Dockerfile
-#    container_name: fintrack-web-portal
-#    depends_on:
-#      gateway:
-#        condition: service_started
-#    ports:
-#      - "3000:80"
-#
-#  web-admin:
-#    build:
-#      context: ./apps/web-admin
-#      dockerfile: Dockerfile
-#    container_name: fintrack-web-admin
-#    depends_on:
-#      gateway:
-#        condition: service_started
-#    ports:
-#      - "3001:80"
   web-admin-react:
-    build:
-      context: ./apps/web-admin-react
-      dockerfile: Dockerfile
+    image: ghcr.io/liananddandan/web-admin-react:${WEB_ADMIN_REACT_VERSION}
     container_name: fintrack-web-admin-react
     depends_on:
       gateway:
@@ -209,9 +178,7 @@ services:
       - "3000:80"
     
   web-portal-react:
-    build:
-      context: ./apps/web-portal-react
-      dockerfile: Dockerfile
+    image: ghcr.io/liananddandan/web-portal-react:${WEB_PORTAL_REACT_VERSION}
     container_name: fintrack-web-portal-react
     depends_on:
       gateway:

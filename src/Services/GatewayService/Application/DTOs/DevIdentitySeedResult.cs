@@ -1,4 +1,4 @@
-namespace GatewayService.DTOs;
+namespace GatewayService.Application.DTOs;
 
 public record DevIdentitySeedResult(
     string TenantPublicId,

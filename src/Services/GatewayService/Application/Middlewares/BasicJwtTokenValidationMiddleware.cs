@@ -1,10 +1,10 @@
-using GatewayService.Common.Options;
+using GatewayService.Application.Common.Options;
 using Microsoft.Extensions.Options;
 using SharedKernel.Common.Constants;
 using SharedKernel.Common.DTOs.Auth;
 using StackExchange.Redis;
 
-namespace GatewayService.Middlewares;
+namespace GatewayService.Application.Middlewares;
 
 public class BasicJwtTokenValidationMiddleware
 {
@@ -27,7 +27,17 @@ public class BasicJwtTokenValidationMiddleware
 
     public async Task Invoke(HttpContext context)
     {
-        var path = context.Request.Path.Value ?? string.Empty;
+        var requestPath = context.Request.Path;
+
+        if (requestPath.StartsWithSegments("/api/swagger") ||
+            requestPath.StartsWithSegments("/api/openapi") ||
+            requestPath == "/favicon.ico")
+        {
+            await _next(context);
+            return;
+        }
+        
+        var path = requestPath.Value ?? string.Empty;
 
         if (_authWhiteList.Any(p => MatchPath(p, path)))
         {

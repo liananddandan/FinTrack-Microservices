@@ -1,9 +1,9 @@
-using GatewayService.DTOs;
-using GatewayService.Services.Interfaces;
+using GatewayService.Application.DTOs;
+using GatewayService.Application.Services.Interfaces;
 using Microsoft.AspNetCore.Mvc;
 using SharedKernel.Common.DTOs;
 
-namespace GatewayService.Controllers;
+namespace GatewayService.Api.Controllers;
 
 [ApiController]
 [Route("api/dev")]

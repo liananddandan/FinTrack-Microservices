@@ -1,22 +1,44 @@
 name: Deploy to VPS
 
 on:
-  push:
-    branches:
-      - main
+  workflow_call:
+    inputs:
+      deploy_web_portal:
+        required: true
+        type: boolean
+      deploy_web_admin:
+        required: true
+        type: boolean
+      deploy_gateway:
+        required: true
+        type: boolean
+      deploy_notification_service:
+        required: true
+        type: boolean
+      deploy_auditlog_service:
+        required: true
+        type: boolean
+      deploy_identity_service:
+        required: true
+        type: boolean
+      deploy_transaction_service:
+        required: true
+        type: boolean
+    secrets:
+      VPS_HOST:
+        required: true
+      VPS_USERNAME:
+        required: true
+      VPS_PORT:
+        required: true
+      VPS_SSH_KEY:
+        required: true
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Check secrets presence
-        run: |
-          [ -n "${{ secrets.VPS_HOST }}" ] && echo "VPS_HOST exists" || echo "VPS_HOST missing"
-          [ -n "${{ secrets.VPS_USERNAME }}" ] && echo "VPS_USERNAME exists" || echo "VPS_USERNAME missing"
-          [ -n "${{ secrets.VPS_PORT }}" ] && echo "VPS_PORT exists" || echo "VPS_PORT missing"
-          [ -n "${{ secrets.VPS_SSH_KEY }}" ] && echo "VPS_SSH_KEY exists" || echo "VPS_SSH_KEY missing"
-
       - name: Deploy via SSH
         uses: appleboy/ssh-action@v1.0.3
         with:
@@ -26,7 +48,64 @@ jobs:
           key: ${{ secrets.VPS_SSH_KEY }}
           script: |
             set -e
-            cd ~/FinTrack-Microservices
-            git pull
-            docker compose up -d --build
+            cd /opt/fintrack
+
+            if [ "${{ inputs.deploy_web_portal }}" = "true" ]; then
+              if [ -f .env ] && grep -q '^WEB_PORTAL_REACT_VERSION=' .env; then
+                sed -i 's/^WEB_PORTAL_REACT_VERSION=.*/WEB_PORTAL_REACT_VERSION=latest/' .env
+              else
+                printf "WEB_PORTAL_REACT_VERSION=latest\n" >> .env
+              fi
+            fi
+
+            if [ "${{ inputs.deploy_web_admin }}" = "true" ]; then
+              if [ -f .env ] && grep -q '^WEB_ADMIN_REACT_VERSION=' .env; then
+                sed -i 's/^WEB_ADMIN_REACT_VERSION=.*/WEB_ADMIN_REACT_VERSION=latest/' .env
+              else
+                printf "WEB_ADMIN_REACT_VERSION=latest\n" >> .env
+              fi
+            fi
+
+            if [ "${{ inputs.deploy_gateway }}" = "true" ]; then
+              if [ -f .env ] && grep -q '^GATEWAY_VERSION=' .env; then
+                sed -i 's/^GATEWAY_VERSION=.*/GATEWAY_VERSION=latest/' .env
+              else
+                printf "GATEWAY_VERSION=latest\n" >> .env
+              fi
+            fi
+
+            if [ "${{ inputs.deploy_notification_service }}" = "true" ]; then
+              if [ -f .env ] && grep -q '^NOTIFICATION_SERVICE_VERSION=' .env; then
+                sed -i 's/^NOTIFICATION_SERVICE_VERSION=.*/NOTIFICATION_SERVICE_VERSION=latest/' .env
+              else
+                printf "NOTIFICATION_SERVICE_VERSION=latest\n" >> .env
+              fi
+            fi
+
+            if [ "${{ inputs.deploy_auditlog_service }}" = "true" ]; then
+              if [ -f .env ] && grep -q '^AUDITLOG_SERVICE_VERSION=' .env; then
+                sed -i 's/^AUDITLOG_SERVICE_VERSION=.*/AUDITLOG_SERVICE_VERSION=latest/' .env
+              else
+                printf "AUDITLOG_SERVICE_VERSION=latest\n" >> .env
+              fi
+            fi
+
+            if [ "${{ inputs.deploy_identity_service }}" = "true" ]; then
+              if [ -f .env ] && grep -q '^IDENTITY_SERVICE_VERSION=' .env; then
+                sed -i 's/^IDENTITY_SERVICE_VERSION=.*/IDENTITY_SERVICE_VERSION=latest/' .env
+              else
+                printf "IDENTITY_SERVICE_VERSION=latest\n" >> .env
+              fi
+            fi
+
+            if [ "${{ inputs.deploy_transaction_service }}" = "true" ]; then
+              if [ -f .env ] && grep -q '^TRANSACTION_SERVICE_VERSION=' .env; then
+                sed -i 's/^TRANSACTION_SERVICE_VERSION=.*/TRANSACTION_SERVICE_VERSION=latest/' .env
+              else
+                printf "TRANSACTION_SERVICE_VERSION=latest\n" >> .env
+              fi
+            fi
+
+            docker compose pull
+            docker compose up -d
             docker image prune -f

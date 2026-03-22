@@ -118,55 +118,6 @@ export default function LandingPage() {
                 </div>
             </section>
 
-            {/* Core capabilities */}
-            <section className="bg-slate-50 py-16 px-6">
-                <div className="max-w-5xl mx-auto text-start">
-                    <h2 className="text-3xl font-semibold text-slate-800">
-                        What you can do with the system
-                    </h2>
-
-                    <div className="mt-10 grid gap-6 text-left sm:grid-cols-2">
-
-                        <div className="rounded-xl border border-slate-200 bg-white p-6">
-                            <h3 className="font-semibold text-slate-800">
-                                Manage organizations independently
-                            </h3>
-                            <p className="mt-2 text-slate-600">
-                                Each tenant operates in isolation with its own data, users, and workflows.
-                            </p>
-                        </div>
-
-                        <div className="rounded-xl border border-slate-200 bg-white p-6">
-                            <h3 className="font-semibold text-slate-800">
-                                Control access with clear roles
-                            </h3>
-                            <p className="mt-2 text-slate-600">
-                                Define permissions for admins and members to ensure secure operations.
-                            </p>
-                        </div>
-
-                        <div className="rounded-xl border border-slate-200 bg-white p-6">
-                            <h3 className="font-semibold text-slate-800">
-                                Process transactions reliably
-                            </h3>
-                            <p className="mt-2 text-slate-600">
-                                Actions flow through services and messaging infrastructure for consistency.
-                            </p>
-                        </div>
-
-                        <div className="rounded-xl border border-slate-200 bg-white p-6">
-                            <h3 className="font-semibold text-slate-800">
-                                Track system activity
-                            </h3>
-                            <p className="mt-2 text-slate-600">
-                                Audit logs provide visibility into every operation across the platform.
-                            </p>
-                        </div>
-
-                    </div>
-                </div>
-            </section>
-
             {/* System architecture */}
             <section className="px-6 pt-6">
                 <div className="mx-auto max-w-5xl">
@@ -229,7 +180,54 @@ export default function LandingPage() {
                     </div>
                 </div>
             </section>
+            {/* Core capabilities */}
+            <section className="bg-slate-50 py-16 px-6">
+                <div className="max-w-5xl mx-auto text-start">
+                    <h2 className="text-3xl font-semibold text-slate-800">
+                        What you can do with the system
+                    </h2>
 
+                    <div className="mt-10 grid gap-6 text-left sm:grid-cols-2">
+
+                        <div className="rounded-xl border border-slate-200 bg-white p-6">
+                            <h3 className="font-semibold text-slate-800">
+                                Manage organizations independently
+                            </h3>
+                            <p className="mt-2 text-slate-600">
+                                Each tenant operates in isolation with its own data, users, and workflows.
+                            </p>
+                        </div>
+
+                        <div className="rounded-xl border border-slate-200 bg-white p-6">
+                            <h3 className="font-semibold text-slate-800">
+                                Control access with clear roles
+                            </h3>
+                            <p className="mt-2 text-slate-600">
+                                Define permissions for admins and members to ensure secure operations.
+                            </p>
+                        </div>
+
+                        <div className="rounded-xl border border-slate-200 bg-white p-6">
+                            <h3 className="font-semibold text-slate-800">
+                                Process transactions reliably
+                            </h3>
+                            <p className="mt-2 text-slate-600">
+                                Actions flow through services and messaging infrastructure for consistency.
+                            </p>
+                        </div>
+
+                        <div className="rounded-xl border border-slate-200 bg-white p-6">
+                            <h3 className="font-semibold text-slate-800">
+                                Track system activity
+                            </h3>
+                            <p className="mt-2 text-slate-600">
+                                Audit logs provide visibility into every operation across the platform.
+                            </p>
+                        </div>
+
+                    </div>
+                </div>
+            </section>
         </main>
     )
 }
