@@ -1,7 +1,10 @@
 name: .NET 9 CI
 
 on:
-  workflow_call:
+  push:
+    branches-ignore:
+      - main
+  pull_request:
 
 jobs:
   build-and-test:
