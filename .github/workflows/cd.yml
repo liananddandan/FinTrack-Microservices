@@ -84,7 +84,7 @@ jobs:
             fi
             
             set -e
-            FinTrack-Microservices
+            cd ~/FinTrack-Microservices
             git pull
             docker compose pull
             docker compose up -d
