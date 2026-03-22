@@ -21,6 +21,7 @@ jobs:
       web_portal: ${{ steps.filter.outputs.web_portal }}
       web_admin: ${{ steps.filter.outputs.web_admin }}
       gateway: ${{ steps.filter.outputs.gateway }}
+      notification_service: ${{ steps.filter.outputs.notification_service }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -36,6 +37,8 @@ jobs:
               - 'apps/web-admin-react/**'
             gateway:
               - 'src/Services/GatewayService/**'
+            notification_service:
+              - 'src/Services/NotificationService/**'
 
   build-web-portal:
     needs: changes
@@ -54,20 +57,26 @@ jobs:
       contents: read
       packages: write
     uses: ./.github/workflows/gateway-image.yml
+    
+  build-notification-service:
+    needs: changes
+    if: needs.changes.outputs.notification_service == 'true'
+    uses: ./.github/workflows/notification-service-image.yml
       
   deploy:
     needs:
       - changes
       - build-web-portal
       - build-web-admin
+      - build-gateway
+      - build-notification-service
     if: |
       always() &&
-      needs.ci.result != 'failure' &&
-      (needs.changes.outputs.web_portal == 'true' || needs.changes.outputs.web_admin == 'true') &&
-      (needs.build-web-portal.result == 'success' || needs.build-web-portal.result == 'skipped') &&
-      (needs.build-web-admin.result == 'success' || needs.build-web-admin.result == 'skipped')
+      needs.ci.result != 'failure'
+
     uses: ./.github/workflows/cd.yml
     with:
       deploy_web_portal: ${{ needs.changes.outputs.web_portal == 'true' }}
       deploy_web_admin: ${{ needs.changes.outputs.web_admin == 'true' }}
       deploy_gateway: ${{ needs.changes.outputs.gateway == 'true' }}
+      deploy_notification_service: ${{ needs.changes.outputs.notification_service == 'true' }}

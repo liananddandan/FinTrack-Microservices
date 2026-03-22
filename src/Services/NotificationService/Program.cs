@@ -4,7 +4,6 @@ using NotificationService.Handlers;
 using NotificationService.Infrastructure.Persistence;
 using NotificationService.Options;
 using NotificationService.Services;
-using Scalar.AspNetCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
