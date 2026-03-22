@@ -6,6 +6,10 @@ import {
     HiOutlineServerStack,
     HiOutlineCube,
     HiOutlineCircleStack,
+    HiOutlineBeaker,
+    HiOutlineCloudArrowUp,
+    HiOutlineArrowDownTray,
+    HiOutlineRocketLaunch,
 } from "react-icons/hi2"
 import {
     SiDotnet,
@@ -18,6 +22,14 @@ import {
 } from "react-icons/si"
 import EntryCard from "../components/EntryCard"
 
+function IconBadge({ children }: { children: React.ReactNode }) {
+    return (
+        <div className="flex h-11 w-11 items-center justify-center rounded-xl border border-slate-200 bg-white text-indigo-600 shadow-sm">
+            {children}
+        </div>
+    )
+}
+
 function ArchitectureNode({
     icon,
     label,
@@ -27,16 +39,14 @@ function ArchitectureNode({
 }) {
     return (
         <div className="flex flex-col items-center">
-            <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-indigo-50 text-indigo-600">
-                {icon}
-            </div>
+            <IconBadge>{icon}</IconBadge>
             <p className="mt-2 text-sm text-slate-700">{label}</p>
         </div>
     )
 }
 
 function ArchitectureArrow() {
-    return <span className="text-lg text-slate-400">→</span>
+    return <span className="text-lg text-slate-300">→</span>
 }
 
 function TechItem({
@@ -48,10 +58,23 @@ function TechItem({
 }) {
     return (
         <div className="flex flex-col items-center gap-2">
-            <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-white border border-slate-200 text-indigo-700">
-                {icon}
-            </div>
+            <IconBadge>{icon}</IconBadge>
             <p className="text-xs text-slate-600">{label}</p>
+        </div>
+    )
+}
+
+function PipelineStep({
+    icon,
+    label,
+}: {
+    icon: React.ReactNode
+    label: string
+}) {
+    return (
+        <div className="flex items-center gap-3">
+            <IconBadge>{icon}</IconBadge>
+            <span className="text-sm font-medium text-slate-700">{label}</span>
         </div>
     )
 }
@@ -59,14 +82,13 @@ function TechItem({
 export default function LandingPage() {
     return (
         <main className="bg-white text-gray-900">
-
             {/* Hero */}
             <section className="px-4 py-4">
-                <div className="max-w-5xl mx-auto">
+                <div className="mx-auto max-w-5xl">
                     <div className="flex items-center gap-3">
-                        <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-indigo-50 text-indigo-600">
+                        <IconBadge>
                             <HiOutlineArrowsRightLeft className="h-6 w-6" />
-                        </div>
+                        </IconBadge>
 
                         <div>
                             <p className="text-sm font-medium tracking-wide text-gray-500">
@@ -79,11 +101,11 @@ export default function LandingPage() {
                     </div>
                 </div>
             </section>
-            <section className="py-10 border-t border-slate-200 bg-slate-100">
-                <div className="max-w-5xl mx-auto">
 
+            <section className="border-t border-slate-200 bg-slate-100 py-10">
+                <div className="mx-auto max-w-5xl">
                     <div className="max-w-3xl">
-                        <h1 className="text-4xl sm:text-5xl font-semibold tracking-tight text-slate-800 leading-tight">
+                        <h1 className="text-4xl font-semibold leading-tight tracking-tight text-slate-800 sm:text-5xl">
                             Transaction & workflow system for multi-tenant applications
                         </h1>
 
@@ -129,7 +151,7 @@ export default function LandingPage() {
                         Request flow and event-driven communication across services
                     </p>
 
-                    <div className="py-6 flex flex-wrap items-center justify-center gap-8 sm:gap-10">
+                    <div className="flex flex-wrap items-center justify-center gap-8 py-6 sm:gap-10">
                         <ArchitectureNode
                             icon={<HiOutlineUser className="h-6 w-6" />}
                             label="Client"
@@ -162,8 +184,56 @@ export default function LandingPage() {
                 </div>
             </section>
 
+            {/* Delivery pipeline */}
+            <section className="bg-slate-50 px-6 py-14">
+                <div className="mx-auto max-w-5xl">
+                    <h2 className="text-3xl font-semibold text-slate-800">
+                        Delivery pipeline
+                    </h2>
+
+                    <p className="mt-3 text-sm text-slate-500">
+                        From code validation to image-based deployment in production
+                    </p>
+
+                    <div className="mt-8 flex flex-wrap items-center justify-center gap-5 sm:gap-6">
+                        <PipelineStep
+                            icon={<HiOutlineBeaker className="h-5 w-5" />}
+                            label="Test"
+                        />
+
+                        <span className="text-lg text-slate-300">→</span>
+
+                        <PipelineStep
+                            icon={<HiOutlineCube className="h-5 w-5" />}
+                            label="Build image"
+                        />
+
+                        <span className="text-lg text-slate-300">→</span>
+
+                        <PipelineStep
+                            icon={<HiOutlineCloudArrowUp className="h-5 w-5" />}
+                            label="Push to GHCR"
+                        />
+
+                        <span className="text-lg text-slate-300">→</span>
+
+                        <PipelineStep
+                            icon={<HiOutlineArrowDownTray className="h-5 w-5" />}
+                            label="VPS pull"
+                        />
+
+                        <span className="text-lg text-slate-300">→</span>
+
+                        <PipelineStep
+                            icon={<HiOutlineRocketLaunch className="h-5 w-5" />}
+                            label="Deploy"
+                        />
+                    </div>
+                </div>
+            </section>
+
             {/* Technology stack */}
-            <section className="bg-slate-50 px-6 py-16">
+            <section className="px-6 py-16">
                 <div className="mx-auto max-w-5xl">
                     <h2 className="text-3xl font-semibold text-slate-800">
                         Technology stack
@@ -180,15 +250,15 @@ export default function LandingPage() {
                     </div>
                 </div>
             </section>
+
             {/* Core capabilities */}
-            <section className="bg-slate-50 py-16 px-6">
-                <div className="max-w-5xl mx-auto text-start">
+            <section className="bg-slate-50 px-6 py-16">
+                <div className="mx-auto max-w-5xl text-start">
                     <h2 className="text-3xl font-semibold text-slate-800">
                         What you can do with the system
                     </h2>
 
                     <div className="mt-10 grid gap-6 text-left sm:grid-cols-2">
-
                         <div className="rounded-xl border border-slate-200 bg-white p-6">
                             <h3 className="font-semibold text-slate-800">
                                 Manage organizations independently
@@ -224,7 +294,6 @@ export default function LandingPage() {
                                 Audit logs provide visibility into every operation across the platform.
                             </p>
                         </div>
-
                     </div>
                 </div>
             </section>
