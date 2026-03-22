@@ -188,9 +188,7 @@ services:
       - "3000:80"
     
   web-portal-react:
-    build:
-      context: ./apps/web-portal-react
-      dockerfile: Dockerfile
+    image: ghcr.io/liananddandan/web-admin-react:${WEB_ADMIN_REACT_VERSION}
     container_name: fintrack-web-portal-react
     depends_on:
       gateway:
