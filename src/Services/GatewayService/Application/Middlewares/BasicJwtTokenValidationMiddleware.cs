@@ -30,7 +30,7 @@ public class BasicJwtTokenValidationMiddleware
         var requestPath = context.Request.Path;
 
         if (requestPath.StartsWithSegments("/api/swagger") ||
-            requestPath.StartsWithSegments("/openapi") ||
+            requestPath.StartsWithSegments("/api/openapi") ||
             requestPath == "/favicon.ico")
         {
             await _next(context);
