@@ -22,6 +22,7 @@ jobs:
       web_admin: ${{ steps.filter.outputs.web_admin }}
       gateway: ${{ steps.filter.outputs.gateway }}
       notification_service: ${{ steps.filter.outputs.notification_service }}
+      auditlog_service: ${{ steps.filter.outputs.auditlog_service }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -39,6 +40,8 @@ jobs:
               - 'src/Services/GatewayService/**'
             notification_service:
               - 'src/Services/NotificationService/**'
+            auditlog_service:
+              - 'src/Services/AuditLogService/**'
 
   build-web-portal:
     needs: changes
@@ -62,6 +65,11 @@ jobs:
     needs: changes
     if: needs.changes.outputs.notification_service == 'true'
     uses: ./.github/workflows/notification-service-image.yml
+  
+  build-auditlog-service:
+    needs: changes
+    if: needs.changes.outputs.auditlog_service == 'true'
+    uses: ./.github/workflows/auditlog-service-image.yml
       
   deploy:
     needs:
@@ -70,6 +78,7 @@ jobs:
       - build-web-admin
       - build-gateway
       - build-notification-service
+      - build-auditlog-service
     if: |
       always() &&
       needs.ci.result != 'failure'
@@ -80,6 +89,7 @@ jobs:
       deploy_web_admin: ${{ needs.changes.outputs.web_admin == 'true' }}
       deploy_gateway: ${{ needs.changes.outputs.gateway == 'true' }}
       deploy_notification_service: ${{ needs.changes.outputs.notification_service == 'true' }}
+      deploy_auditlog_service: ${{ needs.changes.outputs.auditlog_service == 'true' }}
     secrets:
       VPS_HOST: ${{ secrets.VPS_HOST }}
       VPS_USERNAME: ${{ secrets.VPS_USERNAME }}

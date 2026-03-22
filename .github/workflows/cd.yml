@@ -15,6 +15,9 @@ on:
       deploy_notification_service:
         required: true
         type: boolean
+      deploy_auditlog_service:
+        required: true
+        type: boolean
     secrets:
       VPS_HOST:
         required: true
@@ -69,6 +72,14 @@ jobs:
                 sed -i 's/^NOTIFICATION_SERVICE_VERSION=.*/NOTIFICATION_SERVICE_VERSION=latest/' .env
               else
                 printf "NOTIFICATION_SERVICE_VERSION=latest\n" >> .env
+              fi
+            fi
+            
+            if [ "${{ inputs.deploy_auditlog_service }}" = "true" ]; then
+              if [ -f .env ] && grep -q '^AUDITLOG_SERVICE_VERSION=' .env; then
+                sed -i 's/^AUDITLOG_SERVICE_VERSION=.*/AUDITLOG_SERVICE_VERSION=latest/' .env
+              else
+                printf "AUDITLOG_SERVICE_VERSION=latest\n" >> .env
               fi
             fi
             

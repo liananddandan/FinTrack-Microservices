@@ -97,9 +97,7 @@ services:
       - "5101:8080"
 
   auditlog-service:
-    build:
-      context: .
-      dockerfile: src/Services/AuditLogService/Dockerfile
+    image: ghcr.io/liananddandan/auditlog-service:${AUDITLOG_SERVICE_VERSION}
     container_name: fintrack-auditlog
     depends_on:
       mysql:
@@ -175,7 +173,7 @@ services:
   # Frontend
   # ========================
   web-admin-react:
-    image: ghcr.io/liananddandan/web-portal-react:${WEB_PORTAL_REACT_VERSION}
+    image: ghcr.io/liananddandan/web-admin-react:${WEB_ADMIN_REACT_VERSION}
     container_name: fintrack-web-admin-react
     depends_on:
       gateway:
@@ -184,7 +182,7 @@ services:
       - "3000:80"
     
   web-portal-react:
-    image: ghcr.io/liananddandan/web-admin-react:${WEB_ADMIN_REACT_VERSION}
+    image: ghcr.io/liananddandan/web-portal-react:${WEB_PORTAL_REACT_VERSION}
     container_name: fintrack-web-portal-react
     depends_on:
       gateway:

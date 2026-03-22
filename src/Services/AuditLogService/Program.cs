@@ -46,7 +46,7 @@ builder.Services.AddCap(x =>
 
 builder.Services.AddScoped<IAuditLogWriter, AuditLogWriter>();
 builder.Services.AddScoped<IAuditLogReader, AuditLogReader>();
-// Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
+
 builder.Services.AddOpenApi();
 
 builder.Services.AddAuthentication().AddJwtBearer(options =>
