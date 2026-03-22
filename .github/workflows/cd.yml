@@ -48,7 +48,7 @@ jobs:
           key: ${{ secrets.VPS_SSH_KEY }}
           script: |
             set -e
-            cd ~/FinTrack-Microservices
+            cd /opt/fintrack
 
             if [ "${{ inputs.deploy_web_portal }}" = "true" ]; then
               if [ -f .env ] && grep -q '^WEB_PORTAL_REACT_VERSION=' .env; then
@@ -106,7 +106,6 @@ jobs:
               fi
             fi
 
-            git pull
             docker compose pull
             docker compose up -d
             docker image prune -f
