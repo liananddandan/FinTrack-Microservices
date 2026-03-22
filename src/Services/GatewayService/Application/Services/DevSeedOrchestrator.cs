@@ -1,10 +1,9 @@
-using System.Net.Http.Json;
 using System.Text.Json;
-using GatewayService.DTOs;
-using GatewayService.Services.Interfaces;
+using GatewayService.Application.DTOs;
+using GatewayService.Application.Services.Interfaces;
 using SharedKernel.Common.DTOs;
 
-namespace GatewayService.Services;
+namespace GatewayService.Application.Services;
 
 public class DevSeedOrchestrator(
     IHttpClientFactory httpClientFactory,

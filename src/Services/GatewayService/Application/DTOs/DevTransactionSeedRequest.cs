@@ -1,4 +1,4 @@
-namespace GatewayService.DTOs;
+namespace GatewayService.Application.DTOs;
 
 public class DevTransactionSeedRequest
 {

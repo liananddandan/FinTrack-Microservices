@@ -1,9 +1,10 @@
 using System.Text;
-using GatewayService.Common.Options;
-using GatewayService.Middlewares;
-using GatewayService.Services;
-using GatewayService.Services.Interfaces;
+using GatewayService.Application.Common.Options;
+using GatewayService.Application.Middlewares;
+using GatewayService.Application.Services;
+using GatewayService.Application.Services.Interfaces;
 using Microsoft.IdentityModel.Tokens;
+using Scalar.AspNetCore;
 using SharedKernel.Common.Options;
 using StackExchange.Redis;
 
@@ -59,6 +60,7 @@ builder.Services.AddCors(options =>
 
 builder.Services.AddHttpClient();
 builder.Services.AddScoped<IDevSeedOrchestrator, DevSeedOrchestrator>();
+builder.Services.AddSingleton<IOpenApiDocumentMerger, OpenApiDocumentMerger>();
 builder.Services.AddControllers();
 
 var app = builder.Build();
@@ -66,7 +68,31 @@ var app = builder.Build();
 app.UseCors("FrontendDev");
 app.UseAuthentication();
 app.UseAuthorization();
+
 app.UseMiddleware<BasicJwtTokenValidationMiddleware>();
 app.MapControllers();
+app.MapGet("/openapi/all.json", async (IHttpClientFactory httpClientFactory,
+    IOpenApiDocumentMerger merger) =>
+{
+    var client = httpClientFactory.CreateClient();
+
+    var identityJson = await client.GetStringAsync("http://localhost:5100/openapi/v1.json");
+    var transactionJson = await client.GetStringAsync("http://localhost:5133/openapi/v1.json");
+    var auditLogJson = await client.GetStringAsync("http://localhost:5107/openapi/v1.json");
+    
+    var merged = merger.Merge(
+        ("Identity API", identityJson),
+        ("Transaction API", transactionJson),
+        ("AuditLog API", auditLogJson));
+
+    return Results.Content(merged, "application/json");
+});
+
+app.MapScalarApiReference("/api/swagger", options =>
+{
+    options.WithTitle("Transaction & Workflow Platform API Docs");
+    options.WithTheme(ScalarTheme.Default);
+    options.OpenApiRoutePattern = "/openapi/all.json";
+});
 app.MapReverseProxy();
 app.Run();
