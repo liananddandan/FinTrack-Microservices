@@ -1,12 +1,7 @@
 name: Build and Push web-portal-react Image
 
 on:
-  push:
-    branches:
-      - main
-    paths:
-      - 'apps/web-portal-react/**'
-      - '.github/workflows/web-portal-react-image.yml'
+  workflow_call:
 
 jobs:
   build-and-push:

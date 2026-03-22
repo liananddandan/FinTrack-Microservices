@@ -1,12 +1,7 @@
 name: Build and Push web-admin-react Image
 
 on:
-  push:
-    branches:
-      - main
-    paths:
-      - 'apps/web-admin-react/**'
-      - '.github/workflows/web-admin-react-image.yml'
+  workflow_call:
 
 jobs:
   build-and-push:

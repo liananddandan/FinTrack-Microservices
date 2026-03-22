@@ -1,19 +1,7 @@
 name: .NET 9 CI
 
 on:
-  push:
-    branches:
-      - main
-      - feature/identity-service
-      - feature/transaction-service
-      - feature/gateway-service
-      - feature/web-portal
-      - feature/audit-log-service
-      - feature/vue-to-react-migration
-      - feature/swagger
-  pull_request:
-    branches:
-      - main
+  workflow_call:
 
 jobs:
   build-and-test:
