@@ -18,11 +18,11 @@ jobs:
     runs-on: ubuntu-latest
     needs: ci
     outputs:
-      web_portal: ${{ steps.filter.outputs.web_portal }}
-      web_admin: ${{ steps.filter.outputs.web_admin }}
-      gateway: ${{ steps.filter.outputs.gateway }}
-      notification_service: ${{ steps.filter.outputs.notification_service }}
-      auditlog_service: ${{ steps.filter.outputs.auditlog_service }}
+      web_portal: ${{ steps.filter.outputs.web_portal == 'true' || true}}
+      web_admin: ${{ steps.filter.outputs.web_admin == 'true' || true}}
+      gateway: ${{ steps.filter.outputs.gateway == 'true' || true}}
+      notification_service: ${{ steps.filter.outputs.notification_service == 'true' || true}}
+      auditlog_service: ${{ steps.filter.outputs.auditlog_service == 'true' || true}}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
