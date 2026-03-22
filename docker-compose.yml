@@ -51,9 +51,7 @@ services:
   # ========================
 
   identity-service:
-    build:
-      context: .
-      dockerfile: src/Services/IdentityService/Dockerfile
+    image: ghcr.io/liananddandan/identity-service:${IDENTITY_SERVICE_VERSION}
     container_name: fintrack-identity
     depends_on:
       mysql:
@@ -76,9 +74,7 @@ services:
       - "5100:8080"
 
   transaction-service:
-    build:
-      context: .
-      dockerfile: src/Services/TransactionService/Dockerfile
+    image: ghcr.io/liananddandan/identity-service:${IDENTITY_SERVICE_VERSION}
     container_name: fintrack-transaction
     depends_on:
       mysql:

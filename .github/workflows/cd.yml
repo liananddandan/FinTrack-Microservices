@@ -18,6 +18,12 @@ on:
       deploy_auditlog_service:
         required: true
         type: boolean
+      deploy_identity_service:
+        required: true
+        type: boolean
+      deploy_transaction_service:
+        required: true
+        type: boolean
     secrets:
       VPS_HOST:
         required: true
@@ -27,6 +33,7 @@ on:
         required: true
       VPS_SSH_KEY:
         required: true
+
 jobs:
   deploy:
     runs-on: ubuntu-latest
@@ -58,7 +65,7 @@ jobs:
                 printf "WEB_ADMIN_REACT_VERSION=latest\n" >> .env
               fi
             fi
-            
+
             if [ "${{ inputs.deploy_gateway }}" = "true" ]; then
               if [ -f .env ] && grep -q '^GATEWAY_VERSION=' .env; then
                 sed -i 's/^GATEWAY_VERSION=.*/GATEWAY_VERSION=latest/' .env
@@ -74,7 +81,7 @@ jobs:
                 printf "NOTIFICATION_SERVICE_VERSION=latest\n" >> .env
               fi
             fi
-            
+
             if [ "${{ inputs.deploy_auditlog_service }}" = "true" ]; then
               if [ -f .env ] && grep -q '^AUDITLOG_SERVICE_VERSION=' .env; then
                 sed -i 's/^AUDITLOG_SERVICE_VERSION=.*/AUDITLOG_SERVICE_VERSION=latest/' .env
@@ -82,9 +89,23 @@ jobs:
                 printf "AUDITLOG_SERVICE_VERSION=latest\n" >> .env
               fi
             fi
-            
-            set -e
-            cd ~/FinTrack-Microservices
+
+            if [ "${{ inputs.deploy_identity_service }}" = "true" ]; then
+              if [ -f .env ] && grep -q '^IDENTITY_SERVICE_VERSION=' .env; then
+                sed -i 's/^IDENTITY_SERVICE_VERSION=.*/IDENTITY_SERVICE_VERSION=latest/' .env
+              else
+                printf "IDENTITY_SERVICE_VERSION=latest\n" >> .env
+              fi
+            fi
+
+            if [ "${{ inputs.deploy_transaction_service }}" = "true" ]; then
+              if [ -f .env ] && grep -q '^TRANSACTION_SERVICE_VERSION=' .env; then
+                sed -i 's/^TRANSACTION_SERVICE_VERSION=.*/TRANSACTION_SERVICE_VERSION=latest/' .env
+              else
+                printf "TRANSACTION_SERVICE_VERSION=latest\n" >> .env
+              fi
+            fi
+
             git pull
             docker compose pull
             docker compose up -d

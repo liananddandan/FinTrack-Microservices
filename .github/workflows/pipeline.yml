@@ -23,6 +23,8 @@ jobs:
       gateway: ${{ steps.filter.outputs.gateway == 'true' || true}}
       notification_service: ${{ steps.filter.outputs.notification_service == 'true' || true}}
       auditlog_service: ${{ steps.filter.outputs.auditlog_service == 'true' || true}}
+      identity_service: ${{ steps.filter.outputs.identity_service == 'true' || true}}
+      transaction_service: ${{ steps.filter.outputs.transaction_service == 'true' || true}}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -42,6 +44,10 @@ jobs:
               - 'src/Services/NotificationService/**'
             auditlog_service:
               - 'src/Services/AuditLogService/**'
+            identity_service:
+              - 'src/Services/IdentityService/**'
+            transaction_service:
+              - 'src/Services/TransactionService/**'
 
   build-web-portal:
     needs: changes
@@ -70,6 +76,16 @@ jobs:
     needs: changes
     if: needs.changes.outputs.auditlog_service == 'true'
     uses: ./.github/workflows/auditlog-service-image.yml
+    
+  build-identity-service:
+    needs: changes
+    if: needs.changes.outputs.identity_service == 'true'
+    uses: ./.github/workflows/identity-service-image.yml
+
+  build-transaction-service:
+    needs: changes
+    if: needs.changes.outputs.transaction_service == 'true'
+    uses: ./.github/workflows/transaction-service-image.yml
       
   deploy:
     needs:
@@ -79,6 +95,8 @@ jobs:
       - build-gateway
       - build-notification-service
       - build-auditlog-service
+      - build-identity-service
+      - build-transaction-service
     if: |
       always() &&
       needs.ci.result != 'failure'
@@ -90,6 +108,8 @@ jobs:
       deploy_gateway: ${{ needs.changes.outputs.gateway == 'true' }}
       deploy_notification_service: ${{ needs.changes.outputs.notification_service == 'true' }}
       deploy_auditlog_service: ${{ needs.changes.outputs.auditlog_service == 'true' }}
+      deploy_identity_service: ${{ needs.changes.outputs.identity_service == 'true' }}
+      deploy_transaction_service: ${{ needs.changes.outputs.transaction_service == 'true' }}
     secrets:
       VPS_HOST: ${{ secrets.VPS_HOST }}
       VPS_USERNAME: ${{ secrets.VPS_USERNAME }}
