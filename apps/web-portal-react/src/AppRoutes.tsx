@@ -6,7 +6,7 @@ import RegisterUser from "./pages/RegisterUser"
 import RegisterTenant from "./pages/RegisterTenant"
 import WaitingMembership from "./pages/WaitingMembership"
 import Home from "./pages/Home"
-import Donation from "./pages/Donation"
+import RecordIncome from "./pages/RecordIncome"
 import MyTransactions from "./pages/MyTransactions"
 import TransactionDetail from "./pages/TransactionDetail"
 import NewProcurement from "./pages/NewProcurement"
@@ -71,10 +71,10 @@ export default function AppRoutes() {
             />
 
             <Route
-                path="/portal/donate"
+                path="/portal/record-income"
                 element={
                     <AuthGuard requireAuth requireTenant>
-                        <Donation />
+                        <RecordIncome />
                     </AuthGuard>
                 }
             />

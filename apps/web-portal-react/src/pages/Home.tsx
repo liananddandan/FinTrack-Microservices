@@ -108,7 +108,7 @@ export default function Home() {
   }, [])
 
   function goRecordIncome() {
-    navigate("/portal/donate")
+    navigate("/portal/record-income")
   }
 
   function goProcurement() {
