@@ -2,6 +2,7 @@ import { useState } from "react"
 import { Link, useNavigate } from "react-router-dom"
 import { HiOutlineArrowsRightLeft, HiOutlineArrowUpRight } from "react-icons/hi2"
 import { getCurrentUser, login } from "../api/account"
+import { seedDemoData } from "../api/dev"
 import { authStore } from "../lib/authStore"
 
 type LoginForm = {
@@ -12,12 +13,17 @@ type LoginForm = {
 export default function Login() {
   const navigate = useNavigate()
 
-  const [loading, setLoading] = useState(false)
-  const [errorMessage, setErrorMessage] = useState("")
   const [form, setForm] = useState<LoginForm>({
     email: "",
     password: "",
   })
+
+  const [loading, setLoading] = useState(false)
+  const [errorMessage, setErrorMessage] = useState("")
+
+  const [seedLoading, setSeedLoading] = useState(false)
+  const [seedMessage, setSeedMessage] = useState("")
+  const [seedErrorMessage, setSeedErrorMessage] = useState("")
 
   function updateField<K extends keyof LoginForm>(key: K, value: LoginForm[K]) {
     setForm((prev) => ({
@@ -26,7 +32,49 @@ export default function Login() {
     }))
   }
 
-  async function onLogin() {
+  async function onSeedDemoData() {
+    setSeedMessage("")
+    setSeedErrorMessage("")
+    setErrorMessage("")
+    setSeedLoading(true)
+
+    try {
+      const result = await seedDemoData()
+
+      setForm({
+        email: result.memberEmail,
+        password: result.memberPassword,
+      })
+
+      setSeedMessage("Demo data seeded. Member credentials are ready to use.")
+    } catch (err: unknown) {
+      if (typeof err === "object" && err !== null && "response" in err) {
+        const maybeAxiosError = err as {
+          response?: {
+            data?: {
+              message?: string
+            }
+          }
+          message?: string
+        }
+
+        setSeedErrorMessage(
+          maybeAxiosError.response?.data?.message ??
+            maybeAxiosError.message ??
+            "Seed demo data failed."
+        )
+      } else if (err instanceof Error) {
+        setSeedErrorMessage(err.message)
+      } else {
+        setSeedErrorMessage("Seed demo data failed.")
+      }
+    } finally {
+      setSeedLoading(false)
+    }
+  }
+
+  async function onLogin(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault()
     setErrorMessage("")
 
     if (!form.email.trim()) {
@@ -86,8 +134,8 @@ export default function Login() {
         typeof (err as any).response?.data?.message === "string"
           ? (err as any).response.data.message
           : err instanceof Error
-          ? err.message
-          : "Login failed."
+            ? err.message
+            : "Login failed."
 
       setErrorMessage(message)
     } finally {
@@ -129,10 +177,8 @@ export default function Login() {
 
           <form
             className="mt-8 space-y-5"
-            onSubmit={(e) => {
-              e.preventDefault()
-              void onLogin()
-            }}
+            onSubmit={onLogin}
+            autoComplete="off"
           >
             <div>
               <label
@@ -143,7 +189,9 @@ export default function Login() {
               </label>
               <input
                 id="email"
+                name="login-email"
                 type="email"
+                autoComplete="off"
                 value={form.email}
                 onChange={(e) => updateField("email", e.target.value)}
                 placeholder="you@example.com"
@@ -160,7 +208,9 @@ export default function Login() {
               </label>
               <input
                 id="password"
+                name="login-password"
                 type="password"
+                autoComplete="new-password"
                 value={form.password}
                 onChange={(e) => updateField("password", e.target.value)}
                 placeholder="Enter your password"
@@ -171,10 +221,37 @@ export default function Login() {
             <button
               type="submit"
               className="!inline-flex !h-11 !w-full !items-center !justify-center !rounded-xl !bg-indigo-600 !text-sm !font-semibold !text-white transition hover:!bg-indigo-500 disabled:cursor-not-allowed disabled:opacity-60"
-              disabled={loading}
+              disabled={loading || seedLoading}
             >
               {loading ? "Signing in..." : "Sign in"}
             </button>
+
+            <button
+              type="button"
+              onClick={() => void onSeedDemoData()}
+              className="!inline-flex !h-11 !w-full !items-center !justify-center !rounded-xl !border !border-slate-300 !bg-white !text-sm !font-semibold !text-slate-700 transition hover:!border-indigo-500 hover:!text-indigo-600 disabled:cursor-not-allowed disabled:opacity-60"
+              disabled={loading || seedLoading}
+            >
+              {seedLoading ? "Loading demo data..." : "Use demo data"}
+            </button>
+
+            {seedMessage ? (
+              <div
+                role="status"
+                className="rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700"
+              >
+                {seedMessage}
+              </div>
+            ) : null}
+
+            {seedErrorMessage ? (
+              <div
+                role="alert"
+                className="rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700"
+              >
+                {seedErrorMessage}
+              </div>
+            ) : null}
 
             {errorMessage ? (
               <div
