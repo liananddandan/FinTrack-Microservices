@@ -80,3 +80,8 @@ jobs:
       deploy_web_admin: ${{ needs.changes.outputs.web_admin == 'true' }}
       deploy_gateway: ${{ needs.changes.outputs.gateway == 'true' }}
       deploy_notification_service: ${{ needs.changes.outputs.notification_service == 'true' }}
+    secrets:
+      VPS_HOST: ${{ secrets.VPS_HOST }}
+      VPS_USERNAME: ${{ secrets.VPS_USERNAME }}
+      VPS_PORT: ${{ secrets.VPS_PORT }}
+      VPS_SSH_KEY: ${{ secrets.VPS_SSH_KEY }}

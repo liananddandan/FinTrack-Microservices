@@ -15,6 +15,15 @@ on:
       deploy_notification_service:
         required: true
         type: boolean
+    secrets:
+      VPS_HOST:
+        required: true
+      VPS_USERNAME:
+        required: true
+      VPS_PORT:
+        required: true
+      VPS_SSH_KEY:
+        required: true
 jobs:
   deploy:
     runs-on: ubuntu-latest
