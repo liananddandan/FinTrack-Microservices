@@ -1,14 +1,49 @@
 import { NavLink, Outlet, useLocation, useNavigate } from "react-router-dom"
+import {
+  HiOutlineHome,
+  HiOutlineClipboardDocumentList,
+  HiOutlineUsers,
+  HiOutlineEnvelope,
+  HiOutlineDocumentMagnifyingGlass,
+  HiOutlineArrowLeftOnRectangle,
+  HiOutlineArrowsRightLeft,
+} from "react-icons/hi2"
 import { authStore } from "../lib/authStore"
 import { useAuth } from "../hooks/useAuth"
-import "./AdminLayout.css"
 
 function getPageTitle(path: string): string {
   if (path.startsWith("/members")) return "Members"
   if (path.startsWith("/transactions")) return "Transactions"
   if (path.startsWith("/invitations")) return "Invitations"
   if (path.startsWith("/audit-logs")) return "Audit Logs"
-  return "Dashboard"
+  return "Overview"
+}
+
+function AdminNavItem({
+  to,
+  label,
+  icon,
+}: {
+  to: string
+  label: string
+  icon: React.ReactNode
+}) {
+  return (
+    <NavLink
+      to={to}
+      className={({ isActive }) =>
+        [
+          "group flex items-center gap-3 rounded-2xl px-4 py-3 text-sm font-medium transition",
+          isActive
+            ? "bg-indigo-50 text-indigo-700"
+            : "text-slate-600 hover:bg-slate-100 hover:text-slate-900",
+        ].join(" ")
+      }
+    >
+      <span className="flex h-5 w-5 items-center justify-center">{icon}</span>
+      <span>{label}</span>
+    </NavLink>
+  )
 }
 
 export default function AdminLayout() {
@@ -20,95 +55,116 @@ export default function AdminLayout() {
 
   function logout() {
     authStore.logout()
-    navigate("/login")
+    navigate("/login", { replace: true })
   }
 
   return (
-    <div className="admin-shell">
-      <aside className="admin-aside">
-        <div className="admin-brand">
-          <div className="admin-brand-title">FinTrack Admin</div>
-          <div className="admin-brand-subtitle">
-            {auth.currentTenantName || "No tenant"}
+    <div className="min-h-screen bg-slate-50 text-slate-900">
+      <div className="grid min-h-screen lg:grid-cols-[280px_minmax(0,1fr)]">
+        <aside className="border-r border-slate-200 bg-white px-5 py-6">
+          <div className="flex items-start gap-3">
+            <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-indigo-100 text-indigo-600">
+              <HiOutlineArrowsRightLeft className="h-6 w-6" />
+            </div>
+
+            <div className="min-w-0">
+              <div className="text-base font-semibold text-slate-900">
+                FinTrack
+              </div>
+              <div className="mt-0.5 text-xs leading-5 text-slate-500">
+                Transaction & Workflow Platform
+              </div>
+              <div className="mt-1 text-[11px] font-medium text-indigo-600">
+                Admin
+              </div>
+            </div>
           </div>
+
+          <div className="mt-6 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3">
+            <div className="text-xs uppercase tracking-wide text-slate-500">
+              Workspace
+            </div>
+
+            <div className="mt-2 truncate text-sm font-medium text-slate-800">
+              {auth.currentTenantName || "No tenant"}
+            </div>
+
+            <div className="mt-2 inline-flex items-center rounded-full bg-indigo-50 px-2.5 py-1 text-xs font-medium text-indigo-700">
+              {auth.currentMembership?.role || "Unknown role"}
+            </div>
+          </div>
+
+          <nav className="mt-8 space-y-2">
+            <AdminNavItem
+              to="/overview"
+              label="Overview"
+              icon={<HiOutlineHome className="h-5 w-5" />}
+            />
+
+            <AdminNavItem
+              to="/transactions"
+              label="Transactions"
+              icon={<HiOutlineClipboardDocumentList className="h-5 w-5" />}
+            />
+
+            <AdminNavItem
+              to="/members"
+              label="Members"
+              icon={<HiOutlineUsers className="h-5 w-5" />}
+            />
+
+            <AdminNavItem
+              to="/invitations"
+              label="Invitations"
+              icon={<HiOutlineEnvelope className="h-5 w-5" />}
+            />
+
+            <AdminNavItem
+              to="/audit-logs"
+              label="Audit Logs"
+              icon={<HiOutlineDocumentMagnifyingGlass className="h-5 w-5" />}
+            />
+          </nav>
+        </aside>
+
+        <div className="min-w-0">
+          <header className="sticky top-0 z-10 border-b border-slate-200 bg-white/90 backdrop-blur">
+            <div className="flex flex-col gap-4 px-6 py-4 sm:flex-row sm:items-center sm:justify-between">
+              <div className="min-w-0">
+                <div className="text-2xl font-semibold tracking-tight text-slate-900">
+                  {pageTitle}
+                </div>
+                <div className="mt-1 truncate text-sm text-slate-500">
+                  Tenant: {auth.currentTenantName || "Unknown tenant"}
+                </div>
+              </div>
+
+              <div className="flex items-center justify-between gap-4 sm:justify-end">
+                <div className="min-w-0 text-right">
+                  <div className="truncate text-sm font-medium text-slate-900">
+                    {auth.userName || auth.userEmail || "Unknown user"}
+                  </div>
+                  <div className="truncate text-sm text-slate-500">
+                    {auth.userEmail || "No email"}
+                  </div>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={logout}
+                  className="inline-flex items-center gap-2 rounded-full border border-rose-200 bg-rose-50 px-4 py-2 text-sm font-medium text-rose-700 transition hover:border-rose-300 hover:bg-rose-100"
+                >
+                  <HiOutlineArrowLeftOnRectangle className="h-4 w-4" />
+                  Logout
+                </button>
+              </div>
+            </div>
+          </header>
+
+          <main className="px-6 py-6">
+            <Outlet />
+          </main>
         </div>
-
-        <nav className="admin-menu">
-          <NavLink
-            to="/overview"
-            className={({ isActive }) =>
-              `admin-menu-item ${isActive ? "active" : ""}`
-            }
-          >
-            Overview
-          </NavLink>
-
-          <NavLink
-            to="/transactions"
-            className={({ isActive }) =>
-              `admin-menu-item ${isActive ? "active" : ""}`
-            }
-          >
-            Transactions
-          </NavLink>
-
-          <NavLink
-            to="/members"
-            className={({ isActive }) =>
-              `admin-menu-item ${isActive ? "active" : ""}`
-            }
-          >
-            Members
-          </NavLink>
-
-          <NavLink
-            to="/invitations"
-            className={({ isActive }) =>
-              `admin-menu-item ${isActive ? "active" : ""}`
-            }
-          >
-            Invitations
-          </NavLink>
-
-          <NavLink
-            to="/audit-logs"
-            className={({ isActive }) =>
-              `admin-menu-item ${isActive ? "active" : ""}`
-            }
-          >
-            Audit Logs
-          </NavLink>
-        </nav>
-      </aside>
-
-      <div className="admin-content">
-        <header className="admin-header">
-          <div className="admin-header-left">
-            <div className="admin-page-title">{pageTitle}</div>
-            <div className="admin-page-meta">
-              Tenant: {auth.currentTenantName || "Unknown tenant"}
-            </div>
-          </div>
-
-          <div className="admin-header-right">
-            <div className="admin-user">
-              <div className="admin-user-name">
-                {auth.userName || auth.userEmail || "Unknown user"}
-              </div>
-              <div className="admin-user-email">
-                {auth.userEmail || "No email"}
-              </div>
-            </div>
-
-            <button className="admin-logout-btn" onClick={logout}>
-              Logout
-            </button>
-          </div>
-        </header>
-
-        <main className="admin-main">
-          <Outlet />
-        </main>
       </div>
     </div>
   )
