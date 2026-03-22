@@ -9,6 +9,7 @@ import {
   HiOutlineFunnel,
   HiOutlineArrowPath,
   HiOutlineArrowRight,
+  HiOutlineClipboardDocumentList
 } from "react-icons/hi2"
 
 type TransactionItem = {
@@ -43,10 +44,10 @@ function Badge({
     tone === "success"
       ? "bg-emerald-50 text-emerald-700 border-emerald-200"
       : tone === "warning"
-      ? "bg-amber-50 text-amber-700 border-amber-200"
-      : tone === "danger"
-      ? "bg-rose-50 text-rose-700 border-rose-200"
-      : "bg-slate-100 text-slate-700 border-slate-200"
+        ? "bg-amber-50 text-amber-700 border-amber-200"
+        : tone === "danger"
+          ? "bg-rose-50 text-rose-700 border-rose-200"
+          : "bg-slate-100 text-slate-700 border-slate-200"
 
   return (
     <span
@@ -252,6 +253,29 @@ export default function Transactions() {
 
   return (
     <div className="mx-auto flex max-w-6xl flex-col gap-6">
+      <section className="rounded-3xl border border-slate-200 bg-white px-8 py-6 sm:px-10">
+        <div className="flex items-start gap-4">
+          {/* icon */}
+          <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-indigo-50 text-indigo-600">
+            <HiOutlineClipboardDocumentList className="h-5 w-5" />
+          </div>
+
+          {/* text */}
+          <div className="min-w-0">
+            <h1 className="text-2xl font-semibold text-slate-800">
+              Transactions
+            </h1>
+
+            <p className="mt-1 text-sm text-slate-500">
+              Manage income entries and procurement workflows in this workspace.
+            </p>
+
+            <div className="mt-3 text-sm text-slate-500">
+              Total {totalCount} records
+            </div>
+          </div>
+        </div>
+      </section>
       {/* Filters */}
       <section className="rounded-3xl border border-slate-200 bg-white p-5 sm:p-6">
         <div className="mb-4 flex items-center gap-2 text-slate-800">

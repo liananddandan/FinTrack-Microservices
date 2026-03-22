@@ -4,13 +4,60 @@ import {
   resendTenantInvitation,
   type TenantInvitationDto,
 } from "../api/invitation"
-import "./Invitations.css"
+import {
+  HiOutlineEnvelope,
+  HiOutlineMagnifyingGlass,
+  HiOutlineArrowPath,
+} from "react-icons/hi2"
+
+function Badge({
+  children,
+  tone = "default",
+}: {
+  children: React.ReactNode
+  tone?: "default" | "success" | "warning" | "danger"
+}) {
+  const className =
+    tone === "success"
+      ? "bg-emerald-50 text-emerald-700 border-emerald-200"
+      : tone === "warning"
+      ? "bg-amber-50 text-amber-700 border-amber-200"
+      : tone === "danger"
+      ? "bg-rose-50 text-rose-700 border-rose-200"
+      : "bg-slate-100 text-slate-700 border-slate-200"
+
+  return (
+    <span
+      className={`inline-flex items-center rounded-full border px-2.5 py-1 text-xs font-medium ${className}`}
+    >
+      {children}
+    </span>
+  )
+}
+
+function SummaryCard({
+  label,
+  value,
+}: {
+  label: string
+  value: string | number
+}) {
+  return (
+    <div className="rounded-2xl border border-slate-200 bg-white p-5">
+      <p className="text-sm text-slate-500">{label}</p>
+      <p className="mt-2 text-2xl font-semibold text-slate-800">{value}</p>
+    </div>
+  )
+}
 
 export default function Invitations() {
   const [loading, setLoading] = useState(false)
   const [keyword, setKeyword] = useState("")
   const [invitations, setInvitations] = useState<TenantInvitationDto[]>([])
   const [resendingInvitationId, setResendingInvitationId] = useState("")
+
+  const [pageMessage, setPageMessage] = useState("")
+  const [pageError, setPageError] = useState("")
 
   const filteredInvitations = useMemo(() => {
     const q = keyword.trim().toLowerCase()
@@ -40,17 +87,17 @@ export default function Invitations() {
 
   async function loadInvitations() {
     setLoading(true)
+    setPageError("")
+    setPageMessage("")
 
     try {
       const result = await getTenantInvitations()
       setInvitations(result)
     } catch (error: unknown) {
-      console.error("Failed to load invitations:", error)
-
       if (error instanceof Error) {
-        window.alert(error.message || "Failed to load invitations.")
+        setPageError(error.message || "Failed to load invitations.")
       } else {
-        window.alert("Failed to load invitations.")
+        setPageError("Failed to load invitations.")
       }
     } finally {
       setLoading(false)
@@ -59,17 +106,17 @@ export default function Invitations() {
 
   async function handleResend(item: TenantInvitationDto) {
     setResendingInvitationId(item.invitationPublicId)
+    setPageError("")
+    setPageMessage("")
 
     try {
       await resendTenantInvitation(item.invitationPublicId)
-      window.alert("Invitation email resent successfully.")
+      setPageMessage("Invitation email resent successfully.")
     } catch (error: unknown) {
-      console.error("Failed to resend invitation:", error)
-
       if (error instanceof Error) {
-        window.alert(error.message || "Failed to resend invitation.")
+        setPageError(error.message || "Failed to resend invitation.")
       } else {
-        window.alert("Failed to resend invitation.")
+        setPageError("Failed to resend invitation.")
       }
     } finally {
       setResendingInvitationId("")
@@ -91,114 +138,138 @@ export default function Invitations() {
     return date.toLocaleString()
   }
 
-  function statusClass(status: string) {
-    if (status === "Accepted") return "tag tag-success"
-    if (status === "Pending") return "tag tag-warning"
-    return "tag tag-info"
-  }
-
   function handleViewLater(item: TenantInvitationDto) {
-    window.alert(`TODO: view invitation ${item.invitationPublicId}`)
+    setPageMessage(`Details page is not implemented yet for ${item.email}.`)
   }
 
   return (
-    <div className="invitations-page">
-      <div className="invitations-topbar">
-        <div>
-          <h2 className="invitations-title">Invitations</h2>
-          <p className="invitations-subtitle">
-            Review invitation history and monitor acceptance status.
-          </p>
-        </div>
-      </div>
-
-      <div className="invitations-summary-grid">
-        <div className="summary-card">
-          <div className="summary-label">Total invitations</div>
-          <div className="summary-value">{invitations.length}</div>
-        </div>
-
-        <div className="summary-card">
-          <div className="summary-label">Pending</div>
-          <div className="summary-value">{pendingCount}</div>
-        </div>
-
-        <div className="summary-card">
-          <div className="summary-label">Accepted</div>
-          <div className="summary-value">{acceptedCount}</div>
-        </div>
-      </div>
-
-      <div className="invitations-card">
-        <div className="invitations-card-header">
-          <div>
-            <div className="invitations-card-title">Invitation records</div>
-            <div className="invitations-card-subtitle">
-              All invitations created for the current tenant.
-            </div>
+    <div className="mx-auto flex max-w-6xl flex-col gap-6">
+      {/* Header */}
+      <section className="rounded-3xl border border-slate-200 bg-white px-8 py-7 sm:px-10 sm:py-8">
+        <div className="flex items-start gap-4">
+          <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-indigo-50 text-indigo-600">
+            <HiOutlineEnvelope className="h-6 w-6" />
           </div>
 
-          <div className="invitations-toolbar">
+          <div>
+            <h1 className="text-3xl font-semibold tracking-tight text-slate-800">
+              Invitations
+            </h1>
+            <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-600">
+              Review invitation history and monitor acceptance status for this tenant.
+            </p>
+          </div>
+        </div>
+      </section>
+
+      {pageMessage ? (
+        <div
+          className="rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700"
+          role="status"
+        >
+          {pageMessage}
+        </div>
+      ) : null}
+
+      {pageError ? (
+        <div
+          className="rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700"
+          role="alert"
+        >
+          {pageError}
+        </div>
+      ) : null}
+
+      {/* Summary */}
+      <section className="grid gap-4 md:grid-cols-3">
+        <SummaryCard label="Total invitations" value={invitations.length} />
+        <SummaryCard label="Pending" value={pendingCount} />
+        <SummaryCard label="Accepted" value={acceptedCount} />
+      </section>
+
+      {/* Invitation list */}
+      <section className="rounded-3xl border border-slate-200 bg-white p-5 sm:p-6">
+        <div className="mb-4 flex flex-wrap items-start justify-between gap-4">
+          <div>
+            <h2 className="text-base font-semibold text-slate-800">
+              Invitation records
+            </h2>
+            <p className="mt-1 text-sm text-slate-500">
+              All invitations created for the current tenant.
+            </p>
+          </div>
+
+          <div className="relative w-full max-w-sm">
+            <HiOutlineMagnifyingGlass className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
             <input
               value={keyword}
               onChange={(e) => setKeyword(e.target.value)}
               placeholder="Search by email or inviter"
-              className="invitations-search"
+              className="h-11 w-full rounded-xl border border-slate-300 bg-white pl-10 pr-3 text-sm text-slate-800 outline-none placeholder:text-slate-400 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100"
             />
           </div>
         </div>
 
         {loading ? (
-          <div className="loading-block">Loading invitations...</div>
+          <div className="text-sm text-slate-500">Loading invitations...</div>
         ) : filteredInvitations.length === 0 ? (
-          <div className="empty-block">No invitations found.</div>
+          <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-10 text-center text-sm text-slate-500">
+            No invitations found.
+          </div>
         ) : (
-          <div className="invitation-list">
+          <div className="space-y-4">
             {filteredInvitations.map((item) => (
-              <div key={item.invitationPublicId} className="invitation-item">
-                <div className="invitation-main">
-                  <div className="invitation-avatar">
+              <div
+                key={item.invitationPublicId}
+                className="flex flex-col gap-4 rounded-2xl border border-slate-200 bg-slate-50 p-5 xl:flex-row xl:items-center xl:justify-between"
+              >
+                <div className="flex min-w-0 items-start gap-4">
+                  <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-indigo-100 text-sm font-semibold text-indigo-700">
                     {getInitials(item.email)}
                   </div>
 
-                  <div className="invitation-info">
-                    <div className="invitation-row invitation-row-top">
-                      <div className="invitation-email">{item.email}</div>
+                  <div className="min-w-0">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <div className="truncate text-sm font-semibold text-slate-800">
+                        {item.email}
+                      </div>
 
-                      <span className="tag tag-primary">{item.role}</span>
+                      <Badge>{item.role}</Badge>
 
-                      <span className={statusClass(item.status)}>
+                      <Badge tone={item.status === "Accepted" ? "success" : "warning"}>
                         {item.status}
-                      </span>
+                      </Badge>
                     </div>
 
-                    <div className="invitation-meta">
+                    <div className="mt-2 flex flex-wrap items-center gap-2 text-xs text-slate-500">
                       <span>Invited by {item.createdByUserEmail}</span>
-                      <span className="dot">•</span>
+                      <span>•</span>
                       <span>Created {formatDate(item.createdAt)}</span>
-                      <span className="dot">•</span>
+                      <span>•</span>
                       <span>Expires {formatDate(item.expiredAt)}</span>
                     </div>
 
                     {item.acceptedAt ? (
-                      <div className="invitation-accepted">
+                      <div className="mt-2 text-sm text-emerald-700">
                         Accepted at {formatDate(item.acceptedAt)}
                       </div>
                     ) : null}
 
-                    <div className="invitation-id mono">
+                    <div className="mt-2 font-mono text-xs text-slate-500 break-all">
                       {item.invitationPublicId}
                     </div>
                   </div>
                 </div>
 
-                <div className="invitation-side">
+                <div className="flex flex-wrap items-center gap-3 xl:justify-end">
                   {item.status === "Pending" ? (
                     <button
-                      className="link-btn primary-text"
+                      type="button"
                       disabled={resendingInvitationId === item.invitationPublicId}
+                      className="inline-flex items-center gap-1 text-sm font-medium text-indigo-600 transition hover:text-indigo-500 disabled:cursor-not-allowed disabled:opacity-50"
                       onClick={() => void handleResend(item)}
                     >
+                      <HiOutlineArrowPath className="h-4 w-4" />
                       {resendingInvitationId === item.invitationPublicId
                         ? "Resending..."
                         : "Resend"}
@@ -206,7 +277,8 @@ export default function Invitations() {
                   ) : null}
 
                   <button
-                    className="link-btn"
+                    type="button"
+                    className="text-sm text-slate-700 transition hover:text-indigo-600"
                     onClick={() => handleViewLater(item)}
                   >
                     Details
@@ -216,7 +288,7 @@ export default function Invitations() {
             ))}
           </div>
         )}
-      </div>
+      </section>
     </div>
   )
 }

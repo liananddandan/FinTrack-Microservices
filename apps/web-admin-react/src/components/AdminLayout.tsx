@@ -1,4 +1,4 @@
-import { NavLink, Outlet, useLocation, useNavigate } from "react-router-dom"
+import { NavLink, Outlet, useNavigate } from "react-router-dom"
 import {
   HiOutlineHome,
   HiOutlineClipboardDocumentList,
@@ -10,14 +10,6 @@ import {
 } from "react-icons/hi2"
 import { authStore } from "../lib/authStore"
 import { useAuth } from "../hooks/useAuth"
-
-function getPageTitle(path: string): string {
-  if (path.startsWith("/members")) return "Members"
-  if (path.startsWith("/transactions")) return "Transactions"
-  if (path.startsWith("/invitations")) return "Invitations"
-  if (path.startsWith("/audit-logs")) return "Audit Logs"
-  return "Overview"
-}
 
 function AdminNavItem({
   to,
@@ -47,11 +39,8 @@ function AdminNavItem({
 }
 
 export default function AdminLayout() {
-  const location = useLocation()
   const navigate = useNavigate()
   const auth = useAuth()
-
-  const pageTitle = getPageTitle(location.pathname)
 
   function logout() {
     authStore.logout()
@@ -61,14 +50,14 @@ export default function AdminLayout() {
   return (
     <div className="min-h-screen bg-slate-50 text-slate-900">
       <div className="grid min-h-screen lg:grid-cols-[280px_minmax(0,1fr)]">
-        <aside className="border-r border-slate-200 bg-white px-5 py-6">
+        <aside className="flex min-h-screen flex-col border-r border-slate-200 bg-white px-5 py-6">
           <div className="flex items-start gap-3">
             <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-indigo-100 text-indigo-600">
               <HiOutlineArrowsRightLeft className="h-6 w-6" />
             </div>
 
             <div className="min-w-0">
-              <div className="mt-0.5 text-xs leading-5 text-slate-500">
+              <div className="text-xs leading-5 text-slate-500">
                 Transaction & Workflow Platform
               </div>
               <div className="mt-1 text-[11px] font-medium text-indigo-600">
@@ -88,6 +77,26 @@ export default function AdminLayout() {
 
             <div className="mt-2 inline-flex items-center rounded-full bg-indigo-50 px-2.5 py-1 text-xs font-medium text-indigo-700">
               {auth.currentMembership?.role || "Unknown role"}
+            </div>
+          </div>
+
+           <div className="pt-6">
+            <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3">
+              <div className="truncate text-sm font-medium text-slate-900">
+                {auth.userName || auth.userEmail || "Unknown user"}
+              </div>
+              <div className="mt-1 truncate text-xs text-slate-500">
+                {auth.userEmail || "No email"}
+              </div>
+
+              <button
+                type="button"
+                onClick={logout}
+                className="mt-4 inline-flex w-full items-center justify-center gap-2 rounded-xl border border-rose-200 bg-rose-50 px-4 py-2 text-sm font-medium text-rose-700 transition hover:border-rose-300 hover:bg-rose-100"
+              >
+                <HiOutlineArrowLeftOnRectangle className="h-4 w-4" />
+                Logout
+              </button>
             </div>
           </div>
 
@@ -122,43 +131,12 @@ export default function AdminLayout() {
               icon={<HiOutlineDocumentMagnifyingGlass className="h-5 w-5" />}
             />
           </nav>
+
         </aside>
 
-        <div className="min-w-0">
-          <header className="sticky top-0 z-10 border-b border-slate-200 bg-white/90 backdrop-blur">
-            <div className="flex flex-col gap-4 px-6 py-4 sm:flex-row sm:items-center sm:justify-between">
-              <div className="min-w-0">
-                <div className="text-2xl font-semibold tracking-tight text-slate-900">
-                  {pageTitle}
-                </div>
-              </div>
-
-              <div className="flex items-center justify-between gap-4 sm:justify-end">
-                <div className="min-w-0 text-right">
-                  <div className="truncate text-sm font-medium text-slate-900">
-                    {auth.userName || auth.userEmail || "Unknown user"}
-                  </div>
-                  <div className="truncate text-sm text-slate-500">
-                    {auth.userEmail || "No email"}
-                  </div>
-                </div>
-
-                <button
-                  type="button"
-                  onClick={logout}
-                  className="inline-flex items-center gap-2 rounded-full border border-rose-200 bg-rose-50 px-4 py-2 text-sm font-medium text-rose-700 transition hover:border-rose-300 hover:bg-rose-100"
-                >
-                  <HiOutlineArrowLeftOnRectangle className="h-4 w-4" />
-                  Logout
-                </button>
-              </div>
-            </div>
-          </header>
-
-          <main className="px-6 py-6">
-            <Outlet />
-          </main>
-        </div>
+        <main className="min-w-0 px-6 py-6">
+          <Outlet />
+        </main>
       </div>
     </div>
   )
