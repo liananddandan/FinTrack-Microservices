@@ -35,7 +35,8 @@ builder.Services.AddAuthentication().AddJwtBearer(options =>
         ValidateIssuerSigningKey = true,
         ValidIssuer = builder.Configuration["JwtSettings:Issuer"],
         ValidAudience = builder.Configuration["JwtSettings:Audience"],
-        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(builder.Configuration["JwtSettings:Secret"]!))
+        IssuerSigningKey =
+            new SymmetricSecurityKey(Encoding.UTF8.GetBytes(builder.Configuration["JwtSettings:Secret"]!))
     };
 });
 
@@ -52,9 +53,9 @@ builder.Services.AddCors(options =>
     options.AddPolicy("FrontendDev", policy =>
     {
         policy
-            .WithOrigins("http://localhost:5173", 
-                "http://localhost:5174", 
-                "http://localhost:5175", 
+            .WithOrigins("http://localhost:5173",
+                "http://localhost:5174",
+                "http://localhost:5175",
                 "http://localhost:5176")
             .AllowAnyHeader()
             .AllowAnyMethod();
@@ -88,7 +89,7 @@ app.MapGet("/api/openapi/all.json", async (
     Console.WriteLine($"[OpenAPI] Identity URL: {identityUrl}");
     Console.WriteLine($"[OpenAPI] Transaction URL: {transactionUrl}");
     Console.WriteLine($"[OpenAPI] AuditLog URL: {auditLogUrl}");
-    
+
     var identityJson = await client.GetStringAsync(identityUrl);
     var transactionJson = await client.GetStringAsync(transactionUrl);
     var auditLogJson = await client.GetStringAsync(auditLogUrl);

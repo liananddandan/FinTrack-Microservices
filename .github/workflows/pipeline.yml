@@ -41,16 +41,12 @@ jobs:
     needs: changes
     if: needs.changes.outputs.web_portal == 'true'
     uses: ./.github/workflows/web-portal-react-image.yml
-    secrets:
-      CICD_GITHUB_TOKEN: ${{ secrets.CICD_GITHUB_TOKEN }}
       
   build-web-admin:
     needs: changes
     if: needs.changes.outputs.web_admin == 'true'
     uses: ./.github/workflows/web-admin-react-image.yml
-    secrets:
-      CICD_GITHUB_TOKEN: ${{ secrets.CICD_GITHUB_TOKEN }}
-      
+          
   build-gateway:
     needs: changes
     if: needs.changes.outputs.gateway == 'true'
@@ -58,8 +54,6 @@ jobs:
       contents: read
       packages: write
     uses: ./.github/workflows/gateway-image.yml
-    secrets:
-      CICD_GITHUB_TOKEN: ${{ secrets.CICD_GITHUB_TOKEN }}
       
   deploy:
     needs:
