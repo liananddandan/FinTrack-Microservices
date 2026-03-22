@@ -72,7 +72,14 @@ export default function RegisterUser() {
       }, 1200)
     } catch (err) {
       const msg =
-        err instanceof Error ? err.message : "User registration failed."
+        typeof err === "object" &&
+          err !== null &&
+          "response" in err &&
+          typeof (err as any).response?.data?.message === "string"
+          ? (err as any).response.data.message
+          : err instanceof Error
+            ? err.message
+            : "User registration failed."
       setErrorMessage(msg)
     } finally {
       setLoading(false)

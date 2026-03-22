@@ -81,9 +81,14 @@ export default function RegisterTenant() {
       }, 1200)
     } catch (err) {
       const msg =
-        err instanceof Error
-          ? err.message
-          : "Failed to register organization."
+        typeof err === "object" &&
+          err !== null &&
+          "response" in err &&
+          typeof (err as any).response?.data?.message === "string"
+          ? (err as any).response.data.message
+          : err instanceof Error
+            ? err.message
+            : "User registration failed."
       setErrorMessage(msg)
     } finally {
       setLoading(false)

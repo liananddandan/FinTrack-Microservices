@@ -3,13 +3,53 @@ import { useNavigate } from "react-router-dom"
 import { getCurrentUser } from "../api/account"
 import { authStore } from "../lib/authStore"
 import { useAuth } from "../hooks/useAuth"
-import "./WaitingMembership.css"
+import {
+  HiOutlineClock,
+  HiOutlineEnvelope,
+  HiOutlineArrowPath,
+  HiOutlineArrowLeftOnRectangle,
+  HiOutlineCheckCircle,
+  HiOutlineUserPlus,
+} from "react-icons/hi2"
+
+function InfoRow({
+  label,
+  value,
+}: {
+  label: string
+  value: string
+}) {
+  return (
+    <div className="flex items-start justify-between gap-4 border-b border-slate-100 py-3 last:border-b-0">
+      <span className="text-sm text-slate-500">{label}</span>
+      <span className="text-right text-sm font-medium text-slate-800 break-all">
+        {value}
+      </span>
+    </div>
+  )
+}
+
+function StepRow({
+  icon,
+  text,
+}: {
+  icon: React.ReactNode
+  text: string
+}) {
+  return (
+    <div className="flex items-start gap-3">
+      <div className="mt-0.5 text-indigo-600">{icon}</div>
+      <p className="text-sm leading-6 text-slate-600">{text}</p>
+    </div>
+  )
+}
 
 export default function WaitingMembership() {
   const navigate = useNavigate()
   const auth = useAuth()
 
   const [loading, setLoading] = useState(false)
+  const [initializing, setInitializing] = useState(true)
   const [message, setMessage] = useState("")
   const [errorMessage, setErrorMessage] = useState("")
 
@@ -29,14 +69,22 @@ export default function WaitingMembership() {
           navigate("/portal/home", { replace: true })
         }
       } catch {
-        // stay on waiting page
+        // stay on page
       }
     }
   }
 
   useEffect(() => {
-    void redirectIfTenantReady()
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    async function init() {
+      try {
+        await auth.initialize()
+        await redirectIfTenantReady()
+      } finally {
+        setInitializing(false)
+      }
+    }
+
+    void init()
   }, [])
 
   async function refreshProfile() {
@@ -58,11 +106,17 @@ export default function WaitingMembership() {
       }
 
       setMessage("Status refreshed.")
-    } catch (err) {
+    } catch (err: unknown) {
       const msg =
-        err instanceof Error
+        typeof err === "object" &&
+        err !== null &&
+        "response" in err &&
+        typeof (err as any).response?.data?.message === "string"
+          ? (err as any).response.data.message
+          : err instanceof Error
           ? err.message
           : "Failed to refresh account status."
+
       setErrorMessage(msg)
     } finally {
       setLoading(false)
@@ -71,76 +125,112 @@ export default function WaitingMembership() {
 
   function logout() {
     authStore.logout()
-    navigate("/portal/login")
+    navigate("/portal/login", { replace: true })
+  }
+
+  if (initializing) {
+    return (
+      <div className="min-h-screen bg-slate-50 px-6 py-10">
+        <div className="mx-auto max-w-3xl text-sm text-slate-500">
+          Loading account status...
+        </div>
+      </div>
+    )
   }
 
   return (
-    <div className="portal-page">
-      <div className="portal-shell">
-        <div className="portal-brand">
-          <div className="portal-badge">FinTrack Portal</div>
-          <h1 className="portal-title">Waiting for organization access</h1>
-          <p className="portal-description">
-            Your account is ready, but you are not connected to any active
-            organization yet.
+    <div className="min-h-screen bg-slate-50 px-6 py-10">
+      <div className="mx-auto max-w-3xl">
+        <section className="rounded-3xl border border-slate-200 border-t-4 border-t-indigo-200 bg-white p-8 shadow-sm sm:p-10">
+          <div className="flex items-center gap-4">
+            <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-indigo-100 text-indigo-600">
+              <HiOutlineClock className="h-7 w-7" />
+            </div>
+
+            <div>
+              <p className="text-lg font-semibold text-slate-800">
+                Transaction & Workflow Platform
+              </p>
+              <p className="mt-1 text-sm text-slate-500">
+                Pending workspace access
+              </p>
+            </div>
+          </div>
+
+          <h1 className="mt-8 text-3xl font-semibold tracking-tight text-slate-800">
+            Workspace access required
+          </h1>
+
+          <p className="mt-4 text-base leading-7 text-slate-600">
+            Your account is ready, but you are not connected to any active workspace yet.
           </p>
-        </div>
 
-        <div className="portal-card">
-          <div className="portal-card-header">
-            <h2 className="portal-card-title">Account status</h2>
-            <p className="portal-card-subtitle">
-              You can sign in, but tenant features become available only after
-              your membership is active.
-            </p>
+          <div className="mt-8 rounded-2xl border border-slate-200 bg-slate-50 px-5">
+            <InfoRow label="Email" value={auth.userEmail || "-"} />
+            <InfoRow label="User name" value={auth.userName || "-"} />
+            <InfoRow label="Status" value="Pending workspace access" />
           </div>
 
-          <div className="summary-list">
-            <div className="summary-row">
-              <span className="summary-label">Email</span>
-              <span className="summary-value">{auth.userEmail || "-"}</span>
-            </div>
+          <div className="mt-8">
+            <h2 className="text-lg font-semibold text-slate-800">Next steps</h2>
 
-            <div className="summary-row">
-              <span className="summary-label">User name</span>
-              <span className="summary-value">{auth.userName || "-"}</span>
-            </div>
+            <div className="mt-4 space-y-4">
+              <StepRow
+                icon={<HiOutlineUserPlus className="h-5 w-5" />}
+                text="Ask an administrator to add your account to a workspace."
+              />
 
-            <div className="summary-row">
-              <span className="summary-label">Membership count</span>
-              <span className="summary-value">
-                {auth.resolvedMemberships.length}
-              </span>
-            </div>
-          </div>
+              <StepRow
+                icon={<HiOutlineEnvelope className="h-5 w-5" />}
+                text="Check your email and accept the invitation if one was sent."
+              />
 
-          <div className="portal-alert" role="note">
-            If an administrator has invited you, please open the invitation
-            email and accept the invitation first.
+              <StepRow
+                icon={<HiOutlineCheckCircle className="h-5 w-5" />}
+                text="Refresh your status after joining."
+              />
+            </div>
           </div>
 
           {message ? (
-            <div className="portal-message success" role="status">
+            <div
+              className="mt-6 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700"
+              role="status"
+            >
               {message}
             </div>
           ) : null}
 
           {errorMessage ? (
-            <div className="portal-message error" role="alert">
+            <div
+              className="mt-6 rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700"
+              role="alert"
+            >
               {errorMessage}
             </div>
           ) : null}
 
-          <div className="portal-actions">
-            <button onClick={refreshProfile} disabled={loading}>
+          <div className="mt-8 flex flex-wrap gap-3">
+            <button
+              type="button"
+              onClick={refreshProfile}
+              disabled={loading}
+              className="inline-flex items-center gap-2 rounded-full bg-indigo-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-indigo-500 disabled:cursor-not-allowed disabled:opacity-60"
+            >
+              <HiOutlineArrowPath className="h-4 w-4" />
               {loading ? "Refreshing..." : "Refresh status"}
             </button>
 
-            <button className="danger" onClick={logout}>
+            <button
+              type="button"
+              onClick={logout}
+              className="inline-flex items-center gap-2 rounded-full border border-rose-200 bg-rose-50 px-4 py-2 text-sm text-rose-700 transition hover:border-rose-300 hover:bg-rose-100"
+            >
+              <HiOutlineArrowLeftOnRectangle className="h-4 w-4" />
               Sign out
             </button>
           </div>
-        </div>
+        </section>
       </div>
     </div>
   )
