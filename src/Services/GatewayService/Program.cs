@@ -71,7 +71,7 @@ app.UseAuthorization();
 
 app.UseMiddleware<BasicJwtTokenValidationMiddleware>();
 app.MapControllers();
-app.MapGet("/openapi/all.json", async (IHttpClientFactory httpClientFactory,
+app.MapGet("/api/openapi/all.json", async (IHttpClientFactory httpClientFactory,
     IOpenApiDocumentMerger merger) =>
 {
     var client = httpClientFactory.CreateClient();
