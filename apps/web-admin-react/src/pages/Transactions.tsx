@@ -5,7 +5,12 @@ import {
   getTenantTransactions,
   rejectProcurement,
 } from "../api/transaction-admin"
-import "./Transactions.css"
+import {
+  HiOutlineFunnel,
+  HiOutlineArrowPath,
+  HiOutlineArrowRight,
+  HiOutlineClipboardDocumentList
+} from "react-icons/hi2"
 
 type TransactionItem = {
   transactionPublicId: string
@@ -24,9 +29,33 @@ type TransactionItem = {
 type QueryState = {
   type: string
   status: string
-  paymentStatus: string
   pageNumber: number
   pageSize: number
+}
+
+function Badge({
+  children,
+  tone = "default",
+}: {
+  children: React.ReactNode
+  tone?: "default" | "success" | "warning" | "danger"
+}) {
+  const className =
+    tone === "success"
+      ? "bg-emerald-50 text-emerald-700 border-emerald-200"
+      : tone === "warning"
+        ? "bg-amber-50 text-amber-700 border-amber-200"
+        : tone === "danger"
+          ? "bg-rose-50 text-rose-700 border-rose-200"
+          : "bg-slate-100 text-slate-700 border-slate-200"
+
+  return (
+    <span
+      className={`inline-flex items-center rounded-full border px-2.5 py-1 text-xs font-medium ${className}`}
+    >
+      {children}
+    </span>
+  )
 }
 
 export default function Transactions() {
@@ -36,11 +65,11 @@ export default function Transactions() {
   const [items, setItems] = useState<TransactionItem[]>([])
   const [totalCount, setTotalCount] = useState(0)
   const [errorMessage, setErrorMessage] = useState("")
+  const [actionMessage, setActionMessage] = useState("")
 
   const [query, setQuery] = useState<QueryState>({
     type: "",
     status: "",
-    paymentStatus: "",
     pageNumber: 1,
     pageSize: 10,
   })
@@ -57,7 +86,6 @@ export default function Transactions() {
       const result = await getTenantTransactions({
         type: query.type || undefined,
         status: query.status || undefined,
-        paymentStatus: query.paymentStatus || undefined,
         pageNumber: query.pageNumber,
         pageSize: query.pageSize,
       })
@@ -86,25 +114,23 @@ export default function Transactions() {
     const nextQuery: QueryState = {
       type: "",
       status: "",
-      paymentStatus: "",
       pageNumber: 1,
       pageSize: 10,
     }
 
     setQuery(nextQuery)
-
     void loadWith(nextQuery)
   }
 
   async function loadWith(nextQuery: QueryState) {
     setLoading(true)
     setErrorMessage("")
+    setActionMessage("")
 
     try {
       const result = await getTenantTransactions({
         type: nextQuery.type || undefined,
         status: nextQuery.status || undefined,
-        paymentStatus: nextQuery.paymentStatus || undefined,
         pageNumber: nextQuery.pageNumber,
         pageSize: nextQuery.pageSize,
       })
@@ -149,36 +175,27 @@ export default function Transactions() {
     return date.toLocaleString()
   }
 
-  function statusClass(status: string) {
+  function statusTone(status: string) {
     switch (status) {
       case "Completed":
-        return "tag tag-success"
-      case "Failed":
-        return "tag tag-danger"
+      case "Approved":
+        return "success"
       case "Submitted":
-        return "tag tag-warning"
-      case "Cancelled":
-        return "tag tag-info"
-      default:
-        return "tag tag-info"
-    }
-  }
-
-  function paymentClass(status: string) {
-    switch (status) {
-      case "Succeeded":
-        return "tag tag-success"
-      case "Failed":
-        return "tag tag-danger"
+      case "Draft":
       case "Processing":
-        return "tag tag-warning"
+        return "warning"
+      case "Failed":
+      case "Rejected":
+      case "Cancelled":
+        return "danger"
       default:
-        return "tag tag-info"
+        return "default"
     }
   }
 
   function goTransactionDetail(row: TransactionItem) {
-    navigate(`/admin/transactions/${row.transactionPublicId}`)
+    console.log("go detail", row.transactionPublicId)
+    navigate(`/transactions/${row.transactionPublicId}`)
   }
 
   async function handleApprove(
@@ -186,16 +203,18 @@ export default function Transactions() {
     row: TransactionItem
   ) {
     event.stopPropagation()
+    setActionMessage("")
+    setErrorMessage("")
 
     try {
       await approveProcurement(row.transactionPublicId)
-      window.alert("Procurement approved.")
+      setActionMessage("Procurement approved.")
       await load()
     } catch (err: unknown) {
       if (err instanceof Error) {
-        window.alert(err.message || "Failed to approve.")
+        setErrorMessage(err.message || "Failed to approve.")
       } else {
-        window.alert("Failed to approve.")
+        setErrorMessage("Failed to approve.")
       }
     }
   }
@@ -212,17 +231,20 @@ export default function Transactions() {
       return
     }
 
+    setActionMessage("")
+    setErrorMessage("")
+
     try {
       await rejectProcurement(row.transactionPublicId, {
         reason: reason.trim(),
       })
-      window.alert("Procurement rejected.")
+      setActionMessage("Procurement rejected.")
       await load()
     } catch (err: unknown) {
       if (err instanceof Error) {
-        window.alert(err.message || "Failed to reject.")
+        setErrorMessage(err.message || "Failed to reject.")
       } else {
-        window.alert("Failed to reject.")
+        setErrorMessage("Failed to reject.")
       }
     }
   }
@@ -230,32 +252,52 @@ export default function Transactions() {
   const totalPages = Math.max(1, Math.ceil(totalCount / query.pageSize))
 
   return (
-    <div className="transactions-page">
-      <div className="page-header">
-        <div>
-          <h1 className="page-title">Transactions</h1>
-          <p className="page-subtitle">
-            Review all transactions within the current tenant.
-          </p>
-        </div>
-      </div>
+    <div className="mx-auto flex max-w-6xl flex-col gap-6">
+      <section className="rounded-3xl border border-slate-200 bg-white px-8 py-6 sm:px-10">
+        <div className="flex items-start gap-4">
+          {/* icon */}
+          <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-indigo-50 text-indigo-600">
+            <HiOutlineClipboardDocumentList className="h-5 w-5" />
+          </div>
 
-      <div className="filter-card">
-        <div className="filter-row">
+          {/* text */}
+          <div className="min-w-0">
+            <h1 className="text-2xl font-semibold text-slate-800">
+              Transactions
+            </h1>
+
+            <p className="mt-1 text-sm text-slate-500">
+              Manage income entries and procurement workflows in this workspace.
+            </p>
+
+            <div className="mt-3 text-sm text-slate-500">
+              Total {totalCount} records
+            </div>
+          </div>
+        </div>
+      </section>
+      {/* Filters */}
+      <section className="rounded-3xl border border-slate-200 bg-white p-5 sm:p-6">
+        <div className="mb-4 flex items-center gap-2 text-slate-800">
+          <HiOutlineFunnel className="h-5 w-5 text-slate-500" />
+          <h2 className="text-base font-semibold">Filters</h2>
+        </div>
+
+        <div className="grid gap-3 md:grid-cols-[1fr_1fr_auto_auto]">
           <select
-            className="filter-item"
             value={query.type}
             onChange={(e) => updateQuery("type", e.target.value)}
+            className="h-11 rounded-xl border border-slate-300 bg-white px-3 text-sm text-slate-800 outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100"
           >
             <option value="">Type</option>
-            <option value="Donation">Donation</option>
+            <option value="Donation">Income</option>
             <option value="Procurement">Procurement</option>
           </select>
 
           <select
-            className="filter-item"
             value={query.status}
             onChange={(e) => updateQuery("status", e.target.value)}
+            className="h-11 rounded-xl border border-slate-300 bg-white px-3 text-sm text-slate-800 outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100"
           >
             <option value="">Status</option>
             <option value="Draft">Draft</option>
@@ -266,51 +308,81 @@ export default function Transactions() {
             <option value="Rejected">Rejected</option>
           </select>
 
-          <select
-            className="filter-item"
-            value={query.paymentStatus}
-            onChange={(e) => updateQuery("paymentStatus", e.target.value)}
+          <button
+            type="button"
+            onClick={() => void handleSearch()}
+            className="inline-flex h-11 items-center justify-center rounded-xl bg-indigo-600 px-4 text-sm font-medium text-white transition hover:bg-indigo-500"
           >
-            <option value="">Payment</option>
-            <option value="NotStarted">NotStarted</option>
-            <option value="Processing">Processing</option>
-            <option value="Succeeded">Succeeded</option>
-            <option value="Failed">Failed</option>
-          </select>
-
-          <button className="primary-btn" onClick={() => void handleSearch()}>
             Search
           </button>
 
-          <button className="secondary-btn" onClick={resetFilters}>
+          <button
+            type="button"
+            onClick={resetFilters}
+            className="inline-flex h-11 items-center justify-center gap-2 rounded-xl border border-slate-300 bg-white px-4 text-sm text-slate-700 transition hover:border-indigo-500 hover:text-indigo-600"
+          >
+            <HiOutlineArrowPath className="h-4 w-4" />
             Reset
           </button>
         </div>
-      </div>
+      </section>
 
-      <div className="table-card">
-        {loading ? <div className="loading-text">Loading...</div> : null}
-        {errorMessage ? <div className="alert error">{errorMessage}</div> : null}
+      {loading ? (
+        <div className="text-sm text-slate-500">Loading transactions...</div>
+      ) : null}
 
-        <div className="table-wrap">
-          <table className="transactions-table">
-            <thead>
-              <tr>
-                <th>Title</th>
-                <th>Type</th>
-                <th>Amount</th>
-                <th>Status</th>
-                <th>Payment</th>
-                <th>Created At</th>
-                <th>Action</th>
-                <th>View</th>
+      {actionMessage ? (
+        <div
+          className="rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700"
+          role="status"
+        >
+          {actionMessage}
+        </div>
+      ) : null}
+
+      {errorMessage ? (
+        <div
+          className="rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700"
+          role="alert"
+        >
+          {errorMessage}
+        </div>
+      ) : null}
+
+      {/* Table */}
+      <section className="rounded-3xl border border-slate-200 bg-white p-5 sm:p-6">
+        <div className="mb-4 flex items-center justify-between gap-4">
+          <div>
+            <h2 className="text-base font-semibold text-slate-800">
+              Transaction list
+            </h2>
+            <p className="mt-1 text-sm text-slate-500">
+              Page {query.pageNumber} of {totalPages} · Total {totalCount}
+            </p>
+          </div>
+        </div>
+
+        <div className="overflow-x-auto rounded-2xl border border-slate-200">
+          <table className="min-w-full border-collapse text-left">
+            <thead className="bg-slate-50">
+              <tr className="text-sm text-slate-600">
+                <th className="px-4 py-3 font-medium">Title</th>
+                <th className="px-4 py-3 font-medium">Type</th>
+                <th className="px-4 py-3 font-medium">Amount</th>
+                <th className="px-4 py-3 font-medium">Status</th>
+                <th className="px-4 py-3 font-medium">Created at</th>
+                <th className="px-4 py-3 font-medium">Action</th>
+                <th className="px-4 py-3 font-medium">View</th>
               </tr>
             </thead>
 
             <tbody>
               {items.length === 0 ? (
                 <tr>
-                  <td colSpan={8} className="empty-cell">
+                  <td
+                    colSpan={7}
+                    className="px-4 py-10 text-center text-sm text-slate-500"
+                  >
                     No transactions found.
                   </td>
                 </tr>
@@ -318,58 +390,67 @@ export default function Transactions() {
                 items.map((row) => (
                   <tr
                     key={row.transactionPublicId}
-                    className="clickable-row"
+                    className="cursor-pointer border-t border-slate-200 hover:bg-slate-50"
                     onClick={() => goTransactionDetail(row)}
                   >
-                    <td>{row.title}</td>
-                    <td>
-                      <span className="tag tag-light">{row.type}</span>
+                    <td className="px-4 py-4 text-sm font-medium text-slate-800">
+                      {row.title}
                     </td>
-                    <td>
-                      <span className="strong">
-                        {row.amount} {row.currency}
-                      </span>
+
+                    <td className="px-4 py-4">
+                      <Badge>
+                        {row.type === "Donation" ? "Income" : row.type}
+                      </Badge>
                     </td>
-                    <td>
-                      <span className={statusClass(row.status)}>
+
+                    <td className="px-4 py-4 text-sm font-medium text-slate-800">
+                      {row.amount} {row.currency}
+                    </td>
+
+                    <td className="px-4 py-4">
+                      <Badge tone={statusTone(row.status)}>
                         {row.status}
-                      </span>
+                      </Badge>
                     </td>
-                    <td>
-                      <span className={paymentClass(row.paymentStatus)}>
-                        {row.paymentStatus}
-                      </span>
+
+                    <td className="px-4 py-4 text-sm text-slate-600">
+                      {formatDateTime(row.createdAtUtc)}
                     </td>
-                    <td>{formatDateTime(row.createdAtUtc)}</td>
-                    <td>
+
+                    <td className="px-4 py-4">
                       {row.type === "Procurement" && row.status === "Submitted" ? (
-                        <div className="action-buttons">
+                        <div className="flex items-center gap-3">
                           <button
-                            className="link-btn success-text"
+                            type="button"
+                            className="text-sm font-medium text-emerald-700 transition hover:text-emerald-600"
                             onClick={(event) => void handleApprove(event, row)}
                           >
                             Approve
                           </button>
                           <button
-                            className="link-btn danger-text"
+                            type="button"
+                            className="text-sm font-medium text-rose-700 transition hover:text-rose-600"
                             onClick={(event) => void handleReject(event, row)}
                           >
                             Reject
                           </button>
                         </div>
                       ) : (
-                        <span>-</span>
+                        <span className="text-sm text-slate-400">—</span>
                       )}
                     </td>
-                    <td>
+
+                    <td className="px-4 py-4">
                       <button
-                        className="link-btn"
+                        type="button"
+                        className="inline-flex items-center gap-1 text-sm text-indigo-600 transition hover:text-indigo-500"
                         onClick={(event) => {
                           event.stopPropagation()
                           goTransactionDetail(row)
                         }}
                       >
                         View
+                        <HiOutlineArrowRight className="h-4 w-4" />
                       </button>
                     </td>
                   </tr>
@@ -379,28 +460,30 @@ export default function Transactions() {
           </table>
         </div>
 
-        <div className="pagination-wrap">
+        <div className="mt-5 flex items-center justify-between gap-4">
           <button
-            className="secondary-btn"
+            type="button"
             disabled={query.pageNumber <= 1}
             onClick={() => void handlePageChange(query.pageNumber - 1)}
+            className="inline-flex h-10 items-center justify-center rounded-xl border border-slate-300 bg-white px-4 text-sm text-slate-700 transition hover:border-indigo-500 hover:text-indigo-600 disabled:cursor-not-allowed disabled:opacity-50"
           >
             Previous
           </button>
 
-          <span className="pagination-text">
-            Page {query.pageNumber} of {totalPages} · Total {totalCount}
+          <span className="text-sm text-slate-500">
+            Page {query.pageNumber} of {totalPages}
           </span>
 
           <button
-            className="secondary-btn"
+            type="button"
             disabled={query.pageNumber >= totalPages}
             onClick={() => void handlePageChange(query.pageNumber + 1)}
+            className="inline-flex h-10 items-center justify-center rounded-xl border border-slate-300 bg-white px-4 text-sm text-slate-700 transition hover:border-indigo-500 hover:text-indigo-600 disabled:cursor-not-allowed disabled:opacity-50"
           >
             Next
           </button>
         </div>
-      </div>
+      </section>
     </div>
   )
 }

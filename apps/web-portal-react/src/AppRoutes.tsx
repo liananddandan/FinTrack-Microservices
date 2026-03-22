@@ -1,4 +1,4 @@
-import { Routes, Route } from "react-router-dom"
+import { Routes, Route, Navigate } from "react-router-dom"
 import AuthGuard from "./components/AuthGuard"
 
 import Login from "./pages/Login"
@@ -6,12 +6,13 @@ import RegisterUser from "./pages/RegisterUser"
 import RegisterTenant from "./pages/RegisterTenant"
 import WaitingMembership from "./pages/WaitingMembership"
 import Home from "./pages/Home"
-import Donation from "./pages/Donation"
+import RecordIncome from "./pages/RecordIncome"
 import MyTransactions from "./pages/MyTransactions"
 import TransactionDetail from "./pages/TransactionDetail"
 import NewProcurement from "./pages/NewProcurement"
 import AcceptInvitation from "./pages/AcceptInvitation"
 import LandingPage from "./pages/LandingPage"
+import Profile from "./pages/Profile"
 
 export default function AppRoutes() {
     return (
@@ -19,9 +20,11 @@ export default function AppRoutes() {
             {/* redirect */}
             <Route path="/" element={<LandingPage />} />
 
+            <Route path="/portal" element={<Navigate to="/portal/login" replace />} />
+
             {/* public */}
             <Route
-                path="/login"
+                path="/portal/login"
                 element={
                     <AuthGuard public>
                         <Login />
@@ -30,7 +33,7 @@ export default function AppRoutes() {
             />
 
             <Route
-                path="/register-user"
+                path="/portal/register-user"
                 element={
                     <AuthGuard public>
                         <RegisterUser />
@@ -39,7 +42,7 @@ export default function AppRoutes() {
             />
 
             <Route
-                path="/register-tenant"
+                path="/portal/register-tenant"
                 element={
                     <AuthGuard public>
                         <RegisterTenant />
@@ -49,7 +52,7 @@ export default function AppRoutes() {
 
             {/* auth only */}
             <Route
-                path="/waiting-membership"
+                path="/portal/waiting-membership"
                 element={
                     <AuthGuard requireAuth>
                         <WaitingMembership />
@@ -59,7 +62,7 @@ export default function AppRoutes() {
 
             {/* auth + tenant */}
             <Route
-                path="/home"
+                path="/portal/home"
                 element={
                     <AuthGuard requireAuth requireTenant>
                         <Home />
@@ -68,15 +71,15 @@ export default function AppRoutes() {
             />
 
             <Route
-                path="/donate"
+                path="/portal/record-income"
                 element={
                     <AuthGuard requireAuth requireTenant>
-                        <Donation />
+                        <RecordIncome />
                     </AuthGuard>
                 }
             />
             <Route
-                path="/my-transactions"
+                path="/portal/my-transactions"
                 element={
                     <AuthGuard requireAuth requireTenant>
                         <MyTransactions />
@@ -84,7 +87,7 @@ export default function AppRoutes() {
                 }
             />
             <Route
-                path="/transactions/:transactionPublicId"
+                path="/portal/transactions/:transactionPublicId"
                 element={
                     <AuthGuard requireAuth requireTenant>
                         <TransactionDetail />
@@ -92,7 +95,7 @@ export default function AppRoutes() {
                 }
             />
             <Route
-                path="/procurements/new"
+                path="/portal/procurements/new"
                 element={
                     <AuthGuard requireAuth requireTenant>
                         <NewProcurement />
@@ -100,10 +103,18 @@ export default function AppRoutes() {
                 }
             />
             <Route
-                path="/invitations/accept"
+                path="/portal/invitations/accept"
                 element={
                     <AuthGuard public>
                         <AcceptInvitation />
+                    </AuthGuard>
+                }
+            />
+            <Route
+                path="/portal/profile"
+                element={
+                    <AuthGuard requireAuth requireTenant>
+                        <Profile />
                     </AuthGuard>
                 }
             />

@@ -20,6 +20,13 @@ export default function AuthGuard({children}: AuthGuardProps) {
     void init()
   }, [])
 
+    console.log("AuthGuard render", {
+    loading,
+    isAuthenticated: auth.isAuthenticated,
+    hasTenantContext: auth.hasTenantContext,
+    isAdmin: auth.isAdmin,
+  })
+  
   if (loading) {
     return <div>Loading...</div>
   }

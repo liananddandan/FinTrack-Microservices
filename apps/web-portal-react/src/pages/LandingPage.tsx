@@ -1,123 +1,235 @@
-import Header from "../components/Header"
-import { motion } from "motion/react"
-import SkillsSection from "../components/SkillsSection"
-import ProjectsSection from "../components/ProjectsSection"
-import Footer from "../components/Footer"
-import { Helmet } from "react-helmet-async"
+import {
+    HiOutlineArrowsRightLeft,
+    HiOutlineUser,
+    HiOutlineShieldCheck,
+    HiOutlineCodeBracket,
+    HiOutlineServerStack,
+    HiOutlineCube,
+    HiOutlineCircleStack,
+} from "react-icons/hi2"
+import {
+    SiDotnet,
+    SiMysql,
+    SiRedis,
+    SiRabbitmq,
+    SiDocker,
+    SiGithubactions,
+    SiReact,
+} from "react-icons/si"
+import EntryCard from "../components/EntryCard"
 
-const container = {
-    hidden: {},
-    show: {
-        transition: {
-            staggerChildren: 0.3,
-            delayChildren: 0.2,
-        },
-    },
+function ArchitectureNode({
+    icon,
+    label,
+}: {
+    icon: React.ReactNode
+    label: string
+}) {
+    return (
+        <div className="flex flex-col items-center">
+            <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-indigo-50 text-indigo-600">
+                {icon}
+            </div>
+            <p className="mt-2 text-sm text-slate-700">{label}</p>
+        </div>
+    )
 }
 
-const item = {
-    hidden: { opacity: 0, y: 20 },
-    show: {
-        opacity: 1,
-        y: 0,
-        transition: {
-            duration: 1,
-            ease: [0.22, 1, 0.36, 1] as const,
-        },
-    },
+function ArchitectureArrow() {
+    return <span className="text-lg text-slate-400">→</span>
 }
 
-const motto = {
-    hidden: { opacity: 0, y: 28 },
-    show: {
-        opacity: 1,
-        y: 0,
-        transition: {
-            duration: 1.2,
-            delay: 0.9,
-            ease: [0.22, 1, 0.36, 1] as const,
-        },
-    },
+function TechItem({
+    icon,
+    label,
+}: {
+    icon: React.ReactNode
+    label: string
+}) {
+    return (
+        <div className="flex flex-col items-center gap-2">
+            <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-white border border-slate-200 text-indigo-700">
+                {icon}
+            </div>
+            <p className="text-xs text-slate-600">{label}</p>
+        </div>
+    )
 }
 
 export default function LandingPage() {
     return (
-        <>
-            <Helmet>
-                <title>Chen Li | .NET Engineer</title>
-                <link rel="icon" type="image/png" href="/avatar.png" />
-            </Helmet>
-            <div className="min-h-screen bg-white">
-                <Header />
+        <main className="bg-white text-gray-900">
 
-                <main>
-                    <section className="bg-gradient-to-b from-slate-100 to-white px-6 pt-10 pb-12 lg:px-10">
-                        <div className="mx-auto grid max-w-6xl grid-cols-1 gap-10 lg:grid-cols-[1.3fr_0.7fr] lg:gap-12">
-                            <motion.div
-                                variants={container}
-                                initial="hidden"
-                                animate="show"
-                                className="mx-auto flex w-full max-w-xl flex-col justify-center"
-                            >
-                                <motion.h1
-                                    variants={item}
-                                    className="tracking-tight text-slate-900"
-                                >
-                                    <span className="block text-4xl font-semibold sm:text-5xl lg:text-6xl">
-                                        I turn ideas into
-                                    </span>
-                                    <span className="mt-1 block text-3xl font-medium text-slate-700 sm:text-4xl lg:text-5xl">
-                                        working software.
-                                    </span>
-                                </motion.h1>
-
-                                <motion.p
-                                    variants={item}
-                                    className="mt-5 text-base leading-7 text-slate-500 lg:text-lg"
-                                >
-                                    .NET engineer focused on backend and AI-powered systems.
-                                    I design scalable systems with clear boundaries, and build full-stack solutions when needed.
-                                </motion.p>
-
-                                <motion.div
-                                    variants={item}
-                                    className="mt-8 flex flex-wrap items-center gap-4"
-                                >
-                                    <a
-                                        href="https://github.com/liananddandan"
-                                        target="_blank"
-                                        rel="noreferrer"
-                                        className="text-sm font-medium text-slate-700 transition hover:text-indigo-600"
-                                    >
-                                        View GitHub →
-                                    </a>
-                                </motion.div>
-                            </motion.div>
-
-                            <motion.div variants={motto}
-                                initial="hidden"
-                                animate="show" className="relative hidden items-center justify-end lg:flex">
-                                <div className="border-l border-slate-200 pl-5">
-                                    <p className="text-[11px] uppercase tracking-[0.28em] text-slate-400">
-                                        Personal Motto
-                                    </p>
-
-                                    <p className="mt-3 text-xl leading-relaxed text-slate-700">
-                                        Uncompromising in the pursuit
-                                        <br />
-                                        of a meaningful career
-                                    </p>
-                                </div>
-                            </motion.div>
+            {/* Hero */}
+            <section className="px-4 py-4">
+                <div className="max-w-5xl mx-auto">
+                    <div className="flex items-center gap-3">
+                        <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-indigo-50 text-indigo-600">
+                            <HiOutlineArrowsRightLeft className="h-6 w-6" />
                         </div>
-                    </section>
 
-                    <SkillsSection />
+                        <div>
+                            <p className="text-sm font-medium tracking-wide text-gray-500">
+                                Transaction & Workflow Platform
+                            </p>
+                            <p className="text-xs text-gray-400">
+                                Multi-tenant system built with microservices
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+            <section className="py-10 border-t border-slate-200 bg-slate-100">
+                <div className="max-w-5xl mx-auto">
 
-                    <ProjectsSection />
-                    <Footer />
-                </main>
-            </div>
-        </>
+                    <div className="max-w-3xl">
+                        <h1 className="text-4xl sm:text-5xl font-semibold tracking-tight text-slate-800 leading-tight">
+                            Transaction & workflow system for multi-tenant applications
+                        </h1>
+
+                        <p className="mt-6 text-lg leading-8 text-slate-600">
+                            A production-style platform for managing donations, procurements, and
+                            transaction workflows, built with clean architecture and event-driven design.
+                        </p>
+
+                        <div className="mt-10 grid gap-4 sm:grid-cols-3">
+                            <EntryCard
+                                href="https://fintrack.chenlis.com/portal/login"
+                                icon={<HiOutlineUser className="h-5 w-5" />}
+                                title="Portal"
+                                description="Sign in as a tenant user to manage transactions and workflows."
+                            />
+
+                            <EntryCard
+                                href="https://fintrack.chenlis.com/admin/login"
+                                icon={<HiOutlineShieldCheck className="h-5 w-5" />}
+                                title="Admin Panel"
+                                description="Review member activity, invitations, and audit logs."
+                            />
+
+                            <EntryCard
+                                href="https://fintrack.chenlis.com/api/swagger"
+                                icon={<HiOutlineCodeBracket className="h-5 w-5" />}
+                                title="API Docs"
+                                description="Explore backend endpoints and service contracts through Swagger."
+                            />
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            {/* Core capabilities */}
+            <section className="bg-slate-50 py-16 px-6">
+                <div className="max-w-5xl mx-auto text-start">
+                    <h2 className="text-3xl font-semibold text-slate-800">
+                        What you can do with the system
+                    </h2>
+
+                    <div className="mt-10 grid gap-6 text-left sm:grid-cols-2">
+
+                        <div className="rounded-xl border border-slate-200 bg-white p-6">
+                            <h3 className="font-semibold text-slate-800">
+                                Manage organizations independently
+                            </h3>
+                            <p className="mt-2 text-slate-600">
+                                Each tenant operates in isolation with its own data, users, and workflows.
+                            </p>
+                        </div>
+
+                        <div className="rounded-xl border border-slate-200 bg-white p-6">
+                            <h3 className="font-semibold text-slate-800">
+                                Control access with clear roles
+                            </h3>
+                            <p className="mt-2 text-slate-600">
+                                Define permissions for admins and members to ensure secure operations.
+                            </p>
+                        </div>
+
+                        <div className="rounded-xl border border-slate-200 bg-white p-6">
+                            <h3 className="font-semibold text-slate-800">
+                                Process transactions reliably
+                            </h3>
+                            <p className="mt-2 text-slate-600">
+                                Actions flow through services and messaging infrastructure for consistency.
+                            </p>
+                        </div>
+
+                        <div className="rounded-xl border border-slate-200 bg-white p-6">
+                            <h3 className="font-semibold text-slate-800">
+                                Track system activity
+                            </h3>
+                            <p className="mt-2 text-slate-600">
+                                Audit logs provide visibility into every operation across the platform.
+                            </p>
+                        </div>
+
+                    </div>
+                </div>
+            </section>
+
+            {/* System architecture */}
+            <section className="px-6 pt-6">
+                <div className="mx-auto max-w-5xl">
+                    <h2 className="text-3xl font-semibold text-slate-800">
+                        System architecture
+                    </h2>
+
+                    <p className="mt-3 text-sm text-slate-500">
+                        Request flow and event-driven communication across services
+                    </p>
+
+                    <div className="py-6 flex flex-wrap items-center justify-center gap-8 sm:gap-10">
+                        <ArchitectureNode
+                            icon={<HiOutlineUser className="h-6 w-6" />}
+                            label="Client"
+                        />
+                        <ArchitectureArrow />
+
+                        <ArchitectureNode
+                            icon={<HiOutlineServerStack className="h-6 w-6" />}
+                            label="Gateway"
+                        />
+                        <ArchitectureArrow />
+
+                        <ArchitectureNode
+                            icon={<HiOutlineArrowsRightLeft className="h-6 w-6" />}
+                            label="Message Bus"
+                        />
+                        <ArchitectureArrow />
+
+                        <ArchitectureNode
+                            icon={<HiOutlineCube className="h-6 w-6" />}
+                            label="Services"
+                        />
+                        <ArchitectureArrow />
+
+                        <ArchitectureNode
+                            icon={<HiOutlineCircleStack className="h-6 w-6" />}
+                            label="Database"
+                        />
+                    </div>
+                </div>
+            </section>
+
+            {/* Technology stack */}
+            <section className="bg-slate-50 px-6 py-16">
+                <div className="mx-auto max-w-5xl">
+                    <h2 className="text-3xl font-semibold text-slate-800">
+                        Technology stack
+                    </h2>
+
+                    <div className="mt-10 grid grid-cols-3 gap-8 sm:grid-cols-4 md:grid-cols-7">
+                        <TechItem icon={<SiDotnet className="h-5 w-5" />} label=".NET" />
+                        <TechItem icon={<SiReact className="h-5 w-5" />} label="React" />
+                        <TechItem icon={<SiMysql className="h-5 w-5" />} label="MySQL" />
+                        <TechItem icon={<SiRedis className="h-5 w-5" />} label="Redis" />
+                        <TechItem icon={<SiRabbitmq className="h-5 w-5" />} label="RabbitMQ" />
+                        <TechItem icon={<SiDocker className="h-5 w-5" />} label="Docker" />
+                        <TechItem icon={<SiGithubactions className="h-5 w-5" />} label="CI/CD" />
+                    </div>
+                </div>
+            </section>
+
+        </main>
     )
 }

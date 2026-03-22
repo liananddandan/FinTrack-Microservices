@@ -6,7 +6,12 @@ import {
   type TenantMemberDto,
 } from "../api/tenant"
 import { createTenantInvitation } from "../api/invitation"
-import "./Members.css"
+import {
+  HiOutlineUsers,
+  HiOutlineMagnifyingGlass,
+  HiOutlineEnvelope,
+  HiOutlineUserPlus,
+} from "react-icons/hi2"
 
 type InviteForm = {
   email: string
@@ -17,10 +22,53 @@ type RoleForm = {
   role: string
 }
 
+function Badge({
+  children,
+  tone = "default",
+}: {
+  children: React.ReactNode
+  tone?: "default" | "success" | "warning" | "danger"
+}) {
+  const className =
+    tone === "success"
+      ? "bg-emerald-50 text-emerald-700 border-emerald-200"
+      : tone === "warning"
+      ? "bg-amber-50 text-amber-700 border-amber-200"
+      : tone === "danger"
+      ? "bg-rose-50 text-rose-700 border-rose-200"
+      : "bg-slate-100 text-slate-700 border-slate-200"
+
+  return (
+    <span
+      className={`inline-flex items-center rounded-full border px-2.5 py-1 text-xs font-medium ${className}`}
+    >
+      {children}
+    </span>
+  )
+}
+
+function SummaryCard({
+  label,
+  value,
+}: {
+  label: string
+  value: string | number
+}) {
+  return (
+    <div className="rounded-2xl border border-slate-200 bg-white p-5">
+      <p className="text-sm text-slate-500">{label}</p>
+      <p className="mt-2 text-2xl font-semibold text-slate-800">{value}</p>
+    </div>
+  )
+}
+
 export default function Members() {
   const [loading, setLoading] = useState(false)
   const [keyword, setKeyword] = useState("")
   const [members, setMembers] = useState<TenantMemberDto[]>([])
+
+  const [pageMessage, setPageMessage] = useState("")
+  const [pageError, setPageError] = useState("")
 
   const [inviteDialogVisible, setInviteDialogVisible] = useState(false)
   const [inviteSubmitting, setInviteSubmitting] = useState(false)
@@ -71,16 +119,17 @@ export default function Members() {
 
   async function loadMembers() {
     setLoading(true)
+    setPageError("")
+    setPageMessage("")
 
     try {
       const result = await getTenantMembers()
       setMembers(result)
     } catch (error: unknown) {
-      console.error("Failed to load members:", error)
       if (error instanceof Error) {
-        window.alert(error.message || "Failed to load tenant members.")
+        setPageError(error.message || "Failed to load tenant members.")
       } else {
-        window.alert("Failed to load tenant members.")
+        setPageError("Failed to load tenant members.")
       }
     } finally {
       setLoading(false)
@@ -130,9 +179,8 @@ export default function Members() {
         "Invitation created successfully. The email has been queued for delivery."
       )
 
-      window.alert("Invitation created successfully.")
+      setPageMessage("Invitation created successfully.")
     } catch (error: unknown) {
-      console.error("Failed to create invitation:", error)
       if (error instanceof Error) {
         setInviteErrorMessage(error.message || "Failed to create invitation.")
       } else {
@@ -169,8 +217,7 @@ export default function Members() {
   }
 
   function handleViewLater(member: TenantMemberDto) {
-    console.log("clicked member:", member)
-    window.alert(`TODO: view details for ${member.email}`)
+    setPageMessage(`Details page is not implemented yet for ${member.email}.`)
   }
 
   async function handleRemove(member: TenantMemberDto) {
@@ -180,17 +227,18 @@ export default function Members() {
 
     if (!confirmed) return
 
+    setPageMessage("")
+    setPageError("")
+
     try {
       await removeTenantMember(member.membershipPublicId)
-      window.alert("Member removed successfully.")
+      setPageMessage("Member removed successfully.")
       await loadMembers()
     } catch (error: unknown) {
-      console.error("Failed to remove member:", error)
-
       if (error instanceof Error) {
-        window.alert(error.message || "Failed to remove member.")
+        setPageError(error.message || "Failed to remove member.")
       } else {
-        window.alert("Failed to remove member.")
+        setPageError("Failed to remove member.")
       }
     }
   }
@@ -231,12 +279,10 @@ export default function Members() {
         roleForm.role
       )
 
-      window.alert("Member role updated successfully.")
       closeRoleDialog()
+      setPageMessage("Member role updated successfully.")
       await loadMembers()
     } catch (error: unknown) {
-      console.error("Failed to change member role:", error)
-
       if (error instanceof Error) {
         setRoleErrorMessage(error.message || "Failed to change member role.")
       } else {
@@ -248,122 +294,150 @@ export default function Members() {
   }
 
   return (
-    <div className="members-page">
-      <div className="members-topbar">
-        <div>
-          <h2 className="members-title">Members</h2>
-          <p className="members-subtitle">
-            Manage users who belong to the current organization.
-          </p>
-        </div>
+    <div className="mx-auto flex max-w-6xl flex-col gap-6">
+      {/* Header */}
+      <section className="rounded-3xl border border-slate-200 bg-white px-8 py-7 sm:px-10 sm:py-8">
+        <div className="flex flex-wrap items-start justify-between gap-4">
+          <div className="flex items-start gap-4">
+            <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-indigo-50 text-indigo-600">
+              <HiOutlineUsers className="h-6 w-6" />
+            </div>
 
-        <div className="members-actions">
-          <button className="primary-btn" onClick={openInviteDialog}>
-            Invite member
-          </button>
-        </div>
-      </div>
-
-      <div className="members-summary-grid">
-        <div className="summary-card">
-          <div className="summary-label">Total members</div>
-          <div className="summary-value">{members.length}</div>
-        </div>
-
-        <div className="summary-card">
-          <div className="summary-label">Admins</div>
-          <div className="summary-value">{adminCount}</div>
-        </div>
-
-        <div className="summary-card">
-          <div className="summary-label">Active members</div>
-          <div className="summary-value">{activeCount}</div>
-        </div>
-      </div>
-
-      <div className="members-card">
-        <div className="members-card-header">
-          <div>
-            <div className="members-card-title">Organization members</div>
-            <div className="members-card-subtitle">
-              Showing all users currently associated with this tenant.
+            <div>
+              <h1 className="text-3xl font-semibold tracking-tight text-slate-800">
+                Members
+              </h1>
+              <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-600">
+                Manage users who belong to the current organization workspace.
+              </p>
             </div>
           </div>
 
-          <div className="members-toolbar">
+          <button
+            type="button"
+            onClick={openInviteDialog}
+            className="inline-flex items-center gap-2 rounded-full bg-indigo-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-indigo-500"
+          >
+            <HiOutlineUserPlus className="h-4 w-4" />
+            Invite member
+          </button>
+        </div>
+      </section>
+
+      {pageMessage ? (
+        <div
+          className="rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700"
+          role="status"
+        >
+          {pageMessage}
+        </div>
+      ) : null}
+
+      {pageError ? (
+        <div
+          className="rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700"
+          role="alert"
+        >
+          {pageError}
+        </div>
+      ) : null}
+
+      {/* Summary */}
+      <section className="grid gap-4 md:grid-cols-3">
+        <SummaryCard label="Total members" value={members.length} />
+        <SummaryCard label="Admins" value={adminCount} />
+        <SummaryCard label="Active members" value={activeCount} />
+      </section>
+
+      {/* Member list */}
+      <section className="rounded-3xl border border-slate-200 bg-white p-5 sm:p-6">
+        <div className="mb-4 flex flex-wrap items-start justify-between gap-4">
+          <div>
+            <h2 className="text-base font-semibold text-slate-800">
+              Organization members
+            </h2>
+            <p className="mt-1 text-sm text-slate-500">
+              Showing all users currently associated with this tenant.
+            </p>
+          </div>
+
+          <div className="relative w-full max-w-sm">
+            <HiOutlineMagnifyingGlass className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
             <input
               value={keyword}
               onChange={(e) => setKeyword(e.target.value)}
               placeholder="Search by email or name"
-              className="members-search"
+              className="h-11 w-full rounded-xl border border-slate-300 bg-white pl-10 pr-3 text-sm text-slate-800 outline-none placeholder:text-slate-400 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100"
             />
           </div>
         </div>
 
         {loading ? (
-          <div className="loading-block">Loading members...</div>
+          <div className="text-sm text-slate-500">Loading members...</div>
         ) : filteredMembers.length === 0 ? (
-          <div className="empty-block">No members found.</div>
+          <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-10 text-center text-sm text-slate-500">
+            No members found.
+          </div>
         ) : (
-          <div className="member-list">
+          <div className="space-y-4">
             {filteredMembers.map((member) => (
-              <div key={member.membershipPublicId} className="member-item">
-                <div className="member-main">
-                  <div className="member-avatar">
+              <div
+                key={member.membershipPublicId}
+                className="flex flex-col gap-4 rounded-2xl border border-slate-200 bg-slate-50 p-5 xl:flex-row xl:items-center xl:justify-between"
+              >
+                <div className="flex min-w-0 items-start gap-4">
+                  <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-indigo-100 text-sm font-semibold text-indigo-700">
                     {getInitials(member.userName || member.email)}
                   </div>
 
-                  <div className="member-info">
-                    <div className="member-name-row">
-                      <div className="member-name">
+                  <div className="min-w-0">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <div className="truncate text-sm font-semibold text-slate-800">
                         {member.userName || "Unnamed user"}
                       </div>
 
-                      <span
-                        className={
-                          member.role === "Admin"
-                            ? "tag tag-danger"
-                            : "tag tag-primary"
-                        }
-                      >
+                      <Badge tone={member.role === "Admin" ? "danger" : "default"}>
                         {member.role}
-                      </span>
+                      </Badge>
 
-                      {member.isActive ? (
-                        <span className="tag tag-success">Active</span>
-                      ) : (
-                        <span className="tag tag-info">Inactive</span>
-                      )}
+                      <Badge tone={member.isActive ? "success" : "default"}>
+                        {member.isActive ? "Active" : "Inactive"}
+                      </Badge>
                     </div>
 
-                    <div className="member-email">{member.email}</div>
+                    <div className="mt-2 text-sm text-slate-600">
+                      {member.email}
+                    </div>
 
-                    <div className="member-meta">
-                      <span className="mono">{member.userPublicId}</span>
-                      <span className="dot">•</span>
+                    <div className="mt-2 flex flex-wrap items-center gap-2 text-xs text-slate-500">
+                      <span className="font-mono">{member.userPublicId}</span>
+                      <span>•</span>
                       <span>Joined {formatDate(member.joinedAt)}</span>
                     </div>
                   </div>
                 </div>
 
-                <div className="member-side">
+                <div className="flex flex-wrap items-center gap-3 xl:justify-end">
                   <button
-                    className="link-btn"
+                    type="button"
+                    className="text-sm text-slate-700 transition hover:text-indigo-600"
                     onClick={() => handleViewLater(member)}
                   >
                     Details
                   </button>
 
                   <button
-                    className="link-btn primary-text"
+                    type="button"
+                    className="text-sm font-medium text-indigo-600 transition hover:text-indigo-500"
                     onClick={() => openRoleDialog(member)}
                   >
                     Change role
                   </button>
 
                   <button
-                    className="link-btn danger-text"
+                    type="button"
                     disabled={member.role === "Admin" || !member.isActive}
+                    className="text-sm font-medium text-rose-700 transition hover:text-rose-600 disabled:cursor-not-allowed disabled:opacity-40"
                     onClick={() => void handleRemove(member)}
                   >
                     Remove
@@ -373,21 +447,32 @@ export default function Members() {
             ))}
           </div>
         )}
-      </div>
+      </section>
 
+      {/* Invite dialog */}
       {inviteDialogVisible ? (
-        <div className="dialog-backdrop">
-          <div className="dialog-card">
-            <div className="invite-dialog-header">
-              <div className="invite-dialog-title">Invite member</div>
-              <div className="invite-dialog-subtitle">
-                Send an invitation to an already registered user.
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 px-4">
+          <div className="w-full max-w-lg rounded-3xl border border-slate-200 bg-white p-6 shadow-xl">
+            <div className="flex items-start gap-3">
+              <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-indigo-50 text-indigo-600">
+                <HiOutlineEnvelope className="h-5 w-5" />
+              </div>
+
+              <div>
+                <h2 className="text-xl font-semibold text-slate-800">
+                  Invite member
+                </h2>
+                <p className="mt-1 text-sm leading-6 text-slate-500">
+                  Send an invitation to an already registered user.
+                </p>
               </div>
             </div>
 
-            <div className="dialog-form">
-              <div className="form-item">
-                <label>Email</label>
+            <div className="mt-6 space-y-5">
+              <div>
+                <label className="mb-2 block text-sm font-medium text-slate-700">
+                  Email
+                </label>
                 <input
                   value={inviteForm.email}
                   onChange={(e) =>
@@ -397,11 +482,14 @@ export default function Members() {
                     }))
                   }
                   placeholder="user@example.com"
+                  className="block h-11 w-full rounded-xl border border-slate-300 bg-white px-3 text-sm text-slate-800 outline-none placeholder:text-slate-400 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100"
                 />
               </div>
 
-              <div className="form-item">
-                <label>Role</label>
+              <div>
+                <label className="mb-2 block text-sm font-medium text-slate-700">
+                  Role
+                </label>
                 <select
                   value={inviteForm.role}
                   onChange={(e) =>
@@ -410,6 +498,7 @@ export default function Members() {
                       role: e.target.value,
                     }))
                   }
+                  className="block h-11 w-full rounded-xl border border-slate-300 bg-white px-3 text-sm text-slate-800 outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100"
                 >
                   <option value="Member">Member</option>
                   <option value="Admin">Admin</option>
@@ -417,22 +506,32 @@ export default function Members() {
               </div>
 
               {inviteErrorMessage ? (
-                <div className="alert error">{inviteErrorMessage}</div>
+                <div className="rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">
+                  {inviteErrorMessage}
+                </div>
               ) : null}
 
               {inviteSuccessMessage ? (
-                <div className="alert success">{inviteSuccessMessage}</div>
+                <div className="rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700">
+                  {inviteSuccessMessage}
+                </div>
               ) : null}
             </div>
 
-            <div className="invite-dialog-footer">
-              <button className="secondary-btn" onClick={closeInviteDialog}>
+            <div className="mt-6 flex justify-end gap-3">
+              <button
+                type="button"
+                onClick={closeInviteDialog}
+                className="inline-flex items-center rounded-full border border-slate-300 bg-white px-4 py-2 text-sm text-slate-700 transition hover:border-indigo-500 hover:text-indigo-600"
+              >
                 Cancel
               </button>
+
               <button
-                className="primary-btn"
+                type="button"
                 disabled={inviteSubmitting}
                 onClick={() => void submitInvitation()}
+                className="inline-flex items-center rounded-full bg-indigo-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-indigo-500 disabled:cursor-not-allowed disabled:opacity-60"
               >
                 {inviteSubmitting ? "Sending..." : "Send invitation"}
               </button>
@@ -441,24 +540,33 @@ export default function Members() {
         </div>
       ) : null}
 
+      {/* Role dialog */}
       {roleDialogVisible ? (
-        <div className="dialog-backdrop">
-          <div className="dialog-card">
-            <div className="invite-dialog-header">
-              <div className="invite-dialog-title">Change member role</div>
-              <div className="invite-dialog-subtitle">
-                Update the role for the selected organization member.
-              </div>
-            </div>
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 px-4">
+          <div className="w-full max-w-lg rounded-3xl border border-slate-200 bg-white p-6 shadow-xl">
+            <h2 className="text-xl font-semibold text-slate-800">
+              Change member role
+            </h2>
+            <p className="mt-1 text-sm leading-6 text-slate-500">
+              Update the role for the selected organization member.
+            </p>
 
-            <div className="dialog-form">
-              <div className="form-item">
-                <label>Member</label>
-                <input value={selectedMember?.email || ""} disabled />
+            <div className="mt-6 space-y-5">
+              <div>
+                <label className="mb-2 block text-sm font-medium text-slate-700">
+                  Member
+                </label>
+                <input
+                  value={selectedMember?.email || ""}
+                  disabled
+                  className="block h-11 w-full rounded-xl border border-slate-300 bg-slate-100 px-3 text-sm text-slate-600 outline-none"
+                />
               </div>
 
-              <div className="form-item">
-                <label>Role</label>
+              <div>
+                <label className="mb-2 block text-sm font-medium text-slate-700">
+                  Role
+                </label>
                 <select
                   value={roleForm.role}
                   onChange={(e) =>
@@ -466,6 +574,7 @@ export default function Members() {
                       role: e.target.value,
                     })
                   }
+                  className="block h-11 w-full rounded-xl border border-slate-300 bg-white px-3 text-sm text-slate-800 outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100"
                 >
                   <option value="Member">Member</option>
                   <option value="Admin">Admin</option>
@@ -473,18 +582,26 @@ export default function Members() {
               </div>
 
               {roleErrorMessage ? (
-                <div className="alert error">{roleErrorMessage}</div>
+                <div className="rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">
+                  {roleErrorMessage}
+                </div>
               ) : null}
             </div>
 
-            <div className="invite-dialog-footer">
-              <button className="secondary-btn" onClick={closeRoleDialog}>
+            <div className="mt-6 flex justify-end gap-3">
+              <button
+                type="button"
+                onClick={closeRoleDialog}
+                className="inline-flex items-center rounded-full border border-slate-300 bg-white px-4 py-2 text-sm text-slate-700 transition hover:border-indigo-500 hover:text-indigo-600"
+              >
                 Cancel
               </button>
+
               <button
-                className="primary-btn"
+                type="button"
                 disabled={roleSubmitting}
                 onClick={() => void submitRoleChange()}
+                className="inline-flex items-center rounded-full bg-indigo-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-indigo-500 disabled:cursor-not-allowed disabled:opacity-60"
               >
                 {roleSubmitting ? "Saving..." : "Save"}
               </button>

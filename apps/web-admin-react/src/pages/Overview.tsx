@@ -5,7 +5,17 @@ import {
   getTenantTransactionSummary,
   getTenantTransactions,
 } from "../api/transaction-admin"
-import "./Overview.css"
+import {
+  HiOutlineBuildingOffice2,
+  HiOutlineBanknotes,
+  HiOutlineArrowTrendingUp,
+  HiOutlineDocumentText,
+  HiOutlineClipboardDocumentList,
+  HiOutlineUsers,
+  HiOutlineEnvelope,
+  HiOutlineShieldCheck,
+  HiOutlineArrowRight,
+} from "react-icons/hi2"
 
 type SummaryDto = {
   tenantPublicId: string
@@ -28,6 +38,84 @@ type TransactionListItem = {
   paymentStatus: string
   riskStatus: string
   createdAtUtc: string
+}
+
+function MetricCard({
+  label,
+  value,
+  icon,
+}: {
+  label: string
+  value: string | number
+  icon: React.ReactNode
+}) {
+  return (
+    <div className="rounded-2xl border border-slate-200 bg-white p-5">
+      <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-indigo-50 text-indigo-600">
+        {icon}
+      </div>
+      <p className="mt-4 text-sm text-slate-500">{label}</p>
+      <p className="mt-2 text-2xl font-semibold text-slate-800">{value}</p>
+    </div>
+  )
+}
+
+function ActionCard({
+  title,
+  description,
+  onClick,
+  icon,
+}: {
+  title: string
+  description: string
+  onClick: () => void
+  icon: React.ReactNode
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className="group rounded-2xl border border-slate-200 bg-white p-5 text-left transition hover:border-indigo-400 hover:bg-slate-50"
+    >
+      <div className="flex items-start justify-between gap-4">
+        <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-indigo-50 text-indigo-600">
+          {icon}
+        </div>
+
+        <HiOutlineArrowRight className="mt-1 h-5 w-5 text-slate-400 transition group-hover:translate-x-1 group-hover:text-indigo-600" />
+      </div>
+
+      <div className="mt-4">
+        <p className="text-sm font-semibold text-slate-800">{title}</p>
+        <p className="mt-2 text-sm leading-6 text-slate-600">{description}</p>
+      </div>
+    </button>
+  )
+}
+
+function Badge({
+  children,
+  tone = "default",
+}: {
+  children: React.ReactNode
+  tone?: "default" | "success" | "warning" | "danger"
+}) {
+  const className =
+    tone === "success"
+      ? "bg-emerald-50 text-emerald-700 border-emerald-200"
+      : tone === "warning"
+      ? "bg-amber-50 text-amber-700 border-amber-200"
+      : tone === "danger"
+      ? "bg-rose-50 text-rose-700 border-rose-200"
+      : "bg-slate-100 text-slate-700 border-slate-200"
+
+  return (
+    <span
+      className={`inline-flex items-center rounded-full border px-2.5 py-1 text-xs font-medium ${className}`}
+    >
+      {children}
+    </span>
+  )
 }
 
 export default function Overview() {
@@ -88,31 +176,34 @@ export default function Overview() {
     return date.toLocaleString()
   }
 
-  function statusClass(status: string) {
+  function statusTone(status: string) {
     switch (status) {
       case "Completed":
-        return "tag tag-success"
-      case "Failed":
-        return "tag tag-danger"
+      case "Approved":
+        return "success"
       case "Submitted":
-        return "tag tag-warning"
+      case "Draft":
+      case "Processing":
+        return "warning"
+      case "Failed":
+      case "Rejected":
       case "Cancelled":
-        return "tag tag-info"
+        return "danger"
       default:
-        return "tag tag-info"
+        return "default"
     }
   }
 
-  function paymentClass(status: string) {
+  function executionTone(status: string) {
     switch (status) {
       case "Succeeded":
-        return "tag tag-success"
-      case "Failed":
-        return "tag tag-danger"
+        return "success"
       case "Processing":
-        return "tag tag-warning"
+        return "warning"
+      case "Failed":
+        return "danger"
       default:
-        return "tag tag-info"
+        return "default"
     }
   }
 
@@ -137,170 +228,153 @@ export default function Overview() {
   }
 
   return (
-    <div className="overview-page">
-      <div className="page-header">
-        <div>
-          <h1 className="page-title">Overview</h1>
-          <p className="page-subtitle">
-            Monitor your tenant’s balance, transactions, and activity in one
-            place.
-          </p>
-        </div>
-      </div>
+    <div className="mx-auto flex max-w-6xl flex-col gap-6">
+      <section className="rounded-3xl border border-slate-200 bg-white px-8 py-7 sm:px-10 sm:py-8">
+        <div className="flex items-start gap-4">
+          <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-indigo-50 text-indigo-600">
+            <HiOutlineBuildingOffice2 className="h-6 w-6" />
+          </div>
 
-      {loading ? <div className="loading-text">Loading...</div> : null}
-      {summaryError ? <div className="alert error">{summaryError}</div> : null}
-      {transactionsError ? (
-        <div className="alert error">{transactionsError}</div>
+          <div>
+            <h1 className="text-3xl font-semibold tracking-tight text-slate-800">
+              {summary?.tenantName || auth.currentTenantName || "Overview"}
+            </h1>
+            <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-600">
+              Monitor tenant-wide transaction activity, member operations, and
+              administrative workflows in one place.
+            </p>
+
+            <div className="mt-5 flex flex-wrap items-center gap-3">
+              <span className="inline-flex items-center rounded-full bg-slate-100 px-3 py-1 text-sm text-slate-700">
+                Admin: {auth.userName || auth.userEmail || "-"}
+              </span>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {loading ? (
+        <div className="text-sm text-slate-500">Loading dashboard...</div>
       ) : null}
 
-      <div className="stats-grid">
-        <div className="stat-card">
-          <div className="stat-label">Current Balance</div>
-          <div className="stat-value">
-            {summary ? formatAmount(summary.currentBalance) : "-"}
-          </div>
+      {summaryError ? (
+        <div className="rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">
+          {summaryError}
+        </div>
+      ) : null}
+
+      {transactionsError ? (
+        <div className="rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">
+          {transactionsError}
+        </div>
+      ) : null}
+
+      <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+        <MetricCard
+          label="Current balance"
+          value={summary ? formatAmount(summary.currentBalance) : "-"}
+          icon={<HiOutlineBanknotes className="h-5 w-5" />}
+        />
+
+        <MetricCard
+          label="Total income"
+          value={summary ? formatAmount(summary.totalDonationAmount) : "-"}
+          icon={<HiOutlineArrowTrendingUp className="h-5 w-5" />}
+        />
+
+        <MetricCard
+          label="Total procurements"
+          value={summary ? formatAmount(summary.totalProcurementAmount) : "-"}
+          icon={<HiOutlineDocumentText className="h-5 w-5" />}
+        />
+
+        <MetricCard
+          label="Total transactions"
+          value={summary?.totalTransactionCount ?? "-"}
+          icon={<HiOutlineClipboardDocumentList className="h-5 w-5" />}
+        />
+      </section>
+
+      <section>
+        <div className="mb-4">
+          <h2 className="text-2xl font-semibold text-slate-800">Admin actions</h2>
+          <p className="mt-2 text-sm leading-6 text-slate-500">
+            Open the main management areas for this tenant.
+          </p>
         </div>
 
-        <div className="stat-card">
-          <div className="stat-label">Total Donations</div>
-          <div className="stat-value">
-            {summary ? formatAmount(summary.totalDonationAmount) : "-"}
-          </div>
+        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+          <ActionCard
+            title="Transactions"
+            description="View and manage tenant-wide transaction records."
+            onClick={goTransactions}
+            icon={<HiOutlineClipboardDocumentList className="h-5 w-5" />}
+          />
+
+          <ActionCard
+            title="Audit logs"
+            description="Review important administrative and system actions."
+            onClick={goAuditLogs}
+            icon={<HiOutlineShieldCheck className="h-5 w-5" />}
+          />
+
+          <ActionCard
+            title="Members"
+            description="View and manage members in the current tenant."
+            onClick={goMembers}
+            icon={<HiOutlineUsers className="h-5 w-5" />}
+          />
+
+          <ActionCard
+            title="Invitations"
+            description="Manage pending and issued workspace invitations."
+            onClick={goInvitations}
+            icon={<HiOutlineEnvelope className="h-5 w-5" />}
+          />
         </div>
+      </section>
 
-        <div className="stat-card">
-          <div className="stat-label">Total Procurements</div>
-          <div className="stat-value">
-            {summary ? formatAmount(summary.totalProcurementAmount) : "-"}
-          </div>
-        </div>
-
-        <div className="stat-card">
-          <div className="stat-label">Total Transactions</div>
-          <div className="stat-value">
-            {summary?.totalTransactionCount ?? "-"}
-          </div>
-        </div>
-      </div>
-
-      <div className="content-grid">
-        <div className="panel-card">
-          <div className="panel-header">
-            <div>
-              <div className="panel-title">Tenant Information</div>
-              <div className="panel-subtitle">
-                Current tenant context and administrator details.
-              </div>
-            </div>
-          </div>
-
-          <div className="info-list">
-            <div className="info-row">
-              <span className="info-label">Tenant Name</span>
-              <span className="info-value">
-                {summary?.tenantName || auth.currentTenantName || "-"}
-              </span>
-            </div>
-
-            <div className="info-row">
-              <span className="info-label">Tenant ID</span>
-              <span className="info-value mono">
-                {summary?.tenantPublicId || auth.currentTenantPublicId || "-"}
-              </span>
-            </div>
-
-            <div className="info-row">
-              <span className="info-label">Current User</span>
-              <span className="info-value">
-                {auth.userName || auth.userEmail || "-"}
-              </span>
-            </div>
-
-            <div className="info-row">
-              <span className="info-label">Role</span>
-              <span className="info-value">
-                <span className="tag tag-primary">
-                  {auth.currentMembership?.role || "-"}
-                </span>
-              </span>
-            </div>
-          </div>
-        </div>
-
-        <div className="panel-card">
-          <div className="panel-header">
-            <div>
-              <div className="panel-title">Quick Actions</div>
-              <div className="panel-subtitle">
-                Go to the main administration areas.
-              </div>
-            </div>
-          </div>
-
-          <div className="action-grid">
-            <button className="action-tile" onClick={goTransactions}>
-              <div className="action-title">Transactions</div>
-              <div className="action-text">
-                View and manage tenant-wide transactions.
-              </div>
-            </button>
-
-            <button className="action-tile" onClick={goAuditLogs}>
-              <div className="action-title">Audit Logs</div>
-              <div className="action-text">
-                Review important tenant activities and actions.
-              </div>
-            </button>
-
-            <button className="action-tile" onClick={goMembers}>
-              <div className="action-title">Members</div>
-              <div className="action-text">
-                View and manage tenant members.
-              </div>
-            </button>
-
-            <button className="action-tile" onClick={goInvitations}>
-              <div className="action-title">Invitations</div>
-              <div className="action-text">
-                Manage pending and sent tenant invitations.
-              </div>
-            </button>
-          </div>
-        </div>
-      </div>
-
-      <div className="panel-card">
-        <div className="panel-header">
+      <section className="rounded-3xl border border-slate-200 bg-white p-5 sm:p-6">
+        <div className="mb-4 flex items-center justify-between gap-4">
           <div>
-            <div className="panel-title">Recent Transactions</div>
-            <div className="panel-subtitle">
-              Latest transactions in this tenant.
-            </div>
+            <h2 className="text-lg font-semibold text-slate-800">
+              Recent transactions
+            </h2>
+            <p className="mt-1 text-sm text-slate-500">
+              Latest transaction activity in this tenant.
+            </p>
           </div>
 
-          <button className="link-btn" onClick={goTransactions}>
+          <button
+            type="button"
+            onClick={goTransactions}
+            className="inline-flex items-center gap-1 text-sm text-indigo-600 transition hover:text-indigo-500"
+          >
             View all
+            <HiOutlineArrowRight className="h-4 w-4" />
           </button>
         </div>
 
-        <div className="table-wrap">
-          <table className="recent-table">
-            <thead>
-              <tr>
-                <th>Title</th>
-                <th>Type</th>
-                <th>Amount</th>
-                <th>Status</th>
-                <th>Payment</th>
-                <th>Created At</th>
+        <div className="overflow-x-auto rounded-2xl border border-slate-200">
+          <table className="min-w-full border-collapse text-left">
+            <thead className="bg-slate-50">
+              <tr className="text-sm text-slate-600">
+                <th className="px-4 py-3 font-medium">Title</th>
+                <th className="px-4 py-3 font-medium">Type</th>
+                <th className="px-4 py-3 font-medium">Amount</th>
+                <th className="px-4 py-3 font-medium">Status</th>
+                <th className="px-4 py-3 font-medium">Execution</th>
+                <th className="px-4 py-3 font-medium">Created at</th>
               </tr>
             </thead>
 
             <tbody>
               {recentTransactions.length === 0 ? (
                 <tr>
-                  <td colSpan={6} className="empty-cell">
+                  <td
+                    colSpan={6}
+                    className="px-4 py-10 text-center text-sm text-slate-500"
+                  >
                     No transactions found.
                   </td>
                 </tr>
@@ -308,36 +382,45 @@ export default function Overview() {
                 recentTransactions.map((row) => (
                   <tr
                     key={row.transactionPublicId}
-                    className="clickable-row"
+                    className="cursor-pointer border-t border-slate-200 hover:bg-slate-50"
                     onClick={() => goTransactionDetail(row)}
                   >
-                    <td>{row.title}</td>
-                    <td>
-                      <span className="tag tag-light">{row.type}</span>
+                    <td className="px-4 py-4 text-sm font-medium text-slate-800">
+                      {row.title}
                     </td>
-                    <td>
-                      <span className="strong">
-                        {row.amount} {row.currency}
-                      </span>
+
+                    <td className="px-4 py-4">
+                      <Badge>
+                        {row.type === "Donation" ? "Income" : row.type}
+                      </Badge>
                     </td>
-                    <td>
-                      <span className={statusClass(row.status)}>
+
+                    <td className="px-4 py-4 text-sm font-medium text-slate-800">
+                      {row.amount} {row.currency}
+                    </td>
+
+                    <td className="px-4 py-4">
+                      <Badge tone={statusTone(row.status)}>
                         {row.status}
-                      </span>
+                      </Badge>
                     </td>
-                    <td>
-                      <span className={paymentClass(row.paymentStatus)}>
+
+                    <td className="px-4 py-4">
+                      <Badge tone={executionTone(row.paymentStatus)}>
                         {row.paymentStatus}
-                      </span>
+                      </Badge>
                     </td>
-                    <td>{formatDateTime(row.createdAtUtc)}</td>
+
+                    <td className="px-4 py-4 text-sm text-slate-600">
+                      {formatDateTime(row.createdAtUtc)}
+                    </td>
                   </tr>
                 ))
               )}
             </tbody>
           </table>
         </div>
-      </div>
+      </section>
     </div>
   )
 }

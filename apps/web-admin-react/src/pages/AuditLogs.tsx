@@ -1,6 +1,11 @@
 import { useEffect, useState } from "react"
 import { getAuditLogs, type AuditLogItem } from "../api/audit-log"
-import "./AuditLogs.css"
+import {
+  HiOutlineDocumentMagnifyingGlass,
+  HiOutlineFunnel,
+  HiOutlineArrowPath,
+  HiOutlineArrowRight,
+} from "react-icons/hi2"
 
 type FiltersState = {
   actionType: string
@@ -67,20 +72,14 @@ export default function AuditLogs() {
   }
 
   function resetFilters() {
-    setFilters({
+    const nextFilters: FiltersState = {
       actionType: "",
       fromUtc: "",
       toUtc: "",
-    })
+    }
 
-    void loadLogsWith(
-      {
-        actionType: "",
-        fromUtc: "",
-        toUtc: "",
-      },
-      1
-    )
+    setFilters(nextFilters)
+    void loadLogsWith(nextFilters, 1)
   }
 
   async function loadLogsWith(nextFilters: FiltersState, page = 1) {
@@ -146,23 +145,38 @@ export default function AuditLogs() {
   const totalPages = Math.max(1, Math.ceil(totalCount / pageSize))
 
   return (
-    <div className="audit-page">
-      <div className="audit-topbar">
-        <div>
-          <h2 className="audit-title">Audit Logs</h2>
-          <p className="audit-subtitle">
-            Review administrative actions and membership-related activities in
-            the current organization.
-          </p>
-        </div>
-      </div>
+    <div className="mx-auto flex max-w-6xl flex-col gap-6">
+      {/* Header */}
+      <section className="rounded-3xl border border-slate-200 bg-white px-8 py-7 sm:px-10 sm:py-8">
+        <div className="flex items-start gap-4">
+          <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-indigo-50 text-indigo-600">
+            <HiOutlineDocumentMagnifyingGlass className="h-6 w-6" />
+          </div>
 
-      <div className="audit-filter-card">
-        <div className="audit-filters">
+          <div>
+            <h1 className="text-3xl font-semibold tracking-tight text-slate-800">
+              Audit Logs
+            </h1>
+            <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-600">
+              Review administrative actions and membership-related activities in
+              the current organization.
+            </p>
+          </div>
+        </div>
+      </section>
+
+      {/* Filters */}
+      <section className="rounded-3xl border border-slate-200 bg-white p-5 sm:p-6">
+        <div className="mb-4 flex items-center gap-2 text-slate-800">
+          <HiOutlineFunnel className="h-5 w-5 text-slate-500" />
+          <h2 className="text-base font-semibold">Filters</h2>
+        </div>
+
+        <div className="grid gap-3 md:grid-cols-[1.4fr_1fr_1fr_auto_auto]">
           <select
-            className="filter-item"
             value={filters.actionType}
             onChange={(e) => updateFilter("actionType", e.target.value)}
+            className="h-11 rounded-xl border border-slate-300 bg-white px-3 text-sm text-slate-800 outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100"
           >
             <option value="">Action type</option>
             <option value="Membership.Invited">Membership.Invited</option>
@@ -177,63 +191,116 @@ export default function AuditLogs() {
           </select>
 
           <input
-            className="filter-item filter-date"
             type="datetime-local"
             value={filters.fromUtc}
             onChange={(e) => updateFilter("fromUtc", e.target.value)}
+            className="h-11 rounded-xl border border-slate-300 bg-white px-3 text-sm text-slate-800 outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100"
           />
 
           <input
-            className="filter-item filter-date"
             type="datetime-local"
             value={filters.toUtc}
             onChange={(e) => updateFilter("toUtc", e.target.value)}
+            className="h-11 rounded-xl border border-slate-300 bg-white px-3 text-sm text-slate-800 outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100"
           />
 
-          <button className="primary-btn" onClick={() => void handleSearch()}>
+          <button
+            type="button"
+            onClick={() => void handleSearch()}
+            className="inline-flex h-11 items-center justify-center rounded-xl bg-indigo-600 px-4 text-sm font-medium text-white transition hover:bg-indigo-500"
+          >
             Search
           </button>
-          <button className="secondary-btn" onClick={resetFilters}>
+
+          <button
+            type="button"
+            onClick={resetFilters}
+            className="inline-flex h-11 items-center justify-center gap-2 rounded-xl border border-slate-300 bg-white px-4 text-sm text-slate-700 transition hover:border-indigo-500 hover:text-indigo-600"
+          >
+            <HiOutlineArrowPath className="h-4 w-4" />
             Reset
           </button>
         </div>
-      </div>
+      </section>
 
-      <div className="audit-table-card">
-        {loading ? <div className="loading-block">Loading audit logs...</div> : null}
-        {errorMessage ? <div className="alert error">{errorMessage}</div> : null}
+      {loading ? (
+        <div className="text-sm text-slate-500">Loading audit logs...</div>
+      ) : null}
 
-        <div className="table-wrap">
-          <table className="audit-table">
-            <thead>
-              <tr>
-                <th>Time</th>
-                <th>Actor</th>
-                <th>Action</th>
-                <th>Target</th>
-                <th>Summary</th>
-                <th>Details</th>
+      {errorMessage ? (
+        <div
+          className="rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700"
+          role="alert"
+        >
+          {errorMessage}
+        </div>
+      ) : null}
+
+      {/* Table */}
+      <section className="rounded-3xl border border-slate-200 bg-white p-5 sm:p-6">
+        <div className="mb-4 flex items-center justify-between gap-4">
+          <div>
+            <h2 className="text-base font-semibold text-slate-800">
+              Audit log records
+            </h2>
+            <p className="mt-1 text-sm text-slate-500">
+              Page {pageNumber} of {totalPages} · Total {totalCount}
+            </p>
+          </div>
+        </div>
+
+        <div className="overflow-x-auto rounded-2xl border border-slate-200">
+          <table className="min-w-full border-collapse text-left">
+            <thead className="bg-slate-50">
+              <tr className="text-sm text-slate-600">
+                <th className="px-4 py-3 font-medium">Time</th>
+                <th className="px-4 py-3 font-medium">Actor</th>
+                <th className="px-4 py-3 font-medium">Action</th>
+                <th className="px-4 py-3 font-medium">Target</th>
+                <th className="px-4 py-3 font-medium">Summary</th>
+                <th className="px-4 py-3 font-medium">Details</th>
               </tr>
             </thead>
 
             <tbody>
               {logs.length === 0 ? (
                 <tr>
-                  <td colSpan={6} className="empty-cell">
+                  <td
+                    colSpan={6}
+                    className="px-4 py-10 text-center text-sm text-slate-500"
+                  >
                     No audit logs found.
                   </td>
                 </tr>
               ) : (
                 logs.map((row) => (
-                  <tr key={row.publicId}>
-                    <td>{formatDateTime(row.occurredAtUtc)}</td>
-                    <td>{row.actorDisplayName || "-"}</td>
-                    <td>{row.actionType}</td>
-                    <td>{row.targetDisplay || "-"}</td>
-                    <td>{row.summary}</td>
-                    <td>
-                      <button className="link-btn" onClick={() => openDetails(row)}>
+                  <tr
+                    key={row.publicId}
+                    className="border-t border-slate-200 hover:bg-slate-50"
+                  >
+                    <td className="px-4 py-4 text-sm text-slate-600">
+                      {formatDateTime(row.occurredAtUtc)}
+                    </td>
+                    <td className="px-4 py-4 text-sm text-slate-800">
+                      {row.actorDisplayName || "-"}
+                    </td>
+                    <td className="px-4 py-4 text-sm font-medium text-slate-800">
+                      {row.actionType}
+                    </td>
+                    <td className="px-4 py-4 text-sm text-slate-600">
+                      {row.targetDisplay || "-"}
+                    </td>
+                    <td className="px-4 py-4 text-sm text-slate-600">
+                      {row.summary}
+                    </td>
+                    <td className="px-4 py-4">
+                      <button
+                        type="button"
+                        onClick={() => openDetails(row)}
+                        className="inline-flex items-center gap-1 text-sm text-indigo-600 transition hover:text-indigo-500"
+                      >
                         View
+                        <HiOutlineArrowRight className="h-4 w-4" />
                       </button>
                     </td>
                   </tr>
@@ -243,62 +310,96 @@ export default function AuditLogs() {
           </table>
         </div>
 
-        <div className="audit-pagination">
+        <div className="mt-5 flex items-center justify-between gap-4">
           <button
-            className="secondary-btn"
+            type="button"
             disabled={pageNumber <= 1}
             onClick={() => void handlePageChange(pageNumber - 1)}
+            className="inline-flex h-10 items-center justify-center rounded-xl border border-slate-300 bg-white px-4 text-sm text-slate-700 transition hover:border-indigo-500 hover:text-indigo-600 disabled:cursor-not-allowed disabled:opacity-50"
           >
             Previous
           </button>
 
-          <span className="pagination-text">
-            Page {pageNumber} of {totalPages} · Total {totalCount}
+          <span className="text-sm text-slate-500">
+            Page {pageNumber} of {totalPages}
           </span>
 
           <button
-            className="secondary-btn"
+            type="button"
             disabled={pageNumber >= totalPages}
             onClick={() => void handlePageChange(pageNumber + 1)}
+            className="inline-flex h-10 items-center justify-center rounded-xl border border-slate-300 bg-white px-4 text-sm text-slate-700 transition hover:border-indigo-500 hover:text-indigo-600 disabled:cursor-not-allowed disabled:opacity-50"
           >
             Next
           </button>
         </div>
-      </div>
+      </section>
 
+      {/* Detail dialog */}
       {detailsVisible && selectedLog ? (
-        <div className="dialog-backdrop">
-          <div className="dialog-card">
-            <div className="dialog-header">
-              <div className="dialog-title">Audit Log Details</div>
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 px-4">
+          <div className="w-full max-w-3xl rounded-3xl border border-slate-200 bg-white p-6 shadow-xl">
+            <h2 className="text-xl font-semibold text-slate-800">
+              Audit log details
+            </h2>
+
+            <div className="mt-6 rounded-2xl border border-slate-100 bg-slate-50 px-5">
+              <div className="flex items-start justify-between gap-4 border-b border-slate-100 py-3">
+                <span className="text-sm text-slate-500">Time</span>
+                <span className="text-right text-sm font-medium text-slate-800">
+                  {formatDateTime(selectedLog.occurredAtUtc)}
+                </span>
+              </div>
+
+              <div className="flex items-start justify-between gap-4 border-b border-slate-100 py-3">
+                <span className="text-sm text-slate-500">Actor</span>
+                <span className="text-right text-sm font-medium text-slate-800">
+                  {selectedLog.actorDisplayName || "-"}
+                </span>
+              </div>
+
+              <div className="flex items-start justify-between gap-4 border-b border-slate-100 py-3">
+                <span className="text-sm text-slate-500">Action</span>
+                <span className="text-right text-sm font-medium text-slate-800">
+                  {selectedLog.actionType}
+                </span>
+              </div>
+
+              <div className="flex items-start justify-between gap-4 border-b border-slate-100 py-3">
+                <span className="text-sm text-slate-500">Target</span>
+                <span className="text-right text-sm font-medium text-slate-800">
+                  {selectedLog.targetDisplay || "-"}
+                </span>
+              </div>
+
+              <div className="flex items-start justify-between gap-4 border-b border-slate-100 py-3">
+                <span className="text-sm text-slate-500">Source</span>
+                <span className="text-right text-sm font-medium text-slate-800">
+                  {selectedLog.source || "-"}
+                </span>
+              </div>
+
+              <div className="flex items-start justify-between gap-4 py-3">
+                <span className="text-sm text-slate-500">Correlation Id</span>
+                <span className="text-right text-sm font-medium text-slate-800 break-all">
+                  {selectedLog.correlationId || "-"}
+                </span>
+              </div>
             </div>
 
-            <div className="detail-row">
-              <strong>Time:</strong> {formatDateTime(selectedLog.occurredAtUtc)}
-            </div>
-            <div className="detail-row">
-              <strong>Actor:</strong> {selectedLog.actorDisplayName || "-"}
-            </div>
-            <div className="detail-row">
-              <strong>Action:</strong> {selectedLog.actionType}
-            </div>
-            <div className="detail-row">
-              <strong>Target:</strong> {selectedLog.targetDisplay || "-"}
-            </div>
-            <div className="detail-row">
-              <strong>Source:</strong> {selectedLog.source || "-"}
-            </div>
-            <div className="detail-row">
-              <strong>Correlation Id:</strong> {selectedLog.correlationId || "-"}
+            <div className="mt-6">
+              <h3 className="text-sm font-semibold text-slate-800">Metadata</h3>
+              <pre className="mt-3 overflow-x-auto rounded-2xl border border-slate-200 bg-slate-50 p-4 text-xs leading-6 text-slate-700">
+                {formatJson(selectedLog.metadataJson)}
+              </pre>
             </div>
 
-            <div className="detail-json-title">Metadata</div>
-            <pre className="detail-json">
-              {formatJson(selectedLog.metadataJson)}
-            </pre>
-
-            <div className="dialog-footer">
-              <button className="secondary-btn" onClick={closeDetails}>
+            <div className="mt-6 flex justify-end">
+              <button
+                type="button"
+                onClick={closeDetails}
+                className="inline-flex items-center rounded-full border border-slate-300 bg-white px-4 py-2 text-sm text-slate-700 transition hover:border-indigo-500 hover:text-indigo-600"
+              >
                 Close
               </button>
             </div>

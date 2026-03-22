@@ -1,13 +1,45 @@
 import { useEffect, useMemo, useState } from "react"
 import { useNavigate } from "react-router-dom"
-import { getMyTransactions, type TransactionListItem } from "../api/transactions"
-import "./MyTransactions.css"
+import {
+  getMyTransactions,
+  type TransactionListItem,
+} from "../api/transactions"
+import {
+  HiOutlineFunnel,
+  HiOutlineArrowPath,
+  HiOutlineArrowRight,
+  HiOutlineClipboardDocumentList,
+} from "react-icons/hi2"
 
 type Filters = {
   keyword: string
   type: string
   status: string
-  paymentStatus: string
+}
+
+function Badge({
+  children,
+  tone = "default",
+}: {
+  children: React.ReactNode
+  tone?: "default" | "success" | "warning" | "danger"
+}) {
+  const className =
+    tone === "success"
+      ? "bg-emerald-50 text-emerald-700 border-emerald-200"
+      : tone === "warning"
+      ? "bg-amber-50 text-amber-700 border-amber-200"
+      : tone === "danger"
+      ? "bg-rose-50 text-rose-700 border-rose-200"
+      : "bg-slate-100 text-slate-700 border-slate-200"
+
+  return (
+    <span
+      className={`inline-flex items-center rounded-full border px-2.5 py-1 text-xs font-medium ${className}`}
+    >
+      {children}
+    </span>
+  )
 }
 
 export default function MyTransactions() {
@@ -21,7 +53,6 @@ export default function MyTransactions() {
     keyword: "",
     type: "",
     status: "",
-    paymentStatus: "",
   })
 
   useEffect(() => {
@@ -34,7 +65,7 @@ export default function MyTransactions() {
         setItems(res.items)
       } catch (err) {
         const message =
-          err instanceof Error ? err.message : "Failed to load transactions"
+          err instanceof Error ? err.message : "Failed to load transactions."
         setErrorMessage(message)
       } finally {
         setLoading(false)
@@ -48,23 +79,20 @@ export default function MyTransactions() {
     const keyword = filters.keyword.trim().toLowerCase()
 
     return items.filter((item) => {
+      const tenantName = item.tenantName?.toLowerCase?.() ?? ""
+      const title = item.title?.toLowerCase?.() ?? ""
+      const type = item.type?.toLowerCase?.() ?? ""
+
       const matchesKeyword =
         !keyword ||
-        item.tenantName.toLowerCase().includes(keyword) ||
-        item.title.toLowerCase().includes(keyword) ||
-        item.type.toLowerCase().includes(keyword)
+        tenantName.includes(keyword) ||
+        title.includes(keyword) ||
+        type.includes(keyword)
 
       const matchesType = !filters.type || item.type === filters.type
       const matchesStatus = !filters.status || item.status === filters.status
-      const matchesPaymentStatus =
-        !filters.paymentStatus || item.paymentStatus === filters.paymentStatus
 
-      return (
-        matchesKeyword &&
-        matchesType &&
-        matchesStatus &&
-        matchesPaymentStatus
-      )
+      return matchesKeyword && matchesType && matchesStatus
     })
   }, [items, filters])
 
@@ -80,7 +108,6 @@ export default function MyTransactions() {
       keyword: "",
       type: "",
       status: "",
-      paymentStatus: "",
     })
   }
 
@@ -95,187 +122,209 @@ export default function MyTransactions() {
     return `${row.amount} ${row.currency}`
   }
 
-  function statusClass(status: string) {
+  function statusTone(status: string) {
     switch (status) {
       case "Completed":
-        return "tag-success"
-      case "Failed":
-        return "tag-danger"
+      case "Approved":
+        return "success"
       case "Submitted":
-        return "tag-warning"
-      case "Cancelled":
-        return "tag-info"
-      default:
-        return "tag-info"
-    }
-  }
-
-  function paymentClass(status: string) {
-    switch (status) {
-      case "Succeeded":
-        return "tag-success"
-      case "Failed":
-        return "tag-danger"
+      case "Draft":
       case "Processing":
-        return "tag-warning"
+        return "warning"
+      case "Failed":
+      case "Rejected":
+      case "Cancelled":
+        return "danger"
       default:
-        return "tag-info"
+        return "default"
     }
   }
 
   function goDetail(row: TransactionListItem) {
-    navigate(`/transactions/${row.transactionPublicId}`)
+    navigate(`/portal/transactions/${row.transactionPublicId}`)
   }
 
   return (
-    <div className="transactions-page">
-      <div className="page-header">
-        <div>
-          <h1 className="page-title">My Transactions</h1>
-          <p className="page-subtitle">
-            Review your donations and procurement requests in the current tenant.
-          </p>
-        </div>
-      </div>
+    <div className="min-h-screen bg-slate-50 px-6 py-10">
+      <div className="mx-auto flex max-w-6xl flex-col gap-6">
+        {/* Header */}
+        <section className="rounded-3xl border border-slate-200 bg-white px-8 py-7 sm:px-10 sm:py-8">
+          <div className="flex items-start gap-4">
+            <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-indigo-50 text-indigo-600">
+              <HiOutlineClipboardDocumentList className="h-6 w-6" />
+            </div>
 
-      <div className="filter-card">
-        <div className="filter-row">
-          <input
-            className="filter-input keyword-input"
-            type="text"
-            placeholder="Search by tenant, title, or type"
-            value={filters.keyword}
-            onChange={(e) => updateFilter("keyword", e.target.value)}
-          />
-
-          <select
-            className="filter-select filter-item"
-            value={filters.type}
-            onChange={(e) => updateFilter("type", e.target.value)}
-          >
-            <option value="">Type</option>
-            <option value="Donation">Donation</option>
-            <option value="Procurement">Procurement</option>
-          </select>
-
-          <select
-            className="filter-select filter-item"
-            value={filters.status}
-            onChange={(e) => updateFilter("status", e.target.value)}
-          >
-            <option value="">Status</option>
-            <option value="Draft">Draft</option>
-            <option value="Submitted">Submitted</option>
-            <option value="Completed">Completed</option>
-            <option value="Failed">Failed</option>
-            <option value="Cancelled">Cancelled</option>
-            <option value="Rejected">Rejected</option>
-          </select>
-
-          <select
-            className="filter-select filter-item"
-            value={filters.paymentStatus}
-            onChange={(e) => updateFilter("paymentStatus", e.target.value)}
-          >
-            <option value="">Payment</option>
-            <option value="NotStarted">NotStarted</option>
-            <option value="Processing">Processing</option>
-            <option value="Succeeded">Succeeded</option>
-            <option value="Failed">Failed</option>
-          </select>
-
-          <button className="reset-btn" type="button" onClick={resetFilters}>
-            Reset
-          </button>
-        </div>
-      </div>
-
-      <div className="table-card">
-        <div className="table-header">
-          <div className="table-title">Transaction List</div>
-          <div className="table-count">
-            {filteredItems.length} item{filteredItems.length !== 1 ? "s" : ""}
+            <div>
+              <h1 className="text-3xl font-semibold tracking-tight text-slate-800">
+                My transactions
+              </h1>
+              <p className="mt-2 max-w-3xl text-sm leading-6 text-slate-600">
+                Review the records you created in the current workspace, including
+                income entries and procurement requests.
+              </p>
+            </div>
           </div>
-        </div>
+        </section>
 
-        {errorMessage ? (
-          <div className="table-alert" role="alert">
-            {errorMessage}
+        {/* Filters */}
+        <section className="rounded-3xl border border-slate-200 bg-white p-5 sm:p-6">
+          <div className="mb-4 flex items-center gap-2 text-slate-800">
+            <HiOutlineFunnel className="h-5 w-5 text-slate-500" />
+            <h2 className="text-base font-semibold">Filters</h2>
           </div>
-        ) : null}
 
-        <div className="table-wrapper">
-          <table className="transaction-table">
-            <thead>
-              <tr>
-                <th>Tenant</th>
-                <th>Title</th>
-                <th>Type</th>
-                <th>Amount</th>
-                <th>Status</th>
-                <th>Payment</th>
-                <th>Created At</th>
-                <th>Action</th>
-              </tr>
-            </thead>
+          <div className="grid gap-3 md:grid-cols-[2fr_1fr_1fr_auto]">
+            <input
+              type="text"
+              placeholder="Search by tenant, title, or type"
+              value={filters.keyword}
+              onChange={(e) => updateFilter("keyword", e.target.value)}
+              className="h-11 rounded-xl border border-slate-300 bg-white px-3 text-sm text-slate-800 outline-none placeholder:text-slate-400 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100"
+            />
 
-            <tbody>
-              {loading ? (
-                <tr>
-                  <td colSpan={8} className="table-empty">
-                    Loading...
-                  </td>
+            <select
+              value={filters.type}
+              onChange={(e) => updateFilter("type", e.target.value)}
+              className="h-11 rounded-xl border border-slate-300 bg-white px-3 text-sm text-slate-800 outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100"
+            >
+              <option value="">Type</option>
+              <option value="Donation">Income</option>
+              <option value="Procurement">Procurement</option>
+            </select>
+
+            <select
+              value={filters.status}
+              onChange={(e) => updateFilter("status", e.target.value)}
+              className="h-11 rounded-xl border border-slate-300 bg-white px-3 text-sm text-slate-800 outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100"
+            >
+              <option value="">Status</option>
+              <option value="Draft">Draft</option>
+              <option value="Submitted">Submitted</option>
+              <option value="Completed">Completed</option>
+              <option value="Failed">Failed</option>
+              <option value="Cancelled">Cancelled</option>
+              <option value="Rejected">Rejected</option>
+            </select>
+
+            <button
+              type="button"
+              onClick={resetFilters}
+              className="inline-flex h-11 items-center justify-center gap-2 rounded-xl border border-slate-300 bg-white px-4 text-sm text-slate-700 transition hover:border-indigo-500 hover:text-indigo-600"
+            >
+              <HiOutlineArrowPath className="h-4 w-4" />
+              Reset
+            </button>
+          </div>
+        </section>
+
+        {/* Table */}
+        <section className="rounded-3xl border border-slate-200 bg-white p-5 sm:p-6">
+          <div className="mb-4 flex items-center justify-between gap-4">
+            <div>
+              <h2 className="text-base font-semibold text-slate-800">
+                Transaction list
+              </h2>
+              <p className="mt-1 text-sm text-slate-500">
+                {filteredItems.length} item{filteredItems.length !== 1 ? "s" : ""}
+              </p>
+            </div>
+          </div>
+
+          {errorMessage ? (
+            <div
+              className="mb-4 rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700"
+              role="alert"
+            >
+              {errorMessage}
+            </div>
+          ) : null}
+
+          <div className="overflow-x-auto rounded-2xl border border-slate-200">
+            <table className="min-w-full border-collapse text-left">
+              <thead className="bg-slate-50">
+                <tr className="text-sm text-slate-600">
+                  <th className="px-4 py-3 font-medium">Tenant</th>
+                  <th className="px-4 py-3 font-medium">Title</th>
+                  <th className="px-4 py-3 font-medium">Type</th>
+                  <th className="px-4 py-3 font-medium">Amount</th>
+                  <th className="px-4 py-3 font-medium">Status</th>
+                  <th className="px-4 py-3 font-medium">Created at</th>
+                  <th className="px-4 py-3 font-medium">Action</th>
                 </tr>
-              ) : filteredItems.length === 0 ? (
-                <tr>
-                  <td colSpan={8} className="table-empty">
-                    No transactions found.
-                  </td>
-                </tr>
-              ) : (
-                filteredItems.map((row) => (
-                  <tr
-                    key={row.transactionPublicId}
-                    className="clickable-row"
-                    onClick={() => goDetail(row)}
-                  >
-                    <td>{row.tenantName}</td>
-                    <td>{row.title}</td>
-                    <td>
-                      <span className="tag tag-info">{row.type}</span>
-                    </td>
-                    <td>
-                      <span className="amount-text">{amountText(row)}</span>
-                    </td>
-                    <td>
-                      <span className={`tag ${statusClass(row.status)}`}>
-                        {row.status}
-                      </span>
-                    </td>
-                    <td>
-                      <span className={`tag ${paymentClass(row.paymentStatus)}`}>
-                        {row.paymentStatus}
-                      </span>
-                    </td>
-                    <td>{formatDateTime(row.createdAtUtc)}</td>
-                    <td>
-                      <button
-                        type="button"
-                        className="link-btn"
-                        onClick={(e) => {
-                          e.stopPropagation()
-                          goDetail(row)
-                        }}
-                      >
-                        View
-                      </button>
+              </thead>
+
+              <tbody>
+                {loading ? (
+                  <tr>
+                    <td
+                      colSpan={7}
+                      className="px-4 py-10 text-center text-sm text-slate-500"
+                    >
+                      Loading...
                     </td>
                   </tr>
-                ))
-              )}
-            </tbody>
-          </table>
-        </div>
+                ) : filteredItems.length === 0 ? (
+                  <tr>
+                    <td
+                      colSpan={7}
+                      className="px-4 py-10 text-center text-sm text-slate-500"
+                    >
+                      No transactions found.
+                    </td>
+                  </tr>
+                ) : (
+                  filteredItems.map((row) => (
+                    <tr
+                      key={row.transactionPublicId}
+                      className="cursor-pointer border-t border-slate-200 hover:bg-slate-50"
+                      onClick={() => goDetail(row)}
+                    >
+                      <td className="px-4 py-4 text-sm text-slate-700">
+                        {row.tenantName || "—"}
+                      </td>
+
+                      <td className="px-4 py-4 text-sm font-medium text-slate-800">
+                        {row.title}
+                      </td>
+
+                      <td className="px-4 py-4">
+                        <Badge>{row.type === "Donation" ? "Income" : row.type}</Badge>
+                      </td>
+
+                      <td className="px-4 py-4 text-sm font-medium text-slate-800">
+                        {amountText(row)}
+                      </td>
+
+                      <td className="px-4 py-4">
+                        <Badge tone={statusTone(row.status)}>
+                          {row.status}
+                        </Badge>
+                      </td>
+
+                      <td className="px-4 py-4 text-sm text-slate-600">
+                        {formatDateTime(row.createdAtUtc)}
+                      </td>
+
+                      <td className="px-4 py-4">
+                        <button
+                          type="button"
+                          className="inline-flex items-center gap-1 text-sm text-indigo-600 transition hover:text-indigo-500"
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            goDetail(row)
+                          }}
+                        >
+                          View
+                          <HiOutlineArrowRight className="h-4 w-4" />
+                        </button>
+                      </td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+          </div>
+        </section>
       </div>
     </div>
   )
