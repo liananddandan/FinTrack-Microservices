@@ -9,7 +9,7 @@ on:
 permissions:
   contents: read
   packages: write
-  
+
 jobs:
   ci:
     uses: ./.github/workflows/ci-reusable.yml
@@ -20,6 +20,7 @@ jobs:
     outputs:
       web_portal: ${{ steps.filter.outputs.web_portal }}
       web_admin: ${{ steps.filter.outputs.web_admin }}
+      gateway: ${{ steps.filter.outputs.gateway }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -33,17 +34,33 @@ jobs:
               - 'apps/web-portal-react/**'
             web_admin:
               - 'apps/web-admin-react/**'
+            gateway:
+              - 'src/Services/GatewayService/**'
 
   build-web-portal:
     needs: changes
     if: needs.changes.outputs.web_portal == 'true'
     uses: ./.github/workflows/web-portal-react-image.yml
-
+    secrets:
+      CICD_GITHUB_TOKEN: ${{ secrets.CICD_GITHUB_TOKEN }}
+      
   build-web-admin:
     needs: changes
     if: needs.changes.outputs.web_admin == 'true'
     uses: ./.github/workflows/web-admin-react-image.yml
-
+    secrets:
+      CICD_GITHUB_TOKEN: ${{ secrets.CICD_GITHUB_TOKEN }}
+      
+  build-gateway:
+    needs: changes
+    if: needs.changes.outputs.gateway == 'true'
+    permissions:
+      contents: read
+      packages: write
+    uses: ./.github/workflows/gateway-image.yml
+    secrets:
+      CICD_GITHUB_TOKEN: ${{ secrets.CICD_GITHUB_TOKEN }}
+      
   deploy:
     needs:
       - changes
@@ -59,3 +76,4 @@ jobs:
     with:
       deploy_web_portal: ${{ needs.changes.outputs.web_portal == 'true' }}
       deploy_web_admin: ${{ needs.changes.outputs.web_admin == 'true' }}
+      deploy_gateway: ${{ needs.changes.outputs.gateway == 'true' }}

@@ -88,6 +88,7 @@ app.MapGet("/api/openapi/all.json", async (
     Console.WriteLine($"[OpenAPI] Identity URL: {identityUrl}");
     Console.WriteLine($"[OpenAPI] Transaction URL: {transactionUrl}");
     Console.WriteLine($"[OpenAPI] AuditLog URL: {auditLogUrl}");
+    
     var identityJson = await client.GetStringAsync(identityUrl);
     var transactionJson = await client.GetStringAsync(transactionUrl);
     var auditLogJson = await client.GetStringAsync(auditLogUrl);
@@ -105,5 +106,6 @@ app.MapScalarApiReference("/api/swagger", options =>
     options.WithTheme(ScalarTheme.Default);
     options.OpenApiRoutePattern = "/api/openapi/all.json";
 });
+
 app.MapReverseProxy();
 app.Run();

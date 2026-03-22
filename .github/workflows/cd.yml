@@ -9,6 +9,9 @@ on:
       deploy_web_admin:
         required: true
         type: boolean
+      deploy_gateway:
+        required: true
+        type: boolean
 
 jobs:
   deploy:
@@ -39,6 +42,14 @@ jobs:
                 sed -i 's/^WEB_ADMIN_REACT_VERSION=.*/WEB_ADMIN_REACT_VERSION=latest/' .env
               else
                 printf "WEB_ADMIN_REACT_VERSION=latest\n" >> .env
+              fi
+            fi
+            
+            if [ "${{ inputs.deploy_gateway }}" = "true" ]; then
+              if [ -f .env ] && grep -q '^GATEWAY_VERSION=' .env; then
+                sed -i 's/^GATEWAY_VERSION=.*/GATEWAY_VERSION=latest/' .env
+              else
+                printf "GATEWAY_VERSION=latest\n" >> .env
               fi
             fi
 

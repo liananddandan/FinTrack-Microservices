@@ -147,9 +147,7 @@ services:
   # ========================
 
   gateway:
-    build:
-      context: .
-      dockerfile: src/Services/GatewayService/Dockerfile
+    image: ghcr.io/liananddandan/gateway:${GATEWAY_VERSION}
     container_name: fintrack-gateway
     depends_on:
       identity-service:
