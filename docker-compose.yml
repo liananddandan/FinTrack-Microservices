@@ -178,32 +178,8 @@ services:
   # ========================
   # Frontend
   # ========================
-
-#  web-portal:
-#    build:
-#      context: ./apps/web-portal
-#      dockerfile: Dockerfile
-#    container_name: fintrack-web-portal
-#    depends_on:
-#      gateway:
-#        condition: service_started
-#    ports:
-#      - "3000:80"
-#
-#  web-admin:
-#    build:
-#      context: ./apps/web-admin
-#      dockerfile: Dockerfile
-#    container_name: fintrack-web-admin
-#    depends_on:
-#      gateway:
-#        condition: service_started
-#    ports:
-#      - "3001:80"
   web-admin-react:
-    build:
-      context: ./apps/web-admin-react
-      dockerfile: Dockerfile
+    image: ghcr.io/liananddandan/web-portal-react:${WEB_PORTAL_REACT_VERSION}
     container_name: fintrack-web-admin-react
     depends_on:
       gateway:
