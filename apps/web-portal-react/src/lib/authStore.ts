@@ -42,7 +42,7 @@ function notify() {
 export const authStore = {
   subscribe(listener: () => void) {
     listeners.add(listener)
-    return () => listeners.delete(listener)
+    return () =>{ listeners.delete(listener) }
   },
 
   getState(): AuthState {

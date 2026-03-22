@@ -5,7 +5,53 @@ import {
   resolveTenantInvitation,
   type ResolveTenantInvitationResult,
 } from "../api/invitation"
-import "./AcceptInvitation.css"
+import {
+  HiOutlineEnvelopeOpen,
+  HiOutlineArrowUpRight,
+  HiOutlineCheckCircle,
+} from "react-icons/hi2"
+
+function Badge({
+  children,
+  tone = "default",
+}: {
+  children: React.ReactNode
+  tone?: "default" | "success" | "warning" | "danger"
+}) {
+  const className =
+    tone === "success"
+      ? "bg-emerald-50 text-emerald-700 border-emerald-200"
+      : tone === "warning"
+        ? "bg-amber-50 text-amber-700 border-amber-200"
+        : tone === "danger"
+          ? "bg-rose-50 text-rose-700 border-rose-200"
+          : "bg-slate-100 text-slate-700 border-slate-200"
+
+  return (
+    <span
+      className={`inline-flex items-center rounded-full border px-2.5 py-1 text-xs font-medium ${className}`}
+    >
+      {children}
+    </span>
+  )
+}
+
+function InfoRow({
+  label,
+  value,
+}: {
+  label: string
+  value: React.ReactNode
+}) {
+  return (
+    <div className="flex items-start justify-between gap-4 border-b border-slate-100 py-3 last:border-b-0">
+      <span className="text-sm text-slate-500">{label}</span>
+      <span className="text-right text-sm font-medium text-slate-800">
+        {value}
+      </span>
+    </div>
+  )
+}
 
 export default function AcceptInvitation() {
   const location = useLocation()
@@ -23,7 +69,8 @@ export default function AcceptInvitation() {
     return params.get("token") ?? ""
   }, [location.search])
 
-  const canAccept = !!invitation &&
+  const canAccept =
+    !!invitation &&
     invitation.status === "Pending" &&
     !successMessage
 
@@ -44,9 +91,15 @@ export default function AcceptInvitation() {
         setInvitation(result)
       } catch (error) {
         const message =
-          error instanceof Error
-            ? error.message
-            : "Failed to load invitation."
+          typeof error === "object" &&
+            error !== null &&
+            "response" in error &&
+            typeof (error as any).response?.data?.message === "string"
+            ? (error as any).response.data.message
+            : error instanceof Error
+              ? error.message
+              : "Failed to load invitation."
+
         setErrorMessage(message)
       } finally {
         setLoading(false)
@@ -76,16 +129,22 @@ export default function AcceptInvitation() {
       setInvitation((prev) =>
         prev
           ? {
-              ...prev,
-              status: "Accepted",
-            }
+            ...prev,
+            status: "Accepted",
+          }
           : prev
       )
     } catch (error) {
       const message =
-        error instanceof Error
-          ? error.message
-          : "Failed to accept invitation."
+        typeof error === "object" &&
+          error !== null &&
+          "response" in error &&
+          typeof (error as any).response?.data?.message === "string"
+          ? (error as any).response.data.message
+          : error instanceof Error
+            ? error.message
+            : "Failed to accept invitation."
+
       setErrorMessage(message)
     } finally {
       setSubmitting(false)
@@ -93,7 +152,7 @@ export default function AcceptInvitation() {
   }
 
   function goLogin() {
-    navigate("/portal/login")
+    navigate("/portal/login", { replace: true })
   }
 
   function formatDate(value: string) {
@@ -106,108 +165,131 @@ export default function AcceptInvitation() {
   }
 
   return (
-    <div className="portal-page">
-      <div className="portal-shell">
-        <div className="portal-brand">
-          <div className="portal-badge">FinTrack Portal</div>
-          <h1 className="portal-title">Accept your invitation</h1>
-          <p className="portal-description">
-            Review the invitation details and confirm whether you want to join
-            this organization.
-          </p>
-        </div>
+    <div className="min-h-screen bg-slate-50 px-6 py-10">
+      <div className="mx-auto max-w-3xl">
+        <section className="rounded-3xl border border-slate-200 border-t-4 border-t-indigo-200 bg-white p-8 shadow-sm sm:p-10">
+          <div className="flex items-center gap-4">
+            <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-indigo-100 text-indigo-600">
+              <HiOutlineEnvelopeOpen className="h-7 w-7" />
+            </div>
 
-        <div className="portal-card">
+            <div>
+              <p className="text-lg font-semibold text-slate-800">
+                Transaction & Workflow Platform
+              </p>
+              <p className="mt-1 text-sm text-slate-500">
+                Workspace invitation
+              </p>
+            </div>
+          </div>
+
+          <h1 className="mt-8 text-3xl font-semibold tracking-tight text-slate-800">
+            Accept your invitation
+          </h1>
+
+          <p className="mt-4 max-w-2xl text-base leading-7 text-slate-600">
+            Review the invitation details and confirm whether you want to join this organization workspace.
+          </p>
+
           {loading ? (
-            <div className="skeleton-block">
-              <div className="skeleton-row"></div>
-              <div className="skeleton-row"></div>
-              <div className="skeleton-row"></div>
-              <div className="skeleton-row"></div>
-              <div className="skeleton-row"></div>
-              <div className="skeleton-row"></div>
+            <div className="mt-8 space-y-3">
+              <div className="h-12 rounded-xl bg-slate-100" />
+              <div className="h-12 rounded-xl bg-slate-100" />
+              <div className="h-12 rounded-xl bg-slate-100" />
+              <div className="h-12 rounded-xl bg-slate-100" />
+              <div className="h-12 rounded-xl bg-slate-100" />
             </div>
           ) : errorMessage ? (
-            <div className="portal-alert error">{errorMessage}</div>
+            <div
+              className="mt-8 rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700"
+              role="alert"
+            >
+              {errorMessage}
+            </div>
           ) : invitation ? (
             <>
-              <div className="portal-card-header">
-                <h2 className="portal-card-title">Invitation details</h2>
-                <p className="portal-card-subtitle">
-                  Please confirm the information before accepting.
-                </p>
-              </div>
-
-              <div className="invitation-summary">
-                <div className="summary-row">
-                  <span className="summary-label">Organization</span>
-                  <span className="summary-value">{invitation.tenantName}</span>
-                </div>
-
-                <div className="summary-row">
-                  <span className="summary-label">Email</span>
-                  <span className="summary-value">{invitation.email}</span>
-                </div>
-
-                <div className="summary-row">
-                  <span className="summary-label">Role</span>
-                  <span className="summary-value">
-                    <span className="tag tag-info">{invitation.role}</span>
-                  </span>
-                </div>
-
-                <div className="summary-row">
-                  <span className="summary-label">Status</span>
-                  <span className="summary-value">
-                    <span
-                      className={`tag ${
-                        invitation.status === "Pending"
-                          ? "tag-warning"
-                          : "tag-success"
-                      }`}
+              <div className="mt-8 rounded-2xl border border-slate-200 bg-slate-50 px-5">
+                <InfoRow
+                  label="Organization"
+                  value={invitation.tenantName}
+                />
+                <InfoRow
+                  label="Email"
+                  value={invitation.email}
+                />
+                <InfoRow
+                  label="Role"
+                  value={<Badge>{invitation.role}</Badge>}
+                />
+                <InfoRow
+                  label="Status"
+                  value={
+                    <Badge
+                      tone={
+                        invitation.status === "Pending" ? "warning" : "success"
+                      }
                     >
                       {invitation.status}
-                    </span>
-                  </span>
-                </div>
+                    </Badge>
+                  }
+                />
+                <InfoRow
+                  label="Expires"
+                  value={formatDate(invitation.expiredAt)}
+                />
+              </div>
 
-                <div className="summary-row">
-                  <span className="summary-label">Expires</span>
-                  <span className="summary-value">
-                    {formatDate(invitation.expiredAt)}
-                  </span>
+              <div className="mt-8 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-4">
+                <div className="flex items-start gap-3">
+                  <div className="mt-0.5 text-indigo-600">
+                    <HiOutlineCheckCircle className="h-5 w-5" />
+                  </div>
+                  <p className="text-sm leading-6 text-slate-600">
+                    Accepting this invitation will add your account to the organization workspace with the role shown above.
+                  </p>
                 </div>
               </div>
 
               {successMessage ? (
-                <div className="portal-alert success">{successMessage}</div>
+                <div
+                  className="mt-6 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700"
+                  role="status"
+                >
+                  {successMessage}
+                </div>
               ) : null}
 
-              <div className="portal-actions">
-                <button type="button" className="secondary-btn" onClick={goLogin}>
-                  Back to login
-                </button>
+              <div className="mt-8 flex flex-wrap gap-3">
+                <div >
+                  <button
+                    onClick={goLogin}
+                    className="group inline-flex items-center gap-2 rounded-full border border-slate-200 px-4 py-2 text-sm text-slate-700 transition hover:border-indigo-500 hover:text-indigo-600"
+                  >
+                    <span>Back to login</span>
+                    <HiOutlineArrowUpRight className="h-4 w-4 text-slate-400 transition group-hover:text-indigo-600" />
+                  </button>
+                </div>
 
                 <button
                   type="button"
-                  className="primary-btn"
                   disabled={!canAccept || submitting}
                   onClick={handleAccept}
+                  className="inline-flex items-center rounded-full bg-indigo-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-indigo-500 disabled:cursor-not-allowed disabled:opacity-60"
                 >
                   {submitting ? "Accepting..." : "Accept invitation"}
                 </button>
               </div>
             </>
           ) : (
-            <div className="portal-alert error">
+            <div
+              className="mt-8 rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700"
+              role="alert"
+            >
               Invitation detail is unavailable.
             </div>
           )}
 
-          <div className="portal-footer-link">
-            <Link to="/portal/login">Back to login</Link>
-          </div>
-        </div>
+        </section>
       </div>
     </div>
   )
