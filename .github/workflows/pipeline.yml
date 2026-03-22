@@ -12,7 +12,7 @@ permissions:
   
 jobs:
   ci:
-    uses: ./.github/workflows/ci.yml
+    uses: ./.github/workflows/ci-reusable.yml
 
   changes:
     runs-on: ubuntu-latest
