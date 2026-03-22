@@ -68,9 +68,6 @@ export default function AdminLayout() {
             </div>
 
             <div className="min-w-0">
-              <div className="text-base font-semibold text-slate-900">
-                FinTrack
-              </div>
               <div className="mt-0.5 text-xs leading-5 text-slate-500">
                 Transaction & Workflow Platform
               </div>
@@ -133,9 +130,6 @@ export default function AdminLayout() {
               <div className="min-w-0">
                 <div className="text-2xl font-semibold tracking-tight text-slate-900">
                   {pageTitle}
-                </div>
-                <div className="mt-1 truncate text-sm text-slate-500">
-                  Tenant: {auth.currentTenantName || "Unknown tenant"}
                 </div>
               </div>
 
