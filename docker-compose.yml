@@ -63,7 +63,7 @@ services:
     environment:
       ASPNETCORE_ENVIRONMENT: Development
       ASPNETCORE_URLS: http://+:8080
-      Frontend__PortalBaseUrl: http://localhost:3001
+      Frontend__PortalBaseUrl: https://fintrack.chenlis.com/portal
       ConnectionStrings__DefaultConnection: server=mysql;port=3306;database=fintrack_identity;user=root;password=123456
       ConnectionStrings__Redis: redis:6379
       CAP__RabbitMQ__HostName: rabbitmq
