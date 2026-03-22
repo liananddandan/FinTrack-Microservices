@@ -1,4 +1,4 @@
-namespace GatewayService.Common.Options;
+namespace GatewayService.Application.Common.Options;
 
 public class AuthenticationOptions
 {

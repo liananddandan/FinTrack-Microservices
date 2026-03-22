@@ -1,10 +1,10 @@
-using GatewayService.Common.Options;
+using GatewayService.Application.Common.Options;
 using Microsoft.Extensions.Options;
 using SharedKernel.Common.Constants;
 using SharedKernel.Common.DTOs.Auth;
 using StackExchange.Redis;
 
-namespace GatewayService.Middlewares;
+namespace GatewayService.Application.Middlewares;
 
 public class BasicJwtTokenValidationMiddleware
 {
