@@ -3,6 +3,7 @@ using GatewayService.Application.Common.Options;
 using GatewayService.Application.Middlewares;
 using GatewayService.Application.Services;
 using GatewayService.Application.Services.Interfaces;
+using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 using Scalar.AspNetCore;
 using SharedKernel.Common.Options;
@@ -19,6 +20,8 @@ builder.Services.AddReverseProxy()
 
 builder.Services.Configure<JwtOptions>(
     builder.Configuration.GetSection("JwtSettings"));
+builder.Services.Configure<OpenApiServicesOptions>(
+    builder.Configuration.GetSection("OpenApiServices"));
 
 builder.Services.AddAuthentication().AddJwtBearer(options =>
 {
@@ -71,15 +74,23 @@ app.UseAuthorization();
 
 app.UseMiddleware<BasicJwtTokenValidationMiddleware>();
 app.MapControllers();
-app.MapGet("/api/openapi/all.json", async (IHttpClientFactory httpClientFactory,
+app.MapGet("/api/openapi/all.json", async (
+    IHttpClientFactory httpClientFactory,
+    IOptions<OpenApiServicesOptions> options,
     IOpenApiDocumentMerger merger) =>
 {
     var client = httpClientFactory.CreateClient();
+    var config = options.Value;
+    var identityUrl = $"{config.Identity}/openapi/v1.json";
+    var transactionUrl = $"{config.Transaction}/openapi/v1.json";
+    var auditLogUrl = $"{config.AuditLog}/openapi/v1.json";
 
-    var identityJson = await client.GetStringAsync("http://localhost:5100/openapi/v1.json");
-    var transactionJson = await client.GetStringAsync("http://localhost:5133/openapi/v1.json");
-    var auditLogJson = await client.GetStringAsync("http://localhost:5107/openapi/v1.json");
-    
+    Console.WriteLine($"[OpenAPI] Identity URL: {identityUrl}");
+    Console.WriteLine($"[OpenAPI] Transaction URL: {transactionUrl}");
+    Console.WriteLine($"[OpenAPI] AuditLog URL: {auditLogUrl}");
+    var identityJson = await client.GetStringAsync(identityUrl);
+    var transactionJson = await client.GetStringAsync(transactionUrl);
+    var auditLogJson = await client.GetStringAsync(auditLogUrl);
     var merged = merger.Merge(
         ("Identity API", identityJson),
         ("Transaction API", transactionJson),
