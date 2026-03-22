@@ -9,9 +9,7 @@ export function useAuth() {
       setSnapshot(authStore.getState())
     })
 
-    return () => {
-        unsubscribe
-    }
+    return unsubscribe
   }, [])
 
   return {

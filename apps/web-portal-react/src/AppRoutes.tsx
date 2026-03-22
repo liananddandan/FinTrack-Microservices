@@ -6,19 +6,20 @@ import RegisterUser from "./pages/RegisterUser"
 import RegisterTenant from "./pages/RegisterTenant"
 import WaitingMembership from "./pages/WaitingMembership"
 import Home from "./pages/Home"
-import Donation from "./pages/Donation"
+import RecordIncome from "./pages/RecordIncome"
 import MyTransactions from "./pages/MyTransactions"
 import TransactionDetail from "./pages/TransactionDetail"
 import NewProcurement from "./pages/NewProcurement"
 import AcceptInvitation from "./pages/AcceptInvitation"
 import LandingPage from "./pages/LandingPage"
+import Profile from "./pages/Profile"
 
 export default function AppRoutes() {
     return (
         <Routes>
             {/* redirect */}
             <Route path="/" element={<LandingPage />} />
-            
+
             <Route path="/portal" element={<Navigate to="/portal/login" replace />} />
 
             {/* public */}
@@ -70,10 +71,10 @@ export default function AppRoutes() {
             />
 
             <Route
-                path="/portal/donate"
+                path="/portal/record-income"
                 element={
                     <AuthGuard requireAuth requireTenant>
-                        <Donation />
+                        <RecordIncome />
                     </AuthGuard>
                 }
             />
@@ -106,6 +107,14 @@ export default function AppRoutes() {
                 element={
                     <AuthGuard public>
                         <AcceptInvitation />
+                    </AuthGuard>
+                }
+            />
+            <Route
+                path="/portal/profile"
+                element={
+                    <AuthGuard requireAuth requireTenant>
+                        <Profile />
                     </AuthGuard>
                 }
             />

@@ -20,6 +20,15 @@ export default function AuthGuard({
   const { accountAccessToken, tenantAccessToken } = authStore.getState()
 
   if (isPublic) {
+    // 已登录用户不该再回登录/注册页
+    if (accountAccessToken && tenantAccessToken) {
+      return <Navigate to="/portal/home" replace />
+    }
+
+    if (accountAccessToken && !tenantAccessToken) {
+      return <Navigate to="/portal/waiting-membership" replace />
+    }
+
     return <>{children}</>
   }
 

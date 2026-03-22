@@ -1,7 +1,7 @@
 import { useState } from "react"
 import { useNavigate, Link } from "react-router-dom"
+import { HiOutlineUserPlus, HiOutlineArrowUpRight } from "react-icons/hi2"
 import { registerUser } from "../api/account"
-import "./RegisterUser.css"
 
 export default function RegisterUser() {
   const navigate = useNavigate()
@@ -65,18 +65,21 @@ export default function RegisterUser() {
         password: form.password,
       })
 
-      setSuccessMessage(
-        "User registered successfully. Redirecting to login..."
-      )
+      setSuccessMessage("User registered successfully. Redirecting to login...")
 
       setTimeout(() => {
-        navigate("/portal/login")
+        navigate("/portal/login", { replace: true })
       }, 1200)
     } catch (err) {
       const msg =
-        err instanceof Error
-          ? err.message
-          : "User registration failed."
+        typeof err === "object" &&
+          err !== null &&
+          "response" in err &&
+          typeof (err as any).response?.data?.message === "string"
+          ? (err as any).response.data.message
+          : err instanceof Error
+            ? err.message
+            : "User registration failed."
       setErrorMessage(msg)
     } finally {
       setLoading(false)
@@ -84,105 +87,138 @@ export default function RegisterUser() {
   }
 
   return (
-    <div className="portal-page">
-      <div className="portal-shell">
-        <div className="portal-brand">
-          <div className="portal-badge">FinTrack Portal</div>
-          <h1 className="portal-title">
-            Create your personal account.
-          </h1>
-          <p className="portal-description">
-            Register as an individual user first. Tenant membership can be added later by invitation.
-          </p>
-        </div>
+    <div className="min-h-screen bg-slate-50 px-6 py-10">
+      <div className="mx-auto grid max-w-5xl items-center gap-12 lg:grid-cols-[0.85fr_1.15fr]">
+        <section className="max-w-md">
+          <div className="flex items-center gap-4">
+            <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-indigo-100 text-indigo-600">
+              <HiOutlineUserPlus className="h-7 w-7" />
+            </div>
 
-        <div className="portal-card">
-          <div className="portal-card-header">
-            <h2 className="portal-card-title">Register user</h2>
-            <p className="portal-card-subtitle">
+            <div>
+              <p className="text-lg font-semibold text-slate-800">
+                Transaction & Workflow Platform
+              </p>
+              <p className="mt-1 text-sm text-slate-500">
+                User account registration
+              </p>
+            </div>
+          </div>
+
+          <h1 className="mt-3 text-3xl font-semibold tracking-tight text-slate-800">
+            Create your user account
+          </h1>
+
+          <p className="mt-4 text-base leading-7 text-slate-600">
+            Set up your personal account first. Tenant membership can be added later through invitation or workspace setup.
+          </p>
+        </section>
+
+        <section className="rounded-3xl border border-slate-200 border-t-4 border-t-indigo-200 bg-white p-8 shadow-sm sm:p-10">
+          <div>
+            <h2 className="text-2xl font-semibold text-slate-800">
+              User account setup
+            </h2>
+            <p className="mt-2 text-sm leading-6 text-slate-500">
               This creates a user account only. It does not create or join any organization yet.
             </p>
           </div>
 
-          <div className="form">
-            <div className="form-item">
-              <label>User name</label>
+          <div className="mt-8 space-y-5">
+            <div>
+              <label className="mb-2 block text-sm font-medium text-slate-700">
+                User name
+              </label>
               <input
                 type="text"
                 placeholder="e.g. Chen Li"
                 value={form.userName}
-                onChange={(e) =>
-                  updateField("userName", e.target.value)
-                }
+                onChange={(e) => updateField("userName", e.target.value)}
+                className="!block !h-11 !w-full !rounded-xl !border !border-slate-300 !bg-white !px-3 !text-sm !text-slate-800 !opacity-100 outline-none placeholder:!text-slate-400 focus:!border-indigo-500 focus:!ring-2 focus:!ring-indigo-100"
               />
             </div>
 
-            <div className="form-item">
-              <label>Email</label>
+            <div>
+              <label className="mb-2 block text-sm font-medium text-slate-700">
+                Email
+              </label>
               <input
                 type="email"
                 placeholder="you@example.com"
                 value={form.email}
-                onChange={(e) =>
-                  updateField("email", e.target.value)
-                }
+                onChange={(e) => updateField("email", e.target.value)}
+                className="!block !h-11 !w-full !rounded-xl !border !border-slate-300 !bg-white !px-3 !text-sm !text-slate-800 !opacity-100 outline-none placeholder:!text-slate-400 focus:!border-indigo-500 focus:!ring-2 focus:!ring-indigo-100"
               />
             </div>
 
-            <div className="form-item">
-              <label>Password</label>
+            <div>
+              <label className="mb-2 block text-sm font-medium text-slate-700">
+                Password
+              </label>
               <input
                 type="password"
                 placeholder="Enter your password"
                 value={form.password}
-                onChange={(e) =>
-                  updateField("password", e.target.value)
-                }
+                onChange={(e) => updateField("password", e.target.value)}
+                className="!block !h-11 !w-full !rounded-xl !border !border-slate-300 !bg-white !px-3 !text-sm !text-slate-800 !opacity-100 outline-none placeholder:!text-slate-400 focus:!border-indigo-500 focus:!ring-2 focus:!ring-indigo-100"
               />
             </div>
 
-            <div className="form-item">
-              <label>Confirm password</label>
+            <div>
+              <label className="mb-2 block text-sm font-medium text-slate-700">
+                Confirm password
+              </label>
               <input
                 type="password"
                 placeholder="Re-enter your password"
                 value={form.confirmPassword}
-                onChange={(e) =>
-                  updateField("confirmPassword", e.target.value)
-                }
+                onChange={(e) => updateField("confirmPassword", e.target.value)}
+                className="!block !h-11 !w-full !rounded-xl !border !border-slate-300 !bg-white !px-3 !text-sm !text-slate-800 !opacity-100 outline-none placeholder:!text-slate-400 focus:!border-indigo-500 focus:!ring-2 focus:!ring-indigo-100"
               />
             </div>
 
             <button
-              className="portal-primary-btn"
-              disabled={loading}
+              type="button"
               onClick={onRegister}
+              disabled={loading}
+              className="!inline-flex !h-11 !w-full !items-center !justify-center !rounded-xl !bg-indigo-600 !text-sm !font-semibold !text-white transition hover:!bg-indigo-500 disabled:cursor-not-allowed disabled:opacity-60"
             >
               {loading ? "Creating..." : "Create account"}
             </button>
 
-            {successMessage && (
-              <div className="portal-alert success">
+            {successMessage ? (
+              <div className="rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700">
                 {successMessage}
               </div>
-            )}
+            ) : null}
 
-            {errorMessage && (
-              <div className="portal-alert error">
+            {errorMessage ? (
+              <div className="rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">
                 {errorMessage}
               </div>
-            )}
+            ) : null}
           </div>
 
-          <div className="portal-divider"></div>
+          <div className="my-8 h-px bg-slate-200" />
 
-          <div className="portal-links">
-            <Link to="/portal/login">Back to login</Link>
-            <Link to="/portal/register-tenant">
-              Create organization instead
+          <div className="flex flex-wrap gap-3">
+            <Link
+              to="/portal/login"
+              className="group inline-flex items-center gap-2 rounded-full border border-slate-200 px-4 py-2 text-sm text-slate-700 transition hover:border-indigo-500 hover:text-indigo-600"
+            >
+              <span>Back to login</span>
+              <HiOutlineArrowUpRight className="h-4 w-4 text-slate-400 transition group-hover:text-indigo-600" />
+            </Link>
+
+            <Link
+              to="/portal/register-tenant"
+              className="group inline-flex items-center gap-2 rounded-full border border-slate-200 px-4 py-2 text-sm text-slate-700 transition hover:border-indigo-500 hover:text-indigo-600"
+            >
+              <span>Create organization instead</span>
+              <HiOutlineArrowUpRight className="h-4 w-4 text-slate-400 transition group-hover:text-indigo-600" />
             </Link>
           </div>
-        </div>
+        </section>
       </div>
     </div>
   )
