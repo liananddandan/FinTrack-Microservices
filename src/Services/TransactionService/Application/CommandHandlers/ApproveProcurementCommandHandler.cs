@@ -1,7 +1,7 @@
 using MediatR;
 using SharedKernel.Common.Results;
+using TransactionService.Application.Abstractions;
 using TransactionService.Application.Commands;
-using TransactionService.Application.Services.Interfaces;
 
 namespace TransactionService.Application.CommandHandlers;
 

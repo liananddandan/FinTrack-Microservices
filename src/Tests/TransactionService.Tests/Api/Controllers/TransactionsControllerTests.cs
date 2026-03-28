@@ -7,6 +7,7 @@ using SharedKernel.Common.DTOs;
 using SharedKernel.Common.Results;
 using System.Security.Claims;
 using SharedKernel.Common.DTOs.Auth;
+using TransactionService.Api.Contracts;
 using TransactionService.Api.Controllers;
 using TransactionService.Application.Commands;
 using TransactionService.Application.Common.DTOs;

@@ -1,5 +1,6 @@
+using TransactionService.Api.Contracts;
+using TransactionService.Application.Abstractions;
 using TransactionService.Application.Common.DTOs;
-using TransactionService.Application.Services.Interfaces;
 
 namespace TransactionService.Application.Services;
 

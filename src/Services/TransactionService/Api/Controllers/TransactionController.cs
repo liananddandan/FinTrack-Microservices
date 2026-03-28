@@ -3,6 +3,7 @@ using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using SharedKernel.Common.DTOs.Auth;
+using TransactionService.Api.Contracts;
 using TransactionService.Application.Commands;
 using TransactionService.Application.Common.DTOs;
 using TransactionService.Application.Common.Extensions;

@@ -2,11 +2,12 @@ using FluentAssertions;
 using Microsoft.Extensions.Logging;
 using Moq;
 using SharedKernel.Common.Results;
+using TransactionService.Api.Contracts;
+using TransactionService.Application.Abstractions;
+using TransactionService.Application.Common.Abstractions;
 using TransactionService.Application.Common.DTOs;
-using TransactionService.Application.Services.Interfaces;
 using TransactionService.Domain.Entities;
 using TransactionService.Domain.Enums;
-using TransactionService.Infrastructure.Persistence.Repositories.Interfaces;
 
 namespace TransactionService.Tests.Application.Services;
 

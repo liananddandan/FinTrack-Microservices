@@ -11,7 +11,7 @@ using TransactionService.Infrastructure.Persistence;
 
 namespace TransactionService.Tests.Api.IntegrationTests;
 
-[Collection("IntegrationTests")]
+[Collection("NonParallel Collection")]
 public class TransactionGetDetailTests : IClassFixture<TransactionWebApplicationFactory<Program>>
 {
     private readonly TransactionWebApplicationFactory<Program> _factory;
@@ -44,15 +44,8 @@ public class TransactionGetDetailTests : IClassFixture<TransactionWebApplication
             tenantPublicId,
             userPublicId,
             "Support Donation");
-
-        var token = JwtTestTokenFactory.CreateTenantAccessToken(
-            userPublicId: userPublicId.ToString(),
-            tenantPublicId: tenantPublicId.ToString(),
-            role: "Member",
-            jwtVersion: "1");
-
-        _client.DefaultRequestHeaders.Authorization =
-            new AuthenticationHeaderValue("Bearer", token);
+        
+        _client.SetTestAuth("Member", userPublicId, tenantPublicId);
 
         var response = await _client.GetAsync($"/api/transactions/{transaction.PublicId}");
         var body = await response.Content.ReadAsStringAsync();
@@ -82,15 +75,8 @@ public class TransactionGetDetailTests : IClassFixture<TransactionWebApplication
             tenantPublicId,
             ownerUserId,
             "Owner Donation");
-
-        var token = JwtTestTokenFactory.CreateTenantAccessToken(
-            userPublicId: currentUserId.ToString(),
-            tenantPublicId: tenantPublicId.ToString(),
-            role: "Member",
-            jwtVersion: "1");
-
-        _client.DefaultRequestHeaders.Authorization =
-            new AuthenticationHeaderValue("Bearer", token);
+        
+        _client.SetTestAuth("Member", currentUserId, tenantPublicId);
 
         var response = await _client.GetAsync($"/api/transactions/{transaction.PublicId}");
         var body = await response.Content.ReadAsStringAsync();
@@ -112,15 +98,8 @@ public class TransactionGetDetailTests : IClassFixture<TransactionWebApplication
             tenantPublicId,
             ownerUserId,
             "Admin Visible Donation");
-
-        var token = JwtTestTokenFactory.CreateTenantAccessToken(
-            userPublicId: adminUserId.ToString(),
-            tenantPublicId: tenantPublicId.ToString(),
-            role: "Admin",
-            jwtVersion: "1");
-
-        _client.DefaultRequestHeaders.Authorization =
-            new AuthenticationHeaderValue("Bearer", token);
+        
+        _client.SetTestAuth("Member", ownerUserId, tenantPublicId);
 
         var response = await _client.GetAsync($"/api/transactions/{transaction.PublicId}");
         var body = await response.Content.ReadAsStringAsync();
@@ -148,15 +127,8 @@ public class TransactionGetDetailTests : IClassFixture<TransactionWebApplication
             ownerTenantPublicId,
             userPublicId,
             "Cross Tenant Donation");
-
-        var token = JwtTestTokenFactory.CreateTenantAccessToken(
-            userPublicId: userPublicId.ToString(),
-            tenantPublicId: currentTenantPublicId.ToString(),
-            role: "Member",
-            jwtVersion: "1");
-
-        _client.DefaultRequestHeaders.Authorization =
-            new AuthenticationHeaderValue("Bearer", token);
+        
+        _client.SetTestAuth("Member", userPublicId, currentTenantPublicId);
 
         var response = await _client.GetAsync($"/api/transactions/{transaction.PublicId}");
         var body = await response.Content.ReadAsStringAsync();

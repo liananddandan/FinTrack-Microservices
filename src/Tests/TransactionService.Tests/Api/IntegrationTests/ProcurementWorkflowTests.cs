@@ -4,6 +4,7 @@ using System.Net.Http.Json;
 using FluentAssertions;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
+using TransactionService.Api.Contracts;
 using TransactionService.Application.Common.DTOs;
 using TransactionService.Domain.Entities;
 using TransactionService.Domain.Enums;
@@ -12,7 +13,7 @@ using Xunit;
 
 namespace TransactionService.Tests.Api.IntegrationTests;
 
-[Collection("IntegrationTests")]
+[Collection("NonParallel Collection")]
 public class ProcurementWorkflowTests : IClassFixture<TransactionWebApplicationFactory<Program>>
 {
     private readonly TransactionWebApplicationFactory<Program> _factory;
@@ -32,14 +33,8 @@ public class ProcurementWorkflowTests : IClassFixture<TransactionWebApplicationF
         var tenantId = Guid.NewGuid();
         var userId = Guid.NewGuid();
         var adminId = Guid.NewGuid();
-
-        var memberToken = JwtTestTokenFactory.CreateTenantAccessToken(
-            userPublicId: userId.ToString(),
-            tenantPublicId: tenantId.ToString(),
-            role: "Member");
-
-        _client.DefaultRequestHeaders.Authorization =
-            new AuthenticationHeaderValue("Bearer", memberToken);
+        
+        _client.SetTestAuth("Member", userId, tenantId);
 
         // create
         var createResponse = await _client.PostAsJsonAsync("/api/transactions/procurements",
@@ -79,13 +74,7 @@ public class ProcurementWorkflowTests : IClassFixture<TransactionWebApplicationF
         submitResponse.StatusCode.Should().Be(HttpStatusCode.OK);
 
         // approve as admin
-        var adminToken = JwtTestTokenFactory.CreateTenantAccessToken(
-            userPublicId: adminId.ToString(),
-            tenantPublicId: tenantId.ToString(),
-            role: "Admin");
-
-        _client.DefaultRequestHeaders.Authorization =
-            new AuthenticationHeaderValue("Bearer", adminToken);
+        _client.SetTestAuth("Admin", adminId, tenantId);
 
         var approveResponse = await _client.PostAsync(
             $"/api/transactions/{transactionId}/approve",
@@ -138,14 +127,8 @@ public class ProcurementWorkflowTests : IClassFixture<TransactionWebApplicationF
         using var verifyScope = _factory.Services.CreateScope();
         var verifyDb = verifyScope.ServiceProvider.GetRequiredService<TransactionDbContext>();
         var existing = await verifyDb.Transactions.FirstAsync();
-
-        var adminToken = JwtTestTokenFactory.CreateTenantAccessToken(
-            userPublicId: adminId.ToString(),
-            tenantPublicId: tenantId.ToString(),
-            role: "Admin");
-
-        _client.DefaultRequestHeaders.Authorization =
-            new AuthenticationHeaderValue("Bearer", adminToken);
+        
+        _client.SetTestAuth("Admin", adminId, tenantId);
 
         var rejectResponse = await _client.PostAsJsonAsync(
             $"/api/transactions/{existing.PublicId}/reject",

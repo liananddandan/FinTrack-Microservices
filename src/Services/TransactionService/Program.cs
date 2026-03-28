@@ -4,10 +4,14 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Scalar.AspNetCore;
 using SharedKernel.Common.Options;
+using TransactionService.Application.Abstractions;
+using TransactionService.Application.Common.Abstractions;
 using TransactionService.Application.Middlewares;
+using TransactionService.Application.ProductCategories.Abstractions;
+using TransactionService.Application.ProductCategories.Services;
+using TransactionService.Infrastructure.Authentication;
 using TransactionService.Infrastructure.Persistence;
 using TransactionService.Infrastructure.Persistence.Repositories;
-using TransactionService.Infrastructure.Persistence.Repositories.Interfaces;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -39,7 +43,7 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     });
 
 builder.Services.AddAuthorization();
-
+builder.Services.AddHttpContextAccessor();
 builder.Services.AddScoped<ITransactionRepo, TransactionRepo>();
 builder.Services.AddDbContext<TransactionDbContext>(options =>
 {
@@ -52,13 +56,16 @@ builder.Services.AddMediatR(configuration =>
     configuration.RegisterServicesFromAssembly(typeof(Program).Assembly));
 
 builder.Services.Scan(scan => scan
-    .FromAssemblyOf<Program>() // 你也可以换成 typeof(Program) 或任何所在程序集的类型
+    .FromAssemblyOf<Program>()
     .AddClasses(classes => classes.InNamespaces(
         "TransactionService.Application.Services",
         "TransactionService.Infrastructure.Persistence.Repositories"))
     .AsImplementedInterfaces()
     .WithScopedLifetime());
 
+builder.Services.AddScoped<ICurrentTenantContext, CurrentTenantContext>();
+builder.Services.AddScoped<IProductCategoryService, ProductCategoryService>();
+builder.Services.AddScoped<IProductCategoryRepository, ProductCategoryRepository>();
 builder.Services.AddControllers();
 
 var app = builder.Build();

@@ -1,4 +1,4 @@
-namespace TransactionService.Application.Common.DTOs;
+namespace TransactionService.Api.Contracts;
 
 public class RejectProcurementRequest
 {

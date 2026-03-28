@@ -1,6 +1,6 @@
 using TransactionService.Domain.Entities;
 
-namespace TransactionService.Infrastructure.Persistence.Repositories.Interfaces;
+namespace TransactionService.Application.Abstractions;
 
 public interface ITenantAccountRepo
 {

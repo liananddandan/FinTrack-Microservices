@@ -11,7 +11,7 @@ using Xunit;
 
 namespace TransactionService.Tests.Api.IntegrationTests;
 
-[Collection("IntegrationTests")]
+[Collection("NonParallel Collection")]
 public class TransactionGetMyTests : IClassFixture<TransactionWebApplicationFactory<Program>>
 {
     private readonly TransactionWebApplicationFactory<Program> _factory;
@@ -31,15 +31,8 @@ public class TransactionGetMyTests : IClassFixture<TransactionWebApplicationFact
         var otherUserPublicId = Guid.NewGuid();
 
         await SeedTransactionsAsync(tenantPublicId, currentUserPublicId, otherUserPublicId);
-
-        var token = JwtTestTokenFactory.CreateTenantAccessToken(
-            userPublicId: currentUserPublicId.ToString(),
-            tenantPublicId: tenantPublicId.ToString(),
-            role: "Member",
-            jwtVersion: "1");
-
-        _client.DefaultRequestHeaders.Authorization =
-            new AuthenticationHeaderValue("Bearer", token);
+        
+        _client.SetTestAuth("Member", currentUserPublicId, tenantPublicId);
 
         var response = await _client.GetAsync("/api/transactions/my?pageNumber=1&pageSize=10");
         var body = await response.Content.ReadAsStringAsync();

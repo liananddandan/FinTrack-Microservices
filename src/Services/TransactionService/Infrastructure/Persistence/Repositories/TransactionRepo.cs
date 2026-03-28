@@ -1,7 +1,7 @@
 using Microsoft.EntityFrameworkCore;
+using TransactionService.Application.Abstractions;
 using TransactionService.Domain.Entities;
 using TransactionService.Domain.Enums;
-using TransactionService.Infrastructure.Persistence.Repositories.Interfaces;
 using TransactionService.Infrastructure.Persistence.Repositories.Models;
 
 namespace TransactionService.Infrastructure.Persistence.Repositories;

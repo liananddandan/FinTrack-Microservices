@@ -1,7 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
 using SharedKernel.Common.DTOs;
+using TransactionService.Application.Abstractions;
 using TransactionService.Application.DTOs;
-using TransactionService.Application.Services.Interfaces;
 
 namespace TransactionService.Api.Controllers;
 

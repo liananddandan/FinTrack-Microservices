@@ -6,12 +6,14 @@ using Microsoft.AspNetCore.Mvc;
 using Moq;
 using SharedKernel.Common.DTOs;
 using SharedKernel.Common.Results;
+using TransactionService.Api.Contracts;
 using TransactionService.Api.Controllers;
 using TransactionService.Application.Commands;
 using TransactionService.Application.Common.DTOs;
 
 namespace TransactionService.Tests.Api.IntegrationTests;
 
+[Collection("NonParallel Collection")]
 public class TransactionCreateDonations
 {
     [Fact]

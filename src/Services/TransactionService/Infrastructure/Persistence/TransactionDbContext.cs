@@ -7,6 +7,9 @@ public class TransactionDbContext(DbContextOptions<TransactionDbContext> options
 {
     public DbSet<Transaction> Transactions => Set<Transaction>();
     public DbSet<TenantAccount> TenantAccounts => Set<TenantAccount>();
+    
+    public DbSet<ProductCategory> ProductCategories => Set<ProductCategory>();
+    public DbSet<Product> Products => Set<Product>();
 
     protected override void OnModelCreating(ModelBuilder builder)
     {

@@ -1,4 +1,4 @@
-namespace TransactionService.Infrastructure.Persistence.Repositories.Interfaces;
+namespace TransactionService.Application.Common.Abstractions;
 
 public interface IUnitOfWork
 {

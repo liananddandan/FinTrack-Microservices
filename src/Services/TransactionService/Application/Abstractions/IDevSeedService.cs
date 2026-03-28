@@ -1,6 +1,6 @@
 using TransactionService.Application.DTOs;
 
-namespace TransactionService.Application.Services.Interfaces;
+namespace TransactionService.Application.Abstractions;
 
 public interface IDevSeedService
 {

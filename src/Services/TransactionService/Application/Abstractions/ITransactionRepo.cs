@@ -1,7 +1,7 @@
 using TransactionService.Domain.Entities;
 using TransactionService.Infrastructure.Persistence.Repositories.Models;
 
-namespace TransactionService.Infrastructure.Persistence.Repositories.Interfaces;
+namespace TransactionService.Application.Abstractions;
 
 public interface ITransactionRepo
 {

@@ -1,6 +1,6 @@
-namespace TransactionService.Application.Common.DTOs;
+namespace TransactionService.Api.Contracts;
 
-public class UpdateProcurementRequest
+public class CreateProcurementRequest
 {
     public string Title { get; set; } = string.Empty;
     public string? Description { get; set; }

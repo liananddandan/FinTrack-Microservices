@@ -1,8 +1,8 @@
+using TransactionService.Api.Contracts;
+using TransactionService.Application.Abstractions;
 using TransactionService.Application.Common.DTOs;
 using TransactionService.Application.DTOs;
-using TransactionService.Application.Services.Interfaces;
 using TransactionService.Domain.Enums;
-using TransactionService.Infrastructure.Persistence.Repositories.Interfaces;
 
 namespace TransactionService.Application.Services;
 

@@ -1,6 +1,7 @@
+using TransactionService.Api.Contracts;
 using TransactionService.Application.Common.DTOs;
 
-namespace TransactionService.Application.Services.Interfaces;
+namespace TransactionService.Application.Abstractions;
 
 public interface IPaymentGateway
 {
