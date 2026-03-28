@@ -1,6 +1,6 @@
 using MediatR;
 using SharedKernel.Common.Results;
-using TransactionService.Application.DTOs;
+using TransactionService.Application.ProductCategories.Dtos;
 
 namespace TransactionService.Application.ProductCategories.Commands;
 

@@ -1,7 +1,7 @@
 using MediatR;
 using SharedKernel.Common.Results;
-using TransactionService.Application.DTOs;
 using TransactionService.Application.ProductCategories.Abstractions;
+using TransactionService.Application.ProductCategories.Dtos;
 using TransactionService.Application.ProductCategories.Queries;
 
 namespace TransactionService.Application.ProductCategories.Handlers;

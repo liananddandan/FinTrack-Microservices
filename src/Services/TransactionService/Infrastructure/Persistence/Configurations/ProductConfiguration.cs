@@ -23,8 +23,6 @@ public class ProductConfiguration : IEntityTypeConfiguration<Product>
         builder.Property(x => x.TenantPublicId)
             .IsRequired();
 
-        builder.HasIndex(x => new { x.TenantPublicId, x.Name });
-
         builder.Property(x => x.Name)
             .IsRequired()
             .HasMaxLength(150);
@@ -39,6 +37,9 @@ public class ProductConfiguration : IEntityTypeConfiguration<Product>
         builder.Property(x => x.ImageUrl)
             .HasMaxLength(500);
 
+        builder.Property(x => x.DisplayOrder)
+            .IsRequired();
+
         builder.Property(x => x.IsAvailable)
             .IsRequired();
 
@@ -51,6 +52,8 @@ public class ProductConfiguration : IEntityTypeConfiguration<Product>
         builder.Property(x => x.UpdatedAt);
 
         builder.Property(x => x.DeletedAt);
+
+        builder.HasIndex(x => new { x.TenantPublicId, x.CategoryId, x.Name });
 
         builder.HasOne(x => x.Category)
             .WithMany(x => x.Products)

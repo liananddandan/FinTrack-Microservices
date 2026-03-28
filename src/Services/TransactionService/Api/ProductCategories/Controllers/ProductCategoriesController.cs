@@ -5,6 +5,7 @@ using TransactionService.Api.ProductCategories.Contracts;
 using TransactionService.Application.Common.Extensions;
 using TransactionService.Application.ProductCategories.Commands;
 using TransactionService.Application.ProductCategories.Queries;
+using TransactionService.Application.Products.Queries;
 
 namespace TransactionService.Api.ProductCategories.Controllers;
 
@@ -61,6 +62,16 @@ public class ProductCategoriesController(IMediator mediator) : ControllerBase
 
         var result = await mediator.Send(command, cancellationToken);
 
+        return result.ToActionResult();
+    }
+    
+    [HttpGet("{categoryPublicId:guid}/products")]
+    public async Task<IActionResult> GetProducts(
+        Guid categoryPublicId,
+        CancellationToken cancellationToken)
+    {
+        var query = new GetProductsByCategoryQuery(categoryPublicId);
+        var result = await mediator.Send(query, cancellationToken);
         return result.ToActionResult();
     }
 }

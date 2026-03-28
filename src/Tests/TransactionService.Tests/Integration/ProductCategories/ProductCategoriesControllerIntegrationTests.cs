@@ -3,10 +3,9 @@ using System.Net.Http.Json;
 using FluentAssertions;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
-using SharedKernel.Common.DTOs;
 using SharedKernel.Common.Results;
 using TransactionService.Api.ProductCategories.Contracts;
-using TransactionService.Application.DTOs;
+using TransactionService.Application.ProductCategories.Dtos;
 using TransactionService.Domain.Entities;
 using TransactionService.Infrastructure.Persistence;
 

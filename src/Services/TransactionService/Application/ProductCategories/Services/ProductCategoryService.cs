@@ -1,8 +1,8 @@
 using SharedKernel.Common.Results;
 using TransactionService.Application.Common.Abstractions;
-using TransactionService.Application.DTOs;
 using TransactionService.Application.ProductCategories.Abstractions;
 using TransactionService.Application.ProductCategories.Commands;
+using TransactionService.Application.ProductCategories.Dtos;
 using TransactionService.Domain.Entities;
 
 namespace TransactionService.Application.ProductCategories.Services;

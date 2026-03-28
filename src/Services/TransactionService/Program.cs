@@ -9,6 +9,8 @@ using TransactionService.Application.Common.Abstractions;
 using TransactionService.Application.Middlewares;
 using TransactionService.Application.ProductCategories.Abstractions;
 using TransactionService.Application.ProductCategories.Services;
+using TransactionService.Application.Products.Abstractions;
+using TransactionService.Application.Products.Services;
 using TransactionService.Infrastructure.Authentication;
 using TransactionService.Infrastructure.Persistence;
 using TransactionService.Infrastructure.Persistence.Repositories;
@@ -66,6 +68,8 @@ builder.Services.Scan(scan => scan
 builder.Services.AddScoped<ICurrentTenantContext, CurrentTenantContext>();
 builder.Services.AddScoped<IProductCategoryService, ProductCategoryService>();
 builder.Services.AddScoped<IProductCategoryRepository, ProductCategoryRepository>();
+builder.Services.AddScoped<IProductRepository, ProductRepository>();
+builder.Services.AddScoped<IProductService, ProductService>();
 builder.Services.AddControllers();
 
 var app = builder.Build();

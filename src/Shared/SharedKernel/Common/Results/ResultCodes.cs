@@ -145,6 +145,21 @@ public static class ResultCodes
         public const string CreateSuccess = "100006996";
     }
     
+    public static class Product
+    {
+        public const string CreateParameterError = "100007001";
+        public const string CreateDuplicatedName = "100007002";
+        public const string UpdateParameterError = "100007003";
+        public const string UpdateDuplicatedName = "100007004";
+        public const string NotFound = "100007005";
+        public const string CategoryNotFound = "100007006";
+
+        public const string CreateSuccess = "100007996";
+        public const string DeleteSuccess = "100007997";
+        public const string GetListSuccess = "100007998";
+        public const string UpdateSuccess = "100007999";
+    }
+    
     public const string InternalError = "900900001";
     public const string Forbidden = "900900002";
 }

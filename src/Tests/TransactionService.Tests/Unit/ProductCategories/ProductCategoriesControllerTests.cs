@@ -6,8 +6,8 @@ using SharedKernel.Common.DTOs;
 using SharedKernel.Common.Results;
 using TransactionService.Api.ProductCategories.Contracts;
 using TransactionService.Api.ProductCategories.Controllers;
-using TransactionService.Application.DTOs;
 using TransactionService.Application.ProductCategories.Commands;
+using TransactionService.Application.ProductCategories.Dtos;
 using TransactionService.Application.ProductCategories.Queries;
 using Xunit;
 

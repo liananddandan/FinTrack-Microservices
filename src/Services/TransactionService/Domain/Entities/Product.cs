@@ -5,7 +5,7 @@ public class Product
     public long Id { get; set; }
     public Guid PublicId { get; set; } = Guid.NewGuid();
 
-    public long TenantPublicId { get; set; }
+    public Guid TenantPublicId { get; set; }
 
     public long CategoryId { get; set; }
     public ProductCategory Category { get; set; } = default!;
@@ -23,4 +23,6 @@ public class Product
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     public DateTime? UpdatedAt { get; set; }
     public DateTime? DeletedAt { get; set; }
+    
+    public int DisplayOrder { get; set; }
 }
