@@ -1,10 +1,10 @@
 using FluentAssertions;
 using Moq;
 using SharedKernel.Common.Results;
-using TransactionService.Application.Abstractions;
-using TransactionService.Application.CommandHandlers;
-using TransactionService.Application.Commands;
-using TransactionService.Application.Common.DTOs;
+using TransactionService.Api.Transaction.Contracts;
+using TransactionService.Application.Transactions.Abstractions;
+using TransactionService.Application.Transactions.CommandHandlers;
+using TransactionService.Application.Transactions.Commands;
 using Xunit;
 
 namespace TransactionService.Tests.Application.CommandHandlers;

@@ -4,13 +4,14 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Scalar.AspNetCore;
 using SharedKernel.Common.Options;
-using TransactionService.Application.Abstractions;
 using TransactionService.Application.Common.Abstractions;
 using TransactionService.Application.Middlewares;
 using TransactionService.Application.ProductCategories.Abstractions;
 using TransactionService.Application.ProductCategories.Services;
 using TransactionService.Application.Products.Abstractions;
 using TransactionService.Application.Products.Services;
+using TransactionService.Application.Transactions.Abstractions;
+using TransactionService.Application.Transactions.Services;
 using TransactionService.Infrastructure.Authentication;
 using TransactionService.Infrastructure.Persistence;
 using TransactionService.Infrastructure.Persistence.Repositories;
@@ -58,18 +59,20 @@ builder.Services.AddMediatR(configuration =>
     configuration.RegisterServicesFromAssembly(typeof(Program).Assembly));
 
 builder.Services.Scan(scan => scan
-    .FromAssemblyOf<Program>()
-    .AddClasses(classes => classes.InNamespaces(
-        "TransactionService.Application.Services",
-        "TransactionService.Infrastructure.Persistence.Repositories"))
+    .FromAssemblies(
+        typeof(IProductService).Assembly,
+        typeof(ProductRepository).Assembly)
+    .AddClasses(classes => classes.Where(type =>
+        type.Name.EndsWith("Service") ||
+        type.Name.EndsWith("Repository") ||
+        type.Name.EndsWith("Repo")))
     .AsImplementedInterfaces()
     .WithScopedLifetime());
 
+builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
+builder.Services.AddScoped<ITenantInfoClient, MockTenantInfoClient>();
+builder.Services.AddScoped<IPaymentGateway, MockPaymentGateway>();
 builder.Services.AddScoped<ICurrentTenantContext, CurrentTenantContext>();
-builder.Services.AddScoped<IProductCategoryService, ProductCategoryService>();
-builder.Services.AddScoped<IProductCategoryRepository, ProductCategoryRepository>();
-builder.Services.AddScoped<IProductRepository, ProductRepository>();
-builder.Services.AddScoped<IProductService, ProductService>();
 builder.Services.AddControllers();
 
 var app = builder.Build();

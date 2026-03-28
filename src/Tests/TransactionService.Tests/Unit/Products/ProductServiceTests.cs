@@ -2,7 +2,6 @@ using FluentAssertions;
 using Moq;
 using SharedKernel.Common.Results;
 using TransactionService.Application.Common.Abstractions;
-using TransactionService.Application.DTOs;
 using TransactionService.Application.Products.Abstractions;
 using TransactionService.Application.Products.Commands;
 using TransactionService.Application.Products.Queries;

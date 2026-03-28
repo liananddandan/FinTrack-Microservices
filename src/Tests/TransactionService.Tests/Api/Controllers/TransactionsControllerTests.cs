@@ -7,11 +7,10 @@ using SharedKernel.Common.DTOs;
 using SharedKernel.Common.Results;
 using System.Security.Claims;
 using SharedKernel.Common.DTOs.Auth;
-using TransactionService.Api.Contracts;
-using TransactionService.Api.Controllers;
-using TransactionService.Application.Commands;
-using TransactionService.Application.Common.DTOs;
-using TransactionService.Application.Queries;
+using TransactionService.Api.Transaction.Contracts;
+using TransactionService.Api.Transaction.Controllers;
+using TransactionService.Application.Transactions.Commands;
+using TransactionService.Application.Transactions.Queries;
 using Xunit;
 
 namespace TransactionService.Tests.Api.Controllers;

@@ -6,10 +6,9 @@ using Microsoft.AspNetCore.Mvc;
 using Moq;
 using SharedKernel.Common.DTOs;
 using SharedKernel.Common.Results;
-using TransactionService.Api.Contracts;
-using TransactionService.Api.Controllers;
-using TransactionService.Application.Commands;
-using TransactionService.Application.Common.DTOs;
+using TransactionService.Api.Transaction.Contracts;
+using TransactionService.Api.Transaction.Controllers;
+using TransactionService.Application.Transactions.Commands;
 
 namespace TransactionService.Tests.Api.IntegrationTests;
 

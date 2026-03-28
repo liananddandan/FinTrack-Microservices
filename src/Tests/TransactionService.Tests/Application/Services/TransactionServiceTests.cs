@@ -2,10 +2,9 @@ using FluentAssertions;
 using Microsoft.Extensions.Logging;
 using Moq;
 using SharedKernel.Common.Results;
-using TransactionService.Api.Contracts;
-using TransactionService.Application.Abstractions;
+using TransactionService.Api.Transaction.Contracts;
 using TransactionService.Application.Common.Abstractions;
-using TransactionService.Application.Common.DTOs;
+using TransactionService.Application.Transactions.Abstractions;
 using TransactionService.Domain.Entities;
 using TransactionService.Domain.Enums;
 
@@ -18,13 +17,13 @@ public class TransactionServiceTests
     private readonly Mock<ITenantInfoClient> _tenantInfoClientMock = new();
     private readonly Mock<IPaymentGateway> _paymentGatewayMock = new();
     private readonly Mock<IUnitOfWork> _unitOfWorkMock = new();
-    private readonly Mock<ILogger<TransactionService.Application.Services.TransactionService>> _loggerMock = new();
+    private readonly Mock<ILogger<TransactionService.Application.Transactions.Services.TransactionService>> _loggerMock = new();
 
-    private readonly TransactionService.Application.Services.TransactionService _sut;
+    private readonly TransactionService.Application.Transactions.Services.TransactionService _sut;
 
     public TransactionServiceTests()
     {
-        _sut = new TransactionService.Application.Services.TransactionService(
+        _sut = new TransactionService.Application.Transactions.Services.TransactionService(
             _transactionRepoMock.Object,
             _tenantAccountRepoMock.Object,
             _tenantInfoClientMock.Object,

@@ -13,6 +13,12 @@ export type CreateProductCategoryRequest = {
   displayOrder: number
 }
 
+export type UpdateProductCategoryRequest = {
+  name: string
+  displayOrder: number
+  isActive: boolean
+}
+
 export async function getProductCategories(): Promise<ProductCategoryItem[]> {
   const response = await tenantHttp.get<ApiResponse<ProductCategoryItem[]>>(
     "/api/product-categories"
@@ -26,6 +32,18 @@ export async function createProductCategory(
 ): Promise<ProductCategoryItem> {
   const response = await tenantHttp.post<ApiResponse<ProductCategoryItem>>(
     "/api/product-categories",
+    request
+  )
+
+  return response.data.data
+}
+
+export async function updateProductCategory(
+  publicId: string,
+  request: UpdateProductCategoryRequest
+): Promise<ProductCategoryItem> {
+  const response = await tenantHttp.put<ApiResponse<ProductCategoryItem>>(
+    `/api/product-categories/${publicId}`,
     request
   )
 

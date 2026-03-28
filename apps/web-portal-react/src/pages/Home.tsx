@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react"
 import { useNavigate } from "react-router-dom"
 import { useAuth } from "../hooks/useAuth"
 import { getProductCategories, type ProductCategoryItem } from "../api/product-category"
+import { getProductsByCategory, type ProductItem } from "../api/product"
 import {
   HiOutlineArrowLeftOnRectangle,
   HiOutlineQueueList,
@@ -56,9 +57,12 @@ export default function Home() {
 
   const [initializing, setInitializing] = useState(true)
   const [loadingCategories, setLoadingCategories] = useState(false)
+  const [loadingProducts, setLoadingProducts] = useState(false)
   const [errorMessage, setErrorMessage] = useState("")
+
   const [categories, setCategories] = useState<ProductCategoryItem[]>([])
   const [selectedCategoryId, setSelectedCategoryId] = useState<string>("")
+  const [products, setProducts] = useState<ProductItem[]>([])
   const [cartItems, setCartItems] = useState<CartItem[]>([])
 
   useEffect(() => {
@@ -73,6 +77,14 @@ export default function Home() {
 
     void init()
   }, [])
+
+  useEffect(() => {
+    if (selectedCategoryId) {
+      void loadProducts(selectedCategoryId)
+    } else {
+      setProducts([])
+    }
+  }, [selectedCategoryId])
 
   async function loadCategories() {
     setLoadingCategories(true)
@@ -102,6 +114,28 @@ export default function Home() {
     }
   }
 
+  async function loadProducts(categoryPublicId: string) {
+    setLoadingProducts(true)
+    setErrorMessage("")
+
+    try {
+      const result = await getProductsByCategory(categoryPublicId)
+      const availableProducts = result
+        .filter((x) => x.isAvailable)
+        .sort((a, b) => a.displayOrder - b.displayOrder)
+
+      setProducts(availableProducts)
+    } catch (error: unknown) {
+      if (error instanceof Error) {
+        setErrorMessage(error.message || "Failed to load products.")
+      } else {
+        setErrorMessage("Failed to load products.")
+      }
+    } finally {
+      setLoadingProducts(false)
+    }
+  }
+
   function goOrders() {
     navigate("/portal/my-transactions")
   }
@@ -120,44 +154,24 @@ export default function Home() {
     [categories, selectedCategoryId]
   )
 
-  const categoryProducts = useMemo(() => {
-    if (!selectedCategory) {
-      return []
-    }
-
-    // Temporary mock products for UI structure.
-    // Replace this with backend product API later.
-    const mockProductsByCategory: Record<
-      string,
-      Array<{ id: string; name: string; price: number }>
-    > = {
-      [categories[0]?.publicId ?? ""]: [
-        { id: "p1", name: "Flat White", price: 5.5 },
-        { id: "p2", name: "Latte", price: 5.8 },
-        { id: "p3", name: "Cappuccino", price: 5.6 },
-      ],
-    }
-
-    return mockProductsByCategory[selectedCategory.publicId] ?? []
-  }, [categories, selectedCategory])
-
-  function addToCart(product: { id: string; name: string; price: number }) {
+  function addToCart(product: ProductItem) {
     if (!selectedCategory) {
       return
     }
 
     setCartItems((prev) => {
-      const existing = prev.find((x) => x.id === product.id)
+      const existing = prev.find((x) => x.id === product.publicId)
+
       if (existing) {
         return prev.map((x) =>
-          x.id === product.id ? { ...x, quantity: x.quantity + 1 } : x
+          x.id === product.publicId ? { ...x, quantity: x.quantity + 1 } : x
         )
       }
 
       return [
         ...prev,
         {
-          id: product.id,
+          id: product.publicId,
           name: product.name,
           price: product.price,
           quantity: 1,
@@ -327,39 +341,33 @@ export default function Home() {
               <div className="rounded-2xl border border-dashed border-slate-300 bg-slate-50 px-6 py-10 text-center text-sm text-slate-500">
                 Choose a category to view products.
               </div>
-            ) : categoryProducts.length === 0 ? (
+            ) : loadingProducts ? (
+              <div className="text-sm text-slate-500">Loading products...</div>
+            ) : products.length === 0 ? (
               <div className="rounded-2xl border border-dashed border-slate-300 bg-slate-50 px-6 py-10 text-center text-sm text-slate-500">
                 No products available in this category yet.
               </div>
             ) : (
-              <div className="grid gap-4 sm:grid-cols-2 2xl:grid-cols-3">
-                {categoryProducts.map((product) => (
-                  <button
-                    key={product.id}
-                    type="button"
-                    onClick={() => addToCart(product)}
-                    className="rounded-2xl border border-slate-200 bg-slate-50 p-5 text-left transition hover:border-indigo-300 hover:bg-white"
+              <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
+                {products.map((product) => (
+                  <div
+                    key={product.publicId}
+                    className="rounded-xl border border-slate-200 bg-white p-3"
                   >
-                    <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-indigo-50 text-indigo-600">
-                      <HiOutlineSquares2X2 className="h-5 w-5" />
+                    <div className="text-sm font-medium text-slate-800 truncate">
+                      {product.name}
                     </div>
-
-                    <div className="mt-4">
-                      <p className="text-sm font-semibold text-slate-800">
-                        {product.name}
-                      </p>
-                      <p className="mt-2 text-sm text-slate-500">
-                        {selectedCategory.name}
-                      </p>
-                      <p className="mt-4 text-lg font-semibold text-slate-800">
-                        ${product.price.toFixed(2)}
-                      </p>
+                    <div className="mt-1 text-sm text-slate-500">
+                      ${product.price.toFixed(2)}
                     </div>
-
-                    <div className="mt-4 inline-flex items-center rounded-xl bg-indigo-600 px-3 py-2 text-sm font-medium text-white">
-                      Add to order
-                    </div>
-                  </button>
+                    <button
+                      type="button"
+                      onClick={() => addToCart(product)}
+                      className="mt-3 w-full rounded-lg bg-indigo-600 px-3 py-2 text-sm font-medium text-white transition hover:bg-indigo-500"
+                    >
+                      Add
+                    </button>
+                  </div>
                 ))}
               </div>
             )}
@@ -387,90 +395,94 @@ export default function Home() {
               ) : null}
             </div>
 
-            {cartItems.length === 0 ? (
-              <div className="rounded-2xl border border-dashed border-slate-300 bg-slate-50 px-6 py-10 text-center text-sm text-slate-500">
-                No items in the order yet.
-              </div>
-            ) : (
-              <div className="space-y-3">
-                {cartItems.map((item) => (
-                  <div
-                    key={item.id}
-                    className="rounded-2xl border border-slate-200 bg-slate-50 p-4"
-                  >
-                    <div className="flex items-start justify-between gap-4">
-                      <div className="min-w-0">
-                        <p className="truncate text-sm font-semibold text-slate-800">
-                          {item.name}
-                        </p>
-                        <p className="mt-1 text-xs text-slate-500">
-                          {item.categoryName}
-                        </p>
-                        <p className="mt-2 text-sm text-slate-700">
-                          ${item.price.toFixed(2)} each
-                        </p>
-                      </div>
-
-                      <button
-                        type="button"
-                        onClick={() => removeItem(item.id)}
-                        className="text-slate-400 transition hover:text-rose-600"
-                      >
-                        <HiOutlineTrash className="h-5 w-5" />
-                      </button>
-                    </div>
-
-                    <div className="mt-4 flex items-center justify-between">
-                      <div className="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-2 py-1">
-                        <button
-                          type="button"
-                          onClick={() => decreaseQuantity(item.id)}
-                          className="rounded-lg p-1 text-slate-600 transition hover:bg-slate-100"
-                        >
-                          <HiOutlineMinus className="h-4 w-4" />
-                        </button>
-
-                        <span className="min-w-[24px] text-center text-sm font-medium text-slate-800">
-                          {item.quantity}
-                        </span>
-
-                        <button
-                          type="button"
-                          onClick={() => increaseQuantity(item.id)}
-                          className="rounded-lg p-1 text-slate-600 transition hover:bg-slate-100"
-                        >
-                          <HiOutlinePlus className="h-4 w-4" />
-                        </button>
-                      </div>
-
-                      <div className="text-sm font-semibold text-slate-800">
-                        ${(item.price * item.quantity).toFixed(2)}
-                      </div>
-                    </div>
+            <div className="flex h-[620px] min-h-0 flex-col">
+              <div className="min-h-0 flex-1 overflow-y-auto pr-1">
+                {cartItems.length === 0 ? (
+                  <div className="rounded-2xl border border-dashed border-slate-300 bg-slate-50 px-6 py-10 text-center text-sm text-slate-500">
+                    No items in the order yet.
                   </div>
-                ))}
-              </div>
-            )}
+                ) : (
+                  <div className="space-y-3">
+                    {cartItems.map((item) => (
+                      <div
+                        key={item.id}
+                        className="rounded-xl border border-slate-200 bg-slate-50 p-3"
+                      >
+                        <div className="flex items-start justify-between gap-3">
+                          <div className="min-w-0">
+                            <p className="truncate text-sm font-medium text-slate-800">
+                              {item.name}
+                            </p>
+                            <p className="mt-1 text-xs text-slate-500">
+                              {item.categoryName}
+                            </p>
+                            <p className="mt-1 text-xs text-slate-500">
+                              ${item.price.toFixed(2)} each
+                            </p>
+                          </div>
 
-            <div className="mt-6 rounded-2xl border border-slate-200 bg-slate-50 p-4">
-              <div className="flex items-center justify-between text-sm text-slate-600">
-                <span>Subtotal</span>
-                <span>${subtotal.toFixed(2)}</span>
+                          <button
+                            type="button"
+                            onClick={() => removeItem(item.id)}
+                            className="text-slate-400 transition hover:text-rose-600"
+                          >
+                            <HiOutlineTrash className="h-4 w-4" />
+                          </button>
+                        </div>
+
+                        <div className="mt-3 flex items-center justify-between">
+                          <div className="inline-flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-2 py-1">
+                            <button
+                              type="button"
+                              onClick={() => decreaseQuantity(item.id)}
+                              className="rounded p-1 text-slate-600 transition hover:bg-slate-100"
+                            >
+                              <HiOutlineMinus className="h-4 w-4" />
+                            </button>
+
+                            <span className="min-w-[20px] text-center text-sm font-medium text-slate-800">
+                              {item.quantity}
+                            </span>
+
+                            <button
+                              type="button"
+                              onClick={() => increaseQuantity(item.id)}
+                              className="rounded p-1 text-slate-600 transition hover:bg-slate-100"
+                            >
+                              <HiOutlinePlus className="h-4 w-4" />
+                            </button>
+                          </div>
+
+                          <div className="text-sm font-semibold text-slate-800">
+                            ${(item.price * item.quantity).toFixed(2)}
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
 
-              <div className="mt-3 flex items-center justify-between text-base font-semibold text-slate-800">
-                <span>Total</span>
-                <span>${subtotal.toFixed(2)}</span>
-              </div>
+              <div className="mt-4 shrink-0 rounded-2xl border border-slate-200 bg-slate-50 p-4">
+                <div className="flex items-center justify-between text-sm text-slate-600">
+                  <span>Subtotal</span>
+                  <span>${subtotal.toFixed(2)}</span>
+                </div>
 
-              <button
-                type="button"
-                disabled={cartItems.length === 0}
-                className="mt-5 inline-flex h-12 w-full items-center justify-center gap-2 rounded-2xl bg-indigo-600 px-4 text-sm font-medium text-white transition hover:bg-indigo-500 disabled:cursor-not-allowed disabled:opacity-50"
-              >
-                <HiOutlineCreditCard className="h-5 w-5" />
-                Checkout
-              </button>
+                <div className="mt-3 flex items-center justify-between text-base font-semibold text-slate-800">
+                  <span>Total</span>
+                  <span>${subtotal.toFixed(2)}</span>
+                </div>
+
+                <button
+                  type="button"
+                  disabled={cartItems.length === 0}
+                  className="mt-5 inline-flex h-12 w-full items-center justify-center gap-2 rounded-2xl bg-indigo-600 px-4 text-sm font-medium text-white transition hover:bg-indigo-500 disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  <HiOutlineCreditCard className="h-5 w-5" />
+                  Checkout
+                </button>
+              </div>
             </div>
           </div>
         </section>

@@ -4,7 +4,7 @@ using System.Net.Http.Json;
 using FluentAssertions;
 using Microsoft.Extensions.DependencyInjection;
 using SharedKernel.Common.Results;
-using TransactionService.Application.Common.DTOs;
+using TransactionService.Api.Transaction.Contracts;
 using TransactionService.Domain.Entities;
 using TransactionService.Domain.Enums;
 using TransactionService.Infrastructure.Persistence;
