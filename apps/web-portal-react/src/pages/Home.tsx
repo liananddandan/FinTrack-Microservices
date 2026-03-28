@@ -1,104 +1,71 @@
-import { useEffect, useState } from "react"
+import { useEffect, useMemo, useState } from "react"
 import { useNavigate } from "react-router-dom"
 import { useAuth } from "../hooks/useAuth"
+import { getProductCategories, type ProductCategoryItem } from "../api/product-category"
 import {
-  HiOutlineArrowsRightLeft,
-  HiOutlineArrowRight,
-  HiOutlineBanknotes,
-  HiOutlineDocumentText,
+  HiOutlineArrowLeftOnRectangle,
+  HiOutlineQueueList,
+  HiOutlineSquares2X2,
   HiOutlineClipboardDocumentList,
   HiOutlineUserCircle,
-  HiOutlineBell,
-  HiOutlineChartBar,
-  HiOutlineClock,
-  HiOutlineArrowLeftOnRectangle,
+  HiOutlinePlus,
+  HiOutlineMinus,
+  HiOutlineTrash,
+  HiOutlineCreditCard,
 } from "react-icons/hi2"
 
-function ActionCard({
-  title,
-  description,
+type CartItem = {
+  id: string
+  name: string
+  price: number
+  quantity: number
+  categoryName: string
+}
+
+function TopActionButton({
+  label,
   icon,
   onClick,
+  danger = false,
 }: {
-  title: string
-  description: string
+  label: string
   icon: React.ReactNode
   onClick: () => void
+  danger?: boolean
 }) {
   return (
     <button
       type="button"
       onClick={onClick}
-      className="group rounded-2xl border border-slate-200 bg-white p-5 text-left transition hover:border-indigo-400 hover:bg-slate-50"
+      className={[
+        "inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm transition",
+        danger
+          ? "border border-rose-200 bg-rose-50 text-rose-700 hover:border-rose-300 hover:bg-rose-100"
+          : "border border-slate-300 bg-white text-slate-700 hover:border-indigo-500 hover:text-indigo-600",
+      ].join(" ")}
     >
-      <div className="flex items-start justify-between gap-4">
-        <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-indigo-50 text-indigo-600 shadow-sm">
-          {icon}
-        </div>
-
-        <HiOutlineArrowRight className="mt-1 h-5 w-5 text-slate-400 transition group-hover:translate-x-1 group-hover:text-indigo-600" />
-      </div>
-
-      <div className="mt-4">
-        <p className="text-sm font-semibold text-slate-800">{title}</p>
-        <p className="mt-2 text-sm leading-6 text-slate-600">{description}</p>
-      </div>
+      {icon}
+      {label}
     </button>
-  )
-}
-
-function OverviewCard({
-  label,
-  value,
-  description,
-  icon,
-}: {
-  label: string
-  value: string
-  description: string
-  icon: React.ReactNode
-}) {
-  return (
-    <div className="rounded-2xl border border-slate-200 bg-white p-5">
-      <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-indigo-50 text-indigo-600">
-        {icon}
-      </div>
-      <p className="mt-4 text-sm text-slate-500">{label}</p>
-      <p className="mt-2 text-2xl font-semibold text-slate-800">{value}</p>
-      <p className="mt-2 text-sm leading-6 text-slate-500">{description}</p>
-    </div>
-  )
-}
-
-function PlannedItem({
-  icon,
-  title,
-  description,
-}: {
-  icon: React.ReactNode
-  title: string
-  description: string
-}) {
-  return (
-    <div className="rounded-2xl border border-slate-200 bg-white p-5">
-      <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-indigo-50 text-indigo-600">
-        {icon}
-      </div>
-      <p className="mt-4 text-sm font-semibold text-slate-800">{title}</p>
-      <p className="mt-2 text-sm leading-6 text-slate-600">{description}</p>
-    </div>
   )
 }
 
 export default function Home() {
   const navigate = useNavigate()
   const auth = useAuth()
+
   const [initializing, setInitializing] = useState(true)
+  const [loadingCategories, setLoadingCategories] = useState(false)
+  const [errorMessage, setErrorMessage] = useState("")
+  const [categories, setCategories] = useState<ProductCategoryItem[]>([])
+  const [selectedCategoryId, setSelectedCategoryId] = useState<string>("")
+  const [cartItems, setCartItems] = useState<CartItem[]>([])
 
   useEffect(() => {
     async function init() {
       try {
         await auth.initialize()
+        await loadCategories()
       } finally {
         setInitializing(false)
       }
@@ -107,15 +74,35 @@ export default function Home() {
     void init()
   }, [])
 
-  function goRecordIncome() {
-    navigate("/portal/record-income")
+  async function loadCategories() {
+    setLoadingCategories(true)
+    setErrorMessage("")
+
+    try {
+      const result = await getProductCategories()
+      const activeCategories = result
+        .filter((x) => x.isActive)
+        .sort((a, b) => a.displayOrder - b.displayOrder)
+
+      setCategories(activeCategories)
+
+      if (activeCategories.length > 0) {
+        setSelectedCategoryId(activeCategories[0].publicId)
+      } else {
+        setSelectedCategoryId("")
+      }
+    } catch (error: unknown) {
+      if (error instanceof Error) {
+        setErrorMessage(error.message || "Failed to load menu.")
+      } else {
+        setErrorMessage("Failed to load menu.")
+      }
+    } finally {
+      setLoadingCategories(false)
+    }
   }
 
-  function goProcurement() {
-    navigate("/portal/procurements/new")
-  }
-
-  function goMyTransactions() {
+  function goOrders() {
     navigate("/portal/my-transactions")
   }
 
@@ -128,10 +115,94 @@ export default function Home() {
     navigate("/portal/login", { replace: true })
   }
 
+  const selectedCategory = useMemo(
+    () => categories.find((x) => x.publicId === selectedCategoryId) ?? null,
+    [categories, selectedCategoryId]
+  )
+
+  const categoryProducts = useMemo(() => {
+    if (!selectedCategory) {
+      return []
+    }
+
+    // Temporary mock products for UI structure.
+    // Replace this with backend product API later.
+    const mockProductsByCategory: Record<
+      string,
+      Array<{ id: string; name: string; price: number }>
+    > = {
+      [categories[0]?.publicId ?? ""]: [
+        { id: "p1", name: "Flat White", price: 5.5 },
+        { id: "p2", name: "Latte", price: 5.8 },
+        { id: "p3", name: "Cappuccino", price: 5.6 },
+      ],
+    }
+
+    return mockProductsByCategory[selectedCategory.publicId] ?? []
+  }, [categories, selectedCategory])
+
+  function addToCart(product: { id: string; name: string; price: number }) {
+    if (!selectedCategory) {
+      return
+    }
+
+    setCartItems((prev) => {
+      const existing = prev.find((x) => x.id === product.id)
+      if (existing) {
+        return prev.map((x) =>
+          x.id === product.id ? { ...x, quantity: x.quantity + 1 } : x
+        )
+      }
+
+      return [
+        ...prev,
+        {
+          id: product.id,
+          name: product.name,
+          price: product.price,
+          quantity: 1,
+          categoryName: selectedCategory.name,
+        },
+      ]
+    })
+  }
+
+  function increaseQuantity(id: string) {
+    setCartItems((prev) =>
+      prev.map((x) => (x.id === id ? { ...x, quantity: x.quantity + 1 } : x))
+    )
+  }
+
+  function decreaseQuantity(id: string) {
+    setCartItems((prev) =>
+      prev
+        .map((x) => (x.id === id ? { ...x, quantity: x.quantity - 1 } : x))
+        .filter((x) => x.quantity > 0)
+    )
+  }
+
+  function removeItem(id: string) {
+    setCartItems((prev) => prev.filter((x) => x.id !== id))
+  }
+
+  function clearCart() {
+    setCartItems([])
+  }
+
+  const subtotal = useMemo(
+    () => cartItems.reduce((sum, item) => sum + item.price * item.quantity, 0),
+    [cartItems]
+  )
+
+  const totalItems = useMemo(
+    () => cartItems.reduce((sum, item) => sum + item.quantity, 0),
+    [cartItems]
+  )
+
   if (initializing) {
     return (
       <div className="min-h-screen bg-slate-50 px-6 py-10">
-        <div className="mx-auto max-w-6xl text-sm text-slate-500">
+        <div className="mx-auto max-w-7xl text-sm text-slate-500">
           Loading workspace...
         </div>
       </div>
@@ -139,33 +210,20 @@ export default function Home() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-50 px-6 py-10">
-      <div className="mx-auto flex max-w-6xl flex-col gap-8">
-        <section className="rounded-3xl border border-slate-200 bg-white p-8 sm:p-10">
-          <div className="flex flex-col gap-6 lg:flex-row lg:items-start lg:justify-between">
-            <div className="max-w-2xl">
-              <div className="inline-flex items-center gap-3 rounded-full border border-slate-200 bg-slate-50 px-4 py-2">
-                <div className="flex h-9 w-9 items-center justify-center rounded-full bg-indigo-50 text-indigo-600">
-                  <HiOutlineArrowsRightLeft className="h-5 w-5" />
-                </div>
-                <div>
-                  <p className="text-sm font-medium text-slate-800">
-                    Transaction & Workflow Platform
-                  </p>
-                  <p className="text-xs text-slate-500">Portal workspace</p>
-                </div>
+    <div className="min-h-screen bg-slate-50 px-6 py-6">
+      <div className="mx-auto flex max-w-7xl flex-col gap-6">
+        <section className="rounded-3xl border border-slate-200 bg-white px-6 py-6 sm:px-8">
+          <div className="flex flex-col gap-6 xl:flex-row xl:items-start xl:justify-between">
+            <div className="min-w-0">
+              <div className="text-xs font-medium uppercase tracking-wide text-slate-500">
+                Current merchant
               </div>
 
-              <h1 className="mt-8 text-3xl font-semibold tracking-tight text-slate-800 sm:text-4xl">
+              <h1 className="mt-2 truncate text-3xl font-semibold tracking-tight text-slate-800">
                 {auth.currentTenantName || "Workspace"}
               </h1>
 
-              <p className="mt-4 max-w-2xl text-base leading-7 text-slate-600">
-                Work inside your current tenant context. Record income, submit procurement requests,
-                and review the transaction records you created in this workspace.
-              </p>
-
-              <div className="mt-6 flex flex-wrap items-center gap-3">
+              <div className="mt-4 flex flex-wrap items-center gap-3">
                 <span className="inline-flex items-center rounded-full bg-slate-100 px-3 py-1 text-sm text-slate-700">
                   Role: {auth.currentMembership?.role || "Unknown"}
                 </span>
@@ -177,117 +235,243 @@ export default function Home() {
             </div>
 
             <div className="flex flex-wrap items-center gap-3">
-              <button
-                type="button"
-                onClick={goProfile}
-                className="inline-flex items-center gap-2 rounded-full border border-slate-300 bg-white px-4 py-2 text-sm text-slate-700 transition hover:border-indigo-500 hover:text-indigo-600"
-              >
-                <HiOutlineUserCircle className="h-5 w-5" />
-                Profile
-              </button>
+              <TopActionButton
+                label="Orders"
+                icon={<HiOutlineClipboardDocumentList className="h-5 w-5" />}
+                onClick={goOrders}
+              />
 
-              <button
-                type="button"
+              <TopActionButton
+                label="Profile"
+                icon={<HiOutlineUserCircle className="h-5 w-5" />}
+                onClick={goProfile}
+              />
+
+              <TopActionButton
+                label="Sign out"
+                icon={<HiOutlineArrowLeftOnRectangle className="h-5 w-5" />}
                 onClick={logout}
-                className="inline-flex items-center gap-2 rounded-full border border-rose-200 bg-rose-50 px-4 py-2 text-sm text-rose-700 transition hover:border-rose-300 hover:bg-rose-100"
-              >
-                <HiOutlineArrowLeftOnRectangle className="h-5 w-5" />
-                Sign out
-              </button>
+                danger
+              />
             </div>
           </div>
         </section>
 
-        <section>
-          <div className="mb-4">
-            <h2 className="text-2xl font-semibold text-slate-800">Quick actions</h2>
-            <p className="mt-2 text-sm leading-6 text-slate-500">
-              Start a new record or continue working in this tenant.
-            </p>
+        {errorMessage ? (
+          <div
+            className="rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700"
+            role="alert"
+          >
+            {errorMessage}
+          </div>
+        ) : null}
+
+        <section className="grid gap-6 xl:grid-cols-[240px_minmax(0,1fr)_360px]">
+          <div className="rounded-3xl border border-slate-200 bg-white p-5">
+            <div className="mb-4 flex items-center gap-2 text-slate-800">
+              <HiOutlineQueueList className="h-5 w-5 text-slate-500" />
+              <h2 className="text-base font-semibold">Categories</h2>
+            </div>
+
+            {loadingCategories ? (
+              <div className="text-sm text-slate-500">Loading categories...</div>
+            ) : categories.length === 0 ? (
+              <div className="rounded-2xl border border-dashed border-slate-300 bg-slate-50 px-4 py-8 text-center text-sm text-slate-500">
+                No categories available yet.
+              </div>
+            ) : (
+              <div className="space-y-2">
+                {categories.map((category) => {
+                  const isActive = selectedCategoryId === category.publicId
+
+                  return (
+                    <button
+                      key={category.publicId}
+                      type="button"
+                      onClick={() => setSelectedCategoryId(category.publicId)}
+                      className={[
+                        "w-full rounded-2xl border px-4 py-3 text-left transition",
+                        isActive
+                          ? "border-indigo-200 bg-indigo-50 text-indigo-700"
+                          : "border-slate-200 bg-white text-slate-700 hover:border-slate-300 hover:bg-slate-50",
+                      ].join(" ")}
+                    >
+                      <div className="flex items-center justify-between gap-3">
+                        <span className="truncate text-sm font-medium">
+                          {category.name}
+                        </span>
+                        <span className="text-xs text-slate-500">
+                          #{category.displayOrder}
+                        </span>
+                      </div>
+                    </button>
+                  )
+                })}
+              </div>
+            )}
           </div>
 
-          <div className="grid gap-4 md:grid-cols-3">
-            <ActionCard
-              title="Record income"
-              description="Add an income entry to the current tenant ledger."
-              icon={<HiOutlineBanknotes className="h-5 w-5" />}
-              onClick={goRecordIncome}
-            />
+          <div className="rounded-3xl border border-slate-200 bg-white p-5">
+            <div className="mb-4 flex items-center justify-between gap-4">
+              <div>
+                <h2 className="text-base font-semibold text-slate-800">
+                  {selectedCategory?.name || "Menu"}
+                </h2>
+                <p className="mt-1 text-sm text-slate-500">
+                  Select products and add them to the current order.
+                </p>
+              </div>
+            </div>
 
-            <ActionCard
-              title="New procurement request"
-              description="Create a request that can move through an approval workflow."
-              icon={<HiOutlineDocumentText className="h-5 w-5" />}
-              onClick={goProcurement}
-            />
+            {!selectedCategory ? (
+              <div className="rounded-2xl border border-dashed border-slate-300 bg-slate-50 px-6 py-10 text-center text-sm text-slate-500">
+                Choose a category to view products.
+              </div>
+            ) : categoryProducts.length === 0 ? (
+              <div className="rounded-2xl border border-dashed border-slate-300 bg-slate-50 px-6 py-10 text-center text-sm text-slate-500">
+                No products available in this category yet.
+              </div>
+            ) : (
+              <div className="grid gap-4 sm:grid-cols-2 2xl:grid-cols-3">
+                {categoryProducts.map((product) => (
+                  <button
+                    key={product.id}
+                    type="button"
+                    onClick={() => addToCart(product)}
+                    className="rounded-2xl border border-slate-200 bg-slate-50 p-5 text-left transition hover:border-indigo-300 hover:bg-white"
+                  >
+                    <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-indigo-50 text-indigo-600">
+                      <HiOutlineSquares2X2 className="h-5 w-5" />
+                    </div>
 
-            <ActionCard
-              title="My transactions"
-              description="Review the records you created or submitted in this workspace."
-              icon={<HiOutlineClipboardDocumentList className="h-5 w-5" />}
-              onClick={goMyTransactions}
-            />
-          </div>
-        </section>
+                    <div className="mt-4">
+                      <p className="text-sm font-semibold text-slate-800">
+                        {product.name}
+                      </p>
+                      <p className="mt-2 text-sm text-slate-500">
+                        {selectedCategory.name}
+                      </p>
+                      <p className="mt-4 text-lg font-semibold text-slate-800">
+                        ${product.price.toFixed(2)}
+                      </p>
+                    </div>
 
-        <section>
-          <div className="mb-4">
-            <h2 className="text-2xl font-semibold text-slate-800">Your workspace</h2>
-            <p className="mt-2 text-sm leading-6 text-slate-500">
-              A quick view of your current access and activity.
-            </p>
-          </div>
-
-          <div className="grid gap-4 md:grid-cols-3">
-            <OverviewCard
-              label="My transactions"
-              value="—"
-              description="Recent income entries and procurement requests you created can appear here."
-              icon={<HiOutlineClipboardDocumentList className="h-5 w-5" />}
-            />
-
-            <OverviewCard
-              label="My requests"
-              value="—"
-              description="Track requests you submitted and their current workflow status."
-              icon={<HiOutlineClock className="h-5 w-5" />}
-            />
-
-            <OverviewCard
-              label="Workspace access"
-              value={auth.currentMembership?.role || "—"}
-              description="Your active role inside the current tenant workspace."
-              icon={<HiOutlineUserCircle className="h-5 w-5" />}
-            />
-          </div>
-        </section>
-
-        <section>
-          <div className="mb-4">
-            <h2 className="text-2xl font-semibold text-slate-800">Planned capabilities</h2>
-            <p className="mt-2 text-sm leading-6 text-slate-500">
-              Additional features for future iterations of the user portal.
-            </p>
+                    <div className="mt-4 inline-flex items-center rounded-xl bg-indigo-600 px-3 py-2 text-sm font-medium text-white">
+                      Add to order
+                    </div>
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
 
-          <div className="grid gap-4 md:grid-cols-3">
-            <PlannedItem
-              icon={<HiOutlineChartBar className="h-5 w-5" />}
-              title="Reports"
-              description="User-facing summaries and exportable views across your submitted records."
-            />
+          <div className="rounded-3xl border border-slate-200 bg-white p-5">
+            <div className="mb-4 flex items-center justify-between gap-4">
+              <div>
+                <h2 className="text-base font-semibold text-slate-800">
+                  Current order
+                </h2>
+                <p className="mt-1 text-sm text-slate-500">
+                  {totalItems} item{totalItems === 1 ? "" : "s"} selected
+                </p>
+              </div>
 
-            <PlannedItem
-              icon={<HiOutlineBell className="h-5 w-5" />}
-              title="Notifications"
-              description="Updates for request status changes, approvals, and workspace events."
-            />
+              {cartItems.length > 0 ? (
+                <button
+                  type="button"
+                  onClick={clearCart}
+                  className="text-sm font-medium text-rose-600 transition hover:text-rose-500"
+                >
+                  Clear
+                </button>
+              ) : null}
+            </div>
 
-            <PlannedItem
-              icon={<HiOutlineClock className="h-5 w-5" />}
-              title="Request timeline"
-              description="A future view for tracking workflow stages and historical updates."
-            />
+            {cartItems.length === 0 ? (
+              <div className="rounded-2xl border border-dashed border-slate-300 bg-slate-50 px-6 py-10 text-center text-sm text-slate-500">
+                No items in the order yet.
+              </div>
+            ) : (
+              <div className="space-y-3">
+                {cartItems.map((item) => (
+                  <div
+                    key={item.id}
+                    className="rounded-2xl border border-slate-200 bg-slate-50 p-4"
+                  >
+                    <div className="flex items-start justify-between gap-4">
+                      <div className="min-w-0">
+                        <p className="truncate text-sm font-semibold text-slate-800">
+                          {item.name}
+                        </p>
+                        <p className="mt-1 text-xs text-slate-500">
+                          {item.categoryName}
+                        </p>
+                        <p className="mt-2 text-sm text-slate-700">
+                          ${item.price.toFixed(2)} each
+                        </p>
+                      </div>
+
+                      <button
+                        type="button"
+                        onClick={() => removeItem(item.id)}
+                        className="text-slate-400 transition hover:text-rose-600"
+                      >
+                        <HiOutlineTrash className="h-5 w-5" />
+                      </button>
+                    </div>
+
+                    <div className="mt-4 flex items-center justify-between">
+                      <div className="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-2 py-1">
+                        <button
+                          type="button"
+                          onClick={() => decreaseQuantity(item.id)}
+                          className="rounded-lg p-1 text-slate-600 transition hover:bg-slate-100"
+                        >
+                          <HiOutlineMinus className="h-4 w-4" />
+                        </button>
+
+                        <span className="min-w-[24px] text-center text-sm font-medium text-slate-800">
+                          {item.quantity}
+                        </span>
+
+                        <button
+                          type="button"
+                          onClick={() => increaseQuantity(item.id)}
+                          className="rounded-lg p-1 text-slate-600 transition hover:bg-slate-100"
+                        >
+                          <HiOutlinePlus className="h-4 w-4" />
+                        </button>
+                      </div>
+
+                      <div className="text-sm font-semibold text-slate-800">
+                        ${(item.price * item.quantity).toFixed(2)}
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            <div className="mt-6 rounded-2xl border border-slate-200 bg-slate-50 p-4">
+              <div className="flex items-center justify-between text-sm text-slate-600">
+                <span>Subtotal</span>
+                <span>${subtotal.toFixed(2)}</span>
+              </div>
+
+              <div className="mt-3 flex items-center justify-between text-base font-semibold text-slate-800">
+                <span>Total</span>
+                <span>${subtotal.toFixed(2)}</span>
+              </div>
+
+              <button
+                type="button"
+                disabled={cartItems.length === 0}
+                className="mt-5 inline-flex h-12 w-full items-center justify-center gap-2 rounded-2xl bg-indigo-600 px-4 text-sm font-medium text-white transition hover:bg-indigo-500 disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                <HiOutlineCreditCard className="h-5 w-5" />
+                Checkout
+              </button>
+            </div>
           </div>
         </section>
       </div>

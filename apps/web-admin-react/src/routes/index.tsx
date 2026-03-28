@@ -7,6 +7,7 @@ import Members from "../pages/Members"
 import Invitations from "../pages/Invitations"
 import AuditLogs from "../pages/AuditLogs"
 import TransactionDetail from "../pages/TransactionDetail"
+import Menu from "../pages/Menu"
 
 import AuthGuard from "./guards/AuthGuard"
 import AdminLayout from "../components/AdminLayout"
@@ -34,6 +35,7 @@ export default function AppRouter() {
           <Route path="members" element={<Members />} />
           <Route path="invitations" element={<Invitations />} />
           <Route path="audit-logs" element={<AuditLogs />} />
+          <Route path="menu" element={<Menu />} />
         </Route>
 
         {/* fallback */}
