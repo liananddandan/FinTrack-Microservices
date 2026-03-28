@@ -1,8 +1,7 @@
+using IdentityService.Application.Abstractions;
 using IdentityService.Application.Common.DTOs;
-using IdentityService.Application.Services.Interfaces;
 using IdentityService.Domain.Entities;
 using IdentityService.Domain.Enums;
-using IdentityService.Infrastructure.Persistence.Repositories.Interfaces;
 using MediatR;
 using Microsoft.AspNetCore.Identity;
 using SharedKernel.Common.Constants;

@@ -1,6 +1,5 @@
+using IdentityService.Application.Abstractions;
 using IdentityService.Application.Commands.Tenant;
-using IdentityService.Application.Services.Interfaces;
-using IdentityService.Infrastructure.Persistence.Repositories.Interfaces;
 using MediatR;
 using SharedKernel.Common.Constants;
 using SharedKernel.Common.Results;

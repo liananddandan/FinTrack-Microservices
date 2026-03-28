@@ -3,7 +3,7 @@ using IdentityService.Application.Common.DTOs;
 using IdentityService.Domain.Entities;
 using SharedKernel.Common.Results;
 
-namespace IdentityService.Application.Services.Interfaces;
+namespace IdentityService.Application.Abstractions;
 
 public interface IJwtTokenService
 {

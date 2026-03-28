@@ -1,5 +1,5 @@
 using DotNetCore.CAP;
-using IdentityService.Application.Services.Interfaces;
+using IdentityService.Application.Abstractions;
 using SharedKernel.Contracts.AuditLogs;
 
 namespace IdentityService.Application.Services;

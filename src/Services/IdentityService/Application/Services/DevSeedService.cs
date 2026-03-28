@@ -1,8 +1,7 @@
+using IdentityService.Application.Abstractions;
 using IdentityService.Application.DTOs;
-using IdentityService.Application.Services.Interfaces;
 using IdentityService.Domain.Entities;
 using IdentityService.Domain.Enums;
-using IdentityService.Infrastructure.Persistence.Repositories.Interfaces;
 using Microsoft.AspNetCore.Identity;
 
 namespace IdentityService.Application.Services;

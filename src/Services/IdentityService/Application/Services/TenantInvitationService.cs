@@ -1,10 +1,9 @@
+using IdentityService.Application.Abstractions;
 using IdentityService.Application.Common.DTOs;
 using IdentityService.Application.Common.Status;
 using IdentityService.Application.Events;
-using IdentityService.Application.Services.Interfaces;
 using IdentityService.Domain.Entities;
 using IdentityService.Domain.Enums;
-using IdentityService.Infrastructure.Persistence.Repositories.Interfaces;
 using MediatR;
 using SharedKernel.Common.Results;
 using SharedKernel.Contracts.AuditLogs;

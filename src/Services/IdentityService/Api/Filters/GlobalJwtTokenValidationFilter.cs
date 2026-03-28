@@ -1,6 +1,6 @@
 using IdentityService.Api.Filters.Attributes;
+using IdentityService.Application.Abstractions;
 using IdentityService.Application.Common.Status;
-using IdentityService.Application.Services.Interfaces;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Filters;
 using SharedKernel.Common.DTOs;

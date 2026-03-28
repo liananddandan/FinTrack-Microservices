@@ -1,6 +1,6 @@
 using SharedKernel.Contracts.AuditLogs;
 
-namespace IdentityService.Application.Services.Interfaces;
+namespace IdentityService.Application.Abstractions;
 
 public interface IAuditLogPublisher
 {

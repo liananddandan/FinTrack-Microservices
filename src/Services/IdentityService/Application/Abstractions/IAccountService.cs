@@ -2,7 +2,7 @@ using IdentityService.Application.Common.DTOs;
 using SharedKernel.Common.DTOs.Auth;
 using SharedKernel.Common.Results;
 
-namespace IdentityService.Application.Services.Interfaces;
+namespace IdentityService.Application.Abstractions;
 
 public interface IAccountService
 {

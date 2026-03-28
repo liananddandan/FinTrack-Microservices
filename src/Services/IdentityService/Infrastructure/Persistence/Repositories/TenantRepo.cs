@@ -1,5 +1,5 @@
+using IdentityService.Application.Abstractions;
 using IdentityService.Domain.Entities;
-using IdentityService.Infrastructure.Persistence.Repositories.Interfaces;
 using Microsoft.EntityFrameworkCore;
 
 namespace IdentityService.Infrastructure.Persistence.Repositories;

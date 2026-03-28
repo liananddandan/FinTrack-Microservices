@@ -1,4 +1,4 @@
-using IdentityService.Infrastructure.Persistence.Repositories.Interfaces;
+using IdentityService.Application.Abstractions;
 using Moq;
 
 namespace IdentityService.Tests.Extensions;

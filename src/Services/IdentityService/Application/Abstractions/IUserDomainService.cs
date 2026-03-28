@@ -1,7 +1,7 @@
 using IdentityService.Application.Common.Status;
 using IdentityService.Domain.Entities;
 
-namespace IdentityService.Application.Services.Interfaces;
+namespace IdentityService.Application.Abstractions;
 
 public interface IUserDomainService
 {

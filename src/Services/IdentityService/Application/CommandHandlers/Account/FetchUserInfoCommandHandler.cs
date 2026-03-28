@@ -1,7 +1,7 @@
+using IdentityService.Application.Abstractions;
 using IdentityService.Application.Commands;
 using IdentityService.Application.Commands.Account;
 using IdentityService.Application.Common.DTOs;
-using IdentityService.Application.Services.Interfaces;
 using MediatR;
 using SharedKernel.Common.Results;
 

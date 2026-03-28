@@ -1,6 +1,6 @@
 using IdentityService.Application.DTOs;
 
-namespace IdentityService.Application.Services.Interfaces;
+namespace IdentityService.Application.Abstractions;
 
 public interface IDevSeedService
 {

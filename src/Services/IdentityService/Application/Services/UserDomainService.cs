@@ -1,8 +1,7 @@
 using System.Security.Cryptography;
+using IdentityService.Application.Abstractions;
 using IdentityService.Application.Common.Status;
-using IdentityService.Application.Services.Interfaces;
 using IdentityService.Domain.Entities;
-using IdentityService.Infrastructure.Persistence.Repositories.Interfaces;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using SharedKernel.Common.Constants;

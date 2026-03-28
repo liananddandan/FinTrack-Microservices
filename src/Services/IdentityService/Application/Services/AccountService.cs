@@ -1,7 +1,6 @@
+using IdentityService.Application.Abstractions;
 using IdentityService.Application.Common.DTOs;
-using IdentityService.Application.Services.Interfaces;
 using IdentityService.Domain.Entities;
-using IdentityService.Infrastructure.Persistence.Repositories.Interfaces;
 using Microsoft.AspNetCore.Identity;
 using SharedKernel.Common.DTOs.Auth;
 using SharedKernel.Common.Results;

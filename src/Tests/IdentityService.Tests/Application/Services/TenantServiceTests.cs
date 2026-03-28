@@ -1,11 +1,10 @@
 using AutoFixture;
 using FluentAssertions;
+using IdentityService.Application.Abstractions;
 using IdentityService.Application.Common.DTOs;
 using IdentityService.Application.Services;
-using IdentityService.Application.Services.Interfaces;
 using IdentityService.Domain.Entities;
 using IdentityService.Domain.Enums;
-using IdentityService.Infrastructure.Persistence.Repositories.Interfaces;
 using MediatR;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.Logging;
@@ -557,12 +556,17 @@ public class TenantServiceTests
     [Fact]
     public async Task ChangeTenantMemberRoleAsync_Should_Return_Fail_When_Member_Not_In_Tenant()
     {
+        var tenantId = Guid.NewGuid();
         var membership = new TenantMembership
         {
             PublicId = Guid.NewGuid(),
             IsActive = true,
             Role = TenantRole.Member,
-            Tenant = new Tenant { PublicId = Guid.NewGuid() },
+            Tenant = new Tenant
+            {
+                PublicId = tenantId,
+                Name = $"tenant-{tenantId}"
+            },
             User = new ApplicationUser { PublicId = Guid.NewGuid() }
         };
 
@@ -591,7 +595,11 @@ public class TenantServiceTests
             PublicId = Guid.NewGuid(),
             IsActive = false,
             Role = TenantRole.Member,
-            Tenant = new Tenant { PublicId = tenantId },
+            Tenant = new Tenant
+            {
+                PublicId = tenantId,
+                Name = $"tenant-{tenantId}"
+            },
             User = new ApplicationUser { PublicId = Guid.NewGuid() }
         };
 
@@ -621,7 +629,11 @@ public class TenantServiceTests
             PublicId = Guid.NewGuid(),
             IsActive = true,
             Role = TenantRole.Admin,
-            Tenant = new Tenant { PublicId = tenantId },
+            Tenant = new Tenant
+            {
+                PublicId = tenantId,
+                Name = $"tenant-{tenantId}"
+            },
             User = new ApplicationUser { PublicId = operatorUserId }
         };
 
@@ -651,7 +663,11 @@ public class TenantServiceTests
             IsActive = true,
             Role = TenantRole.Admin,
             TenantId = 100,
-            Tenant = new Tenant { PublicId = tenantId },
+            Tenant = new Tenant
+            {
+                PublicId = tenantId,
+                Name = $"tenant-{tenantId}"
+            },
             User = new ApplicationUser { PublicId = Guid.NewGuid() }
         };
 
@@ -685,7 +701,11 @@ public class TenantServiceTests
             IsActive = true,
             Role = TenantRole.Member,
             TenantId = 100,
-            Tenant = new Tenant { PublicId = tenantId },
+            Tenant = new Tenant
+            {
+                PublicId = tenantId,
+                Name = $"tenant-{tenantId}"
+            },
             User = new ApplicationUser { PublicId = Guid.NewGuid() }
         };
 
@@ -719,7 +739,11 @@ public class TenantServiceTests
             IsActive = true,
             Role = TenantRole.Member,
             TenantId = 100,
-            Tenant = new Tenant { PublicId = tenantId },
+            Tenant = new Tenant
+            {
+                PublicId = tenantId,
+                Name = $"tenant-{tenantId}"
+            },
             User = new ApplicationUser { PublicId = Guid.NewGuid() }
         };
 
@@ -763,7 +787,11 @@ public class TenantServiceTests
             IsActive = true,
             Role = TenantRole.Admin,
             TenantId = 100,
-            Tenant = new Tenant { PublicId = tenantId },
+            Tenant = new Tenant
+            {
+                PublicId = tenantId,
+                Name = $"tenant-{tenantId}"
+            },
             User = new ApplicationUser { PublicId = Guid.NewGuid() }
         };
 

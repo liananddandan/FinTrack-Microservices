@@ -1,9 +1,9 @@
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
+using IdentityService.Application.Abstractions;
 using IdentityService.Application.Common.DTOs;
 using IdentityService.Application.Common.Status;
-using IdentityService.Application.Services.Interfaces;
 using IdentityService.Domain.Entities;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;

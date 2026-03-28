@@ -1,4 +1,4 @@
-namespace IdentityService.Infrastructure.Persistence.Repositories.Interfaces;
+namespace IdentityService.Application.Abstractions;
 
 public interface IUnitOfWork
 {

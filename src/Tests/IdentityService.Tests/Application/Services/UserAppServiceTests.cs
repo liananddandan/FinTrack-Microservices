@@ -1,9 +1,9 @@
 using AutoFixture;
 using FluentAssertions;
+using IdentityService.Application.Abstractions;
 using IdentityService.Application.Services;
 using IdentityService.Domain.Entities;
 using IdentityService.Domain.Enums;
-using IdentityService.Infrastructure.Persistence.Repositories.Interfaces;
 using Microsoft.Extensions.Logging;
 using Moq;
 using SharedKernel.Common.Results;

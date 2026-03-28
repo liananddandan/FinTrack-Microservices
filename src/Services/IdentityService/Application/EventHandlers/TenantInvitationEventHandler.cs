@@ -1,7 +1,7 @@
 using DotNetCore.CAP;
+using IdentityService.Application.Abstractions;
 using IdentityService.Application.Common.DTOs;
 using IdentityService.Application.Events;
-using IdentityService.Application.Services.Interfaces;
 using MediatR;
 using SharedKernel.Events;
 using SharedKernel.Topics;
