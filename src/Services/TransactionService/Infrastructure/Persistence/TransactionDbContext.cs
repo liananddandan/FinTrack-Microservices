@@ -10,6 +10,9 @@ public class TransactionDbContext(DbContextOptions<TransactionDbContext> options
     
     public DbSet<ProductCategory> ProductCategories => Set<ProductCategory>();
     public DbSet<Product> Products => Set<Product>();
+    
+    public DbSet<Order> Orders => Set<Order>();
+    public DbSet<OrderItem> OrderItems => Set<OrderItem>();
 
     protected override void OnModelCreating(ModelBuilder builder)
     {
