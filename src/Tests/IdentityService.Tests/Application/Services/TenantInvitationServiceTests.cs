@@ -1,11 +1,12 @@
 using FluentAssertions;
+using IdentityService.Application.Accounts.Abstractions;
+using IdentityService.Application.Common.Abstractions;
 using IdentityService.Application.Common.Status;
-using IdentityService.Application.Events;
-using IdentityService.Application.Services;
-using IdentityService.Application.Services.Interfaces;
+using IdentityService.Application.Tenants.Abstractions;
+using IdentityService.Application.Tenants.Events;
+using IdentityService.Application.Tenants.Services;
 using IdentityService.Domain.Entities;
 using IdentityService.Domain.Enums;
-using IdentityService.Infrastructure.Persistence.Repositories.Interfaces;
 using MediatR;
 using Microsoft.Extensions.Logging;
 using Moq;

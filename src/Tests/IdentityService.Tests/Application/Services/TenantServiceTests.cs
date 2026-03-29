@@ -1,11 +1,12 @@
 using AutoFixture;
 using FluentAssertions;
+using IdentityService.Application.Accounts.Abstractions;
+using IdentityService.Application.Common.Abstractions;
 using IdentityService.Application.Common.DTOs;
-using IdentityService.Application.Services;
-using IdentityService.Application.Services.Interfaces;
+using IdentityService.Application.Tenants.Abstractions;
+using IdentityService.Application.Tenants.Services;
 using IdentityService.Domain.Entities;
 using IdentityService.Domain.Enums;
-using IdentityService.Infrastructure.Persistence.Repositories.Interfaces;
 using MediatR;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.Logging;
@@ -91,7 +92,7 @@ public class TenantServiceTests
             Times.Never);
 
         _unitOfWorkMock.Verify(
-            x => x.WithTransactionAsync(It.IsAny<Func<Task<ServiceResult<RegisterTenantResult>>>>(), It.IsAny<CancellationToken>()),
+            x => x.WithTransactionAsync(It.IsAny<Func<Task<ServiceResult<RegisterTenantDto>>>>(), It.IsAny<CancellationToken>()),
             Times.Never);
     }
 
@@ -103,8 +104,8 @@ public class TenantServiceTests
             .ReturnsAsync(true);
 
         _unitOfWorkMock
-            .Setup(x => x.WithTransactionAsync(It.IsAny<Func<Task<ServiceResult<RegisterTenantResult>>>>(), It.IsAny<CancellationToken>()))
-            .Returns<Func<Task<ServiceResult<RegisterTenantResult>>>, CancellationToken>((action, _) => action());
+            .Setup(x => x.WithTransactionAsync(It.IsAny<Func<Task<ServiceResult<RegisterTenantDto>>>>(), It.IsAny<CancellationToken>()))
+            .Returns<Func<Task<ServiceResult<RegisterTenantDto>>>, CancellationToken>((action, _) => action());
 
         var result = await _sut.RegisterTenantAsync(
             "FinTrack",
@@ -138,8 +139,8 @@ public class TenantServiceTests
             .ReturnsAsync(true);
 
         _unitOfWorkMock
-            .Setup(x => x.WithTransactionAsync(It.IsAny<Func<Task<ServiceResult<RegisterTenantResult>>>>(), It.IsAny<CancellationToken>()))
-            .Returns<Func<Task<ServiceResult<RegisterTenantResult>>>, CancellationToken>((action, _) => action());
+            .Setup(x => x.WithTransactionAsync(It.IsAny<Func<Task<ServiceResult<RegisterTenantDto>>>>(), It.IsAny<CancellationToken>()))
+            .Returns<Func<Task<ServiceResult<RegisterTenantDto>>>, CancellationToken>((action, _) => action());
 
         var result = await _sut.RegisterTenantAsync(
             "FinTrack",
@@ -173,8 +174,8 @@ public class TenantServiceTests
             .ReturnsAsync(false);
 
         _unitOfWorkMock
-            .Setup(x => x.WithTransactionAsync(It.IsAny<Func<Task<ServiceResult<RegisterTenantResult>>>>(), It.IsAny<CancellationToken>()))
-            .Returns<Func<Task<ServiceResult<RegisterTenantResult>>>, CancellationToken>((action, _) => action());
+            .Setup(x => x.WithTransactionAsync(It.IsAny<Func<Task<ServiceResult<RegisterTenantDto>>>>(), It.IsAny<CancellationToken>()))
+            .Returns<Func<Task<ServiceResult<RegisterTenantDto>>>, CancellationToken>((action, _) => action());
 
         _userManagerMock
             .Setup(x => x.CreateAsync(It.IsAny<ApplicationUser>(), It.IsAny<string>()))
@@ -216,8 +217,8 @@ public class TenantServiceTests
             .ReturnsAsync(false);
 
         _unitOfWorkMock
-            .Setup(x => x.WithTransactionAsync(It.IsAny<Func<Task<ServiceResult<RegisterTenantResult>>>>(), It.IsAny<CancellationToken>()))
-            .Returns<Func<Task<ServiceResult<RegisterTenantResult>>>, CancellationToken>((action, _) => action());
+            .Setup(x => x.WithTransactionAsync(It.IsAny<Func<Task<ServiceResult<RegisterTenantDto>>>>(), It.IsAny<CancellationToken>()))
+            .Returns<Func<Task<ServiceResult<RegisterTenantDto>>>, CancellationToken>((action, _) => action());
 
         _userManagerMock
             .Setup(x => x.CreateAsync(It.IsAny<ApplicationUser>(), It.IsAny<string>()))
@@ -286,7 +287,7 @@ public class TenantServiceTests
     public async Task RegisterTenantAsync_Should_Return_Fail_When_Exception_Is_Thrown()
     {
         _unitOfWorkMock
-            .Setup(x => x.WithTransactionAsync(It.IsAny<Func<Task<ServiceResult<RegisterTenantResult>>>>(), It.IsAny<CancellationToken>()))
+            .Setup(x => x.WithTransactionAsync(It.IsAny<Func<Task<ServiceResult<RegisterTenantDto>>>>(), It.IsAny<CancellationToken>()))
             .ThrowsAsync(new Exception("unexpected"));
 
         var result = await _sut.RegisterTenantAsync(
@@ -557,12 +558,17 @@ public class TenantServiceTests
     [Fact]
     public async Task ChangeTenantMemberRoleAsync_Should_Return_Fail_When_Member_Not_In_Tenant()
     {
+        var tenantId = Guid.NewGuid();
         var membership = new TenantMembership
         {
             PublicId = Guid.NewGuid(),
             IsActive = true,
             Role = TenantRole.Member,
-            Tenant = new Tenant { PublicId = Guid.NewGuid() },
+            Tenant = new Tenant
+            {
+                PublicId = tenantId,
+                Name = $"tenant-{tenantId}"
+            },
             User = new ApplicationUser { PublicId = Guid.NewGuid() }
         };
 
@@ -591,7 +597,11 @@ public class TenantServiceTests
             PublicId = Guid.NewGuid(),
             IsActive = false,
             Role = TenantRole.Member,
-            Tenant = new Tenant { PublicId = tenantId },
+            Tenant = new Tenant
+            {
+                PublicId = tenantId,
+                Name = $"tenant-{tenantId}"
+            },
             User = new ApplicationUser { PublicId = Guid.NewGuid() }
         };
 
@@ -621,7 +631,11 @@ public class TenantServiceTests
             PublicId = Guid.NewGuid(),
             IsActive = true,
             Role = TenantRole.Admin,
-            Tenant = new Tenant { PublicId = tenantId },
+            Tenant = new Tenant
+            {
+                PublicId = tenantId,
+                Name = $"tenant-{tenantId}"
+            },
             User = new ApplicationUser { PublicId = operatorUserId }
         };
 
@@ -651,7 +665,11 @@ public class TenantServiceTests
             IsActive = true,
             Role = TenantRole.Admin,
             TenantId = 100,
-            Tenant = new Tenant { PublicId = tenantId },
+            Tenant = new Tenant
+            {
+                PublicId = tenantId,
+                Name = $"tenant-{tenantId}"
+            },
             User = new ApplicationUser { PublicId = Guid.NewGuid() }
         };
 
@@ -685,7 +703,11 @@ public class TenantServiceTests
             IsActive = true,
             Role = TenantRole.Member,
             TenantId = 100,
-            Tenant = new Tenant { PublicId = tenantId },
+            Tenant = new Tenant
+            {
+                PublicId = tenantId,
+                Name = $"tenant-{tenantId}"
+            },
             User = new ApplicationUser { PublicId = Guid.NewGuid() }
         };
 
@@ -719,7 +741,11 @@ public class TenantServiceTests
             IsActive = true,
             Role = TenantRole.Member,
             TenantId = 100,
-            Tenant = new Tenant { PublicId = tenantId },
+            Tenant = new Tenant
+            {
+                PublicId = tenantId,
+                Name = $"tenant-{tenantId}"
+            },
             User = new ApplicationUser { PublicId = Guid.NewGuid() }
         };
 
@@ -763,7 +789,11 @@ public class TenantServiceTests
             IsActive = true,
             Role = TenantRole.Admin,
             TenantId = 100,
-            Tenant = new Tenant { PublicId = tenantId },
+            Tenant = new Tenant
+            {
+                PublicId = tenantId,
+                Name = $"tenant-{tenantId}"
+            },
             User = new ApplicationUser { PublicId = Guid.NewGuid() }
         };
 

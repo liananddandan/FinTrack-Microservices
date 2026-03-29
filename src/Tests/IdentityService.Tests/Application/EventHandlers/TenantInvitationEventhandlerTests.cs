@@ -1,9 +1,10 @@
 using DotNetCore.CAP;
 using FluentAssertions;
+using IdentityService.Application.Common.Abstractions;
 using IdentityService.Application.Common.Status;
-using IdentityService.Application.EventHandlers;
-using IdentityService.Application.Events;
-using IdentityService.Application.Services.Interfaces;
+using IdentityService.Application.Tenants.Abstractions;
+using IdentityService.Application.Tenants.Events;
+using IdentityService.Application.Tenants.Handlers;
 using IdentityService.Domain.Entities;
 using IdentityService.Domain.Enums;
 using Microsoft.Extensions.Configuration;

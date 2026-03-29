@@ -2,12 +2,16 @@ using System.Text;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
-using Scalar.AspNetCore;
 using SharedKernel.Common.Options;
+using TransactionService.Application.Common.Abstractions;
 using TransactionService.Application.Middlewares;
+using TransactionService.Application.Products.Abstractions;
+using TransactionService.Application.Transactions.Abstractions;
+using TransactionService.Application.Transactions.Services;
+using TransactionService.Infrastructure.Audit;
+using TransactionService.Infrastructure.Authentication;
 using TransactionService.Infrastructure.Persistence;
 using TransactionService.Infrastructure.Persistence.Repositories;
-using TransactionService.Infrastructure.Persistence.Repositories.Interfaces;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -37,9 +41,18 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
             ClockSkew = TimeSpan.Zero
         };
     });
-
+builder.Services.AddCap(options =>
+{
+    options.UseEntityFramework<TransactionDbContext>();
+    options.UseRabbitMQ(cfg =>
+    {
+        cfg.HostName = builder.Configuration["CAP:RabbitMQ:HostName"]!;
+        cfg.UserName = builder.Configuration["CAP:RabbitMQ:UserName"]!;
+        cfg.Password = builder.Configuration["CAP:RabbitMQ:Password"]!;
+    });
+});
 builder.Services.AddAuthorization();
-
+builder.Services.AddHttpContextAccessor();
 builder.Services.AddScoped<ITransactionRepo, TransactionRepo>();
 builder.Services.AddDbContext<TransactionDbContext>(options =>
 {
@@ -52,13 +65,21 @@ builder.Services.AddMediatR(configuration =>
     configuration.RegisterServicesFromAssembly(typeof(Program).Assembly));
 
 builder.Services.Scan(scan => scan
-    .FromAssemblyOf<Program>() // 你也可以换成 typeof(Program) 或任何所在程序集的类型
-    .AddClasses(classes => classes.InNamespaces(
-        "TransactionService.Application.Services",
-        "TransactionService.Infrastructure.Persistence.Repositories"))
+    .FromAssemblies(
+        typeof(IProductService).Assembly,
+        typeof(ProductRepository).Assembly)
+    .AddClasses(classes => classes.Where(type =>
+        type.Name.EndsWith("Service") ||
+        type.Name.EndsWith("Repository") ||
+        type.Name.EndsWith("Repo")))
     .AsImplementedInterfaces()
     .WithScopedLifetime());
 
+builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
+builder.Services.AddScoped<ITenantInfoClient, MockTenantInfoClient>();
+builder.Services.AddScoped<IPaymentGateway, MockPaymentGateway>();
+builder.Services.AddScoped<ICurrentTenantContext, CurrentTenantContext>();
+builder.Services.AddScoped<IAuditLogPublisher, AuditLogPublisher>();
 builder.Services.AddControllers();
 
 var app = builder.Build();

@@ -7,6 +7,7 @@ import {
   HiOutlineDocumentMagnifyingGlass,
   HiOutlineArrowLeftOnRectangle,
   HiOutlineArrowsRightLeft,
+  HiOutlineQueueList,
 } from "react-icons/hi2"
 import { authStore } from "../lib/authStore"
 import { useAuth } from "../hooks/useAuth"
@@ -80,7 +81,7 @@ export default function AdminLayout() {
             </div>
           </div>
 
-           <div className="pt-6">
+          <div className="pt-6">
             <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3">
               <div className="truncate text-sm font-medium text-slate-900">
                 {auth.userName || auth.userEmail || "Unknown user"}
@@ -108,8 +109,14 @@ export default function AdminLayout() {
             />
 
             <AdminNavItem
-              to="/transactions"
-              label="Transactions"
+              to="/menu"
+              label="Menu"
+              icon={<HiOutlineQueueList className="h-5 w-5" />}
+            />
+
+            <AdminNavItem
+              to="/orders"
+              label="Orders"
               icon={<HiOutlineClipboardDocumentList className="h-5 w-5" />}
             />
 
@@ -131,7 +138,6 @@ export default function AdminLayout() {
               icon={<HiOutlineDocumentMagnifyingGlass className="h-5 w-5" />}
             />
           </nav>
-
         </aside>
 
         <main className="min-w-0 px-6 py-6">

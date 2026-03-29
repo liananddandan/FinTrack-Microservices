@@ -1,7 +1,6 @@
 import {
     HiOutlineArrowsRightLeft,
     HiOutlineUser,
-    HiOutlineShieldCheck,
     HiOutlineCodeBracket,
     HiOutlineServerStack,
     HiOutlineCube,
@@ -10,6 +9,7 @@ import {
     HiOutlineCloudArrowUp,
     HiOutlineArrowDownTray,
     HiOutlineRocketLaunch,
+    HiOutlineBuildingStorefront,
 } from "react-icons/hi2"
 import {
     SiDotnet,
@@ -20,7 +20,6 @@ import {
     SiGithubactions,
     SiReact,
 } from "react-icons/si"
-import EntryCard from "../components/EntryCard"
 
 function IconBadge({ children }: { children: React.ReactNode }) {
     return (
@@ -79,23 +78,34 @@ function PipelineStep({
     )
 }
 
+const APP_LINKS = {
+    aucklandCoffee: {
+        portal: "https://coffee.chenlis.com/portal/login",
+        admin: "https://coffee.chenlis.com/admin/login",
+    },
+    sushiBar: {
+        portal: "https://sushi.chenlis.com/portal/login",
+        admin: "https://sushi.chenlis.com/admin/login",
+    },
+    apiDocs: "https://fintrack.chenlis.com/api/swagger",
+}
+
 export default function LandingPage() {
     return (
         <main className="bg-white text-gray-900">
-            {/* Hero */}
             <section className="px-4 py-4">
                 <div className="mx-auto max-w-5xl">
                     <div className="flex items-center gap-3">
                         <IconBadge>
-                            <HiOutlineArrowsRightLeft className="h-6 w-6" />
+                            <HiOutlineBuildingStorefront className="h-6 w-6" />
                         </IconBadge>
 
                         <div>
                             <p className="text-sm font-medium tracking-wide text-gray-500">
-                                Transaction & Workflow Platform
+                                Retail Operations Platform
                             </p>
                             <p className="text-xs text-gray-400">
-                                Multi-tenant system built with microservices
+                                Multi-tenant retail demo built with microservices
                             </p>
                         </div>
                     </div>
@@ -106,41 +116,144 @@ export default function LandingPage() {
                 <div className="mx-auto max-w-5xl">
                     <div className="max-w-3xl">
                         <h1 className="text-4xl font-semibold leading-tight tracking-tight text-slate-800 sm:text-5xl">
-                            Transaction & workflow system for multi-tenant applications
+                            Multi-tenant retail operations system
                         </h1>
 
                         <p className="mt-6 text-lg leading-8 text-slate-600">
-                            A production-style platform for managing donations, procurements, and
-                            transaction workflows, built with clean architecture and event-driven design.
+                            A production-style system for managing menu data, orders, tenant access,
+                            and administrative workflows, built with clean architecture and event-driven design.
                         </p>
+                    </div>
 
-                        <div className="mt-10 grid gap-4 sm:grid-cols-3">
-                            <EntryCard
-                                href="https://fintrack.chenlis.com/portal/login"
-                                icon={<HiOutlineUser className="h-5 w-5" />}
-                                title="Portal"
-                                description="Sign in as a tenant user to manage transactions and workflows."
-                            />
+                    <div className="mt-10 grid gap-4 md:grid-cols-3">
+                        <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+                            <div className="flex items-center gap-2">
+                                <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-amber-100 text-amber-700">
+                                    <HiOutlineBeaker className="h-4 w-4" />
+                                </div>
 
-                            <EntryCard
-                                href="https://fintrack.chenlis.com/admin/login"
-                                icon={<HiOutlineShieldCheck className="h-5 w-5" />}
-                                title="Admin Panel"
-                                description="Review member activity, invitations, and audit logs."
-                            />
+                                <div>
+                                    <p className="text-[11px] font-medium uppercase tracking-wide text-slate-400">
+                                        Tenant
+                                    </p>
+                                    <h3 className="text-sm font-semibold text-slate-800">
+                                        Auckland Coffee
+                                    </h3>
+                                </div>
+                            </div>
 
-                            <EntryCard
-                                href="https://fintrack.chenlis.com/api/swagger"
-                                icon={<HiOutlineCodeBracket className="h-5 w-5" />}
-                                title="API Docs"
-                                description="Explore backend endpoints and service contracts through Swagger."
-                            />
+                            <div className="mt-4 grid grid-cols-2 gap-2">
+                                <a
+                                    href={APP_LINKS.aucklandCoffee.portal}
+                                    className="group rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 transition hover:border-indigo-300 hover:bg-indigo-50"
+                                >
+                                    <div className="flex items-center justify-between">
+                                        <span className="text-sm font-semibold text-slate-800 group-hover:text-indigo-700">
+                                            Portal
+                                        </span>
+                                        <span className="text-slate-400 transition group-hover:translate-x-1 group-hover:text-indigo-500">
+                                            →
+                                        </span>
+                                    </div>
+                                </a>
+
+                                <a
+                                    href={APP_LINKS.aucklandCoffee.admin}
+                                    className="group rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 transition hover:border-indigo-300 hover:bg-indigo-50"
+                                >
+                                    <div className="flex items-center justify-between">
+                                        <span className="text-sm font-semibold text-slate-800 group-hover:text-indigo-700">
+                                            Admin
+                                        </span>
+                                        <span className="text-slate-400 transition group-hover:translate-x-1 group-hover:text-indigo-500">
+                                            →
+                                        </span>
+                                    </div>
+                                </a>
+                            </div>
+                        </div>
+
+                        <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+                            <div className="flex items-center gap-2">
+                                <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-rose-100 text-rose-700">
+                                    <HiOutlineCube className="h-4 w-4" />
+                                </div>
+
+                                <div>
+                                    <p className="text-[11px] font-medium uppercase tracking-wide text-slate-400">
+                                        Tenant
+                                    </p>
+                                    <h3 className="text-sm font-semibold text-slate-800">
+                                        Sushi Bar
+                                    </h3>
+                                </div>
+                            </div>
+
+                            <div className="mt-4 grid grid-cols-2 gap-2">
+                                <a
+                                    href={APP_LINKS.sushiBar.portal}
+                                    className="group rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 transition hover:border-indigo-300 hover:bg-indigo-50"
+                                >
+                                    <div className="flex items-center justify-between">
+                                        <span className="text-sm font-semibold text-slate-800 group-hover:text-indigo-700">
+                                            Portal
+                                        </span>
+                                        <span className="text-slate-400 transition group-hover:translate-x-1 group-hover:text-indigo-500">
+                                            →
+                                        </span>
+                                    </div>
+                                </a>
+
+                                <a
+                                    href={APP_LINKS.sushiBar.admin}
+                                    className="group rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 transition hover:border-indigo-300 hover:bg-indigo-50"
+                                >
+                                    <div className="flex items-center justify-between">
+                                        <span className="text-sm font-semibold text-slate-800 group-hover:text-indigo-700">
+                                            Admin
+                                        </span>
+                                        <span className="text-slate-400 transition group-hover:translate-x-1 group-hover:text-indigo-500">
+                                            →
+                                        </span>
+                                    </div>
+                                </a>
+                            </div>
+                        </div>
+
+                        <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+                            <div className="flex items-center gap-2">
+                                <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-sky-100 text-sky-700">
+                                    <HiOutlineCodeBracket className="h-4 w-4" />
+                                </div>
+
+                                <div>
+                                    <p className="text-[11px] font-medium uppercase tracking-wide text-slate-400">
+                                        Developer
+                                    </p>
+                                    <h3 className="text-sm font-semibold text-slate-800">
+                                        API Docs
+                                    </h3>
+                                </div>
+                            </div>
+
+                            <div className="mt-4">
+                                <a
+                                    href={APP_LINKS.apiDocs}
+                                    className="group flex items-center justify-between rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 transition hover:border-indigo-300 hover:bg-indigo-50"
+                                >
+                                    <span className="text-sm font-semibold text-slate-800 group-hover:text-indigo-700">
+                                        Swagger
+                                    </span>
+                                    <span className="text-slate-400 transition group-hover:translate-x-1 group-hover:text-indigo-500">
+                                        →
+                                    </span>
+                                </a>
+                            </div>
                         </div>
                     </div>
                 </div>
             </section>
 
-            {/* System architecture */}
             <section className="px-6 pt-6">
                 <div className="mx-auto max-w-5xl">
                     <h2 className="text-3xl font-semibold text-slate-800">
@@ -184,7 +297,6 @@ export default function LandingPage() {
                 </div>
             </section>
 
-            {/* Delivery pipeline */}
             <section className="bg-slate-50 px-6 py-14">
                 <div className="mx-auto max-w-5xl">
                     <h2 className="text-3xl font-semibold text-slate-800">
@@ -232,7 +344,6 @@ export default function LandingPage() {
                 </div>
             </section>
 
-            {/* Technology stack */}
             <section className="px-6 py-16">
                 <div className="mx-auto max-w-5xl">
                     <h2 className="text-3xl font-semibold text-slate-800">
@@ -251,47 +362,46 @@ export default function LandingPage() {
                 </div>
             </section>
 
-            {/* Core capabilities */}
             <section className="bg-slate-50 px-6 py-16">
                 <div className="mx-auto max-w-5xl text-start">
                     <h2 className="text-3xl font-semibold text-slate-800">
-                        What you can do with the system
+                        Core capabilities
                     </h2>
 
                     <div className="mt-10 grid gap-6 text-left sm:grid-cols-2">
                         <div className="rounded-xl border border-slate-200 bg-white p-6">
                             <h3 className="font-semibold text-slate-800">
-                                Manage organizations independently
+                                Separate tenant workspaces
                             </h3>
                             <p className="mt-2 text-slate-600">
-                                Each tenant operates in isolation with its own data, users, and workflows.
+                                Each tenant runs with its own menu, orders, users, and admin workspace.
                             </p>
                         </div>
 
                         <div className="rounded-xl border border-slate-200 bg-white p-6">
                             <h3 className="font-semibold text-slate-800">
-                                Control access with clear roles
+                                Menu and order management
                             </h3>
                             <p className="mt-2 text-slate-600">
-                                Define permissions for admins and members to ensure secure operations.
+                                Support category-based menus, order creation, and order history views.
                             </p>
                         </div>
 
                         <div className="rounded-xl border border-slate-200 bg-white p-6">
                             <h3 className="font-semibold text-slate-800">
-                                Process transactions reliably
+                                Role-based access
                             </h3>
                             <p className="mt-2 text-slate-600">
-                                Actions flow through services and messaging infrastructure for consistency.
+                                Admin and member roles operate with distinct responsibilities and permissions.
                             </p>
                         </div>
 
                         <div className="rounded-xl border border-slate-200 bg-white p-6">
                             <h3 className="font-semibold text-slate-800">
-                                Track system activity
+                                Audit-ready workflows
                             </h3>
                             <p className="mt-2 text-slate-600">
-                                Audit logs provide visibility into every operation across the platform.
+                                Administrative actions can be tracked through audit logging and tenant-specific operations.
                             </p>
                         </div>
                     </div>

@@ -12,6 +12,7 @@ public record AuditLogMessage
     public string? TargetType { get; init; }
     public string? TargetPublicId { get; init; }
     public string? TargetDisplay { get; init; }
+    public string? Description { get; init; }
 
     public string? Source { get; init; }
     public string? CorrelationId { get; init; }

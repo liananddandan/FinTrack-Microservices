@@ -130,6 +130,50 @@ public static class ResultCodes
         public const string LoginSuccess = "100005099";
     }
 
+    public static class ProductCategory
+    {
+        public const string CreateParameterError = "100006001";
+        public const string CreateDuplicatedName = "100006002";
+        public const string UpdateParameterError = "100006003";
+        public const string UpdateDuplicatedName = "100006004";
+        public const string NotFound = "100006005";
+        public const string DeleteHasProducts = "100006006";
+
+        public const string DeleteSuccess = "100006997";
+        public const string GetListSuccess = "100006998";
+        public const string UpdateSuccess = "100006999";
+        public const string CreateSuccess = "100006996";
+    }
+    
+    public static class Product
+    {
+        public const string CreateParameterError = "100007001";
+        public const string CreateDuplicatedName = "100007002";
+        public const string UpdateParameterError = "100007003";
+        public const string UpdateDuplicatedName = "100007004";
+        public const string NotFound = "100007005";
+        public const string CategoryNotFound = "100007006";
+
+        public const string CreateSuccess = "100007996";
+        public const string DeleteSuccess = "100007997";
+        public const string GetListSuccess = "100007998";
+        public const string UpdateSuccess = "100007999";
+    }
+    
+    public static class Order
+    {
+        public const string CreateParameterError = "100008001";
+        public const string ProductNotFound = "100008002";
+        public const string NotFound = "100008003";
+        public const string AlreadyCancelled = "100008004";
+
+        public const string CreateSuccess = "100008996";
+        public const string CancelSuccess = "100008997";
+        public const string GetPagedSuccess = "100008998";
+        public const string GetByIdSuccess = "100008999";
+        public const string GetSummarySuccess = "100008995";
+    }
+    
     public const string InternalError = "900900001";
     public const string Forbidden = "900900002";
 }

@@ -9,6 +9,7 @@ using IdentityService.Domain.Enums;
 using IdentityService.Infrastructure.Persistence;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.DependencyInjection;
+using SharedKernel.Common.Constants;
 using SharedKernel.Common.DTOs.Auth;
 using Xunit;
 

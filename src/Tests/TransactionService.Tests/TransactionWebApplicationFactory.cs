@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.EntityFrameworkCore;
@@ -25,6 +26,14 @@ public class TransactionWebApplicationFactory<TProgram> : WebApplicationFactory<
 
         builder.ConfigureServices(services =>
         {
+            services.AddAuthentication(options =>
+            {
+                options.DefaultAuthenticateScheme = TestAuthHandler.SchemeName;
+                options.DefaultChallengeScheme = TestAuthHandler.SchemeName;
+            }).AddScheme<AuthenticationSchemeOptions, TestAuthHandler>(
+                TestAuthHandler.SchemeName,
+                _ => { });
+
             lock (LockObject)
             {
                 if (_databaseMigrated)
@@ -34,6 +43,7 @@ public class TransactionWebApplicationFactory<TProgram> : WebApplicationFactory<
 
                 using var scope = services.BuildServiceProvider().CreateScope();
                 var db = scope.ServiceProvider.GetRequiredService<TransactionDbContext>();
+
                 db.Database.EnsureDeleted();
                 db.Database.Migrate();
 
@@ -46,7 +56,10 @@ public class TransactionWebApplicationFactory<TProgram> : WebApplicationFactory<
     {
         using var scope = Services.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<TransactionDbContext>();
-
+        await db.Database.ExecuteSqlRawAsync("DELETE FROM OrderItems");
+        await db.Database.ExecuteSqlRawAsync("DELETE FROM Orders");
+        await db.Database.ExecuteSqlRawAsync("DELETE FROM Products");
+        await db.Database.ExecuteSqlRawAsync("DELETE FROM ProductCategories");
         await db.Database.ExecuteSqlRawAsync("DELETE FROM TenantAccounts");
         await db.Database.ExecuteSqlRawAsync("DELETE FROM Transactions");
     }

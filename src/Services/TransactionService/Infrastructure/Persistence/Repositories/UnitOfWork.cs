@@ -1,5 +1,5 @@
 using Microsoft.EntityFrameworkCore.Storage;
-using TransactionService.Infrastructure.Persistence.Repositories.Interfaces;
+using TransactionService.Application.Common.Abstractions;
 
 namespace TransactionService.Infrastructure.Persistence.Repositories;
 

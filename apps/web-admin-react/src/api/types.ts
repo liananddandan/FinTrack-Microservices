@@ -3,3 +3,10 @@ export type ApiResponse<T> = {
   message: string
   data: T
 }
+
+export type PagedResult<T> = {
+  items: T[]
+  totalCount: number
+  pageNumber: number
+  pageSize: number
+}

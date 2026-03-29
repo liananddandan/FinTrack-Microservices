@@ -1,4 +1,4 @@
-import { useState } from "react"
+import { useMemo, useState } from "react"
 import { useNavigate } from "react-router-dom"
 import { getCurrentUser, login } from "../api/account"
 import { seedDemoData, type DevSeedResult } from "../api/dev"
@@ -6,6 +6,7 @@ import { authStore } from "../lib/authStore"
 import {
   HiOutlineArrowsRightLeft,
   HiOutlineBeaker,
+  HiOutlineCube,
 } from "react-icons/hi2"
 
 type LoginForm = {
@@ -13,8 +14,54 @@ type LoginForm = {
   password: string
 }
 
+type TenantKey = "aucklandCoffee" | "sushiBar"
+
+const TENANT_CONFIG = {
+  aucklandCoffee: {
+    displayName: "Auckland Coffee",
+    subtitle: "Coffee shop admin workspace",
+    icon: HiOutlineBeaker,
+    themeClass: "bg-amber-100 text-amber-700",
+    matcher: "coffee",
+  },
+  sushiBar: {
+    displayName: "Sushi Bar",
+    subtitle: "Restaurant admin workspace",
+    icon: HiOutlineCube,
+    themeClass: "bg-rose-100 text-rose-700",
+    matcher: "sushi",
+  },
+} satisfies Record<
+  TenantKey,
+  {
+    displayName: string
+    subtitle: string
+    icon: typeof HiOutlineBeaker
+    themeClass: string
+    matcher: string
+  }
+>
+
+function getTenantKeyFromHost(): TenantKey | null {
+  const host = window.location.hostname.toLowerCase()
+
+  if (host.includes("coffee.")) {
+    return "aucklandCoffee"
+  }
+
+  if (host.includes("sushi.")) {
+    return "sushiBar"
+  }
+
+  return null
+}
+
 export default function Login() {
   const navigate = useNavigate()
+
+  const tenantKey = useMemo(() => getTenantKeyFromHost(), [])
+  const tenantConfig = tenantKey ? TENANT_CONFIG[tenantKey] : null
+  const TenantIcon = tenantConfig?.icon ?? HiOutlineArrowsRightLeft
 
   const [form, setForm] = useState<LoginForm>({
     email: "",
@@ -34,6 +81,15 @@ export default function Login() {
       ...prev,
       [key]: value,
     }))
+  }
+
+  function fillDemoAdmin(email: string, password: string) {
+    setForm({
+      email,
+      password,
+    })
+
+    setErrorMessage("")
   }
 
   async function onLogin(event: React.FormEvent<HTMLFormElement>) {
@@ -117,14 +173,36 @@ export default function Login() {
 
     try {
       const result = await seedDemoData()
-      setDemoSeedResult(result)
 
-      setForm({
-        email: result.adminEmail,
-        password: result.adminPassword,
+      const filteredTenants = result.tenants.filter((tenant) => {
+        if (!tenantKey || !tenantConfig) {
+          return true
+        }
+
+        return tenant.tenantName
+          .toLowerCase()
+          .includes(tenantConfig.matcher)
       })
 
-      setSeedMessage("Demo data seeded. Admin credentials are ready to use.")
+      const filteredResult = {
+        ...result,
+        tenants: filteredTenants,
+      }
+
+      setDemoSeedResult(filteredResult)
+
+      const firstTenant = filteredTenants?.[0]
+
+      if (firstTenant) {
+        setForm({
+          email: firstTenant.adminEmail,
+          password: firstTenant.adminPassword,
+        })
+      }
+
+      setSeedMessage(
+        "Demo data seeded. Choose an administrator account below to autofill the sign-in form."
+      )
     } catch (err: unknown) {
       if (typeof err === "object" && err !== null && "response" in err) {
         const maybeAxiosError = err as {
@@ -153,41 +231,112 @@ export default function Login() {
 
   return (
     <div className="min-h-screen bg-slate-50 px-6 py-10">
-      <div className="mx-auto grid max-w-5xl items-center gap-12 lg:grid-cols-[0.9fr_1.1fr]">
-        <section className="max-w-md">
+      <div className="mx-auto grid max-w-6xl gap-10 lg:grid-cols-[1fr_1fr]">
+        <section className="px-2 py-2 sm:px-4">
           <div className="flex items-center gap-4">
-            <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-indigo-100 text-indigo-600">
-              <HiOutlineArrowsRightLeft className="h-7 w-7" />
+            <div
+              className={`flex h-14 w-14 items-center justify-center rounded-2xl ${
+                tenantConfig?.themeClass ?? "bg-indigo-100 text-indigo-600"
+              }`}
+            >
+              <TenantIcon className="h-7 w-7" />
             </div>
 
             <div>
               <p className="text-lg font-semibold text-slate-800">
-                Transaction & Workflow Platform
+                {tenantConfig?.displayName ?? "Multi-tenant retail management"}
               </p>
               <p className="mt-1 text-sm text-slate-500">
-                Admin workspace access
+                {tenantConfig?.subtitle ?? "Admin workspace access"}
               </p>
             </div>
           </div>
 
-          <h1 className="mt-8 text-3xl font-semibold tracking-tight text-slate-800">
-            Admin sign in
-          </h1>
+          <div className="mt-8 flex items-center gap-2">
+            <HiOutlineBeaker className="h-5 w-5 text-amber-600" />
+            <h1 className="text-2xl font-semibold text-slate-800">
+              Use demo data
+            </h1>
+          </div>
 
-          <p className="mt-4 text-base leading-7 text-slate-600">
-            Sign in with an administrator account to access tenant-level
-            management, transaction review, member administration, and audit
-            activity.
+          <p className="mt-3 text-sm leading-6 text-slate-500">
+            Seed demo tenants and choose an administrator account to enter the admin workspace.
           </p>
+
+          <button
+            type="button"
+            disabled={seedLoading}
+            onClick={() => void onSeedDemoData()}
+            className="mt-6 inline-flex h-11 w-full items-center justify-center rounded-xl border border-amber-200 bg-amber-50 text-sm font-semibold text-amber-700 transition hover:bg-amber-100 disabled:cursor-not-allowed disabled:opacity-60"
+          >
+            {seedLoading ? "Seeding..." : "Seed demo data"}
+          </button>
+
+          {seedMessage ? (
+            <div
+              className="mt-4 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700"
+              role="status"
+            >
+              {seedMessage}
+            </div>
+          ) : null}
+
+          {seedErrorMessage ? (
+            <div
+              className="mt-4 rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700"
+              role="alert"
+            >
+              {seedErrorMessage}
+            </div>
+          ) : null}
+
+          {demoSeedResult?.tenants?.length ? (
+            <div className="mt-6 grid gap-4 md:grid-cols-2">
+              {demoSeedResult.tenants.map((tenant) => (
+                <div
+                  key={tenant.tenantPublicId}
+                  className="rounded-2xl border border-slate-200 bg-slate-50 p-4"
+                >
+                  <h2 className="text-base font-semibold text-slate-800">
+                    {tenant.tenantName}
+                  </h2>
+
+                  <div className="mt-4 rounded-xl border border-slate-200 bg-white p-3">
+                    <div className="text-sm font-semibold text-slate-800">
+                      Admin account
+                    </div>
+
+                    <div className="mt-2 text-xs text-slate-500">
+                      {tenant.adminEmail}
+                    </div>
+
+                    <div className="mt-1 text-xs text-slate-500">
+                      {tenant.adminPassword}
+                    </div>
+
+                    <button
+                      type="button"
+                      onClick={() =>
+                        fillDemoAdmin(tenant.adminEmail, tenant.adminPassword)
+                      }
+                      className="mt-3 inline-flex h-8 items-center justify-center rounded-lg bg-indigo-600 px-3 text-xs font-medium text-white transition hover:bg-indigo-500"
+                    >
+                      Use demo admin
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : null}
         </section>
 
         <section className="rounded-3xl border border-slate-200 border-t-4 border-t-indigo-200 bg-white p-8 shadow-sm sm:p-10">
           <div>
             <h2 className="text-2xl font-semibold text-slate-800">
-              Sign in
+              Admin sign in
             </h2>
             <p className="mt-2 text-sm leading-6 text-slate-500">
-              Use your admin credentials to continue.
+              Use your administrator credentials to continue.
             </p>
           </div>
 
@@ -241,71 +390,6 @@ export default function Login() {
               </div>
             ) : null}
           </form>
-
-          <div className="my-8 h-px bg-slate-200" />
-
-          <div className="flex items-center gap-2">
-            <HiOutlineBeaker className="h-5 w-5 text-amber-600" />
-            <p className="text-sm font-medium text-slate-700">Demo setup</p>
-          </div>
-
-          <p className="mt-2 text-sm leading-6 text-slate-500">
-            Seed a demo tenant and test accounts for local development.
-          </p>
-
-          <div className="mt-4">
-            <button
-              type="button"
-              disabled={seedLoading}
-              onClick={onSeedDemoData}
-              className="inline-flex h-11 w-full items-center justify-center rounded-xl border border-amber-200 bg-amber-50 text-sm font-semibold text-amber-700 transition hover:bg-amber-100 disabled:cursor-not-allowed disabled:opacity-60"
-            >
-              {seedLoading ? "Seeding..." : "Seed demo data"}
-            </button>
-          </div>
-
-          {seedMessage ? (
-            <div
-              className="mt-4 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700"
-              role="status"
-            >
-              {seedMessage}
-            </div>
-          ) : null}
-
-          {seedErrorMessage ? (
-            <div
-              className="mt-4 rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700"
-              role="alert"
-            >
-              {seedErrorMessage}
-            </div>
-          ) : null}
-
-          {demoSeedResult ? (
-            <div className="mt-6 rounded-2xl border border-slate-200 bg-slate-50 p-4">
-              <h3 className="text-sm font-semibold text-slate-800">
-                Demo credentials
-              </h3>
-
-              <div className="mt-4 space-y-3 text-sm text-slate-600">
-                <div>
-                  <span className="font-medium text-slate-700">Tenant:</span>{" "}
-                  {demoSeedResult.tenantName}
-                </div>
-
-                <div>
-                  <span className="font-medium text-slate-700">Admin:</span>{" "}
-                  {demoSeedResult.adminEmail} / {demoSeedResult.adminPassword}
-                </div>
-
-                <div>
-                  <span className="font-medium text-slate-700">Member:</span>{" "}
-                  {demoSeedResult.memberEmail} / {demoSeedResult.memberPassword}
-                </div>
-              </div>
-            </div>
-          ) : null}
         </section>
       </div>
     </div>
