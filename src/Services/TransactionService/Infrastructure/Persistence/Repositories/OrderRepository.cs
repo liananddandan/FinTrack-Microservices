@@ -2,6 +2,7 @@ using Microsoft.EntityFrameworkCore;
 using TransactionService.Api.Transaction.Contracts;
 using TransactionService.Application.Orders.Abstractions;
 using TransactionService.Application.Orders.Dtos;
+using TransactionService.Domain.Constants;
 using TransactionService.Domain.Entities;
 
 namespace TransactionService.Infrastructure.Persistence.Repositories;
@@ -115,5 +116,50 @@ public class OrderRepository(TransactionDbContext dbContext) : IOrderRepository
                  x.CreatedAt >= dayStart &&
                  x.CreatedAt < dayEnd,
             cancellationToken);
+    }
+
+    public async Task<OrderSummaryDto> GetSummaryAsync(
+        Guid tenantPublicId,
+        Guid? createdByUserPublicId,
+        DateTime? fromUtc,
+        DateTime? toUtc,
+        CancellationToken cancellationToken)
+    {
+        var query = dbContext.Orders
+            .AsNoTracking()
+            .Where(x => x.TenantPublicId == tenantPublicId);
+
+        if (createdByUserPublicId.HasValue)
+        {
+            query = query.Where(x => x.CreatedByUserPublicId == createdByUserPublicId.Value);
+        }
+
+        if (fromUtc.HasValue)
+        {
+            query = query.Where(x => x.CreatedAt >= fromUtc.Value);
+        }
+
+        if (toUtc.HasValue)
+        {
+            query = query.Where(x => x.CreatedAt <= toUtc.Value);
+        }
+
+        var completedOrders = query.Where(x => x.Status == OrderStatuses.Completed);
+        var cancelledOrders = query.Where(x => x.Status == OrderStatuses.Cancelled);
+
+        var orderCount = await completedOrders.CountAsync(cancellationToken);
+        var totalRevenue = orderCount == 0
+            ? 0m
+            : await completedOrders.SumAsync(x => x.TotalAmount, cancellationToken);
+
+        var cancelledOrderCount = await cancelledOrders.CountAsync(cancellationToken);
+
+        return new OrderSummaryDto
+        {
+            OrderCount = orderCount,
+            TotalRevenue = totalRevenue,
+            AverageOrderValue = orderCount == 0 ? 0m : totalRevenue / orderCount,
+            CancelledOrderCount = cancelledOrderCount
+        };
     }
 }

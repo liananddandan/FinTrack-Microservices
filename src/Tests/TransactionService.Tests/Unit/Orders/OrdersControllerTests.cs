@@ -260,4 +260,68 @@ public class OrdersControllerTests
         body.Message.Should().Be("Order not found.");
         body.Data.Should().BeFalse();
     }
+    
+    [Fact]
+    public async Task GetSummary_ShouldReturnOk_WhenMediatorReturnsSuccess()
+    {
+        var response = ServiceResult<OrderSummaryDto>.Ok(
+            new OrderSummaryDto
+            {
+                OrderCount = 6,
+                TotalRevenue = 150.00m,
+                AverageOrderValue = 25.00m,
+                CancelledOrderCount = 1
+            },
+            ResultCodes.Order.GetSummarySuccess);
+
+        _mediatorMock.Setup(x => x.Send(
+                It.IsAny<GetOrderSummaryQuery>(),
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(response);
+
+        var result = await _controller.GetSummary(
+            false,
+            null,
+            null,
+            CancellationToken.None);
+
+        result.Should().BeOfType<OkObjectResult>();
+
+        var ok = (OkObjectResult)result;
+        ok.Value.Should().BeOfType<ApiResponse<OrderSummaryDto>>();
+
+        var body = (ApiResponse<OrderSummaryDto>)ok.Value!;
+        body.Code.Should().Be(ResultCodes.Order.GetSummarySuccess);
+        body.Data.Should().NotBeNull();
+        body.Data!.OrderCount.Should().Be(6);
+        body.Data.TotalRevenue.Should().Be(150.00m);
+    }
+    
+    [Fact]
+    public async Task GetSummary_ShouldReturnBadRequest_WhenMediatorReturnsFailure()
+    {
+        var response = ServiceResult<OrderSummaryDto>.Fail(
+            ResultCodes.Forbidden,
+            "Tenant context is missing.");
+
+        _mediatorMock.Setup(x => x.Send(
+                It.IsAny<GetOrderSummaryQuery>(),
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(response);
+
+        var result = await _controller.GetSummary(
+            false,
+            null,
+            null,
+            CancellationToken.None);
+
+        result.Should().BeOfType<BadRequestObjectResult>();
+
+        var badRequest = (BadRequestObjectResult)result;
+        badRequest.Value.Should().BeOfType<ApiResponse<OrderSummaryDto>>();
+
+        var body = (ApiResponse<OrderSummaryDto>)badRequest.Value!;
+        body.Code.Should().Be(ResultCodes.Forbidden);
+        body.Data.Should().BeNull();
+    }
 }

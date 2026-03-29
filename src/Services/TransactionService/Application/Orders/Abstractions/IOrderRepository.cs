@@ -32,4 +32,11 @@ public interface IOrderRepository
         Guid tenantPublicId,
         DateTime utcDate,
         CancellationToken cancellationToken);
+    
+    Task<OrderSummaryDto> GetSummaryAsync(
+        Guid tenantPublicId,
+        Guid? createdByUserPublicId,
+        DateTime? fromUtc,
+        DateTime? toUtc,
+        CancellationToken cancellationToken);
 }

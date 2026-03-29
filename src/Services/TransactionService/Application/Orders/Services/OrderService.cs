@@ -227,6 +227,41 @@ public class OrderService(
             "Order cancelled successfully.");
     }
 
+    public async Task<ServiceResult<OrderSummaryDto>> GetSummaryAsync(
+        GetOrderSummaryQuery request,
+        CancellationToken cancellationToken)
+    {
+        if (currentTenantContext.TenantPublicId == Guid.Empty)
+        {
+            return ServiceResult<OrderSummaryDto>.Fail(
+                ResultCodes.Forbidden,
+                "Tenant context is missing.");
+        }
+
+        Guid? createdByUserPublicId = null;
+
+        if (request.CreatedByMe)
+        {
+            createdByUserPublicId = currentTenantContext.UserPublicId;
+        }
+        else if (!string.Equals(currentTenantContext.Role, "Admin", StringComparison.OrdinalIgnoreCase))
+        {
+            createdByUserPublicId = currentTenantContext.UserPublicId;
+        }
+
+        var result = await orderRepository.GetSummaryAsync(
+            currentTenantContext.TenantPublicId,
+            createdByUserPublicId,
+            request.FromUtc,
+            request.ToUtc,
+            cancellationToken);
+
+        return ServiceResult<OrderSummaryDto>.Ok(
+            result,
+            ResultCodes.Order.GetSummarySuccess,
+            "Order summary retrieved successfully.");
+    }
+
     private static OrderDto MapToDto(Order order)
     {
         return new OrderDto

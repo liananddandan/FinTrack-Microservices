@@ -167,10 +167,11 @@ public static class ResultCodes
         public const string NotFound = "100008003";
         public const string AlreadyCancelled = "100008004";
 
+        public const string CreateSuccess = "100008996";
         public const string CancelSuccess = "100008997";
         public const string GetPagedSuccess = "100008998";
         public const string GetByIdSuccess = "100008999";
-        public const string CreateSuccess = "100008996";
+        public const string GetSummarySuccess = "100008995";
     }
     
     public const string InternalError = "900900001";

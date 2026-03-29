@@ -23,4 +23,8 @@ public interface IOrderService
     Task<ServiceResult<bool>> CancelAsync(
         CancelOrderCommand request,
         CancellationToken cancellationToken);
+    
+    Task<ServiceResult<OrderSummaryDto>> GetSummaryAsync(
+        GetOrderSummaryQuery request,
+        CancellationToken cancellationToken);
 }

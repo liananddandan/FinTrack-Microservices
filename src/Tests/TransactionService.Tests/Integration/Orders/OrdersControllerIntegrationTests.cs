@@ -217,6 +217,47 @@ public class OrdersControllerIntegrationTests
         body!.Code.Should().Be(ResultCodes.Order.AlreadyCancelled);
         body.Data.Should().BeFalse();
     }
+    
+    [Fact]
+    public async Task GetSummary_ShouldReturnTenantSummary()
+    {
+        await SeedOrderAsync(customerName: "Emily", totalAmount: 11.50m, status: OrderStatuses.Completed);
+        await SeedOrderAsync(customerName: "Jack", totalAmount: 23.00m, status: OrderStatuses.Completed);
+        await SeedOrderAsync(customerName: "Cancelled", totalAmount: 9.20m, status: OrderStatuses.Cancelled);
+
+        var response = await _client.GetAsync("/api/orders/summary");
+
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
+
+        var body = await response.Content.ReadFromJsonAsync<ApiResponse<OrderSummaryDto>>();
+        body.Should().NotBeNull();
+        body!.Code.Should().Be(ResultCodes.Order.GetSummarySuccess);
+        body.Data.Should().NotBeNull();
+        body.Data!.OrderCount.Should().Be(2);
+        body.Data.TotalRevenue.Should().Be(34.50m);
+        body.Data.AverageOrderValue.Should().Be(17.25m);
+        body.Data.CancelledOrderCount.Should().Be(1);
+    }
+
+    [Fact]
+    public async Task GetSummary_ShouldReturnOnlyCurrentUserSummary_WhenCreatedByMeIsTrue()
+    {
+        await SeedOrderAsync(customerName: "Mine 1", createdByUserPublicId: _userPublicId, totalAmount: 10m, status: OrderStatuses.Completed);
+        await SeedOrderAsync(customerName: "Mine 2", createdByUserPublicId: _userPublicId, totalAmount: 20m, status: OrderStatuses.Completed);
+        await SeedOrderAsync(customerName: "Other", createdByUserPublicId: Guid.NewGuid(), totalAmount: 99m, status: OrderStatuses.Completed);
+
+        var response = await _client.GetAsync("/api/orders/summary?createdByMe=true");
+
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
+
+        var body = await response.Content.ReadFromJsonAsync<ApiResponse<OrderSummaryDto>>();
+        body.Should().NotBeNull();
+        body!.Code.Should().Be(ResultCodes.Order.GetSummarySuccess);
+        body.Data.Should().NotBeNull();
+        body.Data!.OrderCount.Should().Be(2);
+        body.Data.TotalRevenue.Should().Be(30m);
+        body.Data.AverageOrderValue.Should().Be(15m);
+    }
 
     private async Task<Guid> SeedCategoryAsync(string name)
     {
@@ -267,10 +308,14 @@ public class OrdersControllerIntegrationTests
     private async Task<Guid> SeedOrderAsync(
         string customerName = "Emily",
         Guid? createdByUserPublicId = null,
-        string status = OrderStatuses.Completed)
+        string status = OrderStatuses.Completed,
+        decimal totalAmount = 11.50m)
     {
         await using var scope = CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<TransactionDbContext>();
+
+        var subtotal = Math.Round(totalAmount / 1.15m, 2, MidpointRounding.AwayFromZero);
+        var gstAmount = totalAmount - subtotal;
 
         var order = new Order
         {
@@ -281,11 +326,11 @@ public class OrdersControllerIntegrationTests
             CustomerPhone = "0211234567",
             CreatedByUserPublicId = createdByUserPublicId ?? _userPublicId,
             CreatedByUserNameSnapshot = "Test User",
-            SubtotalAmount = 10.00m,
+            SubtotalAmount = subtotal,
             GstRate = 0.15m,
-            GstAmount = 1.50m,
+            GstAmount = gstAmount,
             DiscountAmount = 0m,
-            TotalAmount = 11.50m,
+            TotalAmount = totalAmount,
             Status = status,
             PaymentStatus = PaymentStatuses.Paid,
             PaymentMethod = PaymentMethods.Cash,
@@ -297,9 +342,9 @@ public class OrdersControllerIntegrationTests
                 {
                     ProductPublicId = Guid.NewGuid(),
                     ProductNameSnapshot = "Latte",
-                    UnitPrice = 5.00m,
-                    Quantity = 2,
-                    LineTotal = 10.00m,
+                    UnitPrice = subtotal,
+                    Quantity = 1,
+                    LineTotal = subtotal,
                     Notes = null
                 }
             }

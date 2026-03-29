@@ -439,4 +439,86 @@ public class OrderServiceTests
 
         _unitOfWorkMock.Verify(x => x.SaveChangesAsync(It.IsAny<CancellationToken>()), Times.Once);
     }
+    
+    [Fact]
+    public async Task GetSummaryAsync_ShouldReturnSummary_ForAdminWithoutCreatedByMeFilter()
+    {
+        var summary = new OrderSummaryDto
+        {
+            OrderCount = 5,
+            TotalRevenue = 125.50m,
+            AverageOrderValue = 25.10m,
+            CancelledOrderCount = 1
+        };
+
+        _currentTenantContextMock.Setup(x => x.Role).Returns("Admin");
+
+        _orderRepositoryMock.Setup(x => x.GetSummaryAsync(
+                _tenantPublicId,
+                null,
+                null,
+                null,
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(summary);
+
+        var result = await _service.GetSummaryAsync(
+            new GetOrderSummaryQuery(false, null, null),
+            CancellationToken.None);
+
+        result.Success.Should().BeTrue();
+        result.Code.Should().Be(ResultCodes.Order.GetSummarySuccess);
+        result.Data.Should().NotBeNull();
+        result.Data!.OrderCount.Should().Be(5);
+        result.Data.TotalRevenue.Should().Be(125.50m);
+        result.Data.AverageOrderValue.Should().Be(25.10m);
+        result.Data.CancelledOrderCount.Should().Be(1);
+    }
+
+    [Fact]
+    public async Task GetSummaryAsync_ShouldUseCurrentUserFilter_WhenNotAdmin()
+    {
+        var summary = new OrderSummaryDto
+        {
+            OrderCount = 2,
+            TotalRevenue = 30m,
+            AverageOrderValue = 15m,
+            CancelledOrderCount = 0
+        };
+
+        _currentTenantContextMock.Setup(x => x.Role).Returns("Member");
+
+        _orderRepositoryMock.Setup(x => x.GetSummaryAsync(
+                _tenantPublicId,
+                _userPublicId,
+                null,
+                null,
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(summary);
+
+        var result = await _service.GetSummaryAsync(
+            new GetOrderSummaryQuery(false, null, null),
+            CancellationToken.None);
+
+        result.Success.Should().BeTrue();
+
+        _orderRepositoryMock.Verify(x => x.GetSummaryAsync(
+            _tenantPublicId,
+            _userPublicId,
+            null,
+            null,
+            It.IsAny<CancellationToken>()), Times.Once);
+    }
+    
+    [Fact]
+    public async Task GetSummaryAsync_ShouldReturnFailure_WhenTenantContextMissing()
+    {
+        _currentTenantContextMock.Setup(x => x.TenantPublicId).Returns(Guid.Empty);
+
+        var result = await _service.GetSummaryAsync(
+            new GetOrderSummaryQuery(false, null, null),
+            CancellationToken.None);
+
+        result.Success.Should().BeFalse();
+        result.Code.Should().Be(ResultCodes.Forbidden);
+    }
 }

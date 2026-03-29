@@ -72,4 +72,20 @@ public class OrdersController(IMediator mediator) : ControllerBase
         var result = await mediator.Send(command, cancellationToken);
         return result.ToActionResult();
     }
+    
+    [HttpGet("summary")]
+    public async Task<IActionResult> GetSummary(
+        [FromQuery] bool createdByMe = false,
+        [FromQuery] DateTime? fromUtc = null,
+        [FromQuery] DateTime? toUtc = null,
+        CancellationToken cancellationToken = default)
+    {
+        var query = new GetOrderSummaryQuery(
+            createdByMe,
+            fromUtc,
+            toUtc);
+
+        var result = await mediator.Send(query, cancellationToken);
+        return result.ToActionResult();
+    }
 }
