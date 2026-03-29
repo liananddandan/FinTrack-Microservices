@@ -1,8 +1,10 @@
 using AutoFixture;
 using FluentAssertions;
-using IdentityService.Application.Abstractions;
+using IdentityService.Application.Accounts.Abstractions;
+using IdentityService.Application.Common.Abstractions;
 using IdentityService.Application.Common.DTOs;
-using IdentityService.Application.Services;
+using IdentityService.Application.Tenants.Abstractions;
+using IdentityService.Application.Tenants.Services;
 using IdentityService.Domain.Entities;
 using IdentityService.Domain.Enums;
 using MediatR;
@@ -90,7 +92,7 @@ public class TenantServiceTests
             Times.Never);
 
         _unitOfWorkMock.Verify(
-            x => x.WithTransactionAsync(It.IsAny<Func<Task<ServiceResult<RegisterTenantResult>>>>(), It.IsAny<CancellationToken>()),
+            x => x.WithTransactionAsync(It.IsAny<Func<Task<ServiceResult<RegisterTenantDto>>>>(), It.IsAny<CancellationToken>()),
             Times.Never);
     }
 
@@ -102,8 +104,8 @@ public class TenantServiceTests
             .ReturnsAsync(true);
 
         _unitOfWorkMock
-            .Setup(x => x.WithTransactionAsync(It.IsAny<Func<Task<ServiceResult<RegisterTenantResult>>>>(), It.IsAny<CancellationToken>()))
-            .Returns<Func<Task<ServiceResult<RegisterTenantResult>>>, CancellationToken>((action, _) => action());
+            .Setup(x => x.WithTransactionAsync(It.IsAny<Func<Task<ServiceResult<RegisterTenantDto>>>>(), It.IsAny<CancellationToken>()))
+            .Returns<Func<Task<ServiceResult<RegisterTenantDto>>>, CancellationToken>((action, _) => action());
 
         var result = await _sut.RegisterTenantAsync(
             "FinTrack",
@@ -137,8 +139,8 @@ public class TenantServiceTests
             .ReturnsAsync(true);
 
         _unitOfWorkMock
-            .Setup(x => x.WithTransactionAsync(It.IsAny<Func<Task<ServiceResult<RegisterTenantResult>>>>(), It.IsAny<CancellationToken>()))
-            .Returns<Func<Task<ServiceResult<RegisterTenantResult>>>, CancellationToken>((action, _) => action());
+            .Setup(x => x.WithTransactionAsync(It.IsAny<Func<Task<ServiceResult<RegisterTenantDto>>>>(), It.IsAny<CancellationToken>()))
+            .Returns<Func<Task<ServiceResult<RegisterTenantDto>>>, CancellationToken>((action, _) => action());
 
         var result = await _sut.RegisterTenantAsync(
             "FinTrack",
@@ -172,8 +174,8 @@ public class TenantServiceTests
             .ReturnsAsync(false);
 
         _unitOfWorkMock
-            .Setup(x => x.WithTransactionAsync(It.IsAny<Func<Task<ServiceResult<RegisterTenantResult>>>>(), It.IsAny<CancellationToken>()))
-            .Returns<Func<Task<ServiceResult<RegisterTenantResult>>>, CancellationToken>((action, _) => action());
+            .Setup(x => x.WithTransactionAsync(It.IsAny<Func<Task<ServiceResult<RegisterTenantDto>>>>(), It.IsAny<CancellationToken>()))
+            .Returns<Func<Task<ServiceResult<RegisterTenantDto>>>, CancellationToken>((action, _) => action());
 
         _userManagerMock
             .Setup(x => x.CreateAsync(It.IsAny<ApplicationUser>(), It.IsAny<string>()))
@@ -215,8 +217,8 @@ public class TenantServiceTests
             .ReturnsAsync(false);
 
         _unitOfWorkMock
-            .Setup(x => x.WithTransactionAsync(It.IsAny<Func<Task<ServiceResult<RegisterTenantResult>>>>(), It.IsAny<CancellationToken>()))
-            .Returns<Func<Task<ServiceResult<RegisterTenantResult>>>, CancellationToken>((action, _) => action());
+            .Setup(x => x.WithTransactionAsync(It.IsAny<Func<Task<ServiceResult<RegisterTenantDto>>>>(), It.IsAny<CancellationToken>()))
+            .Returns<Func<Task<ServiceResult<RegisterTenantDto>>>, CancellationToken>((action, _) => action());
 
         _userManagerMock
             .Setup(x => x.CreateAsync(It.IsAny<ApplicationUser>(), It.IsAny<string>()))
@@ -285,7 +287,7 @@ public class TenantServiceTests
     public async Task RegisterTenantAsync_Should_Return_Fail_When_Exception_Is_Thrown()
     {
         _unitOfWorkMock
-            .Setup(x => x.WithTransactionAsync(It.IsAny<Func<Task<ServiceResult<RegisterTenantResult>>>>(), It.IsAny<CancellationToken>()))
+            .Setup(x => x.WithTransactionAsync(It.IsAny<Func<Task<ServiceResult<RegisterTenantDto>>>>(), It.IsAny<CancellationToken>()))
             .ThrowsAsync(new Exception("unexpected"));
 
         var result = await _sut.RegisterTenantAsync(

@@ -4,13 +4,13 @@ namespace IdentityService.Application.Common.Extensions;
 
 public static class HttpContextExtensions
 {
-    public static JwtParseResult? GetHttpHeaderJwtParseResult(this HttpContext httpContext)
+    public static JwtParseDto? GetHttpHeaderJwtParseResult(this HttpContext httpContext)
     {
-        return httpContext.Items["JwtParseResult"] as JwtParseResult;
+        return httpContext.Items["JwtParseResult"] as JwtParseDto;
     }
     
-    public static InvitationParseResult? GetHttpHeaderInviteParseResult(this HttpContext httpContext)
+    public static InvitationParseDto? GetHttpHeaderInviteParseResult(this HttpContext httpContext)
     {
-        return httpContext.Items["InviteParseResult"] as InvitationParseResult;
+        return httpContext.Items["InviteParseResult"] as InvitationParseDto;
     }
 }

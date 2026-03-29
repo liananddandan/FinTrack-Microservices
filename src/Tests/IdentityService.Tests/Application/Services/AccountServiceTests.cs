@@ -1,7 +1,8 @@
 using AutoFixture;
 using FluentAssertions;
-using IdentityService.Application.Abstractions;
-using IdentityService.Application.Services;
+using IdentityService.Application.Accounts.Abstractions;
+using IdentityService.Application.Accounts.Services;
+using IdentityService.Application.Common.Abstractions;
 using IdentityService.Domain.Entities;
 using IdentityService.Domain.Enums;
 using Microsoft.AspNetCore.Identity;

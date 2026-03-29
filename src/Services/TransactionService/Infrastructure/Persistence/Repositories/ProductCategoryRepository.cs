@@ -65,4 +65,18 @@ public class ProductCategoryRepository(TransactionDbContext dbContext) : IProduc
     {
         await dbContext.ProductCategories.AddAsync(category, cancellationToken);
     }
+
+    public async Task<ProductCategory?> GetByNameAsync(
+        Guid tenantPublicId,
+        string name,
+        CancellationToken cancellationToken)
+    {
+        var normalizedName = name.Trim();
+
+        return await dbContext.ProductCategories
+            .FirstOrDefaultAsync(x =>
+                    x.TenantPublicId == tenantPublicId &&
+                    x.Name == normalizedName,
+                cancellationToken);
+    }
 }

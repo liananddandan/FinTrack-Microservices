@@ -33,4 +33,9 @@ public interface IProductRepository
         CancellationToken cancellationToken);
 
     Task AddAsync(Product product, CancellationToken cancellationToken);
+    
+    Task<Product?> GetByNameAsync(
+        Guid tenantPublicId,
+        string name,
+        CancellationToken cancellationToken);
 }

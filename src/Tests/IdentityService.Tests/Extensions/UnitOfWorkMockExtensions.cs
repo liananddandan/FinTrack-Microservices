@@ -1,4 +1,4 @@
-using IdentityService.Application.Abstractions;
+using IdentityService.Application.Common.Abstractions;
 using Moq;
 
 namespace IdentityService.Tests.Extensions;

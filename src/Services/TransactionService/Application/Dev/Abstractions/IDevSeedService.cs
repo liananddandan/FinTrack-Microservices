@@ -1,10 +1,10 @@
-using TransactionService.Api.Dev.Contracts;
+using SharedKernel.Contracts.Dev;
 
 namespace TransactionService.Application.Dev.Abstractions;
 
 public interface IDevSeedService
 {
-    Task<DevTransactionSeedResult> SeedTransactionsAsync(
+    Task<DevTransactionSeedResult> SeedMenuAndOrdersAsync(
         DevTransactionSeedRequest request,
         CancellationToken cancellationToken = default);
 }

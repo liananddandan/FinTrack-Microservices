@@ -1,6 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
 using SharedKernel.Common.DTOs;
-using TransactionService.Api.Dev.Contracts;
+using SharedKernel.Contracts.Dev;
 using TransactionService.Application.Dev.Abstractions;
 
 namespace TransactionService.Api.Dev.Controllers;
@@ -11,8 +11,8 @@ public class DevController(
     IWebHostEnvironment environment,
     IDevSeedService devSeedService) : ControllerBase
 {
-    [HttpPost("transactions")]
-    public async Task<IActionResult> SeedTransactionsAsync(
+    [HttpPost("menu-and-orders")]
+    public async Task<IActionResult> SeedMenuAndOrdersAsync(
         [FromBody] DevTransactionSeedRequest request,
         CancellationToken cancellationToken)
     {
@@ -21,11 +21,11 @@ public class DevController(
             return NotFound();
         }
 
-        var seedResult = await devSeedService.SeedTransactionsAsync(request, cancellationToken);
+        var seedResult = await devSeedService.SeedMenuAndOrdersAsync(request, cancellationToken);
 
         return Ok(new ApiResponse<DevTransactionSeedResult>(
-            "TRANSACTION_SEED_SUCCESS",
-            "Transaction demo data seeded successfully.",
+            "MENU_ORDER_SEED_SUCCESS",
+            "Menu and order demo data seeded successfully.",
             seedResult));
     }
 }

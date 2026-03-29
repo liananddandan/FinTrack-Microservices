@@ -1,4 +1,4 @@
-using IdentityService.Application.Abstractions;
+using IdentityService.Application.Accounts.Abstractions;
 using IdentityService.Domain.Entities;
 using Microsoft.EntityFrameworkCore;
 

@@ -176,7 +176,7 @@ export default function Home() {
   }
 
   function goOrders() {
-    navigate("/portal/my-transactions")
+    navigate("/portal/orders")
   }
 
   function goProfile() {

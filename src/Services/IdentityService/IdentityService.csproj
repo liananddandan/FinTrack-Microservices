@@ -31,6 +31,8 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Folder Include="Api\Accounts\Contracts\" />
+    <Folder Include="Application\Dev\Dtos\" />
     <Folder Include="Infrastructure\Persistence\Migrations\" />
   </ItemGroup>
 

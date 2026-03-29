@@ -76,4 +76,14 @@ public class ProductRepository(TransactionDbContext dbContext) : IProductReposit
     {
         await dbContext.Products.AddAsync(product, cancellationToken);
     }
+
+    public async Task<Product?> GetByNameAsync(Guid tenantPublicId, string name, CancellationToken cancellationToken)
+    {
+        var normalizedName = name.Trim();
+        return await dbContext.Products
+            .FirstOrDefaultAsync(x =>
+                x.TenantPublicId == tenantPublicId &&
+                x.Name == normalizedName,
+                cancellationToken);
+    }
 }

@@ -7,6 +7,9 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="DotNetCore.CAP" Version="8.4.1" />
+    <PackageReference Include="DotNetCore.CAP.MySql" Version="8.4.1" />
+    <PackageReference Include="DotNetCore.CAP.RabbitMQ" Version="8.4.1" />
     <PackageReference Include="MediatR" Version="13.0.0" />
     <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="9.0.6" />
     <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="9.0.2" />
@@ -22,6 +25,10 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\Shared\SharedKernel\SharedKernel.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="Api\Dev\Contracts\" />
   </ItemGroup>
 
 </Project>

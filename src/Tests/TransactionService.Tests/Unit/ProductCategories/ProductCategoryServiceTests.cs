@@ -19,6 +19,7 @@ public class ProductCategoryServiceTests
     private readonly Mock<ICurrentTenantContext> _currentTenantContextMock;
     private readonly Mock<IUnitOfWork> _unitOfWorkMock;
     private readonly ProductCategoryService _service;
+    private readonly Mock<IAuditLogPublisher> _auditLogPublisherMock;
 
     public ProductCategoryServiceTests()
     {
@@ -27,11 +28,12 @@ public class ProductCategoryServiceTests
         _repositoryMock = new Mock<IProductCategoryRepository>();
         _currentTenantContextMock = new Mock<ICurrentTenantContext>();
         _unitOfWorkMock = new Mock<IUnitOfWork>();
-
+        _auditLogPublisherMock = new Mock<IAuditLogPublisher>();
         _service = new ProductCategoryService(
             _repositoryMock.Object,
             _currentTenantContextMock.Object,
-            _unitOfWorkMock.Object);
+            _unitOfWorkMock.Object,
+            _auditLogPublisherMock.Object);
     }
 
     [Fact]

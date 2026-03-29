@@ -1,14 +1,20 @@
 using System.Text;
-using IdentityService.Api.Filters;
-using IdentityService.Api.Middlewares;
+using IdentityService.Application.Common.Abstractions;
+using IdentityService.Application.Common.Filters;
+using IdentityService.Application.Common.Middlewares;
+using IdentityService.Application.Dev.Abstractions;
+using IdentityService.Application.Dev.Services;
 using IdentityService.Domain.Entities;
+using IdentityService.Infrastructure.Aduit.Publishers;
 using IdentityService.Infrastructure.Persistence;
+using IdentityService.Infrastructure.Persistence.Repositories;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Scalar.AspNetCore;
 using SharedKernel.Common.Options;
+using SharedKernel.Topics;
 using StackExchange.Redis;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -79,13 +85,16 @@ builder.Services.AddOpenApi();
 builder.Services.AddControllers(options => { options.Filters.Add<GlobalJwtTokenValidationFilter>(); });
 
 builder.Services.Scan(scan => scan
-    .FromAssemblyOf<Program>()
-    .AddClasses(classes => classes.InNamespaces(
-        "IdentityService.Application.Services",
-        "IdentityService.Infrastructure.Persistence.Repositories"))
+    .FromAssembliesOf(typeof(Program))
+    .AddClasses(classes => classes.Where(type =>
+        type.Name.EndsWith("Service") ||
+        type.Name.EndsWith("Repo") ||
+        type.Name.EndsWith("Repository")))
     .AsMatchingInterface()
     .WithScopedLifetime());
 
+builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
+builder.Services.AddScoped<IAuditLogPublisher, AuditLogPublisher>();
 var app = builder.Build();
 
 // Apply database migrations before serving requests, with retry.

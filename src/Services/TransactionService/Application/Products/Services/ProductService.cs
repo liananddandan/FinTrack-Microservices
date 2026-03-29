@@ -1,4 +1,6 @@
 using SharedKernel.Common.Results;
+using SharedKernel.Contracts.AuditLogs;
+using SharedKernel.Topics;
 using TransactionService.Application.Common.Abstractions;
 using TransactionService.Application.Products.Abstractions;
 using TransactionService.Application.Products.Commands;
@@ -11,7 +13,8 @@ namespace TransactionService.Application.Products.Services;
 public class ProductService(
     IProductRepository productRepository,
     ICurrentTenantContext currentTenantContext,
-    IUnitOfWork unitOfWork)
+    IUnitOfWork unitOfWork,
+    IAuditLogPublisher auditLogPublisher)
     : IProductService
 {
     public async Task<ServiceResult<ProductDto>> CreateAsync(
@@ -83,6 +86,34 @@ public class ProductService(
 
         product.Category = category;
 
+        await auditLogPublisher.PublishAsync(
+            AuditLogTopics.MenuItemCreated,
+            new AuditLogMessage
+            {
+                TenantPublicId = currentTenantContext.TenantPublicId.ToString(),
+                ActorUserPublicId = currentTenantContext.UserPublicId.ToString(),
+                ActorDisplayName = currentTenantContext.UserName,
+
+                ActionType = "Created",
+                Category = "MenuItem",
+
+                TargetType = "MenuItem",
+                TargetPublicId = product.PublicId.ToString(),
+                TargetDisplay = product.Name,
+
+                Description = $"{currentTenantContext.UserName} created menu item {product.Name}",
+
+                Source = "TransactionService",
+
+                Metadata =
+                [
+                    new AuditMetadataItem("CategoryName", category.Name),
+                    new AuditMetadataItem("Price", product.Price.ToString("F2")),
+                    new AuditMetadataItem("DisplayOrder", product.DisplayOrder.ToString()),
+                    new AuditMetadataItem("IsAvailable", product.IsAvailable.ToString())
+                ]
+            },
+            cancellationToken);
         return ServiceResult<ProductDto>.Ok(
             MapToDto(product),
             ResultCodes.Product.CreateSuccess,
@@ -164,7 +195,34 @@ public class ProductService(
         product.Category = category;
 
         await unitOfWork.SaveChangesAsync(cancellationToken);
+        await auditLogPublisher.PublishAsync(
+            AuditLogTopics.MenuItemUpdated,
+            new AuditLogMessage
+            {
+                TenantPublicId = currentTenantContext.TenantPublicId.ToString(),
+                ActorUserPublicId = currentTenantContext.UserPublicId.ToString(),
+                ActorDisplayName = currentTenantContext.UserName,
 
+                ActionType = "Updated",
+                Category = "MenuItem",
+
+                TargetType = "MenuItem",
+                TargetPublicId = product.PublicId.ToString(),
+                TargetDisplay = product.Name,
+
+                Description = $"{currentTenantContext.UserName} updated menu item {product.Name}",
+
+                Source = "TransactionService",
+
+                Metadata =
+                [
+                    new AuditMetadataItem("CategoryName", category.Name),
+                    new AuditMetadataItem("Price", product.Price.ToString("F2")),
+                    new AuditMetadataItem("DisplayOrder", product.DisplayOrder.ToString()),
+                    new AuditMetadataItem("IsAvailable", product.IsAvailable.ToString())
+                ]
+            },
+            cancellationToken);
         return ServiceResult<ProductDto>.Ok(
             MapToDto(product),
             ResultCodes.Product.UpdateSuccess,
@@ -199,7 +257,32 @@ public class ProductService(
         product.UpdatedAt = DateTime.UtcNow;
 
         await unitOfWork.SaveChangesAsync(cancellationToken);
+        await auditLogPublisher.PublishAsync(
+            AuditLogTopics.MenuItemDeleted,
+            new AuditLogMessage
+            {
+                TenantPublicId = currentTenantContext.TenantPublicId.ToString(),
+                ActorUserPublicId = currentTenantContext.UserPublicId.ToString(),
+                ActorDisplayName = currentTenantContext.UserName,
 
+                ActionType = "Deleted",
+                Category = "MenuItem",
+
+                TargetType = "MenuItem",
+                TargetPublicId = product.PublicId.ToString(),
+                TargetDisplay = product.Name,
+
+                Description = $"{currentTenantContext.UserName} deleted menu item {product.Name}",
+
+                Source = "TransactionService",
+
+                Metadata =
+                [
+                    new AuditMetadataItem("CategoryName", product.Category.Name),
+                    new AuditMetadataItem("Price", product.Price.ToString("F2"))
+                ]
+            },
+            cancellationToken);
         return ServiceResult<bool>.Ok(
             true,
             ResultCodes.Product.DeleteSuccess,

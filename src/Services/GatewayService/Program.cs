@@ -1,8 +1,10 @@
 using System.Text;
+using GatewayService.Application.Common.Middlewares;
 using GatewayService.Application.Common.Options;
-using GatewayService.Application.Middlewares;
-using GatewayService.Application.Services;
-using GatewayService.Application.Services.Interfaces;
+using GatewayService.Application.Dev.Abstractions;
+using GatewayService.Application.Dev.Services;
+using GatewayService.Application.Doc.Abstractions;
+using GatewayService.Application.Doc.Services;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 using Scalar.AspNetCore;
@@ -53,10 +55,15 @@ builder.Services.AddCors(options =>
     options.AddPolicy("FrontendDev", policy =>
     {
         policy
-            .WithOrigins("http://localhost:5173",
-                "http://localhost:5174",
+            .WithOrigins(
+                "http://localhost:5176",
                 "http://localhost:5175",
-                "http://localhost:5176")
+                "http://fintrack.chenlis.local:5175",
+                "http://coffee.chenlis.local:5175",
+                "http://sushi.chenlis.local:5175",
+                "http://fintrack.chenlis.local:5176",
+                "http://coffee.chenlis.local:5176",
+                "http://sushi.chenlis.local:5176")
             .AllowAnyHeader()
             .AllowAnyMethod();
     });

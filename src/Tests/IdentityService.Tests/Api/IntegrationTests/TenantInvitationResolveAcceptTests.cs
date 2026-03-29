@@ -2,7 +2,7 @@ using System.Net;
 using System.Net.Http.Headers;
 using System.Net.Http.Json;
 using FluentAssertions;
-using IdentityService.Application.Abstractions;
+using IdentityService.Application.Common.Abstractions;
 using IdentityService.Application.Common.DTOs;
 using IdentityService.Application.Common.Status;
 using IdentityService.Domain.Entities;

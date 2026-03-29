@@ -1,6 +1,5 @@
 using FluentAssertions;
 using Moq;
-using SharedKernel.Common.DTOs;
 using SharedKernel.Common.Results;
 using TransactionService.Api.Transaction.Contracts;
 using TransactionService.Application.Common.Abstractions;
@@ -11,7 +10,6 @@ using TransactionService.Application.Orders.Queries;
 using TransactionService.Application.Orders.Services;
 using TransactionService.Domain.Constants;
 using TransactionService.Domain.Entities;
-using Xunit;
 
 namespace TransactionService.Tests.Unit.Orders;
 
@@ -21,6 +19,7 @@ public class OrderServiceTests
     private readonly Mock<ICurrentTenantContext> _currentTenantContextMock;
     private readonly Mock<IUnitOfWork> _unitOfWorkMock;
     private readonly OrderService _service;
+    private readonly Mock<IAuditLogPublisher> _auditLogPublisherMock;
 
     private readonly Guid _tenantPublicId = Guid.NewGuid();
     private readonly Guid _userPublicId = Guid.NewGuid();
@@ -36,11 +35,12 @@ public class OrderServiceTests
         _currentTenantContextMock.Setup(x => x.UserName).Returns("Test User");
         _currentTenantContextMock.Setup(x => x.UserEmail).Returns("test@example.com");
         _currentTenantContextMock.Setup(x => x.IsAuthenticated).Returns(true);
-
+        _auditLogPublisherMock = new Mock<IAuditLogPublisher>();
         _service = new OrderService(
             _orderRepositoryMock.Object,
             _currentTenantContextMock.Object,
-            _unitOfWorkMock.Object);
+            _unitOfWorkMock.Object,
+            _auditLogPublisherMock.Object);
     }
 
     [Fact]

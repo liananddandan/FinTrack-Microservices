@@ -2,16 +2,13 @@ using System.Text;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
-using Scalar.AspNetCore;
 using SharedKernel.Common.Options;
 using TransactionService.Application.Common.Abstractions;
 using TransactionService.Application.Middlewares;
-using TransactionService.Application.ProductCategories.Abstractions;
-using TransactionService.Application.ProductCategories.Services;
 using TransactionService.Application.Products.Abstractions;
-using TransactionService.Application.Products.Services;
 using TransactionService.Application.Transactions.Abstractions;
 using TransactionService.Application.Transactions.Services;
+using TransactionService.Infrastructure.Audit;
 using TransactionService.Infrastructure.Authentication;
 using TransactionService.Infrastructure.Persistence;
 using TransactionService.Infrastructure.Persistence.Repositories;
@@ -44,7 +41,16 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
             ClockSkew = TimeSpan.Zero
         };
     });
-
+builder.Services.AddCap(options =>
+{
+    options.UseEntityFramework<TransactionDbContext>();
+    options.UseRabbitMQ(cfg =>
+    {
+        cfg.HostName = builder.Configuration["CAP:RabbitMQ:HostName"]!;
+        cfg.UserName = builder.Configuration["CAP:RabbitMQ:UserName"]!;
+        cfg.Password = builder.Configuration["CAP:RabbitMQ:Password"]!;
+    });
+});
 builder.Services.AddAuthorization();
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddScoped<ITransactionRepo, TransactionRepo>();
@@ -73,6 +79,7 @@ builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
 builder.Services.AddScoped<ITenantInfoClient, MockTenantInfoClient>();
 builder.Services.AddScoped<IPaymentGateway, MockPaymentGateway>();
 builder.Services.AddScoped<ICurrentTenantContext, CurrentTenantContext>();
+builder.Services.AddScoped<IAuditLogPublisher, AuditLogPublisher>();
 builder.Services.AddControllers();
 
 var app = builder.Build();

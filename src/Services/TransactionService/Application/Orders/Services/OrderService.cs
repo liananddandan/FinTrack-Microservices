@@ -1,5 +1,7 @@
 using SharedKernel.Common.DTOs;
 using SharedKernel.Common.Results;
+using SharedKernel.Contracts.AuditLogs;
+using SharedKernel.Topics;
 using TransactionService.Api.Transaction.Contracts;
 using TransactionService.Application.Common.Abstractions;
 using TransactionService.Application.Orders.Abstractions;
@@ -14,7 +16,8 @@ namespace TransactionService.Application.Orders.Services;
 public class OrderService(
     IOrderRepository orderRepository,
     ICurrentTenantContext currentTenantContext,
-    IUnitOfWork unitOfWork)
+    IUnitOfWork unitOfWork,
+    IAuditLogPublisher auditLogPublisher)
     : IOrderService
 {
     public async Task<ServiceResult<OrderDto>> CreateAsync(
@@ -122,6 +125,27 @@ public class OrderService(
         await orderRepository.AddAsync(order, cancellationToken);
         await unitOfWork.SaveChangesAsync(cancellationToken);
 
+        await auditLogPublisher.PublishAsync(
+            AuditLogTopics.OrderCreated,
+            new AuditLogMessage
+            {
+                TenantPublicId = currentTenantContext.TenantPublicId.ToString(),
+                ActorUserPublicId = currentTenantContext.UserPublicId.ToString(),
+                ActorDisplayName = currentTenantContext.UserName,
+                ActionType = "Created",
+                Category = "Order",
+                TargetType = "Order",
+                TargetPublicId = order.PublicId.ToString(),
+                TargetDisplay = order.OrderNumber,
+                Source = "TransactionService",
+                Metadata =
+                [
+                    new AuditMetadataItem("PaymentMethod", order.PaymentMethod),
+                    new AuditMetadataItem("TotalAmount", order.TotalAmount.ToString("F2")),
+                    new AuditMetadataItem("CustomerName", order.CustomerName ?? "Walk-in")
+                ]
+            },
+            cancellationToken);
         return ServiceResult<OrderDto>.Ok(
             MapToDto(order),
             ResultCodes.Order.CreateSuccess,
@@ -222,7 +246,27 @@ public class OrderService(
         order.PaidAt = null;
 
         await unitOfWork.SaveChangesAsync(cancellationToken);
-
+        await auditLogPublisher.PublishAsync(
+            AuditLogTopics.OrderCancelled,
+            new AuditLogMessage
+            {
+                TenantPublicId = currentTenantContext.TenantPublicId.ToString(),
+                ActorUserPublicId = currentTenantContext.UserPublicId.ToString(),
+                ActorDisplayName = currentTenantContext.UserName,
+                ActionType = "Created",
+                Category = "Order",
+                TargetType = "Order",
+                TargetPublicId = order.PublicId.ToString(),
+                TargetDisplay = order.OrderNumber,
+                Source = "TransactionService",
+                Metadata =
+                [
+                    new AuditMetadataItem("PaymentMethod", order.PaymentMethod),
+                    new AuditMetadataItem("TotalAmount", order.TotalAmount.ToString("F2")),
+                    new AuditMetadataItem("CustomerName", order.CustomerName ?? "Walk-in")
+                ]
+            },
+            cancellationToken);
         return ServiceResult<bool>.Ok(
             true,
             ResultCodes.Order.CancelSuccess,

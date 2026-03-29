@@ -17,17 +17,19 @@ public class ProductServiceTests
     private readonly Mock<ICurrentTenantContext> _currentTenantContextMock;
     private readonly Mock<IUnitOfWork> _unitOfWorkMock;
     private readonly ProductService _service;
+    private readonly Mock<IAuditLogPublisher> _auditLogPublisherMock;
 
     public ProductServiceTests()
     {
         _productRepositoryMock = new Mock<IProductRepository>();
         _currentTenantContextMock = new Mock<ICurrentTenantContext>();
         _unitOfWorkMock = new Mock<IUnitOfWork>();
-
+        _auditLogPublisherMock = new Mock<IAuditLogPublisher>();
         _service = new ProductService(
             _productRepositoryMock.Object,
             _currentTenantContextMock.Object,
-            _unitOfWorkMock.Object);
+            _unitOfWorkMock.Object,
+            _auditLogPublisherMock.Object);
     }
 
     [Fact]

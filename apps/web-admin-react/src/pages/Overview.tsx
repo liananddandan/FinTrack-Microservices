@@ -47,10 +47,10 @@ function Badge({
     tone === "success"
       ? "bg-emerald-50 text-emerald-700 border-emerald-200"
       : tone === "warning"
-      ? "bg-amber-50 text-amber-700 border-amber-200"
-      : tone === "danger"
-      ? "bg-rose-50 text-rose-700 border-rose-200"
-      : "bg-slate-100 text-slate-700 border-slate-200"
+        ? "bg-amber-50 text-amber-700 border-amber-200"
+        : tone === "danger"
+          ? "bg-rose-50 text-rose-700 border-rose-200"
+          : "bg-slate-100 text-slate-700 border-slate-200"
 
   return (
     <span
@@ -78,17 +78,10 @@ export default function Overview() {
     setLoading(true)
     setErrorMessage("")
 
-    const today = new Date()
-    const fromUtc = new Date(today)
-    fromUtc.setHours(0, 0, 0, 0)
-
-    const toUtc = new Date(today)
-    toUtc.setHours(23, 59, 59, 999)
-
     const [summaryResult, ordersResult] = await Promise.allSettled([
       getOrderSummary({
-        fromUtc: fromUtc.toISOString(),
-        toUtc: toUtc.toISOString(),
+        fromUtc: undefined,
+        toUtc: undefined,
       }),
       getOrders({
         pageNumber: 1,
@@ -176,7 +169,7 @@ export default function Overview() {
               {auth.currentTenantName || "Overview"}
             </h1>
             <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-600">
-              Track daily sales and recent order activity for the current tenant.
+              Track sales performance and recent order activity for the current tenant.
             </p>
 
             <div className="mt-5 flex flex-wrap items-center gap-3">
@@ -200,19 +193,19 @@ export default function Overview() {
 
       <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
         <MetricCard
-          label="Today revenue"
+          label="Total revenue"
           value={summary ? formatAmount(summary.totalRevenue) : "-"}
           icon={<HiOutlineBanknotes className="h-5 w-5" />}
         />
 
         <MetricCard
-          label="Orders today"
+          label="Total Orders"
           value={summary?.orderCount ?? "-"}
           icon={<HiOutlineClipboardDocumentList className="h-5 w-5" />}
         />
 
         <MetricCard
-          label="Avg order value"
+          label="Average order value"
           value={summary ? formatAmount(summary.averageOrderValue) : "-"}
           icon={<HiOutlineChartBar className="h-5 w-5" />}
         />

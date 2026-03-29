@@ -31,5 +31,10 @@ public interface IProductCategoryRepository
     Task AddAsync(
         ProductCategory category,
         CancellationToken cancellationToken);
+    
+    Task<ProductCategory?> GetByNameAsync(
+        Guid tenantPublicId,
+        string name,
+        CancellationToken cancellationToken);
 
 }

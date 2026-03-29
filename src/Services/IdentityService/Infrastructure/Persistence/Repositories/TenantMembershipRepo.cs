@@ -1,4 +1,4 @@
-using IdentityService.Application.Abstractions;
+using IdentityService.Application.Tenants.Abstractions;
 using IdentityService.Domain.Entities;
 using IdentityService.Domain.Enums;
 using Microsoft.EntityFrameworkCore;
