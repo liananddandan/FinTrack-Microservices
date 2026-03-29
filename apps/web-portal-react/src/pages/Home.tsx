@@ -3,10 +3,10 @@ import { useNavigate } from "react-router-dom"
 import { useAuth } from "../hooks/useAuth"
 import { getProductCategories, type ProductCategoryItem } from "../api/product-category"
 import { getProductsByCategory, type ProductItem } from "../api/product"
+import { createOrder } from "../api/order"
 import {
   HiOutlineArrowLeftOnRectangle,
   HiOutlineQueueList,
-  HiOutlineSquares2X2,
   HiOutlineClipboardDocumentList,
   HiOutlineUserCircle,
   HiOutlinePlus,
@@ -65,6 +65,10 @@ export default function Home() {
   const [products, setProducts] = useState<ProductItem[]>([])
   const [cartItems, setCartItems] = useState<CartItem[]>([])
 
+  const [checkingOut, setCheckingOut] = useState(false)
+  const [checkoutSuccessMessage, setCheckoutSuccessMessage] = useState("")
+  const [customerName, setCustomerName] = useState("")
+
   useEffect(() => {
     async function init() {
       try {
@@ -85,6 +89,41 @@ export default function Home() {
       setProducts([])
     }
   }, [selectedCategoryId])
+
+  async function handleCheckout() {
+    if (cartItems.length === 0) {
+      return
+    }
+
+    setCheckingOut(true)
+    setErrorMessage("")
+    setCheckoutSuccessMessage("")
+
+    try {
+      const order = await createOrder({
+        customerName: customerName.trim() || null,
+        customerPhone: null,
+        paymentMethod: "Cash",
+        items: cartItems.map((item) => ({
+          productPublicId: item.id,
+          quantity: item.quantity,
+          notes: null,
+        })),
+      })
+
+      setCheckoutSuccessMessage(`Order ${order.orderNumber} created successfully.`)
+      setCartItems([])
+      setCustomerName("")
+    } catch (error: unknown) {
+      if (error instanceof Error) {
+        setErrorMessage(error.message || "Failed to create order.")
+      } else {
+        setErrorMessage("Failed to create order.")
+      }
+    } finally {
+      setCheckingOut(false)
+    }
+  }
 
   async function loadCategories() {
     setLoadingCategories(true)
@@ -280,6 +319,15 @@ export default function Home() {
           </div>
         ) : null}
 
+        {checkoutSuccessMessage ? (
+          <div
+            className="rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700"
+            role="status"
+          >
+            {checkoutSuccessMessage}
+          </div>
+        ) : null}
+
         <section className="grid gap-6 xl:grid-cols-[240px_minmax(0,1fr)_360px]">
           <div className="rounded-3xl border border-slate-200 bg-white p-5">
             <div className="mb-4 flex items-center gap-2 text-slate-800">
@@ -462,7 +510,18 @@ export default function Home() {
                   </div>
                 )}
               </div>
-
+              <div className="mt-4">
+                <label className="mb-2 block text-sm font-medium text-slate-700">
+                  Customer name
+                </label>
+                <input
+                  type="text"
+                  value={customerName}
+                  onChange={(e) => setCustomerName(e.target.value)}
+                  placeholder="Optional"
+                  className="h-11 w-full rounded-xl border border-slate-300 bg-white px-3 text-sm text-slate-800 outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100"
+                />
+              </div>
               <div className="mt-4 shrink-0 rounded-2xl border border-slate-200 bg-slate-50 p-4">
                 <div className="flex items-center justify-between text-sm text-slate-600">
                   <span>Subtotal</span>
@@ -476,11 +535,12 @@ export default function Home() {
 
                 <button
                   type="button"
-                  disabled={cartItems.length === 0}
+                  onClick={() => void handleCheckout()}
+                  disabled={cartItems.length === 0 || checkingOut}
                   className="mt-5 inline-flex h-12 w-full items-center justify-center gap-2 rounded-2xl bg-indigo-600 px-4 text-sm font-medium text-white transition hover:bg-indigo-500 disabled:cursor-not-allowed disabled:opacity-50"
                 >
                   <HiOutlineCreditCard className="h-5 w-5" />
-                  Checkout
+                  {checkingOut ? "Processing..." : "Checkout"}
                 </button>
               </div>
             </div>
