@@ -53,6 +53,9 @@ public class DevSeedService(
                 adminUserPublicId,
                 memberUserPublicId,
                 categories.SelectMany(x => x.Products).ToList(),
+                request.Template,
+                request.AdminUserEmail,
+                request.MemberUserEmail,
                 cancellationToken);
 
             await unitOfWork.SaveChangesAsync(cancellationToken);
@@ -210,6 +213,9 @@ public class DevSeedService(
         Guid adminUserPublicId,
         Guid memberUserPublicId,
         List<Product> products,
+        string template,
+        string adminUserEmail,
+        string memberUserEmail,
         CancellationToken cancellationToken)
     {
         var created = new List<Guid>();
@@ -233,42 +239,118 @@ public class DevSeedService(
         {
             return created;
         }
+        var seedOrders = new[]
+        {
+            new
+            {
+                UserId = memberUserPublicId,
+                UserName = memberUserEmail,
+                CustomerName = "Walk-in",
+                PaymentMethod = "Cash",
+                DaysAgo = 0,
+                ProductIndexes = new[] { 0, 1 }
+            },
+            new
+            {
+                UserId = adminUserPublicId,
+                UserName = adminUserEmail,
+                CustomerName = "Emily",
+                PaymentMethod = "Card",
+                DaysAgo = 0,
+                ProductIndexes = new[] { 1, 2 }
+            },
+            new
+            {
+                UserId = memberUserPublicId,
+                UserName = memberUserEmail,
+                CustomerName = "James",
+                PaymentMethod = "Card",
+                DaysAgo = 1,
+                ProductIndexes = new[] { 0, 2, 3 }
+            },
+            new
+            {
+                UserId = adminUserPublicId,
+                UserName = adminUserEmail,
+                CustomerName = "Sophia",
+                PaymentMethod = "Cash",
+                DaysAgo = 1,
+                ProductIndexes = new[] { 2, 4 }
+            },
+            new
+            {
+                UserId = memberUserPublicId,
+                UserName = memberUserEmail,
+                CustomerName = "Noah",
+                PaymentMethod = "Bank Transfer",
+                DaysAgo = 2,
+                ProductIndexes = new[] { 0, 3 }
+            },
+            new
+            {
+                UserId = adminUserPublicId,
+                UserName = adminUserEmail,
+                CustomerName = "Olivia",
+                PaymentMethod = "Card",
+                DaysAgo = 3,
+                ProductIndexes = new[] { 1, 3, 4 }
+            },
+            new
+            {
+                UserId = memberUserPublicId,
+                UserName = memberUserEmail,
+                CustomerName = "Lucas",
+                PaymentMethod = "Cash",
+                DaysAgo = 4,
+                ProductIndexes = new[] { 2, 5 }
+            },
+            new
+            {
+                UserId = adminUserPublicId,
+                UserName = adminUserEmail,
+                CustomerName = "Charlotte",
+                PaymentMethod = "Card",
+                DaysAgo = 5,
+                ProductIndexes = new[] { 0, 4, 5 }
+            }
+        };
+        var prefix = GetTenantOrderPrefix(template);
 
-        var firstOrder = CreateSeedOrder(
-            tenantPublicId,
-            tenantName,
-            memberUserPublicId,
-            "Walk-in",
-            "Cash",
-            "ORD-DEMO-0001",
-            products.Take(2).ToList());
+        for (var i = 0; i < seedOrders.Length; i++)
+        {
+            var seed = seedOrders[i];
 
-        var secondOrder = CreateSeedOrder(
-            tenantPublicId,
-            tenantName,
-            adminUserPublicId,
-            "Emily",
-            "Card",
-            "ORD-DEMO-0002",
-            products.Skip(1).Take(2).ToList());
+            var selectedProducts = seed.ProductIndexes
+                .Where(index => index < products.Count)
+                .Select(index => products[index])
+                .ToList();
 
-        await orderRepository.AddAsync(firstOrder, cancellationToken);
-        await orderRepository.AddAsync(secondOrder, cancellationToken);
+            var order = CreateSeedOrder(
+                tenantPublicId,
+                seed.UserId,
+                seed.UserName,
+                seed.CustomerName,
+                seed.PaymentMethod,
+                $"{prefix}-{(i + 1):D4}",
+                selectedProducts,
+                DateTime.UtcNow.AddDays(-seed.DaysAgo));
 
-        created.Add(firstOrder.PublicId);
-        created.Add(secondOrder.PublicId);
+            await orderRepository.AddAsync(order, cancellationToken);
+            created.Add(order.PublicId);
+        }
 
         return created;
     }
 
     private static Order CreateSeedOrder(
         Guid tenantPublicId,
-        string tenantName,
         Guid createdByUserPublicId,
+        string createdByUserNameSnapshot,
         string? customerName,
         string paymentMethod,
         string orderNumber,
-        List<Product> products)
+        List<Product> products,
+        DateTime createdAt)
     {
         var items = new List<OrderItem>();
         decimal grossAmount = 0m;
@@ -303,7 +385,7 @@ public class DevSeedService(
             OrderNumber = orderNumber,
             CustomerName = customerName,
             CreatedByUserPublicId = createdByUserPublicId,
-            CreatedByUserNameSnapshot = "Demo User",
+            CreatedByUserNameSnapshot = createdByUserNameSnapshot,
             SubtotalAmount = subtotalAmount,
             GstRate = gstRate,
             GstAmount = gstAmount,
@@ -312,8 +394,8 @@ public class DevSeedService(
             Status = OrderStatuses.Completed,
             PaymentStatus = PaymentStatuses.Paid,
             PaymentMethod = paymentMethod,
-            CreatedAt = DateTime.UtcNow,
-            PaidAt = DateTime.UtcNow,
+            CreatedAt = createdAt,
+            PaidAt = createdAt.AddMinutes(3),
             Items = items
         };
     }
@@ -321,4 +403,14 @@ public class DevSeedService(
     private sealed record SeededCategory(
         ProductCategory Category,
         List<Product> Products);
+    
+    private static string GetTenantOrderPrefix(string template)
+    {
+        return template.ToLowerInvariant() switch
+        {
+            "coffee" => "AKC",
+            "sushi" => "SSB",
+            _ => "DEM"
+        };
+    }
 }

@@ -149,7 +149,7 @@ export default function WaitingMembership() {
 
             <div>
               <p className="text-lg font-semibold text-slate-800">
-                Transaction & Workflow Platform
+                Retail Operations Platform
               </p>
               <p className="mt-1 text-sm text-slate-500">
                 Pending workspace access

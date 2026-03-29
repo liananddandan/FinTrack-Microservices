@@ -62,7 +62,7 @@ export default function Profile() {
             </div>
             <div>
               <p className="text-sm font-medium text-slate-800">
-                Transaction & Workflow Platform
+                Retail Operations Platform
               </p>
               <p className="text-xs text-slate-500">Profile</p>
             </div>

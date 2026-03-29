@@ -102,10 +102,10 @@ export default function LandingPage() {
 
                         <div>
                             <p className="text-sm font-medium tracking-wide text-gray-500">
-                                Retail Operations Platform
+                                Multi-Tenant Retail Operations Platform
                             </p>
                             <p className="text-xs text-gray-400">
-                                Multi-tenant retail demo built with microservices
+                                Full-stack system for orders, products, and tenant-based business operations
                             </p>
                         </div>
                     </div>
