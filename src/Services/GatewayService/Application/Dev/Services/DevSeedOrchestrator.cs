@@ -10,6 +10,7 @@ public class DevSeedOrchestrator(
     IHttpClientFactory httpClientFactory,
     IConfiguration configuration) : IDevSeedOrchestrator
 {
+    
     private static readonly JsonSerializerOptions JsonOptions = new()
     {
         PropertyNameCaseInsensitive = true
@@ -116,6 +117,8 @@ public class DevSeedOrchestrator(
                 TenantName = identitySeed.TenantName,
                 AdminUserPublicId = identitySeed.AdminUserPublicId,
                 MemberUserPublicId = identitySeed.MemberUserPublicId,
+                AdminUserEmail = identitySeed.AdminEmail,
+                MemberUserEmail = identitySeed.MemberEmail,
                 Template = template
             },
             cancellationToken);

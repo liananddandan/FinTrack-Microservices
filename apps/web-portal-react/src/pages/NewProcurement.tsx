@@ -58,13 +58,13 @@ export default function NewProcurement() {
     } catch (err) {
       const message =
         typeof err === "object" &&
-        err !== null &&
-        "response" in err &&
-        typeof (err as any).response?.data?.message === "string"
+          err !== null &&
+          "response" in err &&
+          typeof (err as any).response?.data?.message === "string"
           ? (err as any).response.data.message
           : err instanceof Error
-          ? err.message
-          : "Failed to create procurement."
+            ? err.message
+            : "Failed to create procurement."
 
       setErrorMessage(message)
     } finally {
@@ -88,7 +88,7 @@ export default function NewProcurement() {
                 </div>
                 <div>
                   <p className="text-sm font-medium text-slate-800">
-                    Transaction & Workflow Platform
+                    Retail Operations Platform
                   </p>
                   <p className="text-xs text-slate-500">Procurement request</p>
                 </div>

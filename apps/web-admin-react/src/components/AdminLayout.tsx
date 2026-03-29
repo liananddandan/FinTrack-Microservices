@@ -59,7 +59,7 @@ export default function AdminLayout() {
 
             <div className="min-w-0">
               <div className="text-xs leading-5 text-slate-500">
-                Transaction & Workflow Platform
+                Retail Operations Platform
               </div>
               <div className="mt-1 text-[11px] font-medium text-indigo-600">
                 Admin
