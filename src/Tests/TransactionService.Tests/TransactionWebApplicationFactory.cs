@@ -56,7 +56,8 @@ public class TransactionWebApplicationFactory<TProgram> : WebApplicationFactory<
     {
         using var scope = Services.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<TransactionDbContext>();
-
+        await db.Database.ExecuteSqlRawAsync("DELETE FROM OrderItems");
+        await db.Database.ExecuteSqlRawAsync("DELETE FROM Orders");
         await db.Database.ExecuteSqlRawAsync("DELETE FROM Products");
         await db.Database.ExecuteSqlRawAsync("DELETE FROM ProductCategories");
         await db.Database.ExecuteSqlRawAsync("DELETE FROM TenantAccounts");

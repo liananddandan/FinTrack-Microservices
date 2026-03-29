@@ -1,4 +1,4 @@
-namespace IdentityService.Application.Common.Status;
+namespace SharedKernel.Common.Constants;
 
 public enum JwtTokenType
 {

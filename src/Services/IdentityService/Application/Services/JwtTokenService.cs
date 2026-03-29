@@ -7,6 +7,7 @@ using IdentityService.Application.Common.Status;
 using IdentityService.Domain.Entities;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
+using SharedKernel.Common.Constants;
 using SharedKernel.Common.DTOs.Auth;
 using SharedKernel.Common.Options;
 using SharedKernel.Common.Results;
@@ -24,7 +25,9 @@ public class JwtTokenService(IOptions<JwtOptions> jwtOptions,
         {
             new(JwtClaimNames.UserId, user.PublicId.ToString()),
             new(JwtClaimNames.JwtVersion, user.JwtVersion.ToString()),
-            new(JwtClaimNames.TokenType, JwtTokenType.AccountAccessToken.ToString())
+            new(JwtClaimNames.TokenType, JwtTokenType.AccountAccessToken.ToString()),
+            new(JwtClaimNames.UserName, user.UserName!),
+            new(JwtClaimNames.UserEmail, user.Email!)
         };
 
         return GenerateToken(
@@ -43,7 +46,10 @@ public class JwtTokenService(IOptions<JwtOptions> jwtOptions,
             new(JwtClaimNames.JwtVersion, user.JwtVersion.ToString()),
             new(JwtClaimNames.Tenant, membership.Tenant.PublicId.ToString()),
             new(JwtClaimNames.Role, membership.Role.ToString()),
-            new(JwtClaimNames.TokenType, JwtTokenType.TenantAccessToken.ToString())
+            new(JwtClaimNames.TokenType, JwtTokenType.TenantAccessToken.ToString()),
+            new(JwtClaimNames.UserName, user.UserName!),
+            new(JwtClaimNames.UserEmail, user.Email!),
+            new(JwtClaimNames.TenantName, membership.Tenant.Name!),
         };
 
         return GenerateToken(
@@ -58,7 +64,9 @@ public class JwtTokenService(IOptions<JwtOptions> jwtOptions,
         {
             new(JwtClaimNames.UserId, user.PublicId.ToString()),
             new(JwtClaimNames.JwtVersion, user.JwtVersion.ToString()),
-            new(JwtClaimNames.TokenType, JwtTokenType.RefreshToken.ToString())
+            new(JwtClaimNames.TokenType, JwtTokenType.RefreshToken.ToString()),
+            new(JwtClaimNames.UserName, user.UserName!),
+            new(JwtClaimNames.UserEmail, user.Email!),
         };
 
         return GenerateToken(

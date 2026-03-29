@@ -1,5 +1,4 @@
 using System.Net;
-using System.Net.Http.Headers;
 using System.Net.Http.Json;
 using FluentAssertions;
 using Microsoft.Extensions.DependencyInjection;
@@ -7,9 +6,8 @@ using TransactionService.Api.Transaction.Contracts;
 using TransactionService.Domain.Entities;
 using TransactionService.Domain.Enums;
 using TransactionService.Infrastructure.Persistence;
-using Xunit;
 
-namespace TransactionService.Tests.Api.IntegrationTests;
+namespace TransactionService.Tests.Integration.Transactions;
 
 [Collection("NonParallel Collection")]
 public class TransactionGetMyTests : IClassFixture<TransactionWebApplicationFactory<Program>>

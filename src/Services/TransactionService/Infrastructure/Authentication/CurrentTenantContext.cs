@@ -20,6 +20,8 @@ public class CurrentTenantContext(IHttpContextAccessor httpContextAccessor) : IC
         }
     }
 
+    public string? TenantName { get; }
+
     public Guid UserPublicId
     {
         get
@@ -31,6 +33,9 @@ public class CurrentTenantContext(IHttpContextAccessor httpContextAccessor) : IC
                 : Guid.Empty;
         }
     }
+
+    public string? UserName { get; }
+    public string? UserEmail { get; }
 
     public string? Role =>
         User?.FindFirst(JwtClaimNames.Role)?.Value;

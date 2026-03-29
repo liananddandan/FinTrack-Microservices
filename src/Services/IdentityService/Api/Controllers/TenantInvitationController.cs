@@ -2,9 +2,9 @@ using IdentityService.Api.Filters.Attributes;
 using IdentityService.Application.Commands.Tenant;
 using IdentityService.Application.Common.DTOs;
 using IdentityService.Application.Common.Extensions;
-using IdentityService.Application.Common.Status;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
+using SharedKernel.Common.Constants;
 
 namespace IdentityService.Api.Controllers;
 

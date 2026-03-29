@@ -9,6 +9,7 @@ using IdentityService.Domain.Enums;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Moq;
+using SharedKernel.Common.Constants;
 using SharedKernel.Common.DTOs.Auth;
 using SharedKernel.Common.Options;
 using SharedKernel.Common.Results;

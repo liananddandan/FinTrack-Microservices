@@ -1,19 +1,18 @@
+using System.Security.Claims;
 using FluentAssertions;
 using MediatR;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Moq;
 using SharedKernel.Common.DTOs;
-using SharedKernel.Common.Results;
-using System.Security.Claims;
 using SharedKernel.Common.DTOs.Auth;
+using SharedKernel.Common.Results;
 using TransactionService.Api.Transaction.Contracts;
 using TransactionService.Api.Transaction.Controllers;
 using TransactionService.Application.Transactions.Commands;
 using TransactionService.Application.Transactions.Queries;
-using Xunit;
 
-namespace TransactionService.Tests.Api.Controllers;
+namespace TransactionService.Tests.Unit.Transactions;
 
 public partial class TransactionsControllerTests
 {

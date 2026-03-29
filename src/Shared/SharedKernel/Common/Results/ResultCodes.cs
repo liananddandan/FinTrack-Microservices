@@ -160,6 +160,19 @@ public static class ResultCodes
         public const string UpdateSuccess = "100007999";
     }
     
+    public static class Order
+    {
+        public const string CreateParameterError = "100008001";
+        public const string ProductNotFound = "100008002";
+        public const string NotFound = "100008003";
+        public const string AlreadyCancelled = "100008004";
+
+        public const string CancelSuccess = "100008997";
+        public const string GetPagedSuccess = "100008998";
+        public const string GetByIdSuccess = "100008999";
+        public const string CreateSuccess = "100008996";
+    }
+    
     public const string InternalError = "900900001";
     public const string Forbidden = "900900002";
 }

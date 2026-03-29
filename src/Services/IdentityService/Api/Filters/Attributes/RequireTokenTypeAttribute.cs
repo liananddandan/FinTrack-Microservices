@@ -1,4 +1,4 @@
-using IdentityService.Application.Common.Status;
+using SharedKernel.Common.Constants;
 
 namespace IdentityService.Api.Filters.Attributes;
 

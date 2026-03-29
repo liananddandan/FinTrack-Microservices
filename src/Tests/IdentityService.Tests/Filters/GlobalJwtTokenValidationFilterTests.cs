@@ -13,6 +13,7 @@ using Microsoft.AspNetCore.Mvc.Controllers;
 using Microsoft.AspNetCore.Mvc.Filters;
 using Microsoft.AspNetCore.Routing;
 using Moq;
+using SharedKernel.Common.Constants;
 using SharedKernel.Common.Results;
 
 namespace IdentityService.Tests.Filters;

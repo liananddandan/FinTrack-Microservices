@@ -10,7 +10,7 @@ using TransactionService.Api.Transaction.Contracts;
 using TransactionService.Api.Transaction.Controllers;
 using TransactionService.Application.Transactions.Commands;
 
-namespace TransactionService.Tests.Api.IntegrationTests;
+namespace TransactionService.Tests.Integration.Transactions;
 
 [Collection("NonParallel Collection")]
 public class TransactionCreateDonations

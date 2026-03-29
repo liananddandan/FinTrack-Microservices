@@ -99,6 +99,23 @@ public class BasicJwtTokenValidationMiddleware
                 await context.Response.WriteAsync("Unauthorized");
                 return;
             }
+            
+            if (tokenType == JwtTokenType.TenantAccessToken.ToString())
+            {
+                if (string.IsNullOrWhiteSpace(tenantPublicId) ||
+                    string.IsNullOrWhiteSpace(userRoleInTenant))
+                {
+                    _logger.LogWarning(
+                        "Gateway rejected request: missing required claims. Path={Path}, UserPublicId={UserPublicId}, TokenType={TokenType}, " +
+                        "JwtVersion={JwtVersion}, TenantPublicId={TenantPublicId}, UserRoleInTenant={UserRoleInTenant}",
+                        path, userPublicId, tokenType, jwtVersion, tenantPublicId, userRoleInTenant);
+
+                    context.Response.Headers["X-Auth-Source"] = "Gateway";
+                    context.Response.StatusCode = StatusCodes.Status401Unauthorized;
+                    await context.Response.WriteAsync("Unauthorized");
+                    return;
+                }
+            }
 
             var redisKey = $"{Constant.Redis.JwtVersionPrefix}{userPublicId}";
             var redisVersion = await _redis.GetDatabase().StringGetAsync(redisKey);
