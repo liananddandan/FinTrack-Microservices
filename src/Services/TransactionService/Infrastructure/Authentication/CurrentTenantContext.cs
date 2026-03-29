@@ -20,7 +20,8 @@ public class CurrentTenantContext(IHttpContextAccessor httpContextAccessor) : IC
         }
     }
 
-    public string? TenantName { get; }
+    public string? TenantName => User?.FindFirst(JwtClaimNames.TenantName)?.Value;
+    
 
     public Guid UserPublicId
     {
@@ -34,8 +35,8 @@ public class CurrentTenantContext(IHttpContextAccessor httpContextAccessor) : IC
         }
     }
 
-    public string? UserName { get; }
-    public string? UserEmail { get; }
+    public string? UserName => User?.FindFirst(JwtClaimNames.UserName)?.Value;
+    public string? UserEmail => User?.FindFirst(JwtClaimNames.UserEmail)?.Value;
 
     public string? Role =>
         User?.FindFirst(JwtClaimNames.Role)?.Value;

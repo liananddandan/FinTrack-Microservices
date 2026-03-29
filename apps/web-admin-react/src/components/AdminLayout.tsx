@@ -115,8 +115,8 @@ export default function AdminLayout() {
             />
 
             <AdminNavItem
-              to="/transactions"
-              label="Transactions"
+              to="/orders"
+              label="Orders"
               icon={<HiOutlineClipboardDocumentList className="h-5 w-5" />}
             />
 
@@ -138,7 +138,6 @@ export default function AdminLayout() {
               icon={<HiOutlineDocumentMagnifyingGlass className="h-5 w-5" />}
             />
           </nav>
-
         </aside>
 
         <main className="min-w-0 px-6 py-6">

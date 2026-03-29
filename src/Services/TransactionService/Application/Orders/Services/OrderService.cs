@@ -64,7 +64,7 @@ public class OrderService(
         var productLookup = products.ToDictionary(x => x.PublicId, x => x);
 
         var orderItems = new List<OrderItem>();
-        decimal subtotal = 0m;
+        decimal grossAmount = 0m;
 
         foreach (var item in request.Items)
         {
@@ -81,14 +81,16 @@ public class OrderService(
                 Notes = item.Notes?.Trim()
             });
 
-            subtotal += lineTotal;
+            grossAmount += lineTotal;
         }
 
         var gstRate = 0.15m;
-        var gstAmount = Math.Round(subtotal * gstRate, 2, MidpointRounding.AwayFromZero);
         var discountAmount = 0m;
-        var totalAmount = subtotal + gstAmount - discountAmount;
 
+        var totalAmount = grossAmount - discountAmount;
+        var subtotalAmount = Math.Round(totalAmount / (1 + gstRate), 2, MidpointRounding.AwayFromZero);
+        var gstAmount = Math.Round(totalAmount - subtotalAmount, 2, MidpointRounding.AwayFromZero);
+        
         var todayCount = await orderRepository.CountTodayOrdersAsync(
             currentTenantContext.TenantPublicId,
             DateTime.UtcNow,
@@ -104,7 +106,7 @@ public class OrderService(
             CustomerPhone = request.CustomerPhone?.Trim(),
             CreatedByUserPublicId = currentTenantContext.UserPublicId,
             CreatedByUserNameSnapshot = currentTenantContext.UserName ?? currentTenantContext.UserEmail ?? "Unknown",
-            SubtotalAmount = subtotal,
+            SubtotalAmount = subtotalAmount,
             GstRate = gstRate,
             GstAmount = gstAmount,
             DiscountAmount = discountAmount,
