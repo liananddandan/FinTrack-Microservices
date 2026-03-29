@@ -175,9 +175,9 @@ public class OrderServiceTests
         result.Data!.CustomerName.Should().Be("Emily");
         result.Data.CreatedByUserPublicId.Should().Be(_userPublicId);
         result.Data.CreatedByUserNameSnapshot.Should().Be("Test User");
-        result.Data.SubtotalAmount.Should().Be(11.00m);
-        result.Data.GstAmount.Should().Be(1.65m);
-        result.Data.TotalAmount.Should().Be(12.65m);
+        result.Data.SubtotalAmount.Should().Be(9.57m);
+        result.Data.GstAmount.Should().Be(1.43m);
+        result.Data.TotalAmount.Should().Be(11.00m);
         result.Data.Items.Should().HaveCount(1);
         result.Data.Items[0].ProductNameSnapshot.Should().Be("Latte");
         result.Data.Items[0].Quantity.Should().Be(2);

@@ -73,9 +73,9 @@ public class OrdersControllerIntegrationTests
         body.Data.Items.Should().HaveCount(1);
         body.Data.Items[0].ProductNameSnapshot.Should().Be("Latte");
         body.Data.Items[0].Quantity.Should().Be(2);
-        body.Data.SubtotalAmount.Should().Be(11.00m);
-        body.Data.GstAmount.Should().Be(1.65m);
-        body.Data.TotalAmount.Should().Be(12.65m);
+        body.Data.SubtotalAmount.Should().Be(9.57m);
+        body.Data.GstAmount.Should().Be(1.43m);
+        body.Data.TotalAmount.Should().Be(11.00m);
 
         await using var scope = CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<TransactionDbContext>();

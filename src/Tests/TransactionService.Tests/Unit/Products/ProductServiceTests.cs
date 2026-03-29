@@ -1,6 +1,7 @@
 using FluentAssertions;
 using Moq;
 using SharedKernel.Common.Results;
+using SharedKernel.Contracts.AuditLogs;
 using TransactionService.Application.Common.Abstractions;
 using TransactionService.Application.Products.Abstractions;
 using TransactionService.Application.Products.Commands;
@@ -347,19 +348,30 @@ public class ProductServiceTests
             PublicId = Guid.NewGuid(),
             TenantPublicId = tenantPublicId,
             Name = "Flat White",
-            Price = 5.5m
+            Price = 5.5m,
+            Category = new ProductCategory
+            {
+                Id = 10,
+                Name = "Coffee"
+            }
         };
 
         var command = new DeleteProductCommand(product.PublicId);
 
         _currentTenantContextMock.Setup(x => x.TenantPublicId).Returns(tenantPublicId);
-
+        _currentTenantContextMock.Setup(x => x.UserPublicId).Returns(Guid.NewGuid());
+        _currentTenantContextMock.Setup(x => x.UserName).Returns("Test User");
         _productRepositoryMock.Setup(x => x.GetByPublicIdAsync(
                 tenantPublicId,
                 product.PublicId,
                 It.IsAny<CancellationToken>()))
             .ReturnsAsync(product);
-
+        _auditLogPublisherMock
+            .Setup(x => x.PublishAsync(
+                It.IsAny<string>(),
+                It.IsAny<AuditLogMessage>(),
+                It.IsAny<CancellationToken>()))
+            .Returns(Task.CompletedTask);
         var result = await _service.DeleteAsync(command, CancellationToken.None);
 
         result.Success.Should().BeTrue();
