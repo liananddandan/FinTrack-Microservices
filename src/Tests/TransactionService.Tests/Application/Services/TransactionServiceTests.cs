@@ -4,6 +4,8 @@ using Moq;
 using SharedKernel.Common.Results;
 using TransactionService.Api.Transaction.Contracts;
 using TransactionService.Application.Common.Abstractions;
+using TransactionService.Application.Payments.Abstractions;
+using TransactionService.Application.Payments.Dtos;
 using TransactionService.Application.Transactions.Abstractions;
 using TransactionService.Domain.Entities;
 using TransactionService.Domain.Enums;
@@ -102,11 +104,12 @@ public class TransactionServiceTests
                 "ok"));
 
         _paymentGatewayMock
-            .Setup(x => x.PayAsync(It.IsAny<PaymentExecutionRequest>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new PaymentExecutionResult
+            .Setup(x => x.CreatePaymentAsync(It.IsAny<CreatePaymentGatewayRequest>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new CreatePaymentGatewayResult
             {
-                Success = true,
-                PaymentReference = "MOCK-PAY-001"
+                Status = PaymentStatus.Succeeded.ToString(),
+                ProviderPaymentReference = "MOCK-PAY-001",
+                ClientSecret = "MOCK-CLIENT-SECRET",
             });
 
         _tenantAccountRepoMock
@@ -141,7 +144,6 @@ public class TransactionServiceTests
         result.Data.Type.Should().Be("Donation");
         result.Data.Status.Should().Be(TransactionStatus.Completed.ToString());
         result.Data.PaymentStatus.Should().Be(PaymentStatus.Succeeded.ToString());
-        result.Data.PaymentReference.Should().Be("MOCK-PAY-001");
 
         capturedTransaction.Should().NotBeNull();
         capturedTransaction!.TenantNameSnapshot.Should().Be("Demo School");
@@ -183,11 +185,12 @@ public class TransactionServiceTests
                 "ok"));
 
         _paymentGatewayMock
-            .Setup(x => x.PayAsync(It.IsAny<PaymentExecutionRequest>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new PaymentExecutionResult
+            .Setup(x => x.CreatePaymentAsync(It.IsAny<CreatePaymentGatewayRequest>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new CreatePaymentGatewayResult()
             {
-                Success = true,
-                PaymentReference = "MOCK-PAY-002"
+                Status = PaymentStatus.Succeeded.ToString(),
+                ProviderPaymentReference = "MOCK-PAY-103",
+                ClientSecret = "MOCK-CLIENT-SECRET",
             });
 
         _tenantAccountRepoMock
@@ -211,56 +214,7 @@ public class TransactionServiceTests
             x => x.AddAsync(It.IsAny<TenantAccount>(), It.IsAny<CancellationToken>()),
             Times.Never);
     }
-
-    [Fact]
-    public async Task CreateDonationAsync_Should_Return_Success_But_Failed_Payment_Status_When_Payment_Fails()
-    {
-        var tenantPublicId = Guid.NewGuid().ToString();
-        var userPublicId = Guid.NewGuid().ToString();
-
-        _tenantInfoClientMock
-            .Setup(x => x.GetTenantSummaryAsync(tenantPublicId, It.IsAny<CancellationToken>()))
-            .ReturnsAsync(ServiceResult<TenantSummaryDto>.Ok(
-                new TenantSummaryDto
-                {
-                    TenantPublicId = tenantPublicId,
-                    TenantName = "Demo School"
-                },
-                ResultCodes.Transaction.TransactionQuerySuccess,
-                "ok"));
-
-        _paymentGatewayMock
-            .Setup(x => x.PayAsync(It.IsAny<PaymentExecutionRequest>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new PaymentExecutionResult
-            {
-                Success = false,
-                FailureReason = "Mock payment rejected."
-            });
-
-        _tenantAccountRepoMock
-            .Setup(x => x.GetByTenantPublicIdAsync(It.IsAny<Guid>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync((TenantAccount?)null);
-
-        var result = await _sut.CreateDonationAsync(
-            tenantPublicId,
-            userPublicId,
-            "Donation",
-            null,
-            100,
-            "NZD",
-            CancellationToken.None);
-
-        result.Success.Should().BeTrue();
-        result.Data.Should().NotBeNull();
-        result.Data!.Status.Should().Be(TransactionStatus.Failed.ToString());
-        result.Data.PaymentStatus.Should().Be(PaymentStatus.Failed.ToString());
-        result.Data.FailureReason.Should().Be("Mock payment rejected.");
-
-        _tenantAccountRepoMock.Verify(
-            x => x.AddAsync(It.IsAny<TenantAccount>(), It.IsAny<CancellationToken>()),
-            Times.Never);
-    }
-
+    
     [Fact]
     public async Task GetMyTransactionsAsync_Should_Return_Fail_When_Tenant_Is_Invalid()
     {

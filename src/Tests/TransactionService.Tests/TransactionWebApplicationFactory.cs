@@ -4,7 +4,11 @@ using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
+using TransactionService.Application.Payments.Abstractions;
+using TransactionService.Application.Payments.Services;
 using TransactionService.Infrastructure.Persistence;
+using TransactionService.Tests.Fakes;
 
 namespace TransactionService.Tests;
 
@@ -33,6 +37,12 @@ public class TransactionWebApplicationFactory<TProgram> : WebApplicationFactory<
             }).AddScheme<AuthenticationSchemeOptions, TestAuthHandler>(
                 TestAuthHandler.SchemeName,
                 _ => { });
+            
+            services.RemoveAll<IPaymentGateway>();
+            services.AddScoped<IPaymentGateway, FakeStripePaymentGateway>();
+
+            services.RemoveAll<IPaymentGatewayResolver>();
+            services.AddScoped<IPaymentGatewayResolver, PaymentGatewayResolver>();
 
             lock (LockObject)
             {
@@ -56,6 +66,7 @@ public class TransactionWebApplicationFactory<TProgram> : WebApplicationFactory<
     {
         using var scope = Services.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<TransactionDbContext>();
+        await db.Database.ExecuteSqlRawAsync("DELETE FROM Payments");
         await db.Database.ExecuteSqlRawAsync("DELETE FROM OrderItems");
         await db.Database.ExecuteSqlRawAsync("DELETE FROM Orders");
         await db.Database.ExecuteSqlRawAsync("DELETE FROM Products");

@@ -12,29 +12,24 @@ using TransactionService.Domain.Constants;
 using TransactionService.Domain.Entities;
 using TransactionService.Infrastructure.Persistence;
 using Xunit;
+using Xunit.Abstractions;
 
 namespace TransactionService.Tests.Integration.Orders;
 
 [Collection("NonParallel Collection")]
-public class OrdersControllerIntegrationTests
+public class OrdersControllerIntegrationTests(TransactionWebApplicationFactory<Program> factory,
+    ITestOutputHelper testOutputHelper)
     : IClassFixture<TransactionWebApplicationFactory<Program>>,
-      IAsyncLifetime
+        IAsyncLifetime
 {
-    private readonly TransactionWebApplicationFactory<Program> _factory;
-    private readonly HttpClient _client;
+    private readonly HttpClient _client = factory.CreateClient();
 
     private readonly Guid _tenantPublicId = Guid.NewGuid();
     private readonly Guid _userPublicId = Guid.NewGuid();
 
-    public OrdersControllerIntegrationTests(TransactionWebApplicationFactory<Program> factory)
-    {
-        _factory = factory;
-        _client = factory.CreateClient();
-    }
-
     public async Task InitializeAsync()
     {
-        await _factory.ResetDatabaseAsync();
+        await factory.ResetDatabaseAsync();
 
         _client.SetTestAuth(
             role: "Admin",
@@ -187,10 +182,10 @@ public class OrdersControllerIntegrationTests
         var orderPublicId = await SeedOrderAsync();
 
         var response = await _client.PostAsync($"/api/orders/{orderPublicId}/cancel", null);
-
+        var body = await response.Content.ReadFromJsonAsync<ApiResponse<bool>>();
+        testOutputHelper.WriteLine(body.ToString());
         response.StatusCode.Should().Be(HttpStatusCode.OK);
 
-        var body = await response.Content.ReadFromJsonAsync<ApiResponse<bool>>();
         body.Should().NotBeNull();
         body!.Code.Should().Be(ResultCodes.Order.CancelSuccess);
         body.Data.Should().BeTrue();
@@ -358,6 +353,6 @@ public class OrdersControllerIntegrationTests
 
     private AsyncServiceScope CreateScope()
     {
-        return _factory.Services.CreateAsyncScope();
+        return factory.Services.CreateAsyncScope();
     }
 }

@@ -5,11 +5,14 @@ using Microsoft.IdentityModel.Tokens;
 using SharedKernel.Common.Options;
 using TransactionService.Application.Common.Abstractions;
 using TransactionService.Application.Middlewares;
+using TransactionService.Application.Payments.Abstractions;
+using TransactionService.Application.Payments.Services;
 using TransactionService.Application.Products.Abstractions;
 using TransactionService.Application.Transactions.Abstractions;
 using TransactionService.Application.Transactions.Services;
 using TransactionService.Infrastructure.Audit;
 using TransactionService.Infrastructure.Authentication;
+using TransactionService.Infrastructure.Payments;
 using TransactionService.Infrastructure.Persistence;
 using TransactionService.Infrastructure.Persistence.Repositories;
 
@@ -21,6 +24,8 @@ builder.Services.AddOpenApi();
 
 builder.Services.Configure<JwtOptions>(
     builder.Configuration.GetSection("JwtSettings"));
+builder.Services.Configure<StripeOptions>(
+    builder.Configuration.GetSection(StripeOptions.SectionName));
 
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>
@@ -77,7 +82,8 @@ builder.Services.Scan(scan => scan
 
 builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
 builder.Services.AddScoped<ITenantInfoClient, MockTenantInfoClient>();
-builder.Services.AddScoped<IPaymentGateway, MockPaymentGateway>();
+builder.Services.AddScoped<IPaymentGateway, StripePaymentGateway>();
+builder.Services.AddScoped<IPaymentGatewayResolver, PaymentGatewayResolver>();
 builder.Services.AddScoped<ICurrentTenantContext, CurrentTenantContext>();
 builder.Services.AddScoped<IAuditLogPublisher, AuditLogPublisher>();
 builder.Services.AddControllers();

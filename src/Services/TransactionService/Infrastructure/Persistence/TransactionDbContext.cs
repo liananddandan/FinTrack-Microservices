@@ -13,7 +13,7 @@ public class TransactionDbContext(DbContextOptions<TransactionDbContext> options
     
     public DbSet<Order> Orders => Set<Order>();
     public DbSet<OrderItem> OrderItems => Set<OrderItem>();
-
+    public DbSet<Payment> Payments => Set<Payment>();
     protected override void OnModelCreating(ModelBuilder builder)
     {
         builder.ApplyConfigurationsFromAssembly(typeof(TransactionDbContext).Assembly);

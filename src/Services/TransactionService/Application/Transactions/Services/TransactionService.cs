@@ -1,6 +1,8 @@
 using SharedKernel.Common.Results;
 using TransactionService.Api.Transaction.Contracts;
 using TransactionService.Application.Common.Abstractions;
+using TransactionService.Application.Payments.Abstractions;
+using TransactionService.Application.Payments.Dtos;
 using TransactionService.Application.Transactions.Abstractions;
 using TransactionService.Domain.Entities;
 using TransactionService.Domain.Enums;
@@ -93,53 +95,34 @@ public class TransactionService(
             await transactionRepo.AddAsync(transaction, cancellationToken);
             await unitOfWork.SaveChangesAsync(cancellationToken);
 
-            var paymentResult = await paymentGateway.PayAsync(
-                new PaymentExecutionRequest
-                {
-                    TransactionPublicId = transaction.PublicId.ToString(),
-                    TenantPublicId = tenantPublicId,
-                    Amount = transaction.Amount,
-                    Currency = transaction.Currency,
-                    Type = transaction.Type.ToString()
-                },
+
+            transaction.PaymentStatus = PaymentStatus.Succeeded;
+            transaction.Status = TransactionStatus.Completed;
+            transaction.PaidByUserPublicId = parsedCreatedByUserPublicId;
+            transaction.PaidAtUtc = DateTime.UtcNow;
+            transaction.FailureReason = null;
+
+            var account = await tenantAccountRepo.GetByTenantPublicIdAsync(
+                parsedTenantPublicId,
                 cancellationToken);
 
-            if (paymentResult.Success)
+            if (account == null)
             {
-                transaction.PaymentStatus = PaymentStatus.Succeeded;
-                transaction.Status = TransactionStatus.Completed;
-                transaction.PaidByUserPublicId = parsedCreatedByUserPublicId;
-                transaction.PaidAtUtc = DateTime.UtcNow;
-                transaction.PaymentReference = paymentResult.PaymentReference;
-                transaction.FailureReason = null;
-
-                var account = await tenantAccountRepo.GetByTenantPublicIdAsync(
-                    parsedTenantPublicId,
-                    cancellationToken);
-
-                if (account == null)
+                account = new TenantAccount
                 {
-                    account = new TenantAccount
-                    {
-                        TenantPublicId = parsedTenantPublicId,
-                        AvailableBalance = transaction.Amount,
-                        UpdatedAtUtc = DateTime.UtcNow
-                    };
+                    TenantPublicId = parsedTenantPublicId,
+                    AvailableBalance = transaction.Amount,
+                    UpdatedAtUtc = DateTime.UtcNow
+                };
 
-                    await tenantAccountRepo.AddAsync(account, cancellationToken);
-                }
-                else
-                {
-                    account.AvailableBalance += transaction.Amount;
-                    account.UpdatedAtUtc = DateTime.UtcNow;
-                }
+                await tenantAccountRepo.AddAsync(account, cancellationToken);
             }
             else
             {
-                transaction.PaymentStatus = PaymentStatus.Failed;
-                transaction.Status = TransactionStatus.Failed;
-                transaction.FailureReason = paymentResult.FailureReason;
+                account.AvailableBalance += transaction.Amount;
+                account.UpdatedAtUtc = DateTime.UtcNow;
             }
+
 
             await unitOfWork.SaveChangesAsync(cancellationToken);
 
