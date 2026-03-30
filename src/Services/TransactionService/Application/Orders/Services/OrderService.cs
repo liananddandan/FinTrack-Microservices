@@ -115,7 +115,7 @@ public class OrderService(
             DiscountAmount = discountAmount,
             TotalAmount = totalAmount,
             Status = OrderStatuses.Completed,
-            PaymentStatus = PaymentStatuses.Paid,
+            PaymentStatus = PaymentStatuses.NotStarted,
             PaymentMethod = request.PaymentMethod,
             CreatedAt = DateTime.UtcNow,
             PaidAt = DateTime.UtcNow,
