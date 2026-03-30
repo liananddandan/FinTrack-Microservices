@@ -23,8 +23,8 @@ public class Order
     public decimal DiscountAmount { get; set; }
     public decimal TotalAmount { get; set; }
 
-    public string Status { get; set; } = OrderStatuses.Completed;
-    public string PaymentStatus { get; set; } = PaymentStatuses.Paid;
+    public string Status { get; set; } = OrderStatuses.Pending;
+    public string PaymentStatus { get; set; } = PaymentStatuses.NotStarted;
     public string PaymentMethod { get; set; } = PaymentMethods.Cash;
 
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
@@ -34,4 +34,8 @@ public class Order
     public DateTime? DeletedAt { get; set; }
 
     public ICollection<OrderItem> Items { get; set; } = new List<OrderItem>();
+    
+    public long? PaymendId { get; set; }
+    public Payment? Payment { get; set; }
+    
 }
