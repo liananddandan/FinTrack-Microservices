@@ -179,6 +179,7 @@ public static class ResultCodes
         public const string CreateSuccess = "100009999";
         public const string GetSuccess = "100009998";
         public const string NotFound = "100009001";
+        public const string WebhookProcessed = "Payment.WebhookProcessed";
     }
     
     public const string InternalError = "900900001";

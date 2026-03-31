@@ -1,27 +1,36 @@
 import { useEffect, useMemo, useState } from "react"
 import { useNavigate } from "react-router-dom"
+import { loadStripe } from "@stripe/stripe-js"
+import {
+  HiOutlineArrowLeftOnRectangle,
+  HiOutlineClipboardDocumentList,
+  HiOutlineUserCircle,
+} from "react-icons/hi2"
+
 import { useAuth } from "../hooks/useAuth"
 import { getProductCategories, type ProductCategoryItem } from "../api/product-category"
 import { getProductsByCategory, type ProductItem } from "../api/product"
-import { createOrder } from "../api/order"
-import {
-  HiOutlineArrowLeftOnRectangle,
-  HiOutlineQueueList,
-  HiOutlineClipboardDocumentList,
-  HiOutlineUserCircle,
-  HiOutlinePlus,
-  HiOutlineMinus,
-  HiOutlineTrash,
-  HiOutlineCreditCard,
-} from "react-icons/hi2"
+import { createOrder, type OrderDto } from "../api/order"
+import { createPayment, getPaymentByOrder } from "../api/payment"
 
-type CartItem = {
-  id: string
-  name: string
-  price: number
-  quantity: number
-  categoryName: string
+import CategorySidebar from "../components/pos/CategorySidebar"
+import ProductGrid from "../components/pos/ProductGrid"
+import CurrentOrderPanel, {
+  type CartItem,
+} from "../components/pos/CurrentOrderPanel"
+import CheckoutReviewDialog from "../components/pos/CheckoutReviewDialog"
+import PaymentDialog from "../components/pos/PaymentDialog"
+import Toast from "../components/pos/Toast"
+
+const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY)
+
+type ToastState = {
+  open: boolean
+  type: "success" | "error"
+  message: string
 }
+
+type PaymentMode = "menu" | "stripe" | "pos"
 
 function TopActionButton({
   label,
@@ -58,16 +67,33 @@ export default function Home() {
   const [initializing, setInitializing] = useState(true)
   const [loadingCategories, setLoadingCategories] = useState(false)
   const [loadingProducts, setLoadingProducts] = useState(false)
-  const [errorMessage, setErrorMessage] = useState("")
+  const [pageError, setPageError] = useState("")
 
   const [categories, setCategories] = useState<ProductCategoryItem[]>([])
-  const [selectedCategoryId, setSelectedCategoryId] = useState<string>("")
+  const [selectedCategoryId, setSelectedCategoryId] = useState("")
   const [products, setProducts] = useState<ProductItem[]>([])
-  const [cartItems, setCartItems] = useState<CartItem[]>([])
 
-  const [checkingOut, setCheckingOut] = useState(false)
-  const [checkoutSuccessMessage, setCheckoutSuccessMessage] = useState("")
+  const [cartItems, setCartItems] = useState<CartItem[]>([])
   const [customerName, setCustomerName] = useState("")
+
+  const [checkoutDialogOpen, setCheckoutDialogOpen] = useState(false)
+  const [checkoutSubmitting, setCheckoutSubmitting] = useState(false)
+  const [checkoutError, setCheckoutError] = useState("")
+
+  const [paymentDialogOpen, setPaymentDialogOpen] = useState(false)
+  const [paymentMode, setPaymentMode] = useState<PaymentMode>("menu")
+  const [paymentActionLoading, setPaymentActionLoading] = useState(false)
+  const [paymentError, setPaymentError] = useState("")
+  const [pollingPayment, setPollingPayment] = useState(false)
+
+  const [createdOrder, setCreatedOrder] = useState<OrderDto | null>(null)
+  const [stripeClientSecret, setStripeClientSecret] = useState<string | null>(null)
+
+  const [toast, setToast] = useState<ToastState>({
+    open: false,
+    type: "success",
+    message: "",
+  })
 
   useEffect(() => {
     async function init() {
@@ -90,44 +116,19 @@ export default function Home() {
     }
   }, [selectedCategoryId])
 
-  async function handleCheckout() {
-    if (cartItems.length === 0) {
-      return
-    }
+  useEffect(() => {
+    if (!toast.open) return
 
-    setCheckingOut(true)
-    setErrorMessage("")
-    setCheckoutSuccessMessage("")
+    const timer = window.setTimeout(() => {
+      setToast((prev) => ({ ...prev, open: false }))
+    }, 3000)
 
-    try {
-      const order = await createOrder({
-        customerName: customerName.trim() || null,
-        customerPhone: null,
-        paymentMethod: "Cash",
-        items: cartItems.map((item) => ({
-          productPublicId: item.id,
-          quantity: item.quantity,
-          notes: null,
-        })),
-      })
-
-      setCheckoutSuccessMessage(`Order ${order.orderNumber} created successfully.`)
-      setCartItems([])
-      setCustomerName("")
-    } catch (error: unknown) {
-      if (error instanceof Error) {
-        setErrorMessage(error.message || "Failed to create order.")
-      } else {
-        setErrorMessage("Failed to create order.")
-      }
-    } finally {
-      setCheckingOut(false)
-    }
-  }
+    return () => window.clearTimeout(timer)
+  }, [toast.open])
 
   async function loadCategories() {
     setLoadingCategories(true)
-    setErrorMessage("")
+    setPageError("")
 
     try {
       const result = await getProductCategories()
@@ -144,9 +145,9 @@ export default function Home() {
       }
     } catch (error: unknown) {
       if (error instanceof Error) {
-        setErrorMessage(error.message || "Failed to load menu.")
+        setPageError(error.message || "Failed to load menu.")
       } else {
-        setErrorMessage("Failed to load menu.")
+        setPageError("Failed to load menu.")
       }
     } finally {
       setLoadingCategories(false)
@@ -155,7 +156,7 @@ export default function Home() {
 
   async function loadProducts(categoryPublicId: string) {
     setLoadingProducts(true)
-    setErrorMessage("")
+    setPageError("")
 
     try {
       const result = await getProductsByCategory(categoryPublicId)
@@ -166,26 +167,179 @@ export default function Home() {
       setProducts(availableProducts)
     } catch (error: unknown) {
       if (error instanceof Error) {
-        setErrorMessage(error.message || "Failed to load products.")
+        setPageError(error.message || "Failed to load products.")
       } else {
-        setErrorMessage("Failed to load products.")
+        setPageError("Failed to load products.")
       }
     } finally {
       setLoadingProducts(false)
     }
   }
 
-  function goOrders() {
-    navigate("/portal/orders")
+  function showToast(type: "success" | "error", message: string) {
+    setToast({
+      open: true,
+      type,
+      message,
+    })
   }
 
-  function goProfile() {
-    navigate("/portal/profile")
+  function openCheckoutDialog() {
+    if (cartItems.length === 0) return
+    setCheckoutError("")
+    setCheckoutDialogOpen(true)
   }
 
-  function logout() {
-    auth.logout()
-    navigate("/portal/login", { replace: true })
+  async function handlePayFromReview() {
+    if (cartItems.length === 0) return
+
+    setCheckoutSubmitting(true)
+    setCheckoutError("")
+
+    try {
+      const order = await createOrder({
+        customerName: customerName.trim() || null,
+        customerPhone: null,
+        paymentMethod: "Pending",
+        items: cartItems.map((item) => ({
+          productPublicId: item.id,
+          quantity: item.quantity,
+          notes: null,
+        })),
+      })
+
+      setCreatedOrder(order)
+      setCheckoutDialogOpen(false)
+      setPaymentDialogOpen(true)
+      setPaymentMode("menu")
+      setPaymentError("")
+    } catch (error: unknown) {
+      if (error instanceof Error) {
+        setCheckoutError(error.message || "Failed to create order.")
+      } else {
+        setCheckoutError("Failed to create order.")
+      }
+    } finally {
+      setCheckoutSubmitting(false)
+    }
+  }
+
+  async function handleCashPayment() {
+    if (!createdOrder) return
+
+    setPaymentActionLoading(true)
+    setPaymentError("")
+
+    try {
+      await createPayment({
+        orderPublicId: createdOrder.publicId,
+        provider: "Cash",
+        paymentMethod: "Cash",
+      })
+
+      const paidOrderNumber = createdOrder.orderNumber
+
+      resetAfterPayment()
+      showToast("success", `Order ${paidOrderNumber} paid successfully by cash.`)
+    } catch (error: unknown) {
+      if (error instanceof Error) {
+        setPaymentError(error.message || "Failed to complete cash payment.")
+      } else {
+        setPaymentError("Failed to complete cash payment.")
+      }
+    } finally {
+      setPaymentActionLoading(false)
+    }
+  }
+
+  async function handleCardEntry() {
+    if (!createdOrder) return
+
+    setPaymentActionLoading(true)
+    setPaymentError("")
+
+    try {
+      const payment = await createPayment({
+        orderPublicId: createdOrder.publicId,
+        provider: "Stripe",
+        paymentMethod: "Card",
+      })
+
+      if (!payment.providerClientSecret) {
+        throw new Error("Stripe client secret is missing.")
+      }
+
+      setStripeClientSecret(payment.providerClientSecret)
+      setPaymentMode("stripe")
+    } catch (error: unknown) {
+      if (error instanceof Error) {
+        setPaymentError(error.message || "Failed to start card payment.")
+      } else {
+        setPaymentError("Failed to start card payment.")
+      }
+    } finally {
+      setPaymentActionLoading(false)
+    }
+  }
+
+  function handlePosTerminal() {
+    setPaymentError("")
+    setPaymentMode("pos")
+  }
+
+  async function pollPaymentStatus(orderPublicId: string, orderNumber: string) {
+    setPollingPayment(true)
+    setPaymentError("")
+
+    try {
+      const maxAttempts = 15
+
+      for (let i = 0; i < maxAttempts; i++) {
+        const payment = await getPaymentByOrder(orderPublicId)
+
+        if (payment.status === "Paid") {
+          resetAfterPayment()
+          showToast("success", `Order ${orderNumber} paid successfully.`)
+          return
+        }
+
+        if (payment.status === "Failed") {
+          setPaymentError(payment.failureReason || "Payment failed.")
+          return
+        }
+
+        await new Promise((resolve) => setTimeout(resolve, 1500))
+      }
+
+      setPaymentError("Payment confirmation timed out. Please check the order status.")
+    } catch (error: unknown) {
+      if (error instanceof Error) {
+        setPaymentError(error.message || "Failed to confirm payment status.")
+      } else {
+        setPaymentError("Failed to confirm payment status.")
+      }
+    } finally {
+      setPollingPayment(false)
+    }
+  }
+
+  function resetAfterPayment() {
+    setPaymentDialogOpen(false)
+    setPaymentMode("menu")
+    setCreatedOrder(null)
+    setStripeClientSecret(null)
+    setCartItems([])
+    setCustomerName("")
+    setPaymentError("")
+    setCheckoutError("")
+  }
+
+  function closePaymentDialog() {
+    setPaymentDialogOpen(false)
+    setPaymentMode("menu")
+    setStripeClientSecret(null)
+    setPaymentError("")
+    setPollingPayment(false)
   }
 
   const selectedCategory = useMemo(
@@ -193,10 +347,18 @@ export default function Home() {
     [categories, selectedCategoryId]
   )
 
+  const subtotal = useMemo(
+    () => cartItems.reduce((sum, item) => sum + item.price * item.quantity, 0),
+    [cartItems]
+  )
+
+  const totalItems = useMemo(
+    () => cartItems.reduce((sum, item) => sum + item.quantity, 0),
+    [cartItems]
+  )
+
   function addToCart(product: ProductItem) {
-    if (!selectedCategory) {
-      return
-    }
+    if (!selectedCategory) return
 
     setCartItems((prev) => {
       const existing = prev.find((x) => x.id === product.publicId)
@@ -242,15 +404,18 @@ export default function Home() {
     setCartItems([])
   }
 
-  const subtotal = useMemo(
-    () => cartItems.reduce((sum, item) => sum + item.price * item.quantity, 0),
-    [cartItems]
-  )
+  function goOrders() {
+    navigate("/portal/orders")
+  }
 
-  const totalItems = useMemo(
-    () => cartItems.reduce((sum, item) => sum + item.quantity, 0),
-    [cartItems]
-  )
+  function goProfile() {
+    navigate("/portal/profile")
+  }
+
+  function logout() {
+    auth.logout()
+    navigate("/portal/login", { replace: true })
+  }
 
   if (initializing) {
     return (
@@ -264,6 +429,8 @@ export default function Home() {
 
   return (
     <div className="min-h-screen bg-slate-50 px-6 py-6">
+      <Toast open={toast.open} type={toast.type} message={toast.message} />
+
       <div className="mx-auto flex max-w-7xl flex-col gap-6">
         <section className="rounded-3xl border border-slate-200 bg-white px-6 py-6 sm:px-8">
           <div className="flex flex-col gap-6 xl:flex-row xl:items-start xl:justify-between">
@@ -310,242 +477,74 @@ export default function Home() {
           </div>
         </section>
 
-        {errorMessage ? (
+        {pageError ? (
           <div
             className="rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700"
             role="alert"
           >
-            {errorMessage}
-          </div>
-        ) : null}
-
-        {checkoutSuccessMessage ? (
-          <div
-            className="rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700"
-            role="status"
-          >
-            {checkoutSuccessMessage}
+            {pageError}
           </div>
         ) : null}
 
         <section className="grid gap-6 xl:grid-cols-[240px_minmax(0,1fr)_360px]">
-          <div className="rounded-3xl border border-slate-200 bg-white p-5">
-            <div className="mb-4 flex items-center gap-2 text-slate-800">
-              <HiOutlineQueueList className="h-5 w-5 text-slate-500" />
-              <h2 className="text-base font-semibold">Categories</h2>
-            </div>
+          <CategorySidebar
+            categories={categories}
+            selectedCategoryId={selectedCategoryId}
+            loading={loadingCategories}
+            onSelect={setSelectedCategoryId}
+          />
 
-            {loadingCategories ? (
-              <div className="text-sm text-slate-500">Loading categories...</div>
-            ) : categories.length === 0 ? (
-              <div className="rounded-2xl border border-dashed border-slate-300 bg-slate-50 px-4 py-8 text-center text-sm text-slate-500">
-                No categories available yet.
-              </div>
-            ) : (
-              <div className="space-y-2">
-                {categories.map((category) => {
-                  const isActive = selectedCategoryId === category.publicId
+          <ProductGrid
+            categoryName={selectedCategory?.name || ""}
+            loading={loadingProducts}
+            products={products}
+            onAdd={addToCart}
+          />
 
-                  return (
-                    <button
-                      key={category.publicId}
-                      type="button"
-                      onClick={() => setSelectedCategoryId(category.publicId)}
-                      className={[
-                        "w-full rounded-2xl border px-4 py-3 text-left transition",
-                        isActive
-                          ? "border-indigo-200 bg-indigo-50 text-indigo-700"
-                          : "border-slate-200 bg-white text-slate-700 hover:border-slate-300 hover:bg-slate-50",
-                      ].join(" ")}
-                    >
-                      <div className="flex items-center justify-between gap-3">
-                        <span className="truncate text-sm font-medium">
-                          {category.name}
-                        </span>
-                        <span className="text-xs text-slate-500">
-                          #{category.displayOrder}
-                        </span>
-                      </div>
-                    </button>
-                  )
-                })}
-              </div>
-            )}
-          </div>
-
-          <div className="rounded-3xl border border-slate-200 bg-white p-5">
-            <div className="mb-4 flex items-center justify-between gap-4">
-              <div>
-                <h2 className="text-base font-semibold text-slate-800">
-                  {selectedCategory?.name || "Menu"}
-                </h2>
-                <p className="mt-1 text-sm text-slate-500">
-                  Select products and add them to the current order.
-                </p>
-              </div>
-            </div>
-
-            {!selectedCategory ? (
-              <div className="rounded-2xl border border-dashed border-slate-300 bg-slate-50 px-6 py-10 text-center text-sm text-slate-500">
-                Choose a category to view products.
-              </div>
-            ) : loadingProducts ? (
-              <div className="text-sm text-slate-500">Loading products...</div>
-            ) : products.length === 0 ? (
-              <div className="rounded-2xl border border-dashed border-slate-300 bg-slate-50 px-6 py-10 text-center text-sm text-slate-500">
-                No products available in this category yet.
-              </div>
-            ) : (
-              <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
-                {products.map((product) => (
-                  <div
-                    key={product.publicId}
-                    className="rounded-xl border border-slate-200 bg-white p-3"
-                  >
-                    <div className="text-sm font-medium text-slate-800 truncate">
-                      {product.name}
-                    </div>
-                    <div className="mt-1 text-sm text-slate-500">
-                      ${product.price.toFixed(2)}
-                    </div>
-                    <button
-                      type="button"
-                      onClick={() => addToCart(product)}
-                      className="mt-3 w-full rounded-lg bg-indigo-600 px-3 py-2 text-sm font-medium text-white transition hover:bg-indigo-500"
-                    >
-                      Add
-                    </button>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-
-          <div className="rounded-3xl border border-slate-200 bg-white p-5">
-            <div className="mb-4 flex items-center justify-between gap-4">
-              <div>
-                <h2 className="text-base font-semibold text-slate-800">
-                  Current order
-                </h2>
-                <p className="mt-1 text-sm text-slate-500">
-                  {totalItems} item{totalItems === 1 ? "" : "s"} selected
-                </p>
-              </div>
-
-              {cartItems.length > 0 ? (
-                <button
-                  type="button"
-                  onClick={clearCart}
-                  className="text-sm font-medium text-rose-600 transition hover:text-rose-500"
-                >
-                  Clear
-                </button>
-              ) : null}
-            </div>
-
-            <div className="flex h-[620px] min-h-0 flex-col">
-              <div className="min-h-0 flex-1 overflow-y-auto pr-1">
-                {cartItems.length === 0 ? (
-                  <div className="rounded-2xl border border-dashed border-slate-300 bg-slate-50 px-6 py-10 text-center text-sm text-slate-500">
-                    No items in the order yet.
-                  </div>
-                ) : (
-                  <div className="space-y-3">
-                    {cartItems.map((item) => (
-                      <div
-                        key={item.id}
-                        className="rounded-xl border border-slate-200 bg-slate-50 p-3"
-                      >
-                        <div className="flex items-start justify-between gap-3">
-                          <div className="min-w-0">
-                            <p className="truncate text-sm font-medium text-slate-800">
-                              {item.name}
-                            </p>
-                            <p className="mt-1 text-xs text-slate-500">
-                              {item.categoryName}
-                            </p>
-                            <p className="mt-1 text-xs text-slate-500">
-                              ${item.price.toFixed(2)} each
-                            </p>
-                          </div>
-
-                          <button
-                            type="button"
-                            onClick={() => removeItem(item.id)}
-                            className="text-slate-400 transition hover:text-rose-600"
-                          >
-                            <HiOutlineTrash className="h-4 w-4" />
-                          </button>
-                        </div>
-
-                        <div className="mt-3 flex items-center justify-between">
-                          <div className="inline-flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-2 py-1">
-                            <button
-                              type="button"
-                              onClick={() => decreaseQuantity(item.id)}
-                              className="rounded p-1 text-slate-600 transition hover:bg-slate-100"
-                            >
-                              <HiOutlineMinus className="h-4 w-4" />
-                            </button>
-
-                            <span className="min-w-[20px] text-center text-sm font-medium text-slate-800">
-                              {item.quantity}
-                            </span>
-
-                            <button
-                              type="button"
-                              onClick={() => increaseQuantity(item.id)}
-                              className="rounded p-1 text-slate-600 transition hover:bg-slate-100"
-                            >
-                              <HiOutlinePlus className="h-4 w-4" />
-                            </button>
-                          </div>
-
-                          <div className="text-sm font-semibold text-slate-800">
-                            ${(item.price * item.quantity).toFixed(2)}
-                          </div>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-              <div className="mt-4">
-                <label className="mb-2 block text-sm font-medium text-slate-700">
-                  Customer name
-                </label>
-                <input
-                  type="text"
-                  value={customerName}
-                  onChange={(e) => setCustomerName(e.target.value)}
-                  placeholder="Optional"
-                  className="h-11 w-full rounded-xl border border-slate-300 bg-white px-3 text-sm text-slate-800 outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100"
-                />
-              </div>
-              <div className="mt-4 shrink-0 rounded-2xl border border-slate-200 bg-slate-50 p-4">
-                <div className="flex items-center justify-between text-sm text-slate-600">
-                  <span>Subtotal</span>
-                  <span>${subtotal.toFixed(2)}</span>
-                </div>
-
-                <div className="mt-3 flex items-center justify-between text-base font-semibold text-slate-800">
-                  <span>Total</span>
-                  <span>${subtotal.toFixed(2)}</span>
-                </div>
-
-                <button
-                  type="button"
-                  onClick={() => void handleCheckout()}
-                  disabled={cartItems.length === 0 || checkingOut}
-                  className="mt-5 inline-flex h-12 w-full items-center justify-center gap-2 rounded-2xl bg-indigo-600 px-4 text-sm font-medium text-white transition hover:bg-indigo-500 disabled:cursor-not-allowed disabled:opacity-50"
-                >
-                  <HiOutlineCreditCard className="h-5 w-5" />
-                  {checkingOut ? "Processing..." : "Checkout"}
-                </button>
-              </div>
-            </div>
-          </div>
+          <CurrentOrderPanel
+            cartItems={cartItems}
+            totalItems={totalItems}
+            subtotal={subtotal}
+            customerName={customerName}
+            onCustomerNameChange={setCustomerName}
+            onIncreaseQuantity={increaseQuantity}
+            onDecreaseQuantity={decreaseQuantity}
+            onRemoveItem={removeItem}
+            onClearCart={clearCart}
+            onCheckout={openCheckoutDialog}
+          />
         </section>
+
+        <CheckoutReviewDialog
+          open={checkoutDialogOpen}
+          cartItems={cartItems}
+          customerName={customerName}
+          subtotal={subtotal}
+          submitting={checkoutSubmitting}
+          errorMessage={checkoutError}
+          onClose={() => setCheckoutDialogOpen(false)}
+          onPay={() => void handlePayFromReview()}
+        />
+
+        <PaymentDialog
+          open={paymentDialogOpen}
+          order={createdOrder}
+          paymentMode={paymentMode}
+          stripePromise={stripePromise}
+          stripeClientSecret={stripeClientSecret}
+          pollingPayment={pollingPayment}
+          actionLoading={paymentActionLoading}
+          errorMessage={paymentError}
+          onClose={closePaymentDialog}
+          onCashPayment={() => void handleCashPayment()}
+          onCardEntry={() => void handleCardEntry()}
+          onPosTerminal={handlePosTerminal}
+          onStripeSuccess={pollPaymentStatus}
+          onBackToMethods={() => {
+            setPaymentMode("menu")
+            setPaymentError("")
+          }}
+        />
       </div>
     </div>
   )

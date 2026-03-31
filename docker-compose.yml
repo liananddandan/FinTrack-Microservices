@@ -46,6 +46,17 @@ services:
       - "1025:1025"
       - "8025:8025"
   
+  stripe-cli:
+    image: stripe/stripe-cli
+    container_name: stripe-cli
+    command:
+      - listen
+      - --api-key
+      - ${STRIPE_SECRET_KEY}
+      - --forward-to
+      - http://host.docker.internal:5193/api/payments/webhook
+    restart: unless-stopped
+  
   # ========================
   # Backend services
   # ========================

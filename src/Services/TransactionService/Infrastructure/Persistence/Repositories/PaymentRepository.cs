@@ -44,4 +44,17 @@ public class PaymentRepository(TransactionDbContext dbContext) : IPaymentReposit
                 x => x.IdempotencyKey == idempotencyKey && !x.IsDeleted,
                 cancellationToken);
     }
+
+
+    public async Task<Payment?> GetByProviderReferenceAsync(
+        string providerPaymentReference,
+        CancellationToken cancellationToken)
+    {
+        return await dbContext.Payments
+            .Include(x => x.Order)
+            .FirstOrDefaultAsync(
+                x => x.ProviderPaymentReference == providerPaymentReference &&
+                     !x.IsDeleted,
+                cancellationToken);
+    }
 }

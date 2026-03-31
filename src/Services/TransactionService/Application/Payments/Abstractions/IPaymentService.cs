@@ -15,4 +15,8 @@ public interface IPaymentService
     Task<ServiceResult<PaymentDto>> GetByOrderAsync(
         GetPaymentByOrderQuery query,
         CancellationToken cancellationToken = default);
+    
+    Task<ServiceResult<bool>> HandleStripeWebhookAsync(
+        HandleStripeWebhookCommand command,
+        CancellationToken cancellationToken = default);
 }

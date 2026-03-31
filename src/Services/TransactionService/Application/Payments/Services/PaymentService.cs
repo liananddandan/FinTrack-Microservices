@@ -1,4 +1,5 @@
 using SharedKernel.Common.Results;
+using Stripe;
 using TransactionService.Application.Common.Abstractions;
 using TransactionService.Application.Orders.Abstractions;
 using TransactionService.Application.Payments.Abstractions;
@@ -100,14 +101,35 @@ public class PaymentService(
             },
             cancellationToken);
 
-        payment.Status = PaymentStatuses.Pending;
+
         payment.ProviderPaymentReference = gatewayResult.ProviderPaymentReference;
         payment.ProviderClientSecret = gatewayResult.ClientSecret;
         payment.StartedAt = DateTime.UtcNow;
-
         order.PaymentMethod = command.PaymentMethod;
-        order.PaymentStatus = PaymentStatuses.Pending;
-        order.Status = OrderStatuses.Pending;
+
+        if (gatewayResult.Status == PaymentStatuses.Paid)
+        {
+            payment.Status = PaymentStatuses.Paid;
+            payment.PaidAt = DateTime.UtcNow;
+
+            order.PaymentStatus = PaymentStatuses.Paid;
+            order.Status = OrderStatuses.Completed;
+            order.PaidAt = DateTime.UtcNow;
+        }
+        else if (gatewayResult.Status == PaymentStatuses.Failed)
+        {
+            payment.Status = PaymentStatuses.Failed;
+            payment.FailureReason = "Payment failed.";
+
+            order.PaymentStatus = PaymentStatuses.Failed;
+            order.Status = OrderStatuses.Pending;
+        }
+        else
+        {
+            payment.Status = PaymentStatuses.Pending;
+            order.PaymentStatus = PaymentStatuses.Pending;
+            order.Status = OrderStatuses.Pending;
+        }
 
         await unitOfWork.SaveChangesAsync(cancellationToken);
 
@@ -144,6 +166,104 @@ public class PaymentService(
             MapToDto(payment, query.OrderPublicId),
             ResultCodes.Payment.GetSuccess,
             "Payment retrieved successfully.");
+    }
+
+    public async Task<ServiceResult<bool>> HandleStripeWebhookAsync(
+        HandleStripeWebhookCommand command,
+        CancellationToken cancellationToken = default)
+    {
+        switch (command.StripeEvent.Type)
+        {
+            case "payment_intent.succeeded":
+            {
+                var paymentIntent = command.StripeEvent.Data.Object as PaymentIntent;
+                if (paymentIntent is null)
+                {
+                    return ServiceResult<bool>.Ok(
+                        true,
+                        ResultCodes.Payment.WebhookProcessed,
+                        "Webhook ignored.");
+                }
+
+                var payment = await paymentRepository.GetByProviderReferenceAsync(
+                    paymentIntent.Id,
+                    cancellationToken);
+
+                if (payment is null)
+                {
+                    return ServiceResult<bool>.Ok(
+                        true,
+                        ResultCodes.Payment.WebhookProcessed,
+                        "Payment not found. Webhook ignored.");
+                }
+
+                if (payment.Status == PaymentStatuses.Paid)
+                {
+                    return ServiceResult<bool>.Ok(
+                        true,
+                        ResultCodes.Payment.WebhookProcessed,
+                        "Payment already processed.");
+                }
+
+                payment.Status = PaymentStatuses.Paid;
+                payment.PaidAt = DateTime.UtcNow;
+                payment.FailureReason = null;
+
+                payment.Order.PaymentStatus = PaymentStatuses.Paid;
+                payment.Order.Status = OrderStatuses.Completed;
+                payment.Order.PaidAt = DateTime.UtcNow;
+
+                await unitOfWork.SaveChangesAsync(cancellationToken);
+
+                return ServiceResult<bool>.Ok(
+                    true,
+                    ResultCodes.Payment.WebhookProcessed,
+                    "Payment succeeded webhook processed.");
+            }
+
+            case "payment_intent.payment_failed":
+            {
+                var paymentIntent = command.StripeEvent.Data.Object as PaymentIntent;
+                if (paymentIntent is null)
+                {
+                    return ServiceResult<bool>.Ok(
+                        true,
+                        ResultCodes.Payment.WebhookProcessed,
+                        "Webhook ignored.");
+                }
+
+                var payment = await paymentRepository.GetByProviderReferenceAsync(
+                    paymentIntent.Id,
+                    cancellationToken);
+
+                if (payment is null)
+                {
+                    return ServiceResult<bool>.Ok(
+                        true,
+                        ResultCodes.Payment.WebhookProcessed,
+                        "Payment not found. Webhook ignored.");
+                }
+
+                payment.Status = PaymentStatuses.Failed;
+                payment.FailureReason = paymentIntent.LastPaymentError?.Message;
+
+                payment.Order.PaymentStatus = PaymentStatuses.Failed;
+                payment.Order.Status = OrderStatuses.Pending;
+
+                await unitOfWork.SaveChangesAsync(cancellationToken);
+
+                return ServiceResult<bool>.Ok(
+                    true,
+                    ResultCodes.Payment.WebhookProcessed,
+                    "Payment failed webhook processed.");
+            }
+
+            default:
+                return ServiceResult<bool>.Ok(
+                    true,
+                    ResultCodes.Payment.WebhookProcessed,
+                    "Unhandled event ignored.");
+        }
     }
 
     private static PaymentDto MapToDto(Payment payment, Guid orderPublicId)

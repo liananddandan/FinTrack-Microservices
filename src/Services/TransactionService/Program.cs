@@ -83,6 +83,7 @@ builder.Services.Scan(scan => scan
 builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
 builder.Services.AddScoped<ITenantInfoClient, MockTenantInfoClient>();
 builder.Services.AddScoped<IPaymentGateway, StripePaymentGateway>();
+builder.Services.AddScoped<IPaymentGateway, CashPaymentGateway>();
 builder.Services.AddScoped<IPaymentGatewayResolver, PaymentGatewayResolver>();
 builder.Services.AddScoped<ICurrentTenantContext, CurrentTenantContext>();
 builder.Services.AddScoped<IAuditLogPublisher, AuditLogPublisher>();

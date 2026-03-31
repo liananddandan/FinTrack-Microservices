@@ -18,4 +18,9 @@ public interface IPaymentRepository
     Task<Payment?> GetByIdempotencyKeyAsync(
         string idempotencyKey,
         CancellationToken cancellationToken);
+    
+    
+    Task<Payment?> GetByProviderReferenceAsync(
+        string providerPaymentReference,
+        CancellationToken cancellationToken);
 }
