@@ -1,9 +1,13 @@
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
+using PlatformService.Application.Common.Abstractions;
 using PlatformService.Application.Common.Options;
 using PlatformService.Application.Tenants.Abstractions;
 using PlatformService.Application.Tenants.Handlers;
 using PlatformService.Application.Tenants.Services;
 using PlatformService.Infrastructure.ExternalServices;
+using PlatformService.Infrastructure.Persistence;
+using PlatformService.Infrastructure.Persistence.Repositories;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -20,8 +24,17 @@ builder.Services.AddHttpClient<IIdentityTenantDirectoryClient, IdentityTenantDir
         client.Timeout = TimeSpan.FromSeconds(15);
     });
 
-builder.Services.AddScoped<IPlatformTenantService, PlatformTenantService>();
+builder.Services.AddDbContext<PlatformDbContext>(options =>
+{
+    options.UseMySql(
+        builder.Configuration.GetConnectionString("DefaultConnection"),
+        ServerVersion.AutoDetect(builder.Configuration.GetConnectionString("DefaultConnection")));
+});
 
+builder.Services.AddScoped<IPlatformTenantService, PlatformTenantService>();
+builder.Services.AddScoped<ITenantDomainMappingRepository, TenantDomainMappingRepository>();
+builder.Services.AddScoped<ITenantDomainMappingService, TenantDomainMappingService>();
+builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
 // Add services to the container.
 builder.Services.AddControllers();
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
@@ -48,4 +61,6 @@ app.MapControllers();
 
 app.Run();
 
-public partial class Program { }
+public partial class Program
+{
+}
