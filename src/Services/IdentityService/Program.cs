@@ -1,11 +1,10 @@
 using System.Text;
 using IdentityService.Application.Common.Abstractions;
+using IdentityService.Application.Common.Extensions;
 using IdentityService.Application.Common.Filters;
 using IdentityService.Application.Common.Middlewares;
 using IdentityService.Application.Common.Options;
 using IdentityService.Application.Common.Services;
-using IdentityService.Application.Dev.Abstractions;
-using IdentityService.Application.Dev.Services;
 using IdentityService.Domain.Entities;
 using IdentityService.Infrastructure.Aduit.Publishers;
 using IdentityService.Infrastructure.Persistence;
@@ -14,9 +13,7 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
-using Scalar.AspNetCore;
 using SharedKernel.Common.Options;
-using SharedKernel.Topics;
 using StackExchange.Redis;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -25,6 +22,8 @@ builder.Services.Configure<JwtOptions>(
     builder.Configuration.GetSection("JwtSettings"));
 builder.Services.Configure<BootstrapAdminOptions>(
     builder.Configuration.GetSection("BootstrapAdmin"));
+builder.Services.Configure<InternalApiOptions>(
+    builder.Configuration.GetSection("InternalApi"));
 
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>
@@ -86,7 +85,11 @@ builder.Services.AddMediatR(configuration =>
 // Add services to the container.
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
 builder.Services.AddOpenApi();
-builder.Services.AddControllers(options => { options.Filters.Add<GlobalJwtTokenValidationFilter>(); });
+builder.Services.AddControllers(options =>
+{
+    options.Filters.Add<GlobalJwtTokenValidationFilter>();
+    options.Filters.Add<InternalApiKeyValidationFilter>();
+});
 
 builder.Services.Scan(scan => scan
     .FromAssembliesOf(typeof(Program))
@@ -100,6 +103,8 @@ builder.Services.Scan(scan => scan
 builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
 builder.Services.AddScoped<IAuditLogPublisher, AuditLogPublisher>();
 builder.Services.AddHostedService<BootstrapAdminHostedService>();
+builder.Services.AddScoped<InternalApiKeyValidationFilter>();
+builder.AddFinTrackOpenTelemetry();
 var app = builder.Build();
 
 // Apply database migrations before serving requests, with retry.
@@ -153,7 +158,7 @@ for (var attempt = 1; attempt <= maxRetries; attempt++)
 
 // Configure the HTTP request pipeline.
 app.MapOpenApi();
-
+app.UseFinTrackTelemetry();
 app.UseMiddleware<GlobalExceptionMiddleware>();
 app.UseRouting();
 app.UseAuthentication();

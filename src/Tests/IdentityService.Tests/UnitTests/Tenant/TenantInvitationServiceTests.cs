@@ -15,7 +15,7 @@ namespace IdentityService.Tests.UnitTests.Tenant;
 
 public class TenantInvitationServiceTests
 {
-    private readonly Mock<ITenantRepo> _tenantRepoMock = new();
+    private readonly Mock<ITenantRepository> _tenantRepoMock = new();
     private readonly Mock<IApplicationUserRepo> _userRepoMock = new();
     private readonly Mock<ITenantMembershipRepo> _membershipRepoMock = new();
     private readonly Mock<ITenantInvitationRepo> _invitationRepoMock = new();

@@ -4,7 +4,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace IdentityService.Infrastructure.Persistence.Repositories;
 
-public class TenantRepo(ApplicationIdentityDbContext dbContext) : ITenantRepo
+public class TenantRepository(ApplicationIdentityDbContext dbContext) : ITenantRepository
 {
     public async Task AddTenantAsync(Tenant tenant, CancellationToken cancellationToken = default)
     {
@@ -34,5 +34,15 @@ public class TenantRepo(ApplicationIdentityDbContext dbContext) : ITenantRepo
     public async Task<bool> IsTenantNameExistsAsync(string tenantName, CancellationToken cancellationToken = default)
     {
         return await dbContext.Tenants
-            .AnyAsync(t => t.Name == tenantName && !t.IsDeleted, cancellationToken);    }
+            .AnyAsync(t => t.Name == tenantName && !t.IsDeleted, cancellationToken);
+    }
+
+    public async Task<IReadOnlyList<Tenant>> GetAllAsync(
+        CancellationToken cancellationToken = default)
+    {
+        return await dbContext.Tenants
+            .AsNoTracking()
+            .OrderBy(x => x.Name)
+            .ToListAsync(cancellationToken);
+    }
 }

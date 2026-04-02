@@ -2,7 +2,7 @@ namespace SharedKernel.Common.Results;
 
 public static class ResultCodes
 {
-    public static class Tenant
+    public static class TenantCodes
     {
         // Identity 100******
         // RegisterTenant Failed 100 001 001

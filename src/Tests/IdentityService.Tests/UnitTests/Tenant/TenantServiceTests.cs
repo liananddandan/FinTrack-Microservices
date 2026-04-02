@@ -21,7 +21,7 @@ public class TenantServiceTests
 
     private readonly Mock<ILogger<TenantService>> _loggerMock = new();
     private readonly Mock<IUnitOfWork> _unitOfWorkMock = new();
-    private readonly Mock<ITenantRepo> _tenantRepoMock = new();
+    private readonly Mock<ITenantRepository> _tenantRepoMock = new();
     private readonly Mock<IApplicationUserRepo> _applicationUserRepoMock = new();
     private readonly Mock<ITenantMembershipRepo> _tenantMembershipRepoMock = new();
     private readonly Mock<UserManager<ApplicationUser>> _userManagerMock;
@@ -84,7 +84,7 @@ public class TenantServiceTests
 
         result.Success.Should().BeFalse();
         result.Message.Should().Be(expectedMessage);
-        result.Code.Should().Be(ResultCodes.Tenant.RegisterTenantParameterError);
+        result.Code.Should().Be(ResultCodes.TenantCodes.RegisterTenantParameterError);
 
         _tenantRepoMock.Verify(
             x => x.IsTenantNameExistsAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()),
@@ -114,7 +114,7 @@ public class TenantServiceTests
             CancellationToken.None);
 
         result.Success.Should().BeFalse();
-        result.Code.Should().Be(ResultCodes.Tenant.RegisterTenantExistedError);
+        result.Code.Should().Be(ResultCodes.TenantCodes.RegisterTenantExistedError);
         result.Message.Should().Be("Tenant name already exists.");
 
         _applicationUserRepoMock.Verify(
@@ -149,7 +149,7 @@ public class TenantServiceTests
             CancellationToken.None);
 
         result.Success.Should().BeFalse();
-        result.Code.Should().Be(ResultCodes.Tenant.RegisterTenantExistedError);
+        result.Code.Should().Be(ResultCodes.TenantCodes.RegisterTenantExistedError);
         result.Message.Should().Be("Admin email already exists.");
 
         _tenantRepoMock.Verify(
@@ -191,7 +191,7 @@ public class TenantServiceTests
             CancellationToken.None);
 
         result.Success.Should().BeFalse();
-        result.Code.Should().Be(ResultCodes.Tenant.RegisterTenantCreateError);
+        result.Code.Should().Be(ResultCodes.TenantCodes.RegisterTenantCreateError);
         result.Message.Should().Contain("Password is too weak.");
 
         _tenantMembershipRepoMock.Verify(
@@ -259,7 +259,7 @@ public class TenantServiceTests
             CancellationToken.None);
 
         result.Success.Should().BeTrue();
-        result.Code.Should().Be(ResultCodes.Tenant.RegisterTenantSuccess);
+        result.Code.Should().Be(ResultCodes.TenantCodes.RegisterTenantSuccess);
         result.Message.Should().Be("Tenant created successfully.");
         result.Data.Should().NotBeNull();
 
@@ -297,7 +297,7 @@ public class TenantServiceTests
             CancellationToken.None);
 
         result.Success.Should().BeFalse();
-        result.Code.Should().Be(ResultCodes.Tenant.RegisterTenantException);
+        result.Code.Should().Be(ResultCodes.TenantCodes.RegisterTenantException);
         result.Message.Should().Be("Tenant registration failed.");
     }
     
@@ -416,7 +416,7 @@ public class TenantServiceTests
             CancellationToken.None);
 
         result.Success.Should().BeFalse();
-        result.Code.Should().Be(ResultCodes.Tenant.MemberNotFound);
+        result.Code.Should().Be(ResultCodes.TenantCodes.MemberNotFound);
     }
     
     [Fact]
@@ -437,7 +437,7 @@ public class TenantServiceTests
             CancellationToken.None);
 
         result.Success.Should().BeFalse();
-        result.Code.Should().Be(ResultCodes.Tenant.MemberAlreadyRemoved);
+        result.Code.Should().Be(ResultCodes.TenantCodes.MemberAlreadyRemoved);
     }
     
     [Fact]
@@ -458,7 +458,7 @@ public class TenantServiceTests
             CancellationToken.None);
 
         result.Success.Should().BeFalse();
-        result.Code.Should().Be(ResultCodes.Tenant.MemberNotInTenant);
+        result.Code.Should().Be(ResultCodes.TenantCodes.MemberNotInTenant);
     }
     
     [Fact]
@@ -482,7 +482,7 @@ public class TenantServiceTests
             CancellationToken.None);
 
         result.Success.Should().BeFalse();
-        result.Code.Should().Be(ResultCodes.Tenant.CannotRemoveSelf);
+        result.Code.Should().Be(ResultCodes.TenantCodes.CannotRemoveSelf);
     }
     
     [Fact]
@@ -533,7 +533,7 @@ public class TenantServiceTests
             CancellationToken.None);
 
         result.Success.Should().BeFalse();
-        result.Code.Should().Be(ResultCodes.Tenant.ChangeMemberRoleInvalidRole);
+        result.Code.Should().Be(ResultCodes.TenantCodes.ChangeMemberRoleInvalidRole);
     }
     
     [Fact]
@@ -551,7 +551,7 @@ public class TenantServiceTests
             CancellationToken.None);
 
         result.Success.Should().BeFalse();
-        result.Code.Should().Be(ResultCodes.Tenant.MemberNotFound);
+        result.Code.Should().Be(ResultCodes.TenantCodes.MemberNotFound);
     }
     
     [Fact]
@@ -583,7 +583,7 @@ public class TenantServiceTests
             CancellationToken.None);
 
         result.Success.Should().BeFalse();
-        result.Code.Should().Be(ResultCodes.Tenant.MemberNotInTenant);
+        result.Code.Should().Be(ResultCodes.TenantCodes.MemberNotInTenant);
     }
     
     [Fact]
@@ -616,7 +616,7 @@ public class TenantServiceTests
             CancellationToken.None);
 
         result.Success.Should().BeFalse();
-        result.Code.Should().Be(ResultCodes.Tenant.ChangeMemberRoleInactiveMembership);
+        result.Code.Should().Be(ResultCodes.TenantCodes.ChangeMemberRoleInactiveMembership);
     }
     
     [Fact]
@@ -650,7 +650,7 @@ public class TenantServiceTests
             CancellationToken.None);
 
         result.Success.Should().BeFalse();
-        result.Code.Should().Be(ResultCodes.Tenant.CannotChangeOwnRole);
+        result.Code.Should().Be(ResultCodes.TenantCodes.CannotChangeOwnRole);
     }
     
     [Fact]
@@ -688,7 +688,7 @@ public class TenantServiceTests
             CancellationToken.None);
 
         result.Success.Should().BeFalse();
-        result.Code.Should().Be(ResultCodes.Tenant.CannotDemoteLastAdmin);
+        result.Code.Should().Be(ResultCodes.TenantCodes.CannotDemoteLastAdmin);
     }
     
     [Fact]
@@ -722,7 +722,7 @@ public class TenantServiceTests
             CancellationToken.None);
 
         result.Success.Should().BeTrue();
-        result.Code.Should().Be(ResultCodes.Tenant.ChangeMemberRoleNoChange);
+        result.Code.Should().Be(ResultCodes.TenantCodes.ChangeMemberRoleNoChange);
 
         _unitOfWorkMock.Verify(
             x => x.SaveChangesAsync(It.IsAny<CancellationToken>()),
@@ -765,7 +765,7 @@ public class TenantServiceTests
             CancellationToken.None);
 
         result.Success.Should().BeTrue();
-        result.Code.Should().Be(ResultCodes.Tenant.ChangeMemberRoleSuccess);
+        result.Code.Should().Be(ResultCodes.TenantCodes.ChangeMemberRoleSuccess);
         membership.Role.Should().Be(TenantRole.Admin);
 
         _unitOfWorkMock.Verify(
@@ -817,7 +817,7 @@ public class TenantServiceTests
             CancellationToken.None);
 
         result.Success.Should().BeTrue();
-        result.Code.Should().Be(ResultCodes.Tenant.ChangeMemberRoleSuccess);
+        result.Code.Should().Be(ResultCodes.TenantCodes.ChangeMemberRoleSuccess);
         membership.Role.Should().Be(TenantRole.Member);
 
         _unitOfWorkMock.Verify(

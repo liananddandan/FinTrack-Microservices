@@ -5,7 +5,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace IdentityService.Tests.UnitTests.Tenant;
 
-public class TenantRepoTests
+public class TenantRepositoryTests
 {
     private class TestDbContext : ApplicationIdentityDbContext
     {
@@ -20,7 +20,7 @@ public class TenantRepoTests
             .UseInMemoryDatabase(databaseName: Guid.NewGuid().ToString())
             .Options;
         var dbContext = new TestDbContext(options);
-        var repo = new TenantRepo(dbContext);
+        var repo = new TenantRepository(dbContext);
         var guid = Guid.NewGuid();
         var tenant = new Domain.Entities.Tenant()
         {
@@ -48,7 +48,7 @@ public class TenantRepoTests
             .UseInMemoryDatabase(databaseName: Guid.NewGuid().ToString())
             .Options;
         var dbContext = new TestDbContext(options);
-        var sut = new TenantRepo(dbContext);
+        var sut = new TenantRepository(dbContext);
         
         // Act
         var result = await sut.GetTenantByPublicIdAsync("publicId", CancellationToken.None);
@@ -65,7 +65,7 @@ public class TenantRepoTests
             .UseInMemoryDatabase(databaseName: Guid.NewGuid().ToString())
             .Options;
         var dbContext = new TestDbContext(options);
-        var sut = new TenantRepo(dbContext);
+        var sut = new TenantRepository(dbContext);
         var tenant = new Domain.Entities.Tenant()
         {
             Name = "Tenant_Get_Tenant_By_PublicId"

@@ -11,7 +11,7 @@ namespace IdentityService.Application.Dev.Services;
 
 public class DevSeedService(
     IUnitOfWork unitOfWork,
-    ITenantRepo tenantRepo,
+    ITenantRepository tenantRepository,
     IApplicationUserRepo applicationUserRepo,
     ITenantMembershipRepo tenantMembershipRepo,
     UserManager<ApplicationUser> userManager) : IDevSeedService
@@ -31,7 +31,7 @@ public class DevSeedService(
         {
             var tenantName = request.TenantName.Trim();
 
-            var tenant = await tenantRepo.GetTenantByNameAsync(tenantName, cancellationToken);
+            var tenant = await tenantRepository.GetTenantByNameAsync(tenantName, cancellationToken);
             if (tenant is null)
             {
                 tenant = new Tenant
@@ -39,7 +39,7 @@ public class DevSeedService(
                     Name = tenantName
                 };
 
-                await tenantRepo.AddTenantAsync(tenant, cancellationToken);
+                await tenantRepository.AddTenantAsync(tenant, cancellationToken);
                 await unitOfWork.SaveChangesAsync(cancellationToken);
             }
 
