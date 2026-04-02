@@ -2,6 +2,8 @@ using System.Text;
 using IdentityService.Application.Common.Abstractions;
 using IdentityService.Application.Common.Filters;
 using IdentityService.Application.Common.Middlewares;
+using IdentityService.Application.Common.Options;
+using IdentityService.Application.Common.Services;
 using IdentityService.Application.Dev.Abstractions;
 using IdentityService.Application.Dev.Services;
 using IdentityService.Domain.Entities;
@@ -21,6 +23,8 @@ var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.Configure<JwtOptions>(
     builder.Configuration.GetSection("JwtSettings"));
+builder.Services.Configure<BootstrapAdminOptions>(
+    builder.Configuration.GetSection("BootstrapAdmin"));
 
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>
@@ -95,6 +99,7 @@ builder.Services.Scan(scan => scan
 
 builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
 builder.Services.AddScoped<IAuditLogPublisher, AuditLogPublisher>();
+builder.Services.AddHostedService<BootstrapAdminHostedService>();
 var app = builder.Build();
 
 // Apply database migrations before serving requests, with retry.

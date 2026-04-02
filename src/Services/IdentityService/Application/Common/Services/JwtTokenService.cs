@@ -3,6 +3,7 @@ using System.Security.Claims;
 using System.Text;
 using IdentityService.Application.Common.Abstractions;
 using IdentityService.Application.Common.DTOs;
+using IdentityService.Application.Platforms.Dtos;
 using IdentityService.Domain.Entities;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
@@ -123,6 +124,9 @@ public class JwtTokenService(IOptions<JwtOptions> jwtOptions,
         var tenantPublicId = principalResult.FindFirst(JwtClaimNames.Tenant)?.Value;
         var userRoleInTenant = principalResult.FindFirst(JwtClaimNames.Role)?.Value;
         
+        var hasPlatformAccess = principalResult.FindFirst(JwtClaimNames.PlatformAccess)?.Value;
+        var platformRole = principalResult.FindFirst(JwtClaimNames.PlatformRole)?.Value;
+        
         if (string.IsNullOrWhiteSpace(userPublicId) ||
             string.IsNullOrWhiteSpace(jwtVersion) ||
             string.IsNullOrWhiteSpace(tokenType))
@@ -147,6 +151,16 @@ public class JwtTokenService(IOptions<JwtOptions> jwtOptions,
                 ResultCodes.Token.JwtTokenClaimMissing,
                 "Tenant access token claims are missing."));
         }
+        
+        if (parsedTokenType == JwtTokenType.PlatformAccessToken &&
+            (string.IsNullOrWhiteSpace(hasPlatformAccess) ||
+             hasPlatformAccess != "true" ||
+             string.IsNullOrWhiteSpace(platformRole)))
+        {
+            return Task.FromResult(ServiceResult<JwtParseDto>.Fail(
+                ResultCodes.Token.JwtTokenClaimMissing,
+                "Platform access token claims are missing."));
+        }
 
         var result = new JwtParseDto
         {
@@ -154,7 +168,9 @@ public class JwtTokenService(IOptions<JwtOptions> jwtOptions,
             JwtVersion = jwtVersion,
             TenantPublicId = tenantPublicId ?? string.Empty,
             UserRoleInTenant = userRoleInTenant ?? string.Empty,
-            TokenType = parsedTokenType
+            TokenType = parsedTokenType,
+            PlatformRole = platformRole ?? string.Empty,
+            HasPlatformAccess = hasPlatformAccess == "true"
         };
 
         return Task.FromResult(ServiceResult<JwtParseDto>.Ok(
@@ -206,6 +222,37 @@ public class JwtTokenService(IOptions<JwtOptions> jwtOptions,
             result,
             ResultCodes.Token.InvitationTokenParseSuccess,
             "Invitation token parsed successfully."));
+    }
+
+    public PlatformTokenDto GeneratePlatformAccessToken(JwtClaimSource claimSource)
+    {
+        var claims = new List<Claim>
+        {
+            new(JwtClaimNames.UserId, claimSource.UserPublicId),
+            new(JwtClaimNames.JwtVersion, claimSource.JwtVersion),
+            new(JwtClaimNames.TokenType, JwtTokenType.PlatformAccessToken.ToString())
+        };
+
+        if (claimSource.HasPlatformAccess)
+        {
+            claims.Add(new Claim("platform_access", "true"));
+        }
+
+        if (!string.IsNullOrWhiteSpace(claimSource.PlatformRole))
+        {
+            claims.Add(new Claim("platform_role", claimSource.PlatformRole));
+        }
+
+        var token = GenerateToken(
+            claims,
+            JwtTokenType.PlatformAccessToken,
+            DateTime.UtcNow.AddMinutes(_jwtOptions.AccessTokenExpirationMinutes));
+
+        return new PlatformTokenDto
+        {
+            PlatformAccessToken = token,
+            PlatformRole = claimSource.PlatformRole
+        };
     }
 
     private string GenerateToken(

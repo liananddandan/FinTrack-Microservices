@@ -3,6 +3,7 @@ using IdentityService.Application.Accounts.Commands;
 using IdentityService.Application.Common.DTOs;
 using IdentityService.Application.Common.Extensions;
 using IdentityService.Application.Common.Filters.Attributes;
+using IdentityService.Application.Platforms.Commands;
 using IdentityService.Application.Tenants.Commands;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
@@ -78,6 +79,21 @@ public class AccountController(IMediator mediator) : ControllerBase
             request.TenantPublicId
         );
 
+        var result = await mediator.Send(command);
+        return result.ToActionResult();
+    }
+    
+    [HttpPost("select-platform")]
+    [RequireTokenType(JwtTokenType.AccountAccessToken)]
+    public async Task<IActionResult> SelectPlatformAsync()
+    {
+        var jwtParseResult = HttpContext.GetHttpHeaderJwtParseResult();
+        if (jwtParseResult == null)
+        {
+            return Unauthorized("Request without valid token");
+        }
+
+        var command = new SelectPlatformCommand(jwtParseResult.UserPublicId);
         var result = await mediator.Send(command);
         return result.ToActionResult();
     }

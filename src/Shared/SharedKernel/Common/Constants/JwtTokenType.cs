@@ -4,6 +4,7 @@ public enum JwtTokenType
 {
     AccountAccessToken = 1,
     TenantAccessToken = 2,
-    RefreshToken,
-    InvitationToken
+    PlatformAccessToken = 3,
+    RefreshToken = 4,
+    InvitationToken = 5
 }

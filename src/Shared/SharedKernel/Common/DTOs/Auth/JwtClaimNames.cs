@@ -18,4 +18,7 @@ public static class JwtClaimNames
     public const string InvitationPublicId = "invitationPublicId";
     public const string InvitationVersion = "invitationVersion";
 
+    public const string PlatformAccess = "platform_access";
+    public const string PlatformRole = "platform_role";
+
 }

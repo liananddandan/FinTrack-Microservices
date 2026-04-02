@@ -11,6 +11,8 @@ public class ApplicationIdentityDbContext(DbContextOptions<ApplicationIdentityDb
     public DbSet<Tenant> Tenants => Set<Tenant>();
     public DbSet<TenantMembership> TenantMemberships => Set<TenantMembership>();
     public DbSet<TenantInvitation> TenantInvitations => Set<TenantInvitation>();
+    
+    public DbSet<PlatformAccess> PlatformAccesses => Set<PlatformAccess>();
 
     protected override void OnModelCreating(ModelBuilder builder)
     {

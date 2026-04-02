@@ -1,5 +1,6 @@
 using System.Security.Claims;
 using IdentityService.Application.Common.DTOs;
+using IdentityService.Application.Platforms.Dtos;
 using IdentityService.Domain.Entities;
 using SharedKernel.Common.Results;
 
@@ -22,4 +23,7 @@ public interface IJwtTokenService
     Task<ServiceResult<JwtParseDto>> ParseJwtTokenAsync(string token);
 
     Task<ServiceResult<InvitationParseDto>> ParseInvitationTokenAsync(string token);
+
+    PlatformTokenDto GeneratePlatformAccessToken(JwtClaimSource claimSource);
+
 }
