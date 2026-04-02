@@ -1,8 +1,9 @@
 using System.Text;
+using DotNetCore.CAP;
+using IdentityService.Api.Common.Filters;
+using IdentityService.Api.Common.Middlewares;
 using IdentityService.Application.Common.Abstractions;
 using IdentityService.Application.Common.Extensions;
-using IdentityService.Application.Common.Filters;
-using IdentityService.Application.Common.Middlewares;
 using IdentityService.Application.Common.Options;
 using IdentityService.Application.Common.Services;
 using IdentityService.Application.Tenants.Abstractions;
@@ -11,6 +12,7 @@ using IdentityService.Domain.Entities;
 using IdentityService.Infrastructure.Aduit.Publishers;
 using IdentityService.Infrastructure.Persistence;
 using IdentityService.Infrastructure.Persistence.Repositories;
+using IdentityService.Infrastructure.Platform;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
@@ -101,6 +103,12 @@ builder.Services.Scan(scan => scan
         type.Name.EndsWith("Repository")))
     .AsMatchingInterface()
     .WithScopedLifetime());
+
+builder.Services.Scan(scan => scan
+    .FromAssemblyOf<TenantDomainSubscriber>()
+    .AddClasses(classes => classes.AssignableTo<ICapSubscribe>())
+    .AsSelfWithInterfaces()
+    .WithTransientLifetime());
 
 builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
 builder.Services.AddScoped<IAuditLogPublisher, AuditLogPublisher>();

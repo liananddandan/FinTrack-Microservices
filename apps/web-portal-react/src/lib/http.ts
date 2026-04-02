@@ -17,13 +17,28 @@ export type JwtTokenPair = {
   refreshToken: string
 }
 
-const rawBaseURL = import.meta.env.VITE_API_BASE_URL
-const baseURL = rawBaseURL || ""
+function resolveBaseUrl(): string {
+  const envBaseUrl = import.meta.env.VITE_API_BASE_URL
+
+  if (envBaseUrl) {
+    return envBaseUrl
+  }
+
+  const { protocol, hostname } = window.location
+
+  if (import.meta.env.DEV) {
+    return `${protocol}//${hostname}:5193`
+  }
+
+  return `${protocol}//${hostname}`
+}
+
+const baseURL = resolveBaseUrl()
 
 console.log("[env] MODE =", import.meta.env.MODE)
 console.log("[env] DEV =", import.meta.env.DEV)
 console.log("[env] PROD =", import.meta.env.PROD)
-console.log("[env] VITE_API_BASE_URL =", rawBaseURL)
+console.log("[env] VITE_API_BASE_URL =", import.meta.env.VITE_API_BASE_URL)
 console.log("[http] resolved baseURL =", baseURL)
 
 function buildDebugUrl(config: InternalAxiosRequestConfig): string {

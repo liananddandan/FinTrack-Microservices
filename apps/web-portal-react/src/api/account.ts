@@ -1,55 +1,57 @@
 import { accountHttp, publicHttp } from "../lib/http"
-import { authStore } from "../lib/authStore"
 import type { ApiResponse } from "./types"
-
-export type LoginMembershipDto = {
-  tenantPublicId: string
-  tenantName: string
-  role: string
-}
+import type { UserProfile } from "../lib/authStore"
 
 export type LoginRequest = {
   email: string
   password: string
 }
 
+export type JwtTokenPair = {
+  accessToken: string
+  refreshToken: string
+}
+
+export type UserLoginResult = {
+  tokens: JwtTokenPair
+  memberships: Array<{
+    tenantPublicId: string
+    tenantName: string
+    role: string
+  }>
+}
+
 export type RegisterUserRequest = {
   userName: string
   email: string
   password: string
+  fullName: string
 }
 
-export type RegisterUserResult = {
-  userPublicId: string
+export type RegisterTenantRequest = {
+  tenantName: string
+  ownerFullName: string
   email: string
-  userName: string
+  password: string
+  confirmPassword: string
 }
 
-export type UserLoginResult = {
-  tokens: {
-    accessToken: string
-    refreshToken: string
-  }
-  memberships: LoginMembershipDto[]
+export async function registerTenant(request: RegisterTenantRequest) {
+  const response = await publicHttp.post<ApiResponse<null>>(
+    "/api/account/register-tenant",
+    request
+  )
+
+  return response.data
 }
 
-export type CurrentUserResult = {
-  userPublicId: string
-  email: string
-  userName?: string
-  memberships?: LoginMembershipDto[]
-}
+export async function registerUser(request: RegisterUserRequest) {
+  const response = await publicHttp.post<ApiResponse<null>>(
+    "/api/account/register-user",
+    request
+  )
 
-export type SelectTenantRequest = {
-  tenantPublicId: string
-}
-
-function ensureAccountToken() {
-  const { accountAccessToken } = authStore.getState()
-
-  if (!accountAccessToken) {
-    throw new Error("Account access token is missing.")
-  }
+  return response.data
 }
 
 export async function login(request: LoginRequest): Promise<UserLoginResult> {
@@ -58,63 +60,19 @@ export async function login(request: LoginRequest): Promise<UserLoginResult> {
     request
   )
 
-  const result = response.data
-
-  if (!result.data) {
-    throw new Error(result.message || "Login failed")
-  }
-
-  return result.data
+  return response.data.data
 }
 
-export async function registerUser(
-  request: RegisterUserRequest
-): Promise<RegisterUserResult> {
-  const response = await publicHttp.post<ApiResponse<RegisterUserResult>>(
-    "/api/account/register",
-    request
-  )
-
-  const result = response.data
-
-  if (!result.data) {
-    throw new Error(result.message || "User registration failed")
-  }
-
-  return result.data
+export async function getCurrentUser(): Promise<UserProfile> {
+  const response = await accountHttp.get<ApiResponse<UserProfile>>("/api/account/me")
+  return response.data.data
 }
 
-export async function getCurrentUser(): Promise<CurrentUserResult> {
-  ensureAccountToken()
-
-  const response = await accountHttp.get<ApiResponse<CurrentUserResult>>(
-    "/api/account/me"
-  )
-
-  const result = response.data
-
-  if (!result.data) {
-    throw new Error(result.message || "Failed to fetch current user")
-  }
-
-  return result.data
-}
-
-export async function selectTenant(
-  request: SelectTenantRequest
-): Promise<string> {
-  ensureAccountToken()
-
+export async function selectTenant(): Promise<string> {
   const response = await accountHttp.post<ApiResponse<string>>(
     "/api/account/select-tenant",
-    request
+    {}
   )
 
-  const result = response.data
-
-  if (!result.data) {
-    throw new Error(result.message || "Failed to select tenant")
-  }
-
-  return result.data
+  return response.data.data
 }

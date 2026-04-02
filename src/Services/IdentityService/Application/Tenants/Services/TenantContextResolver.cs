@@ -24,7 +24,7 @@ public class TenantContextResolver(
             return null;
         }
 
-        var normalizedHost = host.Trim().ToLowerInvariant();
+        var normalizedHost = NormalizeHost(host);
 
         var projection = await tenantDomainProjectionRepository.GetByHostAsync(
             normalizedHost,
@@ -48,5 +48,18 @@ public class TenantContextResolver(
             IsPrimary = projection.IsPrimary,
             IsActive = projection.IsActive
         };
+    }
+    
+    private static string NormalizeHost(string host)
+    {
+        var normalized = host.Trim().ToLowerInvariant();
+
+        var colonIndex = normalized.IndexOf(':');
+        if (colonIndex >= 0)
+        {
+            normalized = normalized[..colonIndex];
+        }
+
+        return normalized;
     }
 }

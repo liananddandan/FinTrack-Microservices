@@ -1,8 +1,8 @@
+using IdentityService.Api.Common.Middlewares;
 using IdentityService.Application.Common.DTOs;
-using IdentityService.Application.Common.Middlewares;
 using IdentityService.Application.Tenants.Dtos;
 
-namespace IdentityService.Application.Common.Extensions;
+namespace IdentityService.Api.Common.Extensions;
 
 public static class HttpContextExtensions
 {

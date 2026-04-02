@@ -1,5 +1,5 @@
+using IdentityService.Api.Common.Filters.Attributes;
 using IdentityService.Application.Common.Extensions;
-using IdentityService.Application.Common.Filters.Attributes;
 using IdentityService.Application.Tenants.Queries;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;

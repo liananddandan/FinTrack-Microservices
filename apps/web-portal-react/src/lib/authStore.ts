@@ -42,7 +42,7 @@ function notify() {
 export const authStore = {
   subscribe(listener: () => void) {
     listeners.add(listener)
-    return () =>{ listeners.delete(listener) }
+    return () => {listeners.delete(listener)}
   },
 
   getState(): AuthState {
@@ -71,41 +71,32 @@ export const authStore = {
       : state.memberships
   },
 
-  get currentMembership(): LoginMembershipDto | null {
-    const memberships = this.resolvedMemberships
-    return memberships.length > 0 ? memberships[0] ?? null : null
+  async initializeProfile() {
+    if (!state.accountAccessToken) {
+      return
+    }
+
+    if (state.profile) {
+      return
+    }
+
+    const profile = await getCurrentUser()
+    this.setProfile(profile)
   },
 
-  get currentTenantName(): string {
-    return this.currentMembership?.tenantName ?? ""
-  },
-
-  get currentTenantPublicId(): string {
-    return this.currentMembership?.tenantPublicId ?? ""
-  },
-
-  get isAdmin(): boolean {
-    return this.currentMembership?.role === "Admin"
-  },
-
-  async initialize() {
-    if (!state.accountAccessToken) return
-    if (state.profile) return
+  async activateTenantForCurrentHost(): Promise<boolean> {
+    if (!state.accountAccessToken) {
+      return false
+    }
 
     try {
-      const profile = await getCurrentUser()
-      this.setProfile(profile)
+      const tenantToken = await selectTenant()
+      this.setTenantAccessToken(tenantToken)
+      return true
     } catch {
-      this.logout()
+      this.clearTenantAccessToken()
+      return false
     }
-  },
-
-  clearProfile() {
-    state = {
-      ...state,
-      profile: null,
-    }
-    notify()
   },
 
   setAccountTokens(accessToken: string, refreshToken: string) {
@@ -148,34 +139,12 @@ export const authStore = {
     notify()
   },
 
-  setProfile(profile: UserProfile) {
+  setProfile(profile: UserProfile | null) {
     state = {
       ...state,
       profile,
     }
     notify()
-  },
-
-  async activateSingleTenantIfPossible() {
-    const memberships = this.resolvedMemberships
-
-    if (memberships.length !== 1) {
-      this.clearTenantAccessToken()
-      return
-    }
-
-    const firstMembership = memberships[0]
-
-    if (!firstMembership) {
-      this.clearTenantAccessToken()
-      return
-    }
-
-    const tenantToken = await selectTenant({
-      tenantPublicId: firstMembership.tenantPublicId,
-    })
-
-    this.setTenantAccessToken(tenantToken)
   },
 
   logout() {
@@ -192,4 +161,13 @@ export const authStore = {
     localStorage.removeItem(REFRESH_TOKEN_KEY)
     notify()
   },
+
+  clearProfile() {
+    state = {
+      ...state,
+      profile: null,
+    }
+
+    notify()
+  }
 }

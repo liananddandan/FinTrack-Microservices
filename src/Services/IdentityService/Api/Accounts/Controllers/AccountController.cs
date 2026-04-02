@@ -1,8 +1,9 @@
+using IdentityService.Api.Common.Extensions;
+using IdentityService.Api.Common.Filters.Attributes;
 using IdentityService.Api.Tenants.Contracts;
 using IdentityService.Application.Accounts.Commands;
 using IdentityService.Application.Common.DTOs;
 using IdentityService.Application.Common.Extensions;
-using IdentityService.Application.Common.Filters.Attributes;
 using IdentityService.Application.Platforms.Commands;
 using IdentityService.Application.Tenants.Commands;
 using MediatR;
@@ -66,7 +67,7 @@ public class AccountController(IMediator mediator) : ControllerBase
     
     [HttpPost("select-tenant")]
     [RequireTokenType(JwtTokenType.AccountAccessToken)]
-    public async Task<IActionResult> SelectTenantAsync([FromBody] SelectTenantRequest request)
+    public async Task<IActionResult> SelectTenantAsync()
     {
         var jwtParseResult = HttpContext.GetHttpHeaderJwtParseResult();
         if (jwtParseResult == null)
@@ -74,9 +75,14 @@ public class AccountController(IMediator mediator) : ControllerBase
             return Unauthorized("Request without valid token");
         }
 
+        var tenantContext = HttpContext.GetTenantRequestContext();
+        if (tenantContext == null)
+        {
+            return BadRequest("Tenant context not found from current host.");
+        }
         var command = new SelectTenantCommand(
             jwtParseResult.UserPublicId,
-            request.TenantPublicId
+            tenantContext.TenantPublicId.ToString()
         );
 
         var result = await mediator.Send(command);

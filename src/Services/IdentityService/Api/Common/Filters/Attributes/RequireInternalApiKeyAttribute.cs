@@ -1,4 +1,4 @@
-namespace IdentityService.Application.Common.Filters.Attributes;
+namespace IdentityService.Api.Common.Filters.Attributes;
 
 [AttributeUsage(AttributeTargets.Class | AttributeTargets.Method)]
 public class RequireInternalApiKeyAttribute : Attribute

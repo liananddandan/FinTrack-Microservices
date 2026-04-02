@@ -1,4 +1,4 @@
-using IdentityService.Application.Common.Middlewares;
+using IdentityService.Api.Common.Middlewares;
 
 namespace IdentityService.Application.Common.Extensions;
 

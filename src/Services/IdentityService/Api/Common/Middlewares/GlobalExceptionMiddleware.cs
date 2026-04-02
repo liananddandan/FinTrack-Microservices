@@ -2,7 +2,7 @@ using System.Net;
 using System.Text.Json;
 using SharedKernel.Common.Exceptions;
 
-namespace IdentityService.Application.Common.Middlewares;
+namespace IdentityService.Api.Common.Middlewares;
 
 public class GlobalExceptionMiddleware(RequestDelegate next, ILogger<GlobalExceptionMiddleware> logger)
 {

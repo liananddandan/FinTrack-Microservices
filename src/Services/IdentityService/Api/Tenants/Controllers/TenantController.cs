@@ -1,6 +1,8 @@
+using IdentityService.Api.Common.Extensions;
+using IdentityService.Api.Common.Filters.Attributes;
 using IdentityService.Application.Common.Extensions;
-using IdentityService.Application.Common.Filters.Attributes;
 using IdentityService.Application.Tenants.Commands;
+using IdentityService.Application.Tenants.Queries;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
 using SharedKernel.Common.Constants;
@@ -31,6 +33,20 @@ public class TenantController(IMediator mediator) : ControllerBase
 
         var command = new GetTenantMembersCommand(jwtParseResult.TenantPublicId);
         var result = await mediator.Send(command);
+        return result.ToActionResult();
+    }
+    
+    [HttpGet("context")]
+    [AllowAnonymousToken]
+    public async Task<IActionResult> GetTenantContextAsync(
+        CancellationToken cancellationToken)
+    {
+        var host = Request.GetOriginalHost();
+
+        var result = await mediator.Send(
+            new GetTenantContextQuery(host),
+            cancellationToken);
+
         return result.ToActionResult();
     }
 }

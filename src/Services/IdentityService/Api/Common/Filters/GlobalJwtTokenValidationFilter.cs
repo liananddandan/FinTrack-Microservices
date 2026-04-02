@@ -1,6 +1,6 @@
+using IdentityService.Api.Common.Filters.Attributes;
 using IdentityService.Application.Accounts.Abstractions;
 using IdentityService.Application.Common.Abstractions;
-using IdentityService.Application.Common.Filters.Attributes;
 using IdentityService.Application.Tenants.Abstractions;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Filters;
@@ -8,7 +8,7 @@ using SharedKernel.Common.Constants;
 using SharedKernel.Common.DTOs;
 using SharedKernel.Common.Results;
 
-namespace IdentityService.Application.Common.Filters;
+namespace IdentityService.Api.Common.Filters;
 
 public class GlobalJwtTokenValidationFilter(
     IJwtTokenService jwtTokenService,

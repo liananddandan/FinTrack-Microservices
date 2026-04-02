@@ -1,6 +1,6 @@
 using System.Diagnostics;
 
-namespace IdentityService.Application.Common.Middlewares;
+namespace IdentityService.Api.Common.Middlewares;
 
 public class TenantTelemetryMiddleware(
     RequestDelegate next,

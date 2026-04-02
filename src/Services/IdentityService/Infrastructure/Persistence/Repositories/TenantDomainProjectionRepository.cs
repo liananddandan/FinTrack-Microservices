@@ -23,6 +23,7 @@ public class TenantDomainProjectionRepository(
         CancellationToken cancellationToken = default)
     {
         return await dbContext.TenantDomainProjections
+            .AsNoTracking()
             .FirstOrDefaultAsync(x => x.Host == host, cancellationToken);
     }
 

@@ -1,4 +1,4 @@
-using IdentityService.Application.Common.Filters.Attributes;
+using IdentityService.Api.Common.Filters.Attributes;
 using IdentityService.Application.Common.Options;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Filters;
@@ -6,7 +6,7 @@ using Microsoft.Extensions.Options;
 using SharedKernel.Common.DTOs;
 using SharedKernel.Common.Results;
 
-namespace IdentityService.Application.Common.Filters;
+namespace IdentityService.Api.Common.Filters;
 
 public class InternalApiKeyValidationFilter(
     IOptions<InternalApiOptions> options) : IAsyncAuthorizationFilter

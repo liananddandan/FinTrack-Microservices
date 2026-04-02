@@ -1,9 +1,9 @@
 using AutoFixture.Xunit2;
 using FluentAssertions;
+using IdentityService.Api.Common.Filters;
+using IdentityService.Api.Common.Filters.Attributes;
 using IdentityService.Application.Common.Abstractions;
 using IdentityService.Application.Common.DTOs;
-using IdentityService.Application.Common.Filters;
-using IdentityService.Application.Common.Filters.Attributes;
 using IdentityService.Application.Common.Status;
 using IdentityService.Application.Tenants.Abstractions;
 using IdentityService.Domain.Entities;

@@ -1,8 +1,11 @@
 import { useEffect, useMemo, useState } from "react"
-import { HiOutlineBuildingOffice2 } from "react-icons/hi2"
+import { HiOutlineBuildingOffice2, HiOutlineCog6Tooth } from "react-icons/hi2"
+import { useNavigate } from "react-router-dom"
 import { getPlatformTenants, type TenantSummaryDto } from "../api/tenant"
 
 export default function Tenants() {
+  const navigate = useNavigate()
+
   const [tenants, setTenants] = useState<TenantSummaryDto[]>([])
   const [loading, setLoading] = useState(true)
   const [errorMessage, setErrorMessage] = useState("")
@@ -58,7 +61,7 @@ export default function Tenants() {
             </h1>
 
             <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-500">
-              View all tenants currently registered in the system. Tenant creation and domain mapping can be added next.
+              View all tenants currently registered in the system and open the tenant configuration page.
             </p>
           </div>
 
@@ -118,6 +121,9 @@ export default function Tenants() {
                     <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">
                       Created At
                     </th>
+                    <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">
+                      Actions
+                    </th>
                   </tr>
                 </thead>
 
@@ -147,6 +153,17 @@ export default function Tenants() {
 
                       <td className="px-4 py-4 text-sm text-slate-500">
                         {new Date(tenant.createdAt).toLocaleString()}
+                      </td>
+
+                      <td className="px-4 py-4 text-sm">
+                        <button
+                          type="button"
+                          onClick={() => navigate(`/tenants/${tenant.tenantPublicId}`)}
+                          className="inline-flex items-center gap-2 rounded-xl bg-indigo-600 px-3 py-2 text-xs font-medium text-white transition hover:bg-indigo-500"
+                        >
+                          <HiOutlineCog6Tooth className="h-4 w-4" />
+                          Config
+                        </button>
                       </td>
                     </tr>
                   ))}
