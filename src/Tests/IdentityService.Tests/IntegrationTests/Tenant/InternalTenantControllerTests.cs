@@ -8,18 +8,12 @@ using Microsoft.Extensions.DependencyInjection;
 namespace IdentityService.Tests.IntegrationTests.Tenant;
 
 [Collection("IntegrationTests")]
-public class InternalTenantControllerTests : IClassFixture<IdentityWebApplicationFactory<Program>>
+public class InternalTenantControllerTests(IdentityWebApplicationFactory<Program> factory)
+    : IClassFixture<IdentityWebApplicationFactory<Program>>
 {
-    private readonly IdentityWebApplicationFactory<Program> _factory;
-    private readonly HttpClient _client;
+    private readonly HttpClient _client = factory.CreateClient();
 
     private const string InternalApiKey = "fintrack-internal-dev-key";
-
-    public InternalTenantControllerTests(IdentityWebApplicationFactory<Program> factory)
-    {
-        _factory = factory;
-        _client = factory.CreateClient();
-    }
 
     [Fact]
     public async Task GetAllTenants_Should_Return_Unauthorized_When_Key_Is_Missing()
@@ -69,7 +63,7 @@ public class InternalTenantControllerTests : IClassFixture<IdentityWebApplicatio
 
     private async Task SeedTenantsAsync()
     {
-        using var scope = _factory.Services.CreateScope();
+        using var scope = factory.Services.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<ApplicationIdentityDbContext>();
 
         if (!db.Tenants.Any(x => x.Name == "Auckland Coffee"))
