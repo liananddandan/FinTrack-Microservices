@@ -5,6 +5,8 @@ using IdentityService.Application.Common.Filters;
 using IdentityService.Application.Common.Middlewares;
 using IdentityService.Application.Common.Options;
 using IdentityService.Application.Common.Services;
+using IdentityService.Application.Tenants.Abstractions;
+using IdentityService.Application.Tenants.Services;
 using IdentityService.Domain.Entities;
 using IdentityService.Infrastructure.Aduit.Publishers;
 using IdentityService.Infrastructure.Persistence;
@@ -104,6 +106,7 @@ builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
 builder.Services.AddScoped<IAuditLogPublisher, AuditLogPublisher>();
 builder.Services.AddHostedService<BootstrapAdminHostedService>();
 builder.Services.AddScoped<InternalApiKeyValidationFilter>();
+builder.Services.AddScoped<ITenantContextResolver, TenantContextResolver>();
 builder.AddFinTrackOpenTelemetry();
 var app = builder.Build();
 
@@ -160,6 +163,7 @@ for (var attempt = 1; attempt <= maxRetries; attempt++)
 app.MapOpenApi();
 app.UseFinTrackTelemetry();
 app.UseMiddleware<GlobalExceptionMiddleware>();
+app.UseMiddleware<TenantContextResolutionMiddleware>();
 app.UseRouting();
 app.UseAuthentication();
 app.UseAuthorization();

@@ -7,6 +7,9 @@
     </PropertyGroup>
 
     <ItemGroup>
+        <PackageReference Include="DotNetCore.CAP" Version="8.4.1" />
+        <PackageReference Include="DotNetCore.CAP.MySql" Version="8.4.1" />
+        <PackageReference Include="DotNetCore.CAP.RabbitMQ" Version="8.4.1" />
         <PackageReference Include="MediatR" Version="13.0.0" />
         <PackageReference Include="MediatR.Contracts" Version="2.0.1" />
         <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="9.0.2"/>

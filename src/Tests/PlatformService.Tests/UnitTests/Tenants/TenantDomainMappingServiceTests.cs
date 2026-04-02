@@ -1,3 +1,4 @@
+using DotNetCore.CAP;
 using FluentAssertions;
 using Moq;
 using PlatformService.Application.Common.Abstractions;
@@ -13,10 +14,13 @@ public class TenantDomainMappingServiceTests
 {
     private readonly Mock<ITenantDomainMappingRepository> _repository = new();
     private readonly Mock<IUnitOfWork> _unitOfWork = new();
+    private readonly Mock<ICapPublisher> _capPublisher = new();
 
     private TenantDomainMappingService CreateService()
     {
-        return new TenantDomainMappingService(_repository.Object, _unitOfWork.Object);
+        return new TenantDomainMappingService(_repository.Object, 
+            _unitOfWork.Object,
+            _capPublisher.Object);
     }
 
     [Fact]

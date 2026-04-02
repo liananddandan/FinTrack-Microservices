@@ -13,6 +13,7 @@ public class ApplicationIdentityDbContext(DbContextOptions<ApplicationIdentityDb
     public DbSet<TenantInvitation> TenantInvitations => Set<TenantInvitation>();
     
     public DbSet<PlatformAccess> PlatformAccesses => Set<PlatformAccess>();
+    public DbSet<TenantDomainProjection> TenantDomainProjections => Set<TenantDomainProjection>();
 
     protected override void OnModelCreating(ModelBuilder builder)
     {

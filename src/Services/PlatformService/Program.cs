@@ -35,6 +35,21 @@ builder.Services.AddScoped<IPlatformTenantService, PlatformTenantService>();
 builder.Services.AddScoped<ITenantDomainMappingRepository, TenantDomainMappingRepository>();
 builder.Services.AddScoped<ITenantDomainMappingService, TenantDomainMappingService>();
 builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
+
+builder.Services.AddCap(options =>
+{
+    options.UseEntityFramework<PlatformDbContext>();
+
+    options.UseRabbitMQ(rabbit =>
+    {
+        rabbit.HostName = builder.Configuration["CAP:RabbitMQ:HostName"] ?? "localhost";
+        rabbit.UserName = builder.Configuration["CAP:RabbitMQ:UserName"] ?? "guest";
+        rabbit.Password = builder.Configuration["CAP:RabbitMQ:Password"] ?? "guest";
+    });
+
+    options.DefaultGroupName = builder.Configuration["CAP:DefaultGroup"] ?? "platform.service";
+});
+
 // Add services to the container.
 builder.Services.AddControllers();
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi

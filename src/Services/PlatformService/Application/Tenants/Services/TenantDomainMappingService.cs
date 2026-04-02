@@ -1,4 +1,5 @@
 
+using DotNetCore.CAP;
 using PlatformService.Application.Common.Abstractions;
 using PlatformService.Application.Tenants.Abstractions;
 using PlatformService.Application.Tenants.Commands;
@@ -6,12 +7,15 @@ using PlatformService.Application.Tenants.Dtos;
 using PlatformService.Domain.Entities;
 using PlatformService.Domain.Enums;
 using SharedKernel.Common.Results;
+using SharedKernel.Contracts.Platform;
+using SharedKernel.Topics;
 
 namespace PlatformService.Application.Tenants.Services;
 
 public class TenantDomainMappingService(
     ITenantDomainMappingRepository repository,
-    IUnitOfWork unitOfWork)
+    IUnitOfWork unitOfWork,
+    ICapPublisher capPublisher)
     : ITenantDomainMappingService
 {
     public async Task<ServiceResult<IReadOnlyList<TenantDomainMappingDto>>> GetByTenantAsync(
@@ -77,6 +81,20 @@ public class TenantDomainMappingService(
         await repository.AddAsync(mapping, cancellationToken);
         await unitOfWork.SaveChangesAsync(cancellationToken);
 
+        await capPublisher.PublishAsync(
+            PlatformTopics.TenantDomainUpserted,
+            new TenantDomainUpsertedMessage
+            {
+                DomainPublicId = mapping.PublicId,
+                TenantPublicId = mapping.TenantPublicId,
+                Host = mapping.Host,
+                DomainType = mapping.DomainType.ToString(),
+                IsPrimary = mapping.IsPrimary,
+                IsActive = mapping.IsActive,
+                OccurredAtUtc = DateTime.UtcNow
+            },
+            cancellationToken: cancellationToken);
+        
         return ServiceResult<TenantDomainMappingDto>.Ok(
             MapToDto(mapping),
             "Platform.TenantDomain.CreateSuccess",
@@ -135,7 +153,19 @@ public class TenantDomainMappingService(
 
         repository.Update(mapping);
         await unitOfWork.SaveChangesAsync(cancellationToken);
-
+        await capPublisher.PublishAsync(
+            PlatformTopics.TenantDomainUpserted,
+            new TenantDomainUpsertedMessage
+            {
+                DomainPublicId = mapping.PublicId,
+                TenantPublicId = mapping.TenantPublicId,
+                Host = mapping.Host,
+                DomainType = mapping.DomainType.ToString(),
+                IsPrimary = mapping.IsPrimary,
+                IsActive = mapping.IsActive,
+                OccurredAtUtc = DateTime.UtcNow
+            },
+            cancellationToken: cancellationToken);
         return ServiceResult<TenantDomainMappingDto>.Ok(
             MapToDto(mapping),
             "Platform.TenantDomain.UpdateSuccess",
@@ -153,10 +183,18 @@ public class TenantDomainMappingService(
                 "Platform.TenantDomain.NotFound",
                 "Tenant domain mapping not found.");
         }
+        var domainPublicId = mapping.PublicId;
 
         repository.Remove(mapping);
         await unitOfWork.SaveChangesAsync(cancellationToken);
-
+        await capPublisher.PublishAsync(
+            PlatformTopics.TenantDomainRemoved,
+            new TenantDomainRemovedMessage
+            {
+                DomainPublicId = domainPublicId,
+                OccurredAtUtc = DateTime.UtcNow
+            },
+            cancellationToken: cancellationToken);
         return ServiceResult<bool>.Ok(
             true,
             "Platform.TenantDomain.DeleteSuccess",
@@ -180,7 +218,19 @@ public class TenantDomainMappingService(
 
         repository.Update(mapping);
         await unitOfWork.SaveChangesAsync(cancellationToken);
-
+        await capPublisher.PublishAsync(
+            PlatformTopics.TenantDomainUpserted,
+            new TenantDomainUpsertedMessage
+            {
+                DomainPublicId = mapping.PublicId,
+                TenantPublicId = mapping.TenantPublicId,
+                Host = mapping.Host,
+                DomainType = mapping.DomainType.ToString(),
+                IsPrimary = mapping.IsPrimary,
+                IsActive = mapping.IsActive,
+                OccurredAtUtc = DateTime.UtcNow
+            },
+            cancellationToken: cancellationToken);
         return ServiceResult<TenantDomainMappingDto>.Ok(
             MapToDto(mapping),
             "Platform.TenantDomain.SetActiveSuccess",
