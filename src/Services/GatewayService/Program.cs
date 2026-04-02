@@ -58,6 +58,7 @@ builder.Services.AddCors(options =>
             .WithOrigins(
                 "http://localhost:5176",
                 "http://localhost:5175",
+                "http://localhost:5177",
                 "http://fintrack.chenlis.local:5175",
                 "http://coffee.chenlis.local:5175",
                 "http://sushi.chenlis.local:5175",
