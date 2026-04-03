@@ -1,8 +1,7 @@
 import { useState } from "react"
 import { Link, useNavigate } from "react-router-dom"
 import { HiOutlineBuildingOffice2, HiOutlineArrowUpRight } from "react-icons/hi2"
-import { registerTenant } from "../api/tenant"
-
+import { tenantApi } from "../lib/tenantApi"
 export default function RegisterTenant() {
   const navigate = useNavigate()
 
@@ -65,7 +64,7 @@ export default function RegisterTenant() {
     setLoading(true)
 
     try {
-      await registerTenant({
+      await tenantApi.registerTenant({
         tenantName: form.tenantName.trim(),
         adminName: form.adminName.trim(),
         adminEmail: form.adminEmail.trim(),

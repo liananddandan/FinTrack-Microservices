@@ -42,48 +42,16 @@ public class TenantMemberRemoveTests : IClassFixture<IdentityWebApplicationFacto
         var adminEmail = $"admin-{unique}@test.com";
         const string password = "Password123!";
         var tenantName = $"Tenant-{unique}";
+        var host = $"tenant-{unique}.test.local";
 
         var seed = await SeedTenantMemberAsync(adminEmail, password, tenantName);
+        await SeedTenantDomainProjectionAsync(seed.TenantPublicId, host);
 
-        // login
-        var loginResponse = await _client.PostAsJsonAsync("/api/account/login", new
-        {
-            email = adminEmail,
-            password
-        });
-
-        var loginBody = await loginResponse.Content.ReadAsStringAsync();
-        loginResponse.StatusCode.Should().Be(HttpStatusCode.OK, loginBody);
-
-        var loginResult =
-            await loginResponse.Content.ReadFromJsonAsync<ApiResponse<UserLoginResultTestDto>>();
-
-        var accountToken = loginResult!.Data!.Tokens.AccessToken;
-
-        _client.DefaultRequestHeaders.Authorization =
-            new AuthenticationHeaderValue("Bearer", accountToken);
-
-        // select tenant
-        var selectTenantResponse = await _client.PostAsJsonAsync(
-            "/api/account/select-tenant",
-            new
-            {
-                tenantPublicId = seed.TenantPublicId
-            });
-
-        var selectTenantBody = await selectTenantResponse.Content.ReadAsStringAsync();
-
-        selectTenantResponse.StatusCode.Should().Be(HttpStatusCode.OK, selectTenantBody);
-
-        var selectTenantResult =
-            await selectTenantResponse.Content.ReadFromJsonAsync<ApiResponse<string>>();
-
-        var tenantToken = selectTenantResult!.Data!;
+        var tenantToken = await LoginAndSelectTenantAsync(adminEmail, password, host);
 
         _client.DefaultRequestHeaders.Authorization =
             new AuthenticationHeaderValue("Bearer", tenantToken);
 
-        // remove member
         var response = await _client.DeleteAsync(
             $"/api/tenant/members/{seed.MembershipPublicId}");
 
@@ -105,44 +73,16 @@ public class TenantMemberRemoveTests : IClassFixture<IdentityWebApplicationFacto
         var adminEmail = $"admin-{unique}@test.com";
         const string password = "Password123!";
         var tenantName = $"Tenant-{unique}";
+        var host = $"tenant-{unique}.test.local";
 
         var seed = await SeedAdminMembershipAsync(adminEmail, password, tenantName);
+        await SeedTenantDomainProjectionAsync(seed.TenantPublicId, host);
 
-        // login
-        var loginResponse = await _client.PostAsJsonAsync("/api/account/login", new
-        {
-            email = adminEmail,
-            password
-        });
-
-        var loginBody = await loginResponse.Content.ReadAsStringAsync();
-        loginResponse.StatusCode.Should().Be(HttpStatusCode.OK, loginBody);
-
-        var loginResult =
-            await loginResponse.Content.ReadFromJsonAsync<ApiResponse<UserLoginResultTestDto>>();
-
-        var accountToken = loginResult!.Data!.Tokens.AccessToken;
-
-        _client.DefaultRequestHeaders.Authorization =
-            new AuthenticationHeaderValue("Bearer", accountToken);
-
-        // select tenant
-        var selectTenantResponse = await _client.PostAsJsonAsync(
-            "/api/account/select-tenant",
-            new
-            {
-                tenantPublicId = seed.TenantPublicId
-            });
-
-        var selectTenantResult =
-            await selectTenantResponse.Content.ReadFromJsonAsync<ApiResponse<string>>();
-
-        var tenantToken = selectTenantResult!.Data!;
+        var tenantToken = await LoginAndSelectTenantAsync(adminEmail, password, host);
 
         _client.DefaultRequestHeaders.Authorization =
             new AuthenticationHeaderValue("Bearer", tenantToken);
 
-        // try remove self
         var response = await _client.DeleteAsync(
             $"/api/tenant/members/{seed.MembershipPublicId}");
 
@@ -151,7 +91,7 @@ public class TenantMemberRemoveTests : IClassFixture<IdentityWebApplicationFacto
         response.StatusCode.Should().Be(HttpStatusCode.BadRequest, body);
         body.Should().Contain("You cannot remove yourself.");
     }
-    
+
     [Fact]
     public async Task RemoveMember_Should_Return_BadRequest_When_Member_Not_Found()
     {
@@ -159,36 +99,12 @@ public class TenantMemberRemoveTests : IClassFixture<IdentityWebApplicationFacto
         var adminEmail = $"admin-{unique}@test.com";
         const string password = "Password123!";
         var tenantName = $"Tenant-{unique}";
+        var host = $"tenant-{unique}.test.local";
 
         var seed = await SeedAdminMembershipAsync(adminEmail, password, tenantName);
+        await SeedTenantDomainProjectionAsync(seed.TenantPublicId, host);
 
-        // login
-        var loginResponse = await _client.PostAsJsonAsync("/api/account/login", new
-        {
-            email = adminEmail,
-            password
-        });
-
-        var loginResult =
-            await loginResponse.Content.ReadFromJsonAsync<ApiResponse<UserLoginResultTestDto>>();
-
-        var accountToken = loginResult!.Data!.Tokens.AccessToken;
-
-        _client.DefaultRequestHeaders.Authorization =
-            new AuthenticationHeaderValue("Bearer", accountToken);
-
-        // select tenant
-        var selectTenantResponse = await _client.PostAsJsonAsync(
-            "/api/account/select-tenant",
-            new
-            {
-                tenantPublicId = seed.TenantPublicId
-            });
-
-        var selectTenantResult =
-            await selectTenantResponse.Content.ReadFromJsonAsync<ApiResponse<string>>();
-
-        var tenantToken = selectTenantResult!.Data!;
+        var tenantToken = await LoginAndSelectTenantAsync(adminEmail, password, host);
 
         _client.DefaultRequestHeaders.Authorization =
             new AuthenticationHeaderValue("Bearer", tenantToken);
@@ -203,7 +119,7 @@ public class TenantMemberRemoveTests : IClassFixture<IdentityWebApplicationFacto
         response.StatusCode.Should().Be(HttpStatusCode.BadRequest, body);
         body.Should().Contain("Membership not found");
     }
-    
+
     [Fact]
     public async Task RemoveMember_Should_Return_BadRequest_When_Member_Already_Removed()
     {
@@ -211,36 +127,12 @@ public class TenantMemberRemoveTests : IClassFixture<IdentityWebApplicationFacto
         var adminEmail = $"admin-{unique}@test.com";
         const string password = "Password123!";
         var tenantName = $"Tenant-{unique}";
+        var host = $"tenant-{unique}.test.local";
 
         var seed = await SeedRemovedMemberAsync(adminEmail, password, tenantName);
+        await SeedTenantDomainProjectionAsync(seed.TenantPublicId, host);
 
-        // login
-        var loginResponse = await _client.PostAsJsonAsync("/api/account/login", new
-        {
-            email = adminEmail,
-            password
-        });
-
-        var loginResult =
-            await loginResponse.Content.ReadFromJsonAsync<ApiResponse<UserLoginResultTestDto>>();
-
-        var accountToken = loginResult!.Data!.Tokens.AccessToken;
-
-        _client.DefaultRequestHeaders.Authorization =
-            new AuthenticationHeaderValue("Bearer", accountToken);
-
-        // select tenant
-        var selectTenantResponse = await _client.PostAsJsonAsync(
-            "/api/account/select-tenant",
-            new
-            {
-                tenantPublicId = seed.TenantPublicId
-            });
-
-        var selectTenantResult =
-            await selectTenantResponse.Content.ReadFromJsonAsync<ApiResponse<string>>();
-
-        var tenantToken = selectTenantResult!.Data!;
+        var tenantToken = await LoginAndSelectTenantAsync(adminEmail, password, host);
 
         _client.DefaultRequestHeaders.Authorization =
             new AuthenticationHeaderValue("Bearer", tenantToken);
@@ -253,7 +145,54 @@ public class TenantMemberRemoveTests : IClassFixture<IdentityWebApplicationFacto
         response.StatusCode.Should().Be(HttpStatusCode.BadRequest, body);
         body.Should().Contain("Member already removed");
     }
-    
+
+    private async Task<string> LoginAndSelectTenantAsync(
+        string email,
+        string password,
+        string host)
+    {
+        var loginResponse = await _client.PostAsJsonAsync("/api/account/login", new
+        {
+            email,
+            password
+        });
+
+        var loginBody = await loginResponse.Content.ReadAsStringAsync();
+        loginResponse.StatusCode.Should().Be(HttpStatusCode.OK, loginBody);
+
+        var loginResult =
+            await loginResponse.Content.ReadFromJsonAsync<ApiResponse<UserLoginResultTestDto>>();
+
+        loginResult.Should().NotBeNull();
+        loginResult!.Data.Should().NotBeNull();
+        loginResult.Data!.Tokens.Should().NotBeNull();
+        loginResult.Data.Tokens.AccessToken.Should().NotBeNullOrWhiteSpace();
+
+        var accountToken = loginResult.Data.Tokens.AccessToken;
+
+        _client.DefaultRequestHeaders.Authorization =
+            new AuthenticationHeaderValue("Bearer", accountToken);
+
+        var request = new HttpRequestMessage(HttpMethod.Post, "/api/account/select-tenant")
+        {
+            Content = JsonContent.Create(new { })
+        };
+        request.Headers.Host = host;
+
+        var selectTenantResponse = await _client.SendAsync(request);
+        var selectTenantBody = await selectTenantResponse.Content.ReadAsStringAsync();
+
+        selectTenantResponse.StatusCode.Should().Be(HttpStatusCode.OK, selectTenantBody);
+
+        var selectTenantResult =
+            await selectTenantResponse.Content.ReadFromJsonAsync<ApiResponse<string>>();
+
+        selectTenantResult.Should().NotBeNull();
+        selectTenantResult!.Data.Should().NotBeNullOrWhiteSpace();
+
+        return selectTenantResult.Data!;
+    }
+
     private async Task<(string MembershipPublicId, string TenantPublicId)> SeedRemovedMemberAsync(
         string adminEmail,
         string password,
@@ -280,7 +219,9 @@ public class TenantMemberRemoveTests : IClassFixture<IdentityWebApplicationFacto
             JwtVersion = 1
         };
 
-        await userManager.CreateAsync(admin, password);
+        var createAdminResult = await userManager.CreateAsync(admin, password);
+        createAdminResult.Succeeded.Should().BeTrue(
+            string.Join(", ", createAdminResult.Errors.Select(x => x.Description)));
 
         db.TenantMemberships.Add(new TenantMembership
         {
@@ -291,15 +232,18 @@ public class TenantMemberRemoveTests : IClassFixture<IdentityWebApplicationFacto
             JoinedAt = DateTime.UtcNow
         });
 
+        var memberEmail = $"member-{Guid.NewGuid():N}@test.com";
         var member = new ApplicationUser
         {
-            UserName = $"member-{Guid.NewGuid():N}@test.com",
-            Email = $"member-{Guid.NewGuid():N}@test.com",
+            UserName = memberEmail,
+            Email = memberEmail,
             EmailConfirmed = true,
             JwtVersion = 1
         };
 
-        await userManager.CreateAsync(member, password);
+        var createMemberResult = await userManager.CreateAsync(member, password);
+        createMemberResult.Succeeded.Should().BeTrue(
+            string.Join(", ", createMemberResult.Errors.Select(x => x.Description)));
 
         var membership = new TenantMembership
         {
@@ -317,7 +261,7 @@ public class TenantMemberRemoveTests : IClassFixture<IdentityWebApplicationFacto
 
         return (membership.PublicId.ToString(), tenant.PublicId.ToString());
     }
-    
+
     private async Task<(string MembershipPublicId, string TenantPublicId)> SeedTenantMemberAsync(
         string adminEmail,
         string password,
@@ -344,7 +288,9 @@ public class TenantMemberRemoveTests : IClassFixture<IdentityWebApplicationFacto
             JwtVersion = 1
         };
 
-        await userManager.CreateAsync(admin, password);
+        var createAdminResult = await userManager.CreateAsync(admin, password);
+        createAdminResult.Succeeded.Should().BeTrue(
+            string.Join(", ", createAdminResult.Errors.Select(x => x.Description)));
 
         db.TenantMemberships.Add(new TenantMembership
         {
@@ -355,15 +301,18 @@ public class TenantMemberRemoveTests : IClassFixture<IdentityWebApplicationFacto
             JoinedAt = DateTime.UtcNow
         });
 
+        var memberEmail = $"member-{Guid.NewGuid():N}@test.com";
         var member = new ApplicationUser
         {
-            UserName = $"member-{Guid.NewGuid():N}@test.com",
-            Email = $"member-{Guid.NewGuid():N}@test.com",
+            UserName = memberEmail,
+            Email = memberEmail,
             EmailConfirmed = true,
             JwtVersion = 1
         };
 
-        await userManager.CreateAsync(member, password);
+        var createMemberResult = await userManager.CreateAsync(member, password);
+        createMemberResult.Succeeded.Should().BeTrue(
+            string.Join(", ", createMemberResult.Errors.Select(x => x.Description)));
 
         var membership = new TenantMembership
         {
@@ -407,7 +356,9 @@ public class TenantMemberRemoveTests : IClassFixture<IdentityWebApplicationFacto
             JwtVersion = 1
         };
 
-        await userManager.CreateAsync(admin, password);
+        var createAdminResult = await userManager.CreateAsync(admin, password);
+        createAdminResult.Succeeded.Should().BeTrue(
+            string.Join(", ", createAdminResult.Errors.Select(x => x.Description)));
 
         var membership = new TenantMembership
         {
@@ -422,6 +373,25 @@ public class TenantMemberRemoveTests : IClassFixture<IdentityWebApplicationFacto
         await db.SaveChangesAsync();
 
         return (membership.PublicId.ToString(), tenant.PublicId.ToString());
+    }
+
+    private async Task SeedTenantDomainProjectionAsync(string tenantPublicId, string host)
+    {
+        using var scope = _factory.Services.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<ApplicationIdentityDbContext>();
+
+        db.TenantDomainProjections.Add(new TenantDomainProjection
+        {
+            DomainPublicId = Guid.NewGuid(),
+            TenantPublicId = Guid.Parse(tenantPublicId),
+            Host = host,
+            DomainType = "Custom",
+            IsPrimary = true,
+            IsActive = true,
+            LastSyncedAtUtc = DateTime.UtcNow
+        });
+
+        await db.SaveChangesAsync();
     }
 
     private sealed class ApiResponse<T>

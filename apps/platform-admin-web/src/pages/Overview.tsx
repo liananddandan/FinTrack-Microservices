@@ -1,7 +1,8 @@
 import { useEffect, useMemo, useState } from "react"
 import { HiOutlineBuildingOffice2, HiOutlineCheckCircle } from "react-icons/hi2"
-import { getPlatformTenants, type TenantSummaryDto } from "../api/tenant"
-import { platformAuthStore } from "../lib/authStore"
+import { platformAuthStore } from "../lib/platformAuthStore"
+import { tenantApi } from "../lib/tenantApi"
+import type { TenantSummaryDto } from "@fintrack/web-shared"
 
 function StatCard({
   title,
@@ -34,7 +35,7 @@ export default function Overview() {
       setErrorMessage("")
 
       try {
-        const result = await getPlatformTenants()
+        const result = await tenantApi.getPlatformTenants()
         setTenants(result)
       } catch (err: unknown) {
         if (err instanceof Error) {

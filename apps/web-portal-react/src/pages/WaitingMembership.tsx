@@ -1,8 +1,9 @@
 import { useEffect, useState } from "react"
 import { useNavigate } from "react-router-dom"
-import { getCurrentUser } from "../api/account"
 import { authStore } from "../lib/authStore"
 import { useAuth } from "../hooks/useAuth"
+import { authService } from "../lib/authService"
+import { accountApi } from "../lib/accountApi"
 import {
   HiOutlineClock,
   HiOutlineEnvelope,
@@ -22,7 +23,7 @@ function InfoRow({
   return (
     <div className="flex items-start justify-between gap-4 border-b border-slate-100 py-3 last:border-b-0">
       <span className="text-sm text-slate-500">{label}</span>
-      <span className="text-right text-sm font-medium text-slate-800 break-all">
+      <span className="break-all text-right text-sm font-medium text-slate-800">
         {value}
       </span>
     </div>
@@ -63,7 +64,7 @@ export default function WaitingMembership() {
 
     if (memberships.length === 1) {
       try {
-        await authStore.activateSingleTenantIfPossible()
+        await authService.activateTenantForCurrentHost()
 
         if (authStore.hasTenantContext) {
           navigate("/portal/home", { replace: true })
@@ -77,7 +78,7 @@ export default function WaitingMembership() {
   useEffect(() => {
     async function init() {
       try {
-        await auth.initialize()
+        await auth.initializeProfile()
         await redirectIfTenantReady()
       } finally {
         setInitializing(false)
@@ -93,11 +94,11 @@ export default function WaitingMembership() {
     setErrorMessage("")
 
     try {
-      const profile = await getCurrentUser()
+      const profile = await accountApi.getCurrentUser()
       authStore.setProfile(profile)
 
       if ((profile.memberships?.length ?? 0) > 0) {
-        await authStore.activateSingleTenantIfPossible()
+        await authService.activateTenantForCurrentHost()
       }
 
       if (authStore.hasTenantContext) {

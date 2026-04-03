@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react"
-import { getAuditLogs, type AuditLogItem } from "../api/audit-log"
+import type { AuditLogItem } from "@fintrack/web-shared"
+import { auditLogApi } from "../lib/auditLogApi"
 import {
   HiOutlineDocumentMagnifyingGlass,
   HiOutlineFunnel,
@@ -40,7 +41,7 @@ export default function AuditLogs() {
     setPageNumber(page)
 
     try {
-      const result = await getAuditLogs({
+      const result = await auditLogApi.getAuditLogs({
         actionType: filters.actionType || undefined,
         fromUtc: filters.fromUtc || undefined,
         toUtc: filters.toUtc || undefined,
@@ -88,7 +89,7 @@ export default function AuditLogs() {
     setPageNumber(page)
 
     try {
-      const result = await getAuditLogs({
+      const result = await auditLogApi.getAuditLogs({
         actionType: nextFilters.actionType || undefined,
         fromUtc: nextFilters.fromUtc || undefined,
         toUtc: nextFilters.toUtc || undefined,

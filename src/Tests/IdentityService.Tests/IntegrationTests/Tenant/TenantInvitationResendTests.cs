@@ -44,13 +44,15 @@ public class TenantInvitationResendTests : IClassFixture<IdentityWebApplicationF
         var adminEmail = $"admin-{unique}@test.com";
         const string password = "Password123!";
         var tenantName = $"Tenant-{unique}";
+        var host = $"tenant-{unique}.test.local";
 
         var seed = await SeedPendingInvitationAsync(adminEmail, password, tenantName);
+        await SeedTenantDomainProjectionAsync(seed.TenantPublicId, host);
 
         var tenantToken = await LoginAndSelectTenantAsync(
             adminEmail,
             password,
-            seed.TenantPublicId);
+            host);
 
         _client.DefaultRequestHeaders.Authorization =
             new AuthenticationHeaderValue("Bearer", tenantToken);
@@ -75,13 +77,15 @@ public class TenantInvitationResendTests : IClassFixture<IdentityWebApplicationF
         var adminEmail = $"admin-{unique}@test.com";
         const string password = "Password123!";
         var tenantName = $"Tenant-{unique}";
+        var host = $"tenant-{unique}.test.local";
 
         var seed = await SeedAcceptedInvitationAsync(adminEmail, password, tenantName);
+        await SeedTenantDomainProjectionAsync(seed.TenantPublicId, host);
 
         var tenantToken = await LoginAndSelectTenantAsync(
             adminEmail,
             password,
-            seed.TenantPublicId);
+            host);
 
         _client.DefaultRequestHeaders.Authorization =
             new AuthenticationHeaderValue("Bearer", tenantToken);
@@ -99,7 +103,7 @@ public class TenantInvitationResendTests : IClassFixture<IdentityWebApplicationF
     private async Task<string> LoginAndSelectTenantAsync(
         string email,
         string password,
-        string tenantPublicId)
+        string host)
     {
         var loginResponse = await _client.PostAsJsonAsync("/api/account/login", new
         {
@@ -119,12 +123,14 @@ public class TenantInvitationResendTests : IClassFixture<IdentityWebApplicationF
         _client.DefaultRequestHeaders.Authorization =
             new AuthenticationHeaderValue("Bearer", loginResult.Data.Tokens.AccessToken);
 
-        var selectTenantResponse = await _client.PostAsJsonAsync(
-            "/api/account/select-tenant",
-            new
-            {
-                tenantPublicId
-            });
+        var request = new HttpRequestMessage(HttpMethod.Post, "/api/account/select-tenant")
+        {
+            Content = JsonContent.Create(new { })
+        };
+
+        request.Headers.Host = host;
+
+        var selectTenantResponse = await _client.SendAsync(request);
 
         var selectTenantBody = await selectTenantResponse.Content.ReadAsStringAsync();
         selectTenantResponse.StatusCode.Should().Be(HttpStatusCode.OK, selectTenantBody);
@@ -249,6 +255,25 @@ public class TenantInvitationResendTests : IClassFixture<IdentityWebApplicationF
         await db.SaveChangesAsync();
 
         return (tenant.PublicId.ToString(), invitation.PublicId.ToString());
+    }
+
+    private async Task SeedTenantDomainProjectionAsync(string tenantPublicId, string host)
+    {
+        using var scope = _factory.Services.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<ApplicationIdentityDbContext>();
+
+        db.TenantDomainProjections.Add(new TenantDomainProjection
+        {
+            DomainPublicId = Guid.NewGuid(),
+            TenantPublicId = Guid.Parse(tenantPublicId),
+            Host = host,
+            DomainType = "Custom",
+            IsPrimary = true,
+            IsActive = true,
+            LastSyncedAtUtc = DateTime.UtcNow
+        });
+
+        await db.SaveChangesAsync();
     }
 
     private sealed class ApiResponse<T>

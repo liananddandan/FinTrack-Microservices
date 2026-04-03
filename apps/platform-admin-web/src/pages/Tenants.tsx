@@ -1,7 +1,8 @@
 import { useEffect, useMemo, useState } from "react"
 import { HiOutlineBuildingOffice2, HiOutlineCog6Tooth } from "react-icons/hi2"
 import { useNavigate } from "react-router-dom"
-import { getPlatformTenants, type TenantSummaryDto } from "../api/tenant"
+import { tenantApi } from "../lib/tenantApi"
+import type { TenantSummaryDto } from "@fintrack/web-shared"
 
 export default function Tenants() {
   const navigate = useNavigate()
@@ -17,7 +18,7 @@ export default function Tenants() {
       setErrorMessage("")
 
       try {
-        const result = await getPlatformTenants()
+        const result = await tenantApi.getPlatformTenants()
         setTenants(result)
       } catch (err: unknown) {
         if (err instanceof Error) {

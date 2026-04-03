@@ -2,12 +2,10 @@ import { useEffect, useMemo, useState } from "react"
 import { useNavigate } from "react-router-dom"
 import { useAuth } from "../hooks/useAuth"
 import { tenantContextStore } from "../lib/tenantContextStore"
-import {
-  getProductCategories,
-  type ProductCategoryItem,
-} from "../api/product-category"
-import { getProductsByCategory, type ProductItem } from "../api/product"
-import { createOrder } from "../api/order"
+import { productCategoryApi } from "../lib/productCategoryApi"
+import type { ProductCategoryItem, ProductItem } from "@fintrack/web-shared"
+import { productApi } from "../lib/productApi"
+import { orderApi } from "../lib/orderApi"
 import {
   HiOutlineArrowLeftOnRectangle,
   HiOutlineQueueList,
@@ -131,7 +129,7 @@ export default function Home() {
     setCheckoutSuccessMessage("")
 
     try {
-      const order = await createOrder({
+      const order = await orderApi.createOrder({
         customerName: customerName.trim() || null,
         customerPhone: null,
         paymentMethod: "Cash",
@@ -161,7 +159,7 @@ export default function Home() {
     setErrorMessage("")
 
     try {
-      const result = await getProductCategories()
+      const result = await productCategoryApi.getProductCategories()
       const activeCategories = result
         .filter((x) => x.isActive)
         .sort((a, b) => a.displayOrder - b.displayOrder)
@@ -189,7 +187,7 @@ export default function Home() {
     setErrorMessage("")
 
     try {
-      const result = await getProductsByCategory(categoryPublicId)
+      const result = await productApi.getProductsByCategory(categoryPublicId)
       const availableProducts = result
         .filter((x) => x.isAvailable)
         .sort((a, b) => a.displayOrder - b.displayOrder)

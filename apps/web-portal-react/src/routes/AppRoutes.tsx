@@ -7,10 +7,6 @@ import RegisterUser from "../pages/RegisterUser"
 import RegisterTenant from "../pages/RegisterTenant"
 import WaitingMembership from "../pages/WaitingMembership"
 import Home from "../pages/Home"
-import RecordIncome from "../pages/RecordIncome"
-import MyTransactions from "../pages/MyTransactions"
-import TransactionDetail from "../pages/TransactionDetail"
-import NewProcurement from "../pages/NewProcurement"
 import AcceptInvitation from "../pages/AcceptInvitation"
 import LandingPage from "../pages/LandingPage"
 import Profile from "../pages/Profile"
@@ -95,42 +91,6 @@ export default function AppRoutes() {
           element={
             <AuthGuard requireAuth requireTenant>
               <Home />
-            </AuthGuard>
-          }
-        />
-
-        <Route
-          path="/portal/record-income"
-          element={
-            <AuthGuard requireAuth requireTenant>
-              <RecordIncome />
-            </AuthGuard>
-          }
-        />
-
-        <Route
-          path="/portal/my-transactions"
-          element={
-            <AuthGuard requireAuth requireTenant>
-              <MyTransactions />
-            </AuthGuard>
-          }
-        />
-
-        <Route
-          path="/portal/transactions/:transactionPublicId"
-          element={
-            <AuthGuard requireAuth requireTenant>
-              <TransactionDetail />
-            </AuthGuard>
-          }
-        />
-
-        <Route
-          path="/portal/procurements/new"
-          element={
-            <AuthGuard requireAuth requireTenant>
-              <NewProcurement />
             </AuthGuard>
           }
         />

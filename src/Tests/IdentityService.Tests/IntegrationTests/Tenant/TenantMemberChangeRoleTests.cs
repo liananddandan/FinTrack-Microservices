@@ -41,13 +41,12 @@ public class TenantMemberChangeRoleTests : IClassFixture<IdentityWebApplicationF
         var adminEmail = $"admin-{unique}@test.com";
         const string password = "Password123!";
         var tenantName = $"Tenant-{unique}";
+        var host = $"tenant-{unique}.test.local";
 
         var seed = await SeedTenantMemberAsync(adminEmail, password, tenantName);
+        await SeedTenantDomainProjectionAsync(seed.TenantPublicId, host);
 
-        var tenantToken = await LoginAndSelectTenantAsync(
-            adminEmail,
-            password,
-            seed.TenantPublicId);
+        var tenantToken = await LoginAndSelectTenantAsync(adminEmail, password, host);
 
         _client.DefaultRequestHeaders.Authorization =
             new AuthenticationHeaderValue("Bearer", tenantToken);
@@ -74,13 +73,12 @@ public class TenantMemberChangeRoleTests : IClassFixture<IdentityWebApplicationF
         var adminEmail = $"admin-{unique}@test.com";
         const string password = "Password123!";
         var tenantName = $"Tenant-{unique}";
+        var host = $"tenant-{unique}.test.local";
 
         var seed = await SeedAdminOnlyAsync(adminEmail, password, tenantName);
+        await SeedTenantDomainProjectionAsync(seed.TenantPublicId, host);
 
-        var tenantToken = await LoginAndSelectTenantAsync(
-            adminEmail,
-            password,
-            seed.TenantPublicId);
+        var tenantToken = await LoginAndSelectTenantAsync(adminEmail, password, host);
 
         _client.DefaultRequestHeaders.Authorization =
             new AuthenticationHeaderValue("Bearer", tenantToken);
@@ -102,13 +100,12 @@ public class TenantMemberChangeRoleTests : IClassFixture<IdentityWebApplicationF
         var adminEmail = $"admin-{unique}@test.com";
         const string password = "Password123!";
         var tenantName = $"Tenant-{unique}";
+        var host = $"tenant-{unique}.test.local";
 
         var seed = await SeedAdminOnlyAsync(adminEmail, password, tenantName);
+        await SeedTenantDomainProjectionAsync(seed.TenantPublicId, host);
 
-        var tenantToken = await LoginAndSelectTenantAsync(
-            adminEmail,
-            password,
-            seed.TenantPublicId);
+        var tenantToken = await LoginAndSelectTenantAsync(adminEmail, password, host);
 
         _client.DefaultRequestHeaders.Authorization =
             new AuthenticationHeaderValue("Bearer", tenantToken);
@@ -137,13 +134,12 @@ public class TenantMemberChangeRoleTests : IClassFixture<IdentityWebApplicationF
         var adminEmail = $"admin-{unique}@test.com";
         const string password = "Password123!";
         var tenantName = $"Tenant-{unique}";
+        var host = $"tenant-{unique}.test.local";
 
         var seed = await SeedTenantMemberAsync(adminEmail, password, tenantName);
+        await SeedTenantDomainProjectionAsync(seed.TenantPublicId, host);
 
-        var tenantToken = await LoginAndSelectTenantAsync(
-            adminEmail,
-            password,
-            seed.TenantPublicId);
+        var tenantToken = await LoginAndSelectTenantAsync(adminEmail, password, host);
 
         _client.DefaultRequestHeaders.Authorization =
             new AuthenticationHeaderValue("Bearer", tenantToken);
@@ -161,7 +157,7 @@ public class TenantMemberChangeRoleTests : IClassFixture<IdentityWebApplicationF
     private async Task<string> LoginAndSelectTenantAsync(
         string email,
         string password,
-        string tenantPublicId)
+        string host)
     {
         var loginResponse = await _client.PostAsJsonAsync("/api/account/login", new
         {
@@ -180,12 +176,13 @@ public class TenantMemberChangeRoleTests : IClassFixture<IdentityWebApplicationF
         _client.DefaultRequestHeaders.Authorization =
             new AuthenticationHeaderValue("Bearer", accountToken);
 
-        var selectTenantResponse = await _client.PostAsJsonAsync(
-            "/api/account/select-tenant",
-            new
-            {
-                tenantPublicId
-            });
+        var request = new HttpRequestMessage(HttpMethod.Post, "/api/account/select-tenant")
+        {
+            Content = JsonContent.Create(new { })
+        };
+        request.Headers.Host = host;
+
+        var selectTenantResponse = await _client.SendAsync(request);
 
         var selectTenantBody = await selectTenantResponse.Content.ReadAsStringAsync();
         selectTenantResponse.StatusCode.Should().Be(HttpStatusCode.OK, selectTenantBody);
@@ -229,10 +226,11 @@ public class TenantMemberChangeRoleTests : IClassFixture<IdentityWebApplicationF
             JoinedAt = DateTime.UtcNow
         });
 
+        var memberEmail = $"member-{Guid.NewGuid():N}@test.com";
         var member = new ApplicationUser
         {
-            UserName = $"member-{Guid.NewGuid():N}@test.com",
-            Email = $"member-{Guid.NewGuid():N}@test.com",
+            UserName = memberEmail,
+            Email = memberEmail,
             EmailConfirmed = true,
             JwtVersion = 1
         };
@@ -289,10 +287,11 @@ public class TenantMemberChangeRoleTests : IClassFixture<IdentityWebApplicationF
 
         db.TenantMemberships.Add(adminMembership);
 
+        var anotherAdminEmail = $"admin2-{Guid.NewGuid():N}@test.com";
         var anotherAdmin = new ApplicationUser
         {
-            UserName = $"admin2-{Guid.NewGuid():N}@test.com",
-            Email = $"admin2-{Guid.NewGuid():N}@test.com",
+            UserName = anotherAdminEmail,
+            Email = anotherAdminEmail,
             EmailConfirmed = true,
             JwtVersion = 1
         };
@@ -315,6 +314,25 @@ public class TenantMemberChangeRoleTests : IClassFixture<IdentityWebApplicationF
             tenant.PublicId.ToString(),
             adminMembership.PublicId.ToString(),
             anotherAdminMembership.PublicId.ToString());
+    }
+
+    private async Task SeedTenantDomainProjectionAsync(string tenantPublicId, string host)
+    {
+        using var scope = _factory.Services.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<ApplicationIdentityDbContext>();
+
+        db.TenantDomainProjections.Add(new TenantDomainProjection
+        {
+            DomainPublicId = Guid.NewGuid(),
+            TenantPublicId = Guid.Parse(tenantPublicId),
+            Host = host,
+            DomainType = "Custom",
+            IsPrimary = true,
+            IsActive = true,
+            LastSyncedAtUtc = DateTime.UtcNow
+        });
+
+        await db.SaveChangesAsync();
     }
 
     private sealed class ApiResponse<T>

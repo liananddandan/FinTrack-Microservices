@@ -1,8 +1,8 @@
 import { useState } from "react"
 import { useNavigate } from "react-router-dom"
 import { HiOutlineShieldCheck, HiOutlineSparkles } from "react-icons/hi2"
-import { getCurrentUser, login, selectPlatform } from "../api/account"
-import { platformAuthStore } from "../lib/authStore"
+import { accountApi } from "../lib/accountApi"
+import { platformAuthStore } from "../lib/platformAuthStore"
 
 type LoginForm = {
     email: string
@@ -58,7 +58,7 @@ export default function Login() {
         setLoading(true)
 
         try {
-            const loginResult = await login({
+            const loginResult = await accountApi.login({
                 email: form.email.trim(),
                 password: form.password,
             })
@@ -75,10 +75,10 @@ export default function Login() {
                 loginResult.tokens.refreshToken
             )
 
-            const profile = await getCurrentUser()
+            const profile = await accountApi.getCurrentUser()
             platformAuthStore.setProfile(profile)
 
-            const platformResult = await selectPlatform()
+            const platformResult = await accountApi.selectPlatform()
 
             if (
                 !platformResult.platformAccessToken ||

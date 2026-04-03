@@ -6,27 +6,33 @@ type AuthGuardProps = {
   children: React.ReactNode
 }
 
-export default function AuthGuard({children}: AuthGuardProps) {
+export default function AuthGuard({ children }: AuthGuardProps) {
   const auth = useAuth()
-
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
     async function init() {
-      await auth.initialize()
-      setLoading(false)
+      try {
+        console.log("AuthGuard init start")
+        await auth.initialize()
+        console.log("AuthGuard init done")
+      } catch (error) {
+        console.error("AuthGuard init failed", error)
+      } finally {
+        setLoading(false)
+      }
     }
 
     void init()
-  }, [])
+  }, [auth])
 
-    console.log("AuthGuard render", {
+  console.log("AuthGuard render", {
     loading,
     isAuthenticated: auth.isAuthenticated,
     hasTenantContext: auth.hasTenantContext,
     isAdmin: auth.isAdmin,
   })
-  
+
   if (loading) {
     return <div>Loading...</div>
   }

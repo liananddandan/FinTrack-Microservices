@@ -39,8 +39,10 @@ public class TenantInvitationListTests : IClassFixture<IdentityWebApplicationFac
         var adminEmail = $"admin-{unique}@test.com";
         const string password = "Password123!";
         var tenantName = $"Tenant-{unique}";
+        var host = $"tenant-{unique}.test.local";
 
         var tenantPublicId = await SeedTenantWithAdminAndInvitationsAsync(adminEmail, password, tenantName);
+        await SeedTenantDomainProjectionAsync(tenantPublicId, host);
 
         // login -> account token
         var loginResponse = await _client.PostAsJsonAsync("/api/account/login", new
@@ -62,12 +64,7 @@ public class TenantInvitationListTests : IClassFixture<IdentityWebApplicationFac
             new AuthenticationHeaderValue("Bearer", loginResult.Data.Tokens.AccessToken);
 
         // select tenant -> tenant token
-        var selectTenantResponse = await _client.PostAsJsonAsync(
-            "/api/account/select-tenant",
-            new
-            {
-                tenantPublicId
-            });
+        var selectTenantResponse = await PostSelectTenantAsync(host);
 
         var selectTenantBody = await selectTenantResponse.Content.ReadAsStringAsync();
         selectTenantResponse.StatusCode.Should().Be(HttpStatusCode.OK, selectTenantBody);
@@ -201,5 +198,36 @@ public class TenantInvitationListTests : IClassFixture<IdentityWebApplicationFac
         public DateTime? AcceptedAt { get; set; }
         public DateTime ExpiredAt { get; set; }
         public string CreatedByUserEmail { get; set; } = string.Empty;
+    }
+
+    private async Task SeedTenantDomainProjectionAsync(string tenantPublicId, string host)
+    {
+        using var scope = _factory.Services.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<ApplicationIdentityDbContext>();
+
+        db.TenantDomainProjections.Add(new TenantDomainProjection
+        {
+            DomainPublicId = Guid.NewGuid(),
+            TenantPublicId = Guid.Parse(tenantPublicId),
+            Host = host,
+            DomainType = "Custom",
+            IsPrimary = true,
+            IsActive = true,
+            LastSyncedAtUtc = DateTime.UtcNow
+        });
+
+        await db.SaveChangesAsync();
+    }
+
+    private async Task<HttpResponseMessage> PostSelectTenantAsync(string host)
+    {
+        var request = new HttpRequestMessage(HttpMethod.Post, "/api/account/select-tenant")
+        {
+            Content = JsonContent.Create(new { })
+        };
+
+        request.Headers.Host = host;
+
+        return await _client.SendAsync(request);
     }
 }

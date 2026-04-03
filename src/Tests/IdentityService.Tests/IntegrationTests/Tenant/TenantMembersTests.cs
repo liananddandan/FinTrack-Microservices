@@ -38,47 +38,16 @@ public class TenantMembersTests : IClassFixture<IdentityWebApplicationFactory<Pr
         var adminEmail = $"admin-{unique}@test.com";
         const string password = "Password123!";
         var tenantName = $"Tenant-{unique}";
+        var host = $"tenant-{unique}.test.local";
 
         var tenantPublicId = await SeedTenantWithTwoMembersAsync(adminEmail, password, tenantName);
+        await SeedTenantDomainProjectionAsync(tenantPublicId, host);
 
-        // login -> account token
-        var loginResponse = await _client.PostAsJsonAsync("/api/account/login", new
-        {
-            email = adminEmail,
-            password
-        });
-
-        var loginBody = await loginResponse.Content.ReadAsStringAsync();
-        loginResponse.StatusCode.Should().Be(HttpStatusCode.OK, loginBody);
-
-        var loginResult = await loginResponse.Content.ReadFromJsonAsync<ApiResponse<UserLoginResultTestDto>>();
-        loginResult.Should().NotBeNull();
-        loginResult!.Data.Should().NotBeNull();
-        loginResult.Data!.Tokens.Should().NotBeNull();
-        loginResult.Data.Tokens.AccessToken.Should().NotBeNullOrWhiteSpace();
+        var tenantToken = await LoginAndSelectTenantAsync(adminEmail, password, host);
 
         _client.DefaultRequestHeaders.Authorization =
-            new AuthenticationHeaderValue("Bearer", loginResult.Data.Tokens.AccessToken);
+            new AuthenticationHeaderValue("Bearer", tenantToken);
 
-        // select tenant -> tenant token
-        var selectTenantResponse = await _client.PostAsJsonAsync(
-            "/api/account/select-tenant",
-            new
-            {
-                tenantPublicId
-            });
-
-        var selectTenantBody = await selectTenantResponse.Content.ReadAsStringAsync();
-        selectTenantResponse.StatusCode.Should().Be(HttpStatusCode.OK, selectTenantBody);
-
-        var selectTenantResult = await selectTenantResponse.Content.ReadFromJsonAsync<ApiResponse<string>>();
-        selectTenantResult.Should().NotBeNull();
-        selectTenantResult!.Data.Should().NotBeNullOrWhiteSpace();
-
-        _client.DefaultRequestHeaders.Authorization =
-            new AuthenticationHeaderValue("Bearer", selectTenantResult.Data);
-
-        // tenant api
         var response = await _client.GetAsync("/api/tenant/members");
         var body = await response.Content.ReadAsStringAsync();
 
@@ -96,7 +65,72 @@ public class TenantMembersTests : IClassFixture<IdentityWebApplicationFactory<Pr
     [Fact]
     public async Task GetTenantMembers_Should_Return_Empty_List_When_Tenant_Has_No_Members()
     {
-        await Task.CompletedTask;
+        var unique = Guid.NewGuid().ToString("N");
+        var adminEmail = $"admin-{unique}@test.com";
+        const string password = "Password123!";
+        var tenantName = $"Tenant-{unique}";
+        var host = $"tenant-{unique}.test.local";
+
+        var tenantPublicId = await SeedTenantWithAdminOnlyAsync(adminEmail, password, tenantName);
+        await SeedTenantDomainProjectionAsync(tenantPublicId, host);
+
+        var tenantToken = await LoginAndSelectTenantAsync(adminEmail, password, host);
+
+        _client.DefaultRequestHeaders.Authorization =
+            new AuthenticationHeaderValue("Bearer", tenantToken);
+
+        var response = await _client.GetAsync("/api/tenant/members");
+        var body = await response.Content.ReadAsStringAsync();
+
+        response.StatusCode.Should().Be(HttpStatusCode.OK, body);
+
+        var apiResponse = await response.Content.ReadFromJsonAsync<ApiResponse<List<TenantMemberDtoTest>>>();
+        apiResponse.Should().NotBeNull();
+        apiResponse!.Data.Should().NotBeNull();
+        apiResponse.Data.Should().HaveCount(1);
+
+        apiResponse.Data.Should().ContainSingle(x => x.Email == adminEmail && x.Role == "Admin");
+    }
+
+    private async Task<string> LoginAndSelectTenantAsync(
+        string email,
+        string password,
+        string host)
+    {
+        var loginResponse = await _client.PostAsJsonAsync("/api/account/login", new
+        {
+            email,
+            password
+        });
+
+        var loginBody = await loginResponse.Content.ReadAsStringAsync();
+        loginResponse.StatusCode.Should().Be(HttpStatusCode.OK, loginBody);
+
+        var loginResult = await loginResponse.Content.ReadFromJsonAsync<ApiResponse<UserLoginResultTestDto>>();
+        loginResult.Should().NotBeNull();
+        loginResult!.Data.Should().NotBeNull();
+        loginResult.Data!.Tokens.Should().NotBeNull();
+        loginResult.Data.Tokens.AccessToken.Should().NotBeNullOrWhiteSpace();
+
+        _client.DefaultRequestHeaders.Authorization =
+            new AuthenticationHeaderValue("Bearer", loginResult.Data.Tokens.AccessToken);
+
+        var request = new HttpRequestMessage(HttpMethod.Post, "/api/account/select-tenant")
+        {
+            Content = JsonContent.Create(new { })
+        };
+        request.Headers.Host = host;
+
+        var selectTenantResponse = await _client.SendAsync(request);
+        var selectTenantBody = await selectTenantResponse.Content.ReadAsStringAsync();
+
+        selectTenantResponse.StatusCode.Should().Be(HttpStatusCode.OK, selectTenantBody);
+
+        var selectTenantResult = await selectTenantResponse.Content.ReadFromJsonAsync<ApiResponse<string>>();
+        selectTenantResult.Should().NotBeNull();
+        selectTenantResult!.Data.Should().NotBeNullOrWhiteSpace();
+
+        return selectTenantResult.Data!;
     }
 
     private async Task<string> SeedTenantWithTwoMembersAsync(
@@ -124,10 +158,11 @@ public class TenantMembersTests : IClassFixture<IdentityWebApplicationFactory<Pr
             JwtVersion = 1
         };
 
+        var memberEmail = $"member-{Guid.NewGuid():N}@test.com";
         var member = new ApplicationUser
         {
-            UserName = $"member-{Guid.NewGuid():N}@test.com",
-            Email = $"member-{Guid.NewGuid():N}@test.com",
+            UserName = memberEmail,
+            Email = memberEmail,
             EmailConfirmed = true,
             JwtVersion = 1
         };
@@ -161,6 +196,68 @@ public class TenantMembersTests : IClassFixture<IdentityWebApplicationFactory<Pr
         await db.SaveChangesAsync();
 
         return tenant.PublicId.ToString();
+    }
+
+    private async Task<string> SeedTenantWithAdminOnlyAsync(
+        string adminEmail,
+        string password,
+        string tenantName)
+    {
+        using var scope = _factory.Services.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<ApplicationIdentityDbContext>();
+        var userManager = scope.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();
+
+        var tenant = new Domain.Entities.Tenant
+        {
+            Name = tenantName
+        };
+
+        db.Tenants.Add(tenant);
+        await db.SaveChangesAsync();
+
+        var admin = new ApplicationUser
+        {
+            UserName = adminEmail,
+            Email = adminEmail,
+            EmailConfirmed = true,
+            JwtVersion = 1
+        };
+
+        var createAdminResult = await userManager.CreateAsync(admin, password);
+        createAdminResult.Succeeded.Should().BeTrue(
+            string.Join(", ", createAdminResult.Errors.Select(x => x.Description)));
+
+        db.TenantMemberships.Add(new TenantMembership
+        {
+            UserId = admin.Id,
+            TenantId = tenant.Id,
+            Role = TenantRole.Admin,
+            IsActive = true,
+            JoinedAt = DateTime.UtcNow
+        });
+
+        await db.SaveChangesAsync();
+
+        return tenant.PublicId.ToString();
+    }
+
+    private async Task SeedTenantDomainProjectionAsync(string tenantPublicId, string host)
+    {
+        using var scope = _factory.Services.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<ApplicationIdentityDbContext>();
+
+        db.TenantDomainProjections.Add(new TenantDomainProjection
+        {
+            DomainPublicId = Guid.NewGuid(),
+            TenantPublicId = Guid.Parse(tenantPublicId),
+            Host = host,
+            DomainType = "Custom",
+            IsPrimary = true,
+            IsActive = true,
+            LastSyncedAtUtc = DateTime.UtcNow
+        });
+
+        await db.SaveChangesAsync();
     }
 
     private sealed class ApiResponse<T>

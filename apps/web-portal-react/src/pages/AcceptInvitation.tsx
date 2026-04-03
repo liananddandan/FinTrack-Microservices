@@ -1,10 +1,9 @@
 import { useEffect, useMemo, useState } from "react"
 import { useLocation, useNavigate } from "react-router-dom"
 import {
-  acceptTenantInvitation,
-  resolveTenantInvitation,
   type ResolveTenantInvitationResult,
-} from "../api/invitation"
+} from "@fintrack/web-shared"
+import { tenantApi } from "../lib/tenantApi"
 import {
   HiOutlineEnvelopeOpen,
   HiOutlineArrowUpRight,
@@ -87,7 +86,7 @@ export default function AcceptInvitation() {
       }
 
       try {
-        const result = await resolveTenantInvitation(token)
+        const result = await tenantApi.resolveTenantInvitation(token)
         setInvitation(result)
       } catch (error) {
         const message =
@@ -120,7 +119,7 @@ export default function AcceptInvitation() {
     setSuccessMessage("")
 
     try {
-      await acceptTenantInvitation(token)
+      await tenantApi.acceptTenantInvitation(token)
 
       setSuccessMessage(
         "Invitation accepted successfully. You can now sign in."

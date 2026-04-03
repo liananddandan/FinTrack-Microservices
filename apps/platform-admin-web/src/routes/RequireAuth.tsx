@@ -1,5 +1,5 @@
 import { Navigate, Outlet } from "react-router-dom"
-import { platformAuthStore } from "../lib/authStore"
+import { platformAuthStore } from "../lib/platformAuthStore"
 
 export default function RequireAuth() {
   if (!platformAuthStore.isAuthenticated || !platformAuthStore.hasPlatformContext) {

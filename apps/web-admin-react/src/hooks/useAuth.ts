@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react"
 import { authStore } from "../lib/authStore"
+import { authService } from "../lib/authService"
 
 export function useAuth() {
   const [snapshot, setSnapshot] = useState(authStore.getState())
@@ -26,15 +27,21 @@ export function useAuth() {
     currentTenantName: authStore.currentTenantName,
     currentTenantPublicId: authStore.currentTenantPublicId,
     isAdmin: authStore.isAdmin,
-    initialize: authStore.initialize.bind(authStore),
-    setAccountTokens: authStore.setAccountTokens.bind(authStore),
-    setTenantAccessToken: authStore.setTenantAccessToken.bind(authStore),
-    clearTenantAccessToken: authStore.clearTenantAccessToken.bind(authStore),
-    setMemberships: authStore.setMemberships.bind(authStore),
-    setProfile: authStore.setProfile.bind(authStore),
-    clearProfile: authStore.clearProfile.bind(authStore),
-    activateSingleAdminTenantIfPossible:
-      authStore.activateSingleAdminTenantIfPossible.bind(authStore),
-    logout: authStore.logout.bind(authStore),
+
+    initialize: () => authService.initialize(),
+    initializeProfile: () => authService.initializeProfile(),
+    activateTenantForCurrentHost: () => authService.activateTenantForCurrentHost(),
+
+    setAccountTokens: (accessToken: string, refreshToken: string) =>
+      authStore.setAccountTokens(accessToken, refreshToken),
+    setTenantAccessToken: (token: string) =>
+      authStore.setTenantAccessToken(token),
+    clearTenantAccessToken: () => authStore.clearTenantAccessToken(),
+    setMemberships: (memberships: typeof snapshot.memberships) =>
+      authStore.setMemberships(memberships),
+    setProfile: (profile: typeof snapshot.profile) =>
+      authStore.setProfile(profile),
+    clearProfile: () => authStore.clearProfile(),
+    logout: () => authStore.logout(),
   }
 }

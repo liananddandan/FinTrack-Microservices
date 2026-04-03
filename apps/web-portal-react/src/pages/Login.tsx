@@ -4,9 +4,11 @@ import {
   HiOutlineArrowUpRight,
   HiOutlineBeaker,
 } from "react-icons/hi2"
-import { getCurrentUser, login } from "../api/account"
-import { seedDemoData, type DevSeedResult } from "../api/dev"
+import { accountApi } from "../lib/accountApi"
+import type { DevSeedResult } from "@fintrack/web-shared"
+import { devApi } from "../lib/devApi"
 import { authStore } from "../lib/authStore"
+import { authService } from "../lib/authService"
 import { tenantContextStore } from "../lib/tenantContextStore"
 
 type LoginForm = {
@@ -65,7 +67,7 @@ export default function Login() {
     setSeedLoading(true)
 
     try {
-      const result = await seedDemoData()
+      const result = await devApi.seedDemoData()
 
       const filteredTenants = result.tenants.filter((tenant) => {
         if (!tenantContext?.tenantPublicId) {
@@ -120,7 +122,7 @@ export default function Login() {
     setLoading(true)
 
     try {
-      const result = await login({
+      const result = await accountApi.login({
         email: form.email.trim(),
         password: form.password,
       })
@@ -133,11 +135,11 @@ export default function Login() {
       authStore.clearTenantAccessToken()
       authStore.setMemberships(result.memberships ?? [])
 
-      const profile = await getCurrentUser()
+      const profile = await accountApi.getCurrentUser()
       authStore.setProfile(profile)
 
       if (tenantContext?.tenantPublicId) {
-        const activated = await authStore.activateTenantForCurrentHost()
+        const activated = await authService.activateTenantForCurrentHost()
 
         if (activated) {
           navigate("/portal/home", { replace: true })

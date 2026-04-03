@@ -1,28 +1,15 @@
-import { getCurrentUser, selectTenant } from "../api/account"
+import type { CurrentUserResult, LoginMembershipDto } from "@fintrack/web-shared"
 
 const ACCOUNT_ACCESS_TOKEN_KEY = "fintrack.accountAccessToken"
 const TENANT_ACCESS_TOKEN_KEY = "fintrack.tenantAccessToken"
 const REFRESH_TOKEN_KEY = "fintrack.refreshToken"
-
-export type LoginMembershipDto = {
-  tenantPublicId: string
-  tenantName: string
-  role: string
-}
-
-export type UserProfile = {
-  userPublicId: string
-  email: string
-  userName?: string
-  memberships?: LoginMembershipDto[]
-}
 
 type AuthState = {
   accountAccessToken: string
   tenantAccessToken: string
   refreshToken: string
   memberships: LoginMembershipDto[]
-  profile: UserProfile | null
+  profile: CurrentUserResult | null
 }
 
 let state: AuthState = {
@@ -42,7 +29,10 @@ function notify() {
 export const authStore = {
   subscribe(listener: () => void) {
     listeners.add(listener)
-    return () => {listeners.delete(listener)}
+
+    return () => {
+      listeners.delete(listener)
+    }
   },
 
   getState(): AuthState {
@@ -69,34 +59,6 @@ export const authStore = {
     return state.profile?.memberships?.length
       ? state.profile.memberships
       : state.memberships
-  },
-
-  async initializeProfile() {
-    if (!state.accountAccessToken) {
-      return
-    }
-
-    if (state.profile) {
-      return
-    }
-
-    const profile = await getCurrentUser()
-    this.setProfile(profile)
-  },
-
-  async activateTenantForCurrentHost(): Promise<boolean> {
-    if (!state.accountAccessToken) {
-      return false
-    }
-
-    try {
-      const tenantToken = await selectTenant()
-      this.setTenantAccessToken(tenantToken)
-      return true
-    } catch {
-      this.clearTenantAccessToken()
-      return false
-    }
   },
 
   setAccountTokens(accessToken: string, refreshToken: string) {
@@ -139,7 +101,7 @@ export const authStore = {
     notify()
   },
 
-  setProfile(profile: UserProfile | null) {
+  setProfile(profile: CurrentUserResult | null) {
     state = {
       ...state,
       profile,
@@ -169,5 +131,5 @@ export const authStore = {
     }
 
     notify()
-  }
+  },
 }

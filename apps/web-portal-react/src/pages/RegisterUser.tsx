@@ -1,7 +1,7 @@
 import { useState } from "react"
 import { useNavigate, Link } from "react-router-dom"
 import { HiOutlineUserPlus, HiOutlineArrowUpRight } from "react-icons/hi2"
-import { registerUser } from "../api/account"
+import { accountApi } from "../lib/accountApi"
 
 export default function RegisterUser() {
   const navigate = useNavigate()
@@ -59,10 +59,11 @@ export default function RegisterUser() {
     setLoading(true)
 
     try {
-      await registerUser({
+      await accountApi.registerUser({
         userName: form.userName.trim(),
         email: form.email.trim(),
         password: form.password,
+        fullName: form.userName.trim(),
       })
 
       setSuccessMessage("User registered successfully. Redirecting to login...")

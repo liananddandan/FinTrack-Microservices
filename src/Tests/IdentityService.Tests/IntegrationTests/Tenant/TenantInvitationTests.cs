@@ -46,47 +46,16 @@ public class TenantInvitationTests : IClassFixture<IdentityWebApplicationFactory
         var memberEmail = $"member-{unique}@test.com";
         const string password = "Password123!";
         var tenantName = $"Tenant-{unique}";
+        var host = $"tenant-{unique}.test.local";
 
         var tenantPublicId = await SeedAdminAndUserAsync(adminEmail, memberEmail, password, tenantName);
+        await SeedTenantDomainProjectionAsync(tenantPublicId, host);
 
-        // login -> account token
-        var loginResponse = await _client.PostAsJsonAsync("/api/account/login", new
-        {
-            email = adminEmail,
-            password
-        });
-
-        var loginBody = await loginResponse.Content.ReadAsStringAsync();
-        loginResponse.StatusCode.Should().Be(HttpStatusCode.OK, loginBody);
-
-        var loginResult = await loginResponse.Content.ReadFromJsonAsync<ApiResponse<UserLoginResultTestDto>>();
-        loginResult.Should().NotBeNull();
-        loginResult!.Data.Should().NotBeNull();
-        loginResult.Data!.Tokens.Should().NotBeNull();
-        loginResult.Data.Tokens.AccessToken.Should().NotBeNullOrWhiteSpace();
+        var tenantToken = await LoginAndSelectTenantAsync(adminEmail, password, host);
 
         _client.DefaultRequestHeaders.Authorization =
-            new AuthenticationHeaderValue("Bearer", loginResult.Data.Tokens.AccessToken);
+            new AuthenticationHeaderValue("Bearer", tenantToken);
 
-        // select tenant -> tenant token
-        var selectTenantResponse = await _client.PostAsJsonAsync(
-            "/api/account/select-tenant",
-            new
-            {
-                tenantPublicId
-            });
-
-        var selectTenantBody = await selectTenantResponse.Content.ReadAsStringAsync();
-        selectTenantResponse.StatusCode.Should().Be(HttpStatusCode.OK, selectTenantBody);
-
-        var selectTenantResult = await selectTenantResponse.Content.ReadFromJsonAsync<ApiResponse<string>>();
-        selectTenantResult.Should().NotBeNull();
-        selectTenantResult!.Data.Should().NotBeNullOrWhiteSpace();
-
-        _client.DefaultRequestHeaders.Authorization =
-            new AuthenticationHeaderValue("Bearer", selectTenantResult.Data);
-
-        // create invitation with tenant token
         var request = new
         {
             email = memberEmail,
@@ -105,6 +74,47 @@ public class TenantInvitationTests : IClassFixture<IdentityWebApplicationFactory
         invitation.Should().NotBeNull();
         invitation!.Status.Should().Be(InvitationStatus.Pending);
         invitation.Role.Should().Be(TenantRole.Member);
+    }
+
+    private async Task<string> LoginAndSelectTenantAsync(
+        string email,
+        string password,
+        string host)
+    {
+        var loginResponse = await _client.PostAsJsonAsync("/api/account/login", new
+        {
+            email,
+            password
+        });
+
+        var loginBody = await loginResponse.Content.ReadAsStringAsync();
+        loginResponse.StatusCode.Should().Be(HttpStatusCode.OK, loginBody);
+
+        var loginResult = await loginResponse.Content.ReadFromJsonAsync<ApiResponse<UserLoginResultTestDto>>();
+        loginResult.Should().NotBeNull();
+        loginResult!.Data.Should().NotBeNull();
+        loginResult.Data!.Tokens.Should().NotBeNull();
+        loginResult.Data.Tokens.AccessToken.Should().NotBeNullOrWhiteSpace();
+
+        _client.DefaultRequestHeaders.Authorization =
+            new AuthenticationHeaderValue("Bearer", loginResult.Data.Tokens.AccessToken);
+
+        var request = new HttpRequestMessage(HttpMethod.Post, "/api/account/select-tenant")
+        {
+            Content = JsonContent.Create(new { })
+        };
+        request.Headers.Host = host;
+
+        var selectTenantResponse = await _client.SendAsync(request);
+        var selectTenantBody = await selectTenantResponse.Content.ReadAsStringAsync();
+
+        selectTenantResponse.StatusCode.Should().Be(HttpStatusCode.OK, selectTenantBody);
+
+        var selectTenantResult = await selectTenantResponse.Content.ReadFromJsonAsync<ApiResponse<string>>();
+        selectTenantResult.Should().NotBeNull();
+        selectTenantResult!.Data.Should().NotBeNullOrWhiteSpace();
+
+        return selectTenantResult.Data!;
     }
 
     private async Task<string> SeedAdminAndUserAsync(
@@ -161,6 +171,25 @@ public class TenantInvitationTests : IClassFixture<IdentityWebApplicationFactory
         await db.SaveChangesAsync();
 
         return tenant.PublicId.ToString();
+    }
+
+    private async Task SeedTenantDomainProjectionAsync(string tenantPublicId, string host)
+    {
+        using var scope = _factory.Services.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<ApplicationIdentityDbContext>();
+
+        db.TenantDomainProjections.Add(new TenantDomainProjection
+        {
+            DomainPublicId = Guid.NewGuid(),
+            TenantPublicId = Guid.Parse(tenantPublicId),
+            Host = host,
+            DomainType = "Custom",
+            IsPrimary = true,
+            IsActive = true,
+            LastSyncedAtUtc = DateTime.UtcNow
+        });
+
+        await db.SaveChangesAsync();
     }
 
     private sealed class ApiResponse<T>

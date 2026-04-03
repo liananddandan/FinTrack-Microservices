@@ -5,7 +5,8 @@ import {
   HiOutlineClipboardDocumentList,
   HiOutlineXMark,
 } from "react-icons/hi2"
-import { cancelOrder, getOrderById, type OrderDto } from "../api/order"
+import type {OrderDto} from "@fintrack/web-shared"
+import { orderApi } from "../lib/orderApi"
 
 function Badge({
   children,
@@ -74,7 +75,7 @@ export default function OrderDetail() {
     setActionMessage("")
 
     try {
-      const result = await getOrderById(orderPublicId)
+      const result = await orderApi.getOrderById(orderPublicId)
       setDetail(result)
     } catch (err: unknown) {
       if (err instanceof Error) {
@@ -105,7 +106,7 @@ export default function OrderDetail() {
     setActionMessage("")
 
     try {
-      await cancelOrder(detail.publicId)
+      await orderApi.cancelOrder(detail.publicId)
       setActionMessage("Order cancelled successfully.")
       await load()
     } catch (err: unknown) {

@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react"
 import { authStore } from "../lib/authStore"
+import { authService } from "../lib/authService"
 
 export function useAuth() {
   const [snapshot, setSnapshot] = useState(authStore.getState())
@@ -19,8 +20,8 @@ export function useAuth() {
     userEmail: authStore.userEmail,
     userName: authStore.userName,
     resolvedMemberships: authStore.resolvedMemberships,
-    initializeProfile: () => authStore.initializeProfile(),
-    activateTenantForCurrentHost: () => authStore.activateTenantForCurrentHost(),
+    initializeProfile: () => authService.initializeProfile(),
+    activateTenantForCurrentHost: () => authService.activateTenantForCurrentHost(),
     setAccountTokens: (accessToken: string, refreshToken: string) =>
       authStore.setAccountTokens(accessToken, refreshToken),
     setTenantAccessToken: (token: string) => authStore.setTenantAccessToken(token),

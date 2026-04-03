@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react"
 import { Outlet } from "react-router-dom"
 import { authStore } from "../lib/authStore"
+import { authService } from "../lib/authService"
 import { tenantContextStore } from "../lib/tenantContextStore"
 
 export default function AppInitializer() {
@@ -12,10 +13,10 @@ export default function AppInitializer() {
         await tenantContextStore.initialize()
 
         if (authStore.isAuthenticated) {
-          await authStore.initializeProfile()
+          await authService.initializeProfile()
 
           if (tenantContextStore.hasTenantContext && !authStore.hasTenantContext) {
-            await authStore.activateTenantForCurrentHost()
+            await authService.activateTenantForCurrentHost()
           }
         }
       } finally {

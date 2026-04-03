@@ -8,15 +8,11 @@ import {
   HiOutlinePlus,
   HiOutlineTrash,
 } from "react-icons/hi2"
-import { getPlatformTenants, type TenantSummaryDto } from "../api/tenant"
-import {
-  createTenantDomain,
-  deleteTenantDomain,
-  getTenantDomains,
-  setTenantDomainActive,
-  updateTenantDomain,
-  type TenantDomainMappingDto,
-} from "../api/tenantDomain"
+import { tenantApi } from "../lib/tenantApi"
+import type {
+  TenantSummaryDto,
+  TenantDomainMappingDto,
+} from "@fintrack/web-shared"
 
 type DomainForm = {
   host: string
@@ -55,8 +51,8 @@ export default function TenantConfig() {
 
       try {
         const [tenantsResult, domainsResult] = await Promise.all([
-          getPlatformTenants(),
-          getTenantDomains(tenantPublicId),
+          tenantApi.getPlatformTenants(),
+          tenantApi.getTenantDomains(tenantPublicId),
         ])
 
         const currentTenant =
@@ -130,7 +126,7 @@ export default function TenantConfig() {
   }
 
   async function reloadDomains() {
-    const result = await getTenantDomains(tenantPublicId)
+    const result = await tenantApi.getTenantDomains(tenantPublicId)
     setDomains(result)
   }
 
@@ -146,7 +142,7 @@ export default function TenantConfig() {
     setSubmitting(true)
 
     try {
-      await createTenantDomain({
+      await tenantApi.createTenantDomain({
         tenantPublicId,
         host: createForm.host.trim(),
         domainType: createForm.domainType,
@@ -173,7 +169,7 @@ export default function TenantConfig() {
     setSubmitting(true)
 
     try {
-      await updateTenantDomain(domainPublicId, {
+      await tenantApi.updateTenantDomain(domainPublicId, {
         host: editForm.host.trim(),
         domainType: editForm.domainType,
         isPrimary: editForm.isPrimary,
@@ -198,7 +194,7 @@ export default function TenantConfig() {
     setErrorMessage("")
 
     try {
-      await setTenantDomainActive(domain.domainPublicId, !domain.isActive)
+      await tenantApi.setTenantDomainActive(domain.domainPublicId, !domain.isActive)
       await reloadDomains()
     } catch (err: unknown) {
       if (err instanceof Error) {
@@ -221,7 +217,7 @@ export default function TenantConfig() {
     setErrorMessage("")
 
     try {
-      await deleteTenantDomain(domainPublicId)
+      await tenantApi.deleteTenantDomain(domainPublicId)
       await reloadDomains()
     } catch (err: unknown) {
       if (err instanceof Error) {
