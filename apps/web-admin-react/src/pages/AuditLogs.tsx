@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react"
 import type { AuditLogItem } from "@fintrack/web-shared"
-import { auditLogApi } from "../lib/auditLogApi"
+import { auditLogApi } from "../lib/auditLogApi.ts"
 import {
   HiOutlineDocumentMagnifyingGlass,
   HiOutlineFunnel,

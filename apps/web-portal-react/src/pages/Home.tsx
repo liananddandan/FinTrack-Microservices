@@ -10,7 +10,6 @@ import {
   HiOutlineArrowLeftOnRectangle,
   HiOutlineQueueList,
   HiOutlineClipboardDocumentList,
-  HiOutlineUserCircle,
   HiOutlinePlus,
   HiOutlineMinus,
   HiOutlineTrash,
@@ -208,10 +207,6 @@ export default function Home() {
     navigate("/portal/orders")
   }
 
-  function goProfile() {
-    navigate("/portal/profile")
-  }
-
   function logout() {
     auth.logout()
     navigate("/portal/login", { replace: true })
@@ -321,12 +316,6 @@ export default function Home() {
                 label="Orders"
                 icon={<HiOutlineClipboardDocumentList className="h-5 w-5" />}
                 onClick={goOrders}
-              />
-
-              <TopActionButton
-                label="Profile"
-                icon={<HiOutlineUserCircle className="h-5 w-5" />}
-                onClick={goProfile}
               />
 
               <TopActionButton

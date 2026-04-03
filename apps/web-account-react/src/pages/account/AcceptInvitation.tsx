@@ -1,9 +1,7 @@
 import { useEffect, useMemo, useState } from "react"
 import { useLocation, useNavigate } from "react-router-dom"
-import {
-  type ResolveTenantInvitationResult,
-} from "@fintrack/web-shared"
-import { tenantApi } from "../lib/tenantApi"
+import type { ResolveTenantInvitationResult } from "@fintrack/web-shared"
+import { tenantApi } from "../../lib/tenantApi"
 import {
   HiOutlineEnvelopeOpen,
   HiOutlineArrowUpRight,
@@ -91,9 +89,9 @@ export default function AcceptInvitation() {
       } catch (error) {
         const message =
           typeof error === "object" &&
-            error !== null &&
-            "response" in error &&
-            typeof (error as any).response?.data?.message === "string"
+          error !== null &&
+          "response" in error &&
+          typeof (error as any).response?.data?.message === "string"
             ? (error as any).response.data.message
             : error instanceof Error
               ? error.message
@@ -128,17 +126,17 @@ export default function AcceptInvitation() {
       setInvitation((prev) =>
         prev
           ? {
-            ...prev,
-            status: "Accepted",
-          }
+              ...prev,
+              status: "Accepted",
+            }
           : prev
       )
     } catch (error) {
       const message =
         typeof error === "object" &&
-          error !== null &&
-          "response" in error &&
-          typeof (error as any).response?.data?.message === "string"
+        error !== null &&
+        "response" in error &&
+        typeof (error as any).response?.data?.message === "string"
           ? (error as any).response.data.message
           : error instanceof Error
             ? error.message
@@ -151,7 +149,7 @@ export default function AcceptInvitation() {
   }
 
   function goLogin() {
-    navigate("/portal/login", { replace: true })
+    navigate("/account/login", { replace: true })
   }
 
   function formatDate(value: string) {
@@ -174,10 +172,10 @@ export default function AcceptInvitation() {
 
             <div>
               <p className="text-lg font-semibold text-slate-800">
-                Retail Operations Platform
+                FinTrack
               </p>
               <p className="mt-1 text-sm text-slate-500">
-                Workspace invitation
+                Invitation
               </p>
             </div>
           </div>
@@ -187,7 +185,7 @@ export default function AcceptInvitation() {
           </h1>
 
           <p className="mt-4 max-w-2xl text-base leading-7 text-slate-600">
-            Review the invitation details and confirm whether you want to join this organization workspace.
+            Review the invitation details and confirm whether you want to join this organization.
           </p>
 
           {loading ? (
@@ -244,7 +242,7 @@ export default function AcceptInvitation() {
                     <HiOutlineCheckCircle className="h-5 w-5" />
                   </div>
                   <p className="text-sm leading-6 text-slate-600">
-                    Accepting this invitation will add your account to the organization workspace with the role shown above.
+                    Accepting this invitation will add your account to the organization with the role shown above.
                   </p>
                 </div>
               </div>
@@ -259,15 +257,14 @@ export default function AcceptInvitation() {
               ) : null}
 
               <div className="mt-8 flex flex-wrap gap-3">
-                <div >
-                  <button
-                    onClick={goLogin}
-                    className="group inline-flex items-center gap-2 rounded-full border border-slate-200 px-4 py-2 text-sm text-slate-700 transition hover:border-indigo-500 hover:text-indigo-600"
-                  >
-                    <span>Back to login</span>
-                    <HiOutlineArrowUpRight className="h-4 w-4 text-slate-400 transition group-hover:text-indigo-600" />
-                  </button>
-                </div>
+                <button
+                  type="button"
+                  onClick={goLogin}
+                  className="group inline-flex items-center gap-2 rounded-full border border-slate-200 px-4 py-2 text-sm text-slate-700 transition hover:border-indigo-500 hover:text-indigo-600"
+                >
+                  <span>Back to sign in</span>
+                  <HiOutlineArrowUpRight className="h-4 w-4 text-slate-400 transition group-hover:text-indigo-600" />
+                </button>
 
                 <button
                   type="button"
@@ -287,7 +284,6 @@ export default function AcceptInvitation() {
               Invitation detail is unavailable.
             </div>
           )}
-
         </section>
       </div>
     </div>

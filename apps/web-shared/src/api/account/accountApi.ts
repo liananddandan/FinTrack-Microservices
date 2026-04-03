@@ -12,7 +12,7 @@ import type {
 export function createAccountApi(params: {
   publicHttp: AxiosInstance
   accountHttp: AxiosInstance
-  platformHttp: AxiosInstance
+  platformHttp?: AxiosInstance
 }) {
   const { publicHttp, accountHttp, platformHttp } = params
 
@@ -29,10 +29,18 @@ export function createAccountApi(params: {
     return result.data
   }
 
+  function requirePlatformHttp(): AxiosInstance {
+    if (!platformHttp) {
+      throw new Error("platformHttp is not configured.")
+    }
+
+    return platformHttp
+  }
+
   return {
     async registerTenant(request: RegisterTenantRequest) {
       const response = await publicHttp.post<ApiResponse<null>>(
-        "/api/account/register-tenant",
+        "/api/tenant/register",
         request
       )
 
@@ -41,7 +49,7 @@ export function createAccountApi(params: {
 
     async registerUser(request: RegisterUserRequest) {
       const response = await publicHttp.post<ApiResponse<null>>(
-        "/api/account/register-user",
+        "/api/account/register",
         request
       )
 
@@ -83,11 +91,14 @@ export function createAccountApi(params: {
     },
 
     async getPlatformOverview(): Promise<{ message: string }> {
-      const response = await platformHttp.get<ApiResponse<{ message: string }>>(
+      const client = requirePlatformHttp()
+
+      const response = await client.get<ApiResponse<{ message: string }>>(
         "/api/platform/overview"
       )
 
       return unwrapApiResponse(response, "Failed to fetch platform overview")
     },
+
   }
 }

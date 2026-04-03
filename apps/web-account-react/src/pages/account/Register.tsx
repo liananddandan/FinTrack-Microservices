@@ -1,7 +1,7 @@
 import { useState } from "react"
 import { useNavigate, Link } from "react-router-dom"
 import { HiOutlineUserPlus, HiOutlineArrowUpRight } from "react-icons/hi2"
-import { accountApi } from "../lib/accountApi"
+import { accountApi } from "../../lib/accountApi"
 
 export default function RegisterUser() {
   const navigate = useNavigate()
@@ -66,21 +66,22 @@ export default function RegisterUser() {
         fullName: form.userName.trim(),
       })
 
-      setSuccessMessage("User registered successfully. Redirecting to login...")
+      setSuccessMessage("User registered successfully. Redirecting to sign in...")
 
       setTimeout(() => {
-        navigate("/portal/login", { replace: true })
+        navigate("/account/login", { replace: true })
       }, 1200)
     } catch (err) {
       const msg =
         typeof err === "object" &&
-          err !== null &&
-          "response" in err &&
-          typeof (err as any).response?.data?.message === "string"
+        err !== null &&
+        "response" in err &&
+        typeof (err as any).response?.data?.message === "string"
           ? (err as any).response.data.message
           : err instanceof Error
             ? err.message
             : "User registration failed."
+
       setErrorMessage(msg)
     } finally {
       setLoading(false)
@@ -98,10 +99,10 @@ export default function RegisterUser() {
 
             <div>
               <p className="text-lg font-semibold text-slate-800">
-                Retail Operations Platform
+                FinTrack
               </p>
               <p className="mt-1 text-sm text-slate-500">
-                User account registration
+                Account registration
               </p>
             </div>
           </div>
@@ -111,7 +112,7 @@ export default function RegisterUser() {
           </h1>
 
           <p className="mt-4 text-base leading-7 text-slate-600">
-            Set up your personal account first. Tenant membership can be added later through invitation or workspace setup.
+            Set up your personal account first. Organization membership can be added later through invitation or workspace setup.
           </p>
         </section>
 
@@ -135,7 +136,7 @@ export default function RegisterUser() {
                 placeholder="e.g. Chen Li"
                 value={form.userName}
                 onChange={(e) => updateField("userName", e.target.value)}
-                className="!block !h-11 !w-full !rounded-xl !border !border-slate-300 !bg-white !px-3 !text-sm !text-slate-800 !opacity-100 outline-none placeholder:!text-slate-400 focus:!border-indigo-500 focus:!ring-2 focus:!ring-indigo-100"
+                className="block h-11 w-full rounded-xl border border-slate-300 bg-white px-3 text-sm text-slate-800 outline-none placeholder:text-slate-400 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100"
               />
             </div>
 
@@ -148,7 +149,7 @@ export default function RegisterUser() {
                 placeholder="you@example.com"
                 value={form.email}
                 onChange={(e) => updateField("email", e.target.value)}
-                className="!block !h-11 !w-full !rounded-xl !border !border-slate-300 !bg-white !px-3 !text-sm !text-slate-800 !opacity-100 outline-none placeholder:!text-slate-400 focus:!border-indigo-500 focus:!ring-2 focus:!ring-indigo-100"
+                className="block h-11 w-full rounded-xl border border-slate-300 bg-white px-3 text-sm text-slate-800 outline-none placeholder:text-slate-400 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100"
               />
             </div>
 
@@ -161,7 +162,7 @@ export default function RegisterUser() {
                 placeholder="Enter your password"
                 value={form.password}
                 onChange={(e) => updateField("password", e.target.value)}
-                className="!block !h-11 !w-full !rounded-xl !border !border-slate-300 !bg-white !px-3 !text-sm !text-slate-800 !opacity-100 outline-none placeholder:!text-slate-400 focus:!border-indigo-500 focus:!ring-2 focus:!ring-indigo-100"
+                className="block h-11 w-full rounded-xl border border-slate-300 bg-white px-3 text-sm text-slate-800 outline-none placeholder:text-slate-400 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100"
               />
             </div>
 
@@ -174,7 +175,7 @@ export default function RegisterUser() {
                 placeholder="Re-enter your password"
                 value={form.confirmPassword}
                 onChange={(e) => updateField("confirmPassword", e.target.value)}
-                className="!block !h-11 !w-full !rounded-xl !border !border-slate-300 !bg-white !px-3 !text-sm !text-slate-800 !opacity-100 outline-none placeholder:!text-slate-400 focus:!border-indigo-500 focus:!ring-2 focus:!ring-indigo-100"
+                className="block h-11 w-full rounded-xl border border-slate-300 bg-white px-3 text-sm text-slate-800 outline-none placeholder:text-slate-400 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100"
               />
             </div>
 
@@ -182,7 +183,7 @@ export default function RegisterUser() {
               type="button"
               onClick={onRegister}
               disabled={loading}
-              className="!inline-flex !h-11 !w-full !items-center !justify-center !rounded-xl !bg-indigo-600 !text-sm !font-semibold !text-white transition hover:!bg-indigo-500 disabled:cursor-not-allowed disabled:opacity-60"
+              className="inline-flex h-11 w-full items-center justify-center rounded-xl bg-indigo-600 text-sm font-semibold text-white transition hover:bg-indigo-500 disabled:cursor-not-allowed disabled:opacity-60"
             >
               {loading ? "Creating..." : "Create account"}
             </button>
@@ -204,15 +205,15 @@ export default function RegisterUser() {
 
           <div className="flex flex-wrap gap-3">
             <Link
-              to="/portal/login"
+              to="/account/login"
               className="group inline-flex items-center gap-2 rounded-full border border-slate-200 px-4 py-2 text-sm text-slate-700 transition hover:border-indigo-500 hover:text-indigo-600"
             >
-              <span>Back to login</span>
+              <span>Back to sign in</span>
               <HiOutlineArrowUpRight className="h-4 w-4 text-slate-400 transition group-hover:text-indigo-600" />
             </Link>
 
             <Link
-              to="/portal/register-tenant"
+              to="/account/register-tenant"
               className="group inline-flex items-center gap-2 rounded-full border border-slate-200 px-4 py-2 text-sm text-slate-700 transition hover:border-indigo-500 hover:text-indigo-600"
             >
               <span>Create organization instead</span>

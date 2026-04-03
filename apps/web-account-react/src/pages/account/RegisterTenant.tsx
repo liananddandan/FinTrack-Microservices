@@ -1,7 +1,11 @@
 import { useState } from "react"
 import { Link, useNavigate } from "react-router-dom"
-import { HiOutlineBuildingOffice2, HiOutlineArrowUpRight } from "react-icons/hi2"
-import { tenantApi } from "../lib/tenantApi"
+import {
+  HiOutlineBuildingOffice2,
+  HiOutlineArrowUpRight,
+} from "react-icons/hi2"
+import { tenantApi } from "../../lib/tenantApi"
+
 export default function RegisterTenant() {
   const navigate = useNavigate()
 
@@ -76,18 +80,19 @@ export default function RegisterTenant() {
       )
 
       setTimeout(() => {
-        navigate("/portal/login", { replace: true })
+        navigate("/account/login", { replace: true })
       }, 1200)
     } catch (err) {
       const msg =
         typeof err === "object" &&
-          err !== null &&
-          "response" in err &&
-          typeof (err as any).response?.data?.message === "string"
+        err !== null &&
+        "response" in err &&
+        typeof (err as any).response?.data?.message === "string"
           ? (err as any).response.data.message
           : err instanceof Error
             ? err.message
-            : "User registration failed."
+            : "Organization registration failed."
+
       setErrorMessage(msg)
     } finally {
       setLoading(false)
@@ -105,24 +110,24 @@ export default function RegisterTenant() {
 
             <div>
               <p className="text-lg font-semibold text-slate-800">
-                Retail Operations Platform
+                FinTrack
               </p>
               <p className="mt-1 text-sm text-slate-500">
-                Organization workspace setup
+                Organization registration
               </p>
             </div>
           </div>
 
           <p className="mt-6 text-sm font-medium uppercase tracking-wide text-indigo-600">
-            Workspace setup
+            Organization setup
           </p>
 
           <h1 className="mt-3 text-3xl font-semibold tracking-tight text-slate-800">
-            Create your organization workspace
+            Create your organization
           </h1>
 
           <p className="mt-4 text-base leading-7 text-slate-600">
-            Register a tenant and create its first administrator account in one step.
+            Register an organization and create its first administrator account in one step.
           </p>
         </section>
 
@@ -132,7 +137,7 @@ export default function RegisterTenant() {
               Register organization
             </h2>
             <p className="mt-2 text-sm leading-6 text-slate-500">
-              This creates a tenant and its first administrator account.
+              This creates an organization and its first administrator account.
             </p>
           </div>
 
@@ -146,7 +151,7 @@ export default function RegisterTenant() {
                 placeholder="e.g. Acme Corp"
                 value={form.tenantName}
                 onChange={(e) => updateField("tenantName", e.target.value)}
-                className="!block !h-11 !w-full !rounded-xl !border !border-slate-300 !bg-white !px-3 !text-sm !text-slate-800 !opacity-100 outline-none placeholder:!text-slate-400 focus:!border-indigo-500 focus:!ring-2 focus:!ring-indigo-100"
+                className="block h-11 w-full rounded-xl border border-slate-300 bg-white px-3 text-sm text-slate-800 outline-none placeholder:text-slate-400 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100"
               />
             </div>
 
@@ -159,7 +164,7 @@ export default function RegisterTenant() {
                 placeholder="e.g. Emily"
                 value={form.adminName}
                 onChange={(e) => updateField("adminName", e.target.value)}
-                className="!block !h-11 !w-full !rounded-xl !border !border-slate-300 !bg-white !px-3 !text-sm !text-slate-800 !opacity-100 outline-none placeholder:!text-slate-400 focus:!border-indigo-500 focus:!ring-2 focus:!ring-indigo-100"
+                className="block h-11 w-full rounded-xl border border-slate-300 bg-white px-3 text-sm text-slate-800 outline-none placeholder:text-slate-400 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100"
               />
             </div>
 
@@ -172,7 +177,7 @@ export default function RegisterTenant() {
                 placeholder="admin@example.com"
                 value={form.adminEmail}
                 onChange={(e) => updateField("adminEmail", e.target.value)}
-                className="!block !h-11 !w-full !rounded-xl !border !border-slate-300 !bg-white !px-3 !text-sm !text-slate-800 !opacity-100 outline-none placeholder:!text-slate-400 focus:!border-indigo-500 focus:!ring-2 focus:!ring-indigo-100"
+                className="block h-11 w-full rounded-xl border border-slate-300 bg-white px-3 text-sm text-slate-800 outline-none placeholder:text-slate-400 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100"
               />
             </div>
 
@@ -185,7 +190,7 @@ export default function RegisterTenant() {
                 placeholder="At least 8 characters"
                 value={form.adminPassword}
                 onChange={(e) => updateField("adminPassword", e.target.value)}
-                className="!block !h-11 !w-full !rounded-xl !border !border-slate-300 !bg-white !px-3 !text-sm !text-slate-800 !opacity-100 outline-none placeholder:!text-slate-400 focus:!border-indigo-500 focus:!ring-2 focus:!ring-indigo-100"
+                className="block h-11 w-full rounded-xl border border-slate-300 bg-white px-3 text-sm text-slate-800 outline-none placeholder:text-slate-400 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100"
               />
             </div>
 
@@ -198,7 +203,7 @@ export default function RegisterTenant() {
                 placeholder="Re-enter password"
                 value={form.confirmPassword}
                 onChange={(e) => updateField("confirmPassword", e.target.value)}
-                className="!block !h-11 !w-full !rounded-xl !border !border-slate-300 !bg-white !px-3 !text-sm !text-slate-800 !opacity-100 outline-none placeholder:!text-slate-400 focus:!border-indigo-500 focus:!ring-2 focus:!ring-indigo-100"
+                className="block h-11 w-full rounded-xl border border-slate-300 bg-white px-3 text-sm text-slate-800 outline-none placeholder:text-slate-400 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100"
               />
             </div>
 
@@ -206,7 +211,7 @@ export default function RegisterTenant() {
               type="button"
               disabled={loading}
               onClick={onSubmit}
-              className="!inline-flex !h-11 !w-full !items-center !justify-center !rounded-xl !bg-indigo-600 !text-sm !font-semibold !text-white transition hover:!bg-indigo-500 disabled:cursor-not-allowed disabled:opacity-60"
+              className="inline-flex h-11 w-full items-center justify-center rounded-xl bg-indigo-600 text-sm font-semibold text-white transition hover:bg-indigo-500 disabled:cursor-not-allowed disabled:opacity-60"
             >
               {loading ? "Creating..." : "Create organization"}
             </button>
@@ -226,15 +231,15 @@ export default function RegisterTenant() {
 
           <div className="mt-8 flex flex-wrap gap-3">
             <Link
-              to="/portal/login"
+              to="/account/login"
               className="group inline-flex items-center gap-2 rounded-full border border-slate-200 px-4 py-2 text-sm text-slate-700 transition hover:border-indigo-500 hover:text-indigo-600"
             >
-              <span>Back to login</span>
+              <span>Back to sign in</span>
               <HiOutlineArrowUpRight className="h-4 w-4 text-slate-400 transition group-hover:text-indigo-600" />
             </Link>
 
             <Link
-              to="/portal/register-user"
+              to="/account/register-user"
               className="group inline-flex items-center gap-2 rounded-full border border-slate-200 px-4 py-2 text-sm text-slate-700 transition hover:border-indigo-500 hover:text-indigo-600"
             >
               <span>Create user account instead</span>

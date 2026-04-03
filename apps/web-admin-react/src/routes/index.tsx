@@ -11,35 +11,35 @@ import Orders from "../pages/Orders"
 
 import AuthGuard from "./guards/AuthGuard"
 import AdminLayout from "../components/AdminLayout"
+import AppInitializer from "../components/AppInitializer"
 
 export default function AppRouter() {
   return (
     <BrowserRouter basename="/admin">
       <Routes>
-        {/* public */}
-        <Route path="/login" element={<Login />} />
+        <Route element={<AppInitializer />}>
+          <Route path="/login" element={<Login />} />
 
-        {/* protected */}
-        <Route
-          path="/"
-          element={
-            <AuthGuard>
-              <AdminLayout />
-            </AuthGuard>
-          }
-        >
-          <Route index element={<Navigate to="overview" replace />} />
-          <Route path="overview" element={<Overview />} />
-          <Route path="orders" element={<Orders />} />
-          <Route path="orders/:orderPublicId" element={<OrderDetail />} />
-          <Route path="members" element={<Members />} />
-          <Route path="invitations" element={<Invitations />} />
-          <Route path="audit-logs" element={<AuditLogs />} />
-          <Route path="menu" element={<Menu />} />
+          <Route
+            path="/"
+            element={
+              <AuthGuard>
+                <AdminLayout />
+              </AuthGuard>
+            }
+          >
+            <Route index element={<Navigate to="overview" replace />} />
+            <Route path="overview" element={<Overview />} />
+            <Route path="orders" element={<Orders />} />
+            <Route path="orders/:orderPublicId" element={<OrderDetail />} />
+            <Route path="members" element={<Members />} />
+            <Route path="invitations" element={<Invitations />} />
+            <Route path="audit-logs" element={<AuditLogs />} />
+            <Route path="menu" element={<Menu />} />
+          </Route>
+
+          <Route path="*" element={<Navigate to="/login" replace />} />
         </Route>
-
-        {/* fallback */}
-        <Route path="*" element={<Navigate to="/overview" replace />} />
       </Routes>
     </BrowserRouter>
   )
