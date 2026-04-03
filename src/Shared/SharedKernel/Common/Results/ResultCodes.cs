@@ -48,6 +48,7 @@ public static class ResultCodes
         public const string CannotChangeOwnRole = "100001040";
         public const string ChangeMemberRoleNoChange = "100001041";
         public const string CannotDemoteLastAdmin = "100001042";
+        public const string CreateInvitationAlreadyPending = "100001043";
         // RegisterTenant Success 100 001 999
         public const string ChangeMemberRoleSuccess = "100001990";
         public const string MemberRemoved = "100001991";

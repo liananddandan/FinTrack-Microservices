@@ -8,7 +8,7 @@ import AppShell from "../components/AppShell"
 
 export default function AppRouter() {
   return (
-    <BrowserRouter>
+    <BrowserRouter basename="/admin">
       <Routes>
         <Route path="/login" element={<Login />} />
 

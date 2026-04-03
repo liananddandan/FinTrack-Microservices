@@ -4,8 +4,6 @@ import { authStore } from "../lib/authStore"
 import { authService } from "../lib/authService"
 import { tenantContextStore } from "../lib/tenantContextStore"
 
-const ACCOUNT_LANDING_URL =
-  import.meta.env.VITE_ACCOUNT_LANDING_URL || "https://fintrack.chenlis.com"
 
 export default function AppInitializer() {
   const [loading, setLoading] = useState(true)
@@ -16,8 +14,14 @@ export default function AppInitializer() {
         await tenantContextStore.initialize()
 
         if (!tenantContextStore.hasTenantContext) {
-          window.location.replace(ACCOUNT_LANDING_URL)
-          return
+          setLoading(false)
+          return (
+            <div className="flex min-h-screen items-center justify-center bg-slate-50 p-8">
+              <div className="rounded-2xl border border-amber-200 bg-amber-50 p-6 text-sm text-amber-800">
+                Tenant context not found for current host.
+              </div>
+            </div>
+          )
         }
 
         if (authStore.isAuthenticated) {
@@ -27,7 +31,9 @@ export default function AppInitializer() {
             await authService.activateTenantForCurrentHost()
           }
         }
-      } finally {
+
+        setLoading(false)
+      } catch {
         setLoading(false)
       }
     }
@@ -38,7 +44,9 @@ export default function AppInitializer() {
   if (loading) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-slate-50">
-        <div className="text-sm text-slate-500">Loading...</div>
+        <div className="text-sm text-slate-500">
+          {loading ? "Loading..." : "Redirecting..."}
+        </div>
       </div>
     )
   }

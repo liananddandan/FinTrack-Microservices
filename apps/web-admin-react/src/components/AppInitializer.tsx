@@ -4,44 +4,47 @@ import { authStore } from "../lib/authStore"
 import { authService } from "../lib/authService"
 import { tenantContextStore } from "../lib/tenantContextStore"
 
-const ACCOUNT_LANDING_URL =
-  import.meta.env.VITE_ACCOUNT_LANDING_URL || "https://fintrack.chenlis.com"
-
 export default function AppInitializer() {
-  const [loading, setLoading] = useState(true)
+    const [loading, setLoading] = useState(true)
 
-  useEffect(() => {
-    async function initialize() {
-      try {
-        await tenantContextStore.initialize()
+    useEffect(() => {
+        async function initialize() {
+            try {
+                await tenantContextStore.initialize()
 
-        if (!tenantContextStore.hasTenantContext) {
-          window.location.replace(ACCOUNT_LANDING_URL)
-          return
+                if (!tenantContextStore.hasTenantContext) {
+                    setLoading(false)
+                    return (
+                        <div className="flex min-h-screen items-center justify-center bg-slate-50 p-8">
+                            <div className="rounded-2xl border border-amber-200 bg-amber-50 p-6 text-sm text-amber-800">
+                                Tenant context not found for current host.
+                            </div>
+                        </div>
+                    )
+                }
+
+                if (authStore.isAuthenticated) {
+                    await authService.initializeProfile()
+
+                    if (!authStore.hasTenantContext) {
+                        await authService.activateTenantForCurrentHost()
+                    }
+                }
+            } finally {
+                setLoading(false)
+            }
         }
 
-        if (authStore.isAuthenticated) {
-          await authService.initializeProfile()
+        void initialize()
+    }, [])
 
-          if (!authStore.hasTenantContext) {
-            await authService.activateTenantForCurrentHost()
-          }
-        }
-      } finally {
-        setLoading(false)
-      }
+    if (loading) {
+        return (
+            <div className="flex min-h-screen items-center justify-center bg-slate-50">
+                <div className="text-sm text-slate-500">Loading...</div>
+            </div>
+        )
     }
 
-    void initialize()
-  }, [])
-
-  if (loading) {
-    return (
-      <div className="flex min-h-screen items-center justify-center bg-slate-50">
-        <div className="text-sm text-slate-500">Loading...</div>
-      </div>
-    )
-  }
-
-  return <Outlet />
+    return <Outlet />
 }

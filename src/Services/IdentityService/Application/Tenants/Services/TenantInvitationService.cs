@@ -93,6 +93,13 @@ public class TenantInvitationService(
 
         email = email.Trim().ToLowerInvariant();
 
+        logger.LogInformation(
+            "CreateInvitationAsync started. TenantPublicId={TenantPublicId}, Email={Email}, Role={Role}, InvitedByUserPublicId={InvitedByUserPublicId}",
+            tenantPublicId,
+            email,
+            role,
+            invitedByUserPublicId);
+
         try
         {
             var tenant = await tenantRepository.GetTenantByPublicIdAsync(
@@ -101,18 +108,39 @@ public class TenantInvitationService(
 
             if (tenant == null)
             {
+                logger.LogWarning(
+                    "CreateInvitationAsync failed because tenant was not found. TenantPublicId={TenantPublicId}",
+                    tenantPublicId);
+
                 return ServiceResult<bool>.Fail(
                     ResultCodes.TenantCodes.CreateInvitationTenantNotFound,
                     "Tenant not found.");
             }
 
+            logger.LogInformation(
+                "Tenant found for invitation. TenantId={TenantId}, TenantPublicId={TenantPublicId}, TenantName={TenantName}",
+                tenant.Id,
+                tenant.PublicId,
+                tenant.Name);
+
             var user = await userRepo.GetUserByEmailAsync(email, cancellationToken);
             if (user == null)
             {
+                logger.LogWarning(
+                    "CreateInvitationAsync failed because invited user was not found. TenantPublicId={TenantPublicId}, Email={Email}",
+                    tenantPublicId,
+                    email);
+
                 return ServiceResult<bool>.Fail(
                     ResultCodes.TenantCodes.CreateInvitationUserNotFound,
                     "User not found.");
             }
+
+            logger.LogInformation(
+                "Invited user found. UserId={UserId}, UserPublicId={UserPublicId}, Email={Email}",
+                user.Id,
+                user.PublicId,
+                user.Email);
 
             var existingMembership = await membershipRepo.GetMembershipAsync(
                 tenant.Id,
@@ -121,13 +149,24 @@ public class TenantInvitationService(
 
             if (existingMembership != null)
             {
+                logger.LogWarning(
+                    "CreateInvitationAsync blocked because user already belongs to tenant. TenantPublicId={TenantPublicId}, Email={Email}, MembershipPublicId={MembershipPublicId}, IsActive={IsActive}",
+                    tenantPublicId,
+                    email,
+                    existingMembership.PublicId,
+                    existingMembership.IsActive);
+
                 return ServiceResult<bool>.Fail(
                     ResultCodes.TenantCodes.CreateInvitationUserAlreadyExists,
                     "User already belongs to this tenant.");
             }
 
-            if (!Guid.TryParse(invitedByUserPublicId, out var inviterPublicId))
+            if (!Guid.TryParse(invitedByUserPublicId, out _))
             {
+                logger.LogWarning(
+                    "CreateInvitationAsync failed because inviter public id is invalid. InvitedByUserPublicId={InvitedByUserPublicId}",
+                    invitedByUserPublicId);
+
                 return ServiceResult<bool>.Fail(
                     ResultCodes.TenantCodes.CreateInvitationParameterError,
                     "Invalid inviter.");
@@ -139,6 +178,10 @@ public class TenantInvitationService(
 
             if (inviter == null)
             {
+                logger.LogWarning(
+                    "CreateInvitationAsync failed because inviter was not found. InvitedByUserPublicId={InvitedByUserPublicId}",
+                    invitedByUserPublicId);
+
                 return ServiceResult<bool>.Fail(
                     ResultCodes.TenantCodes.CreateInvitationInviterNotFound,
                     "Inviter not found.");
@@ -146,9 +189,36 @@ public class TenantInvitationService(
 
             if (!Enum.TryParse<TenantRole>(role, true, out var parsedRole))
             {
+                logger.LogWarning(
+                    "CreateInvitationAsync failed because role is invalid. Role={Role}",
+                    role);
+
                 return ServiceResult<bool>.Fail(
                     ResultCodes.TenantCodes.CreateInvitationParameterError,
                     "Invalid role.");
+            }
+
+            var existingPendingInvitations = await invitationRepo.GetByTenantPublicIdAsync(
+                tenantPublicId,
+                cancellationToken);
+
+            var duplicatedPendingInvitation = existingPendingInvitations.FirstOrDefault(x =>
+                x.Email.ToLower() == email &&
+                x.Status == InvitationStatus.Pending &&
+                x.ExpiredAt > DateTime.UtcNow);
+
+            if (duplicatedPendingInvitation != null)
+            {
+                logger.LogWarning(
+                    "CreateInvitationAsync blocked because a pending invitation already exists. TenantPublicId={TenantPublicId}, Email={Email}, InvitationPublicId={InvitationPublicId}, ExpiredAt={ExpiredAt}",
+                    tenantPublicId,
+                    email,
+                    duplicatedPendingInvitation.PublicId,
+                    duplicatedPendingInvitation.ExpiredAt);
+
+                return ServiceResult<bool>.Fail(
+                    ResultCodes.TenantCodes.CreateInvitationAlreadyPending,
+                    "A pending invitation already exists for this user.");
             }
 
             var invitation = new TenantInvitation
@@ -162,13 +232,45 @@ public class TenantInvitationService(
                 CreatedByUserId = inviter.Id
             };
 
+            logger.LogInformation(
+                "Creating tenant invitation entity. TenantPublicId={TenantPublicId}, Email={Email}, Role={Role}, InviterPublicId={InviterPublicId}",
+                tenantPublicId,
+                email,
+                parsedRole,
+                inviter.PublicId);
+
             await invitationRepo.AddAsync(invitation, cancellationToken);
             await unitOfWork.SaveChangesAsync(cancellationToken);
-            await mediator.Publish(new TenantInvitationCreatedEvent(
-                invitation.PublicId.ToString(),
+
+            logger.LogInformation(
+                "Tenant invitation saved successfully. InvitationPublicId={InvitationPublicId}, TenantPublicId={TenantPublicId}, Email={Email}",
+                invitation.PublicId,
+                tenantPublicId,
+                email);
+
+            logger.LogInformation(
+                "Publishing TenantInvitationCreatedEvent. InvitationPublicId={InvitationPublicId}, TenantName={TenantName}, Email={Email}",
+                invitation.PublicId,
                 tenant.Name,
-                email
-            ), cancellationToken);
+                email);
+
+            await mediator.Publish(
+                new TenantInvitationCreatedEvent(
+                    invitation.PublicId.ToString(),
+                    tenant.Name,
+                    email
+                ),
+                cancellationToken);
+
+            logger.LogInformation(
+                "TenantInvitationCreatedEvent published successfully. InvitationPublicId={InvitationPublicId}, Email={Email}",
+                invitation.PublicId,
+                email);
+
+            logger.LogInformation(
+                "Publishing audit log for invitation creation. InvitationPublicId={InvitationPublicId}, Email={Email}",
+                invitation.PublicId,
+                invitation.Email);
 
             await auditLogPublisher.PublishAsync(
                 AuditLogTopics.MembershipInvited,
@@ -191,6 +293,11 @@ public class TenantInvitationService(
                     ]
                 },
                 cancellationToken);
+
+            logger.LogInformation(
+                "Invitation audit log published successfully. InvitationPublicId={InvitationPublicId}, Email={Email}",
+                invitation.PublicId,
+                invitation.Email);
 
             return ServiceResult<bool>.Ok(
                 true,

@@ -18,8 +18,18 @@ public class TenantInvitationEventHandler(
 {
     public async Task Handle(TenantInvitationCreatedEvent notification, CancellationToken cancellationToken)
     {
+        logger.LogInformation(
+            "Handling TenantInvitationCreatedEvent. InvitationPublicId={InvitationPublicId}",
+            notification.InvitationPublicId);
+
         var invitationResult = await tenantInvitationService
             .GetTenantInvitationByPublicIdAsync(notification.InvitationPublicId, cancellationToken);
+
+        logger.LogInformation(
+            "Tenant invitation lookup completed. InvitationPublicId={InvitationPublicId}, Success={Success}, HasData={HasData}",
+            notification.InvitationPublicId,
+            invitationResult.Success,
+            invitationResult.Data is not null);
 
         if (!invitationResult.Success || invitationResult.Data == null)
         {
@@ -31,29 +41,51 @@ public class TenantInvitationEventHandler(
 
         var invitation = invitationResult.Data;
 
+        logger.LogInformation(
+            "Preparing invitation email event. InvitationPublicId={InvitationPublicId}, Email={Email}, TenantName={TenantName}, Role={Role}",
+            notification.InvitationPublicId,
+            invitation.Email,
+            invitation.Tenant.Name,
+            invitation.Role);
+
         string invitationToken;
-        
+
         try
         {
+            logger.LogInformation(
+                "Generating invitation token for InvitationPublicId={InvitationPublicId}",
+                notification.InvitationPublicId);
+
             invitationToken = jwtTokenService.GenerateInvitationToken(invitation);
+
+            logger.LogInformation(
+                "Invitation token generated successfully for InvitationPublicId={InvitationPublicId}. TokenLength={TokenLength}",
+                notification.InvitationPublicId,
+                invitationToken?.Length ?? 0);
         }
         catch (Exception ex)
         {
-            logger.LogWarning(
+            logger.LogError(
                 ex,
                 "Could not generate invitation token for invitation {InvitationPublicId}.",
                 notification.InvitationPublicId);
             return;
         }
-        
+
         if (string.IsNullOrWhiteSpace(invitationToken))
         {
             logger.LogWarning(
-                "Could not generate invitation token for invitation {InvitationPublicId}.",
+                "Generated invitation token is empty for invitation {InvitationPublicId}.",
                 notification.InvitationPublicId);
             return;
         }
+
         var portalBaseUrl = configuration["Frontend:PortalBaseUrl"];
+
+        logger.LogInformation(
+            "Resolved Frontend:PortalBaseUrl for InvitationPublicId={InvitationPublicId}. Value={PortalBaseUrl}",
+            notification.InvitationPublicId,
+            portalBaseUrl);
 
         if (string.IsNullOrWhiteSpace(portalBaseUrl))
         {
@@ -64,7 +96,12 @@ public class TenantInvitationEventHandler(
         }
 
         var invitationLink =
-            $"{portalBaseUrl.TrimEnd('/')}/invitations/accept?token={Uri.EscapeDataString(invitationToken)}";
+            $"{portalBaseUrl.TrimEnd('/')}/account/accept-invitation?token={Uri.EscapeDataString(invitationToken)}";
+
+        logger.LogInformation(
+            "Generated invitation link for InvitationPublicId={InvitationPublicId}. InvitationLink={InvitationLink}",
+            notification.InvitationPublicId,
+            invitationLink);
 
         var message = new TenantInvitationEmailRequestedEvent(
             invitation.Email,
@@ -73,14 +110,34 @@ public class TenantInvitationEventHandler(
             invitation.Role.ToString()
         );
 
-        await capPublisher.PublishAsync(
-            NotificationTopics.TenantInvitationEmailRequested,
-            message,
-            cancellationToken: cancellationToken);
+        try
+        {
+            logger.LogInformation(
+                "Publishing CAP message. Topic={Topic}, InvitationPublicId={InvitationPublicId}, Email={Email}",
+                NotificationTopics.TenantInvitationEmailRequested,
+                notification.InvitationPublicId,
+                invitation.Email);
 
-        logger.LogInformation(
-            "Published tenant invitation email event for invitation {InvitationPublicId} to {Email}.",
-            notification.InvitationPublicId,
-            invitation.Email);
+            await capPublisher.PublishAsync(
+                NotificationTopics.TenantInvitationEmailRequested,
+                message,
+                cancellationToken: cancellationToken);
+
+            logger.LogInformation(
+                "Published tenant invitation email event successfully. Topic={Topic}, InvitationPublicId={InvitationPublicId}, Email={Email}",
+                NotificationTopics.TenantInvitationEmailRequested,
+                notification.InvitationPublicId,
+                invitation.Email);
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(
+                ex,
+                "Failed to publish tenant invitation email event. Topic={Topic}, InvitationPublicId={InvitationPublicId}, Email={Email}",
+                NotificationTopics.TenantInvitationEmailRequested,
+                notification.InvitationPublicId,
+                invitation.Email);
+            throw;
+        }
     }
 }

@@ -62,6 +62,23 @@ builder.Services.AddDbContext<ApplicationIdentityDbContext>(options =>
 builder.Services.AddCap(options =>
 {
     options.UseEntityFramework<ApplicationIdentityDbContext>();
+    var rabbitHost = builder.Configuration["CAP:RabbitMQ:HostName"];
+    var rabbitUser = builder.Configuration["CAP:RabbitMQ:UserName"];
+    var rabbitPassword = builder.Configuration["CAP:RabbitMQ:Password"];
+    var rabbitVHost = builder.Configuration["CAP:RabbitMQ:VirtualHost"] ?? "/";
+
+    Console.WriteLine("=== IDENTITY CAP CONFIG ===");
+    Console.WriteLine($"HostName: {rabbitHost}");
+    Console.WriteLine($"UserName: {rabbitUser}");
+    Console.WriteLine($"Password empty: {string.IsNullOrWhiteSpace(rabbitPassword)}");
+    Console.WriteLine($"VirtualHost: {rabbitVHost}");
+    Console.WriteLine("===========================");
+    if (string.IsNullOrWhiteSpace(rabbitHost) ||
+        string.IsNullOrWhiteSpace(rabbitUser) ||
+        string.IsNullOrWhiteSpace(rabbitPassword))
+    {
+        throw new InvalidOperationException("CAP RabbitMQ configuration is missing.");
+    }
     options.UseRabbitMQ(cfg =>
     {
         cfg.HostName = builder.Configuration["CAP:RabbitMQ:HostName"]!;
@@ -115,7 +132,7 @@ builder.Services.AddScoped<IAuditLogPublisher, AuditLogPublisher>();
 builder.Services.AddHostedService<BootstrapAdminHostedService>();
 builder.Services.AddScoped<InternalApiKeyValidationFilter>();
 builder.Services.AddScoped<ITenantContextResolver, TenantContextResolver>();
-builder.AddFinTrackOpenTelemetry();
+// builder.AddFinTrackOpenTelemetry();
 var app = builder.Build();
 
 // Apply database migrations before serving requests, with retry.
