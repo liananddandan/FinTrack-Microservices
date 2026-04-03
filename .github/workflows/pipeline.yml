@@ -24,9 +24,12 @@ jobs:
     runs-on: ubuntu-latest
     needs: ci
     outputs:
+      web_account: ${{ steps.filter.outputs.web_account }}
       web_portal: ${{ steps.filter.outputs.web_portal }}
       web_admin: ${{ steps.filter.outputs.web_admin }}
+      platform_admin_web: ${{ steps.filter.outputs.platform_admin_web }}
       gateway: ${{ steps.filter.outputs.gateway }}
+      platform_service: ${{ steps.filter.outputs.platform_service }}
       notification_service: ${{ steps.filter.outputs.notification_service }}
       auditlog_service: ${{ steps.filter.outputs.auditlog_service }}
       identity_service: ${{ steps.filter.outputs.identity_service }}
@@ -41,12 +44,18 @@ jobs:
         uses: dorny/paths-filter@v3
         with:
           filters: |
+            web_account:
+              - 'apps/web-account-react/**'
             web_portal:
               - 'apps/web-portal-react/**'
             web_admin:
               - 'apps/web-admin-react/**'
+            platform_admin_web:
+              - 'apps/platform-admin-web/**'
             gateway:
               - 'src/Services/GatewayService/**'
+            platform_service:
+              - 'src/Services/PlatformService/**'
             notification_service:
               - 'src/Services/NotificationService/**'
             auditlog_service:
@@ -55,6 +64,11 @@ jobs:
               - 'src/Services/IdentityService/**'
             transaction_service:
               - 'src/Services/TransactionService/**'
+
+  build-web-account:
+    needs: changes
+    if: ${{ needs.changes.outputs.web_account == 'true' || github.event.inputs.force_deploy_all == 'true' }}
+    uses: ./.github/workflows/web-account-react-image.yml
 
   build-web-portal:
     needs: changes
@@ -65,12 +79,22 @@ jobs:
     needs: changes
     if: ${{ needs.changes.outputs.web_admin == 'true' || github.event.inputs.force_deploy_all == 'true' }}
     uses: ./.github/workflows/web-admin-react-image.yml
-          
+
+  build-platform-admin-web:
+    needs: changes
+    if: ${{ needs.changes.outputs.platform_admin_web == 'true' || github.event.inputs.force_deploy_all == 'true' }}
+    uses: ./.github/workflows/platform-admin-web-image.yml
+    
   build-gateway:
     needs: changes
     if: ${{ needs.changes.outputs.gateway == 'true' || github.event.inputs.force_deploy_all == 'true' }}
     uses: ./.github/workflows/gateway-image.yml
-    
+
+  build-platform-service:
+    needs: changes
+    if: ${{ needs.changes.outputs.platform_service == 'true' || github.event.inputs.force_deploy_all == 'true' }}
+    uses: ./.github/workflows/platform-service-image.yml
+
   build-notification-service:
     needs: changes
     if: ${{ needs.changes.outputs.notification_service == 'true' || github.event.inputs.force_deploy_all == 'true' }}
@@ -95,33 +119,43 @@ jobs:
     needs:
       - ci
       - changes
+      - build-web-account
       - build-web-portal
       - build-web-admin
+      - build-platform-admin-web
       - build-gateway
+      - build-platform-service
       - build-notification-service
       - build-auditlog-service
       - build-identity-service
       - build-transaction-service
-    if: ${{
-      always() &&
-      needs.ci.result == 'success' &&
-      (
-      needs.changes.outputs.web_portal == 'true' ||
-      needs.changes.outputs.web_admin == 'true' ||
-      needs.changes.outputs.gateway == 'true' ||
-      needs.changes.outputs.notification_service == 'true' ||
-      needs.changes.outputs.auditlog_service == 'true' ||
-      needs.changes.outputs.identity_service == 'true' ||
-      needs.changes.outputs.transaction_service == 'true' ||
-      github.event.inputs.force_deploy_all == 'true'
-      )
+    if: >-
+      ${{
+        always() &&
+        needs.ci.result == 'success' &&
+        (
+          needs.changes.outputs.web_account == 'true' ||
+          needs.changes.outputs.web_portal == 'true' ||
+          needs.changes.outputs.web_admin == 'true' ||
+          needs.changes.outputs.platform_admin_web == 'true' ||
+          needs.changes.outputs.gateway == 'true' ||
+          needs.changes.outputs.platform_service == 'true' ||
+          needs.changes.outputs.notification_service == 'true' ||
+          needs.changes.outputs.auditlog_service == 'true' ||
+          needs.changes.outputs.identity_service == 'true' ||
+          needs.changes.outputs.transaction_service == 'true' ||
+          github.event.inputs.force_deploy_all == 'true'
+        )
       }}
 
     uses: ./.github/workflows/cd.yml
     with:
+      deploy_web_account: ${{ needs.changes.outputs.web_account == 'true' || github.event.inputs.force_deploy_all == 'true' }}
       deploy_web_portal: ${{ needs.changes.outputs.web_portal == 'true' || github.event.inputs.force_deploy_all == 'true' }}
       deploy_web_admin: ${{ needs.changes.outputs.web_admin == 'true' || github.event.inputs.force_deploy_all == 'true' }}
+      deploy_platform_admin_web: ${{ needs.changes.outputs.platform_admin_web == 'true' || github.event.inputs.force_deploy_all == 'true' }}
       deploy_gateway: ${{ needs.changes.outputs.gateway == 'true' || github.event.inputs.force_deploy_all == 'true' }}
+      deploy_platform_service: ${{ needs.changes.outputs.platform_service == 'true' || github.event.inputs.force_deploy_all == 'true' }}
       deploy_notification_service: ${{ needs.changes.outputs.notification_service == 'true' || github.event.inputs.force_deploy_all == 'true' }}
       deploy_auditlog_service: ${{ needs.changes.outputs.auditlog_service == 'true' || github.event.inputs.force_deploy_all == 'true' }}
       deploy_identity_service: ${{ needs.changes.outputs.identity_service == 'true' || github.event.inputs.force_deploy_all == 'true' }}

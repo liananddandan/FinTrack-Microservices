@@ -252,6 +252,10 @@ public class TenantInvitationServiceTests
             .Setup(x => x.AddAsync(It.IsAny<TenantInvitation>(), It.IsAny<CancellationToken>()))
             .Callback<TenantInvitation, CancellationToken>((inv, _) => savedInvitation = inv)
             .Returns(Task.CompletedTask);
+        
+        _invitationRepoMock
+            .Setup(x => x.GetByTenantPublicIdAsync(tenantPublicId, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new List<TenantInvitation>());
 
         var result = await _sut.CreateInvitationAsync(
             tenantPublicId,

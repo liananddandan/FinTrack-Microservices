@@ -37,7 +37,7 @@ jobs:
       - name: Build and push Docker image
         uses: docker/build-push-action@v6
         with:
-          context: ./apps/web-admin-react
+          context: .
           file: ./apps/web-admin-react/Dockerfile
           push: true
           platforms: linux/amd64,linux/arm64

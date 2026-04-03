@@ -3,13 +3,22 @@ name: Deploy to VPS
 on:
   workflow_call:
     inputs:
+      deploy_web_account:
+        required: true
+        type: boolean
       deploy_web_portal:
         required: true
         type: boolean
       deploy_web_admin:
         required: true
         type: boolean
+      deploy_platform_admin_web:
+        required: true
+        type: boolean
       deploy_gateway:
+        required: true
+        type: boolean
+      deploy_platform_service:
         required: true
         type: boolean
       deploy_notification_service:
@@ -50,8 +59,18 @@ jobs:
             set -e
             cd /opt/fintrack
 
+            touch .env
+
+            if [ "${{ inputs.deploy_web_account }}" = "true" ]; then
+              if grep -q '^WEB_ACCOUNT_REACT_VERSION=' .env; then
+                sed -i 's/^WEB_ACCOUNT_REACT_VERSION=.*/WEB_ACCOUNT_REACT_VERSION=latest/' .env
+              else
+                printf "WEB_ACCOUNT_REACT_VERSION=latest\n" >> .env
+              fi
+            fi
+
             if [ "${{ inputs.deploy_web_portal }}" = "true" ]; then
-              if [ -f .env ] && grep -q '^WEB_PORTAL_REACT_VERSION=' .env; then
+              if grep -q '^WEB_PORTAL_REACT_VERSION=' .env; then
                 sed -i 's/^WEB_PORTAL_REACT_VERSION=.*/WEB_PORTAL_REACT_VERSION=latest/' .env
               else
                 printf "WEB_PORTAL_REACT_VERSION=latest\n" >> .env
@@ -59,23 +78,39 @@ jobs:
             fi
 
             if [ "${{ inputs.deploy_web_admin }}" = "true" ]; then
-              if [ -f .env ] && grep -q '^WEB_ADMIN_REACT_VERSION=' .env; then
+              if grep -q '^WEB_ADMIN_REACT_VERSION=' .env; then
                 sed -i 's/^WEB_ADMIN_REACT_VERSION=.*/WEB_ADMIN_REACT_VERSION=latest/' .env
               else
                 printf "WEB_ADMIN_REACT_VERSION=latest\n" >> .env
               fi
             fi
 
+            if [ "${{ inputs.deploy_platform_admin_web }}" = "true" ]; then
+              if grep -q '^PLATFORM_ADMIN_WEB_VERSION=' .env; then
+                sed -i 's/^PLATFORM_ADMIN_WEB_VERSION=.*/PLATFORM_ADMIN_WEB_VERSION=latest/' .env
+              else
+                printf "PLATFORM_ADMIN_WEB_VERSION=latest\n" >> .env
+              fi
+            fi
+
             if [ "${{ inputs.deploy_gateway }}" = "true" ]; then
-              if [ -f .env ] && grep -q '^GATEWAY_VERSION=' .env; then
+              if grep -q '^GATEWAY_VERSION=' .env; then
                 sed -i 's/^GATEWAY_VERSION=.*/GATEWAY_VERSION=latest/' .env
               else
                 printf "GATEWAY_VERSION=latest\n" >> .env
               fi
             fi
 
+            if [ "${{ inputs.deploy_platform_service }}" = "true" ]; then
+              if grep -q '^PLATFORM_SERVICE_VERSION=' .env; then
+                sed -i 's/^PLATFORM_SERVICE_VERSION=.*/PLATFORM_SERVICE_VERSION=latest/' .env
+              else
+                printf "PLATFORM_SERVICE_VERSION=latest\n" >> .env
+              fi
+            fi
+
             if [ "${{ inputs.deploy_notification_service }}" = "true" ]; then
-              if [ -f .env ] && grep -q '^NOTIFICATION_SERVICE_VERSION=' .env; then
+              if grep -q '^NOTIFICATION_SERVICE_VERSION=' .env; then
                 sed -i 's/^NOTIFICATION_SERVICE_VERSION=.*/NOTIFICATION_SERVICE_VERSION=latest/' .env
               else
                 printf "NOTIFICATION_SERVICE_VERSION=latest\n" >> .env
@@ -83,7 +118,7 @@ jobs:
             fi
 
             if [ "${{ inputs.deploy_auditlog_service }}" = "true" ]; then
-              if [ -f .env ] && grep -q '^AUDITLOG_SERVICE_VERSION=' .env; then
+              if grep -q '^AUDITLOG_SERVICE_VERSION=' .env; then
                 sed -i 's/^AUDITLOG_SERVICE_VERSION=.*/AUDITLOG_SERVICE_VERSION=latest/' .env
               else
                 printf "AUDITLOG_SERVICE_VERSION=latest\n" >> .env
@@ -91,7 +126,7 @@ jobs:
             fi
 
             if [ "${{ inputs.deploy_identity_service }}" = "true" ]; then
-              if [ -f .env ] && grep -q '^IDENTITY_SERVICE_VERSION=' .env; then
+              if grep -q '^IDENTITY_SERVICE_VERSION=' .env; then
                 sed -i 's/^IDENTITY_SERVICE_VERSION=.*/IDENTITY_SERVICE_VERSION=latest/' .env
               else
                 printf "IDENTITY_SERVICE_VERSION=latest\n" >> .env
@@ -99,7 +134,7 @@ jobs:
             fi
 
             if [ "${{ inputs.deploy_transaction_service }}" = "true" ]; then
-              if [ -f .env ] && grep -q '^TRANSACTION_SERVICE_VERSION=' .env; then
+              if grep -q '^TRANSACTION_SERVICE_VERSION=' .env; then
                 sed -i 's/^TRANSACTION_SERVICE_VERSION=.*/TRANSACTION_SERVICE_VERSION=latest/' .env
               else
                 printf "TRANSACTION_SERVICE_VERSION=latest\n" >> .env

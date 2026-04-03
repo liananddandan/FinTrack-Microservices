@@ -1,4 +1,4 @@
-name: Build and Push web-portal-react Image
+name: Build and Push platform-service Image
 
 on:
   workflow_call:
@@ -29,7 +29,7 @@ jobs:
         id: meta
         uses: docker/metadata-action@v5
         with:
-          images: ghcr.io/${{ github.repository_owner }}/web-portal-react
+          images: ghcr.io/${{ github.repository_owner }}/platform-service
           tags: |
             type=raw,value=latest
             type=sha
@@ -38,7 +38,7 @@ jobs:
         uses: docker/build-push-action@v6
         with:
           context: .
-          file: ./apps/web-portal-react/Dockerfile
+          file: ./src/Services/PlatformService/Dockerfile
           push: true
           platforms: linux/amd64,linux/arm64
           tags: ${{ steps.meta.outputs.tags }}
