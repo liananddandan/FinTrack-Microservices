@@ -1,12 +1,8 @@
 import { useEffect, useState } from "react"
 import { useNavigate } from "react-router-dom"
 import { useAuth } from "../hooks/useAuth"
-import {
-  getOrderSummary,
-  getOrders,
-  type OrderSummaryDto,
-  type OrderListItemDto,
-} from "../api/order-admin"
+import { orderApi } from "../lib/orderApi"
+import type { OrderListItemDto, OrderSummaryDto } from "@fintrack/web-shared"
 import {
   HiOutlineBuildingOffice2,
   HiOutlineBanknotes,
@@ -79,11 +75,11 @@ export default function Overview() {
     setErrorMessage("")
 
     const [summaryResult, ordersResult] = await Promise.allSettled([
-      getOrderSummary({
+      orderApi.getOrderSummary({
         fromUtc: undefined,
         toUtc: undefined,
       }),
-      getOrders({
+      orderApi.getOrders({
         pageNumber: 1,
         pageSize: 5,
       }),

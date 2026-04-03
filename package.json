@@ -1,0 +1,7 @@
+{
+  "name": "fintrack-workspace",
+  "private": true,
+  "workspaces": [
+    "apps/*"
+  ]
+}

@@ -16,7 +16,7 @@ namespace IdentityService.Application.Tenants.Services;
 public class TenantService(
     ILogger<TenantService> logger,
     IUnitOfWork unitOfWork,
-    ITenantRepo tenantRepo,
+    ITenantRepository tenantRepository,
     IApplicationUserRepo applicationUserRepo,
     UserManager<ApplicationUser> userManager,
     ITenantMembershipRepo tenantMembershipRepo,
@@ -37,37 +37,37 @@ public class TenantService(
         if (string.IsNullOrWhiteSpace(tenantName))
         {
             return ServiceResult<RegisterTenantDto>.Fail(
-                ResultCodes.Tenant.RegisterTenantParameterError, "Tenant name is required.");
+                ResultCodes.TenantCodes.RegisterTenantParameterError, "Tenant name is required.");
         }
 
         if (string.IsNullOrWhiteSpace(adminName))
         {
             return ServiceResult<RegisterTenantDto>.Fail(
-                ResultCodes.Tenant.RegisterTenantParameterError, "Admin name is required.");
+                ResultCodes.TenantCodes.RegisterTenantParameterError, "Admin name is required.");
         }
 
         if (string.IsNullOrWhiteSpace(adminEmail))
         {
             return ServiceResult<RegisterTenantDto>.Fail(
-                ResultCodes.Tenant.RegisterTenantParameterError, "Admin email is required.");
+                ResultCodes.TenantCodes.RegisterTenantParameterError, "Admin email is required.");
         }
 
         if (string.IsNullOrWhiteSpace(adminPassword))
         {
             return ServiceResult<RegisterTenantDto>.Fail(
-                ResultCodes.Tenant.RegisterTenantParameterError, "Admin password is required.");
+                ResultCodes.TenantCodes.RegisterTenantParameterError, "Admin password is required.");
         }
 
         await unitOfWork.BeginTransactionAsync(cancellationToken);
 
         try
         {
-            var tenantExists = await tenantRepo.IsTenantNameExistsAsync(tenantName, cancellationToken);
+            var tenantExists = await tenantRepository.IsTenantNameExistsAsync(tenantName, cancellationToken);
             if (tenantExists)
             {
                 await unitOfWork.RollbackTransactionAsync(cancellationToken);
                 return ServiceResult<RegisterTenantDto>.Fail(
-                    ResultCodes.Tenant.RegisterTenantExistedError, "Tenant name already exists.");
+                    ResultCodes.TenantCodes.RegisterTenantExistedError, "Tenant name already exists.");
             }
 
             var emailExists = await applicationUserRepo.IsEmailExistsAsync(adminEmail, cancellationToken);
@@ -75,7 +75,7 @@ public class TenantService(
             {
                 await unitOfWork.RollbackTransactionAsync(cancellationToken);
                 return ServiceResult<RegisterTenantDto>.Fail(
-                    ResultCodes.Tenant.RegisterTenantExistedError, "Admin email already exists.");
+                    ResultCodes.TenantCodes.RegisterTenantExistedError, "Admin email already exists.");
             }
 
             var tenant = new Tenant
@@ -83,7 +83,7 @@ public class TenantService(
                 Name = tenantName
             };
 
-            await tenantRepo.AddTenantAsync(tenant, cancellationToken);
+            await tenantRepository.AddTenantAsync(tenant, cancellationToken);
             await unitOfWork.SaveChangesAsync(cancellationToken);
 
             var user = new ApplicationUser
@@ -99,7 +99,7 @@ public class TenantService(
                 var error = string.Join(", ", createUserResult.Errors.Select(e => e.Description));
                 await unitOfWork.RollbackTransactionAsync(cancellationToken);
                 return ServiceResult<RegisterTenantDto>.Fail(
-                    ResultCodes.Tenant.RegisterTenantCreateError, error);
+                    ResultCodes.TenantCodes.RegisterTenantCreateError, error);
             }
 
             var membership = new TenantMembership
@@ -122,7 +122,7 @@ public class TenantService(
                     user.PublicId.ToString(),
                     user.Email!
                 ),
-                ResultCodes.Tenant.RegisterTenantSuccess,
+                ResultCodes.TenantCodes.RegisterTenantSuccess,
                 "Tenant created successfully.");
         }
         catch (Exception ex)
@@ -135,7 +135,7 @@ public class TenantService(
                 adminEmail);
 
             return ServiceResult<RegisterTenantDto>.Fail(
-                ResultCodes.Tenant.RegisterTenantException, "Tenant registration failed.");
+                ResultCodes.TenantCodes.RegisterTenantException, "Tenant registration failed.");
         }
     }
 
@@ -146,7 +146,7 @@ public class TenantService(
         if (string.IsNullOrWhiteSpace(tenantPublicId))
         {
             return ServiceResult<List<TenantMemberDto>>.Fail(
-                ResultCodes.Tenant.GetTenantMembersParameterError,
+                ResultCodes.TenantCodes.GetTenantMembersParameterError,
                 "Tenant public id is required.");
         }
 
@@ -169,7 +169,7 @@ public class TenantService(
 
             return ServiceResult<List<TenantMemberDto>>.Ok(
                 result,
-                ResultCodes.Tenant.GetTenantMembersSuccess,
+                ResultCodes.TenantCodes.GetTenantMembersSuccess,
                 "Tenant members fetched successfully.");
         }
         catch (Exception ex)
@@ -177,7 +177,7 @@ public class TenantService(
             logger.LogError(ex, "Failed to get tenant members for tenant {TenantPublicId}", tenantPublicId);
 
             return ServiceResult<List<TenantMemberDto>>.Fail(
-                ResultCodes.Tenant.GetTenantMembersException,
+                ResultCodes.TenantCodes.GetTenantMembersException,
                 "Failed to get tenant members.");
         }
     }
@@ -195,28 +195,28 @@ public class TenantService(
         if (membership == null)
         {
             return ServiceResult<bool>.Fail(
-                ResultCodes.Tenant.MemberNotFound,
+                ResultCodes.TenantCodes.MemberNotFound,
                 "Membership not found.");
         }
 
         if (!membership.IsActive)
         {
             return ServiceResult<bool>.Fail(
-                ResultCodes.Tenant.MemberAlreadyRemoved,
+                ResultCodes.TenantCodes.MemberAlreadyRemoved,
                 "Member already removed.");
         }
 
         if (membership.Tenant.PublicId.ToString() != tenantPublicId)
         {
             return ServiceResult<bool>.Fail(
-                ResultCodes.Tenant.MemberNotInTenant,
+                ResultCodes.TenantCodes.MemberNotInTenant,
                 "Member does not belong to this tenant.");
         }
 
         if (membership.User.PublicId.ToString() == operatorUserPublicId)
         {
             return ServiceResult<bool>.Fail(
-                ResultCodes.Tenant.CannotRemoveSelf,
+                ResultCodes.TenantCodes.CannotRemoveSelf,
                 "You cannot remove yourself.");
         }
 
@@ -262,7 +262,7 @@ public class TenantService(
 
         return ServiceResult<bool>.Ok(
             true,
-            ResultCodes.Tenant.MemberRemoved,
+            ResultCodes.TenantCodes.MemberRemoved,
             "Member removed successfully.");
     }
 
@@ -276,21 +276,21 @@ public class TenantService(
         if (string.IsNullOrWhiteSpace(tenantPublicId))
         {
             return ServiceResult<bool>.Fail(
-                ResultCodes.Tenant.ChangeMemberRoleParameterError,
+                ResultCodes.TenantCodes.ChangeMemberRoleParameterError,
                 "Tenant public id is required.");
         }
 
         if (string.IsNullOrWhiteSpace(membershipPublicId))
         {
             return ServiceResult<bool>.Fail(
-                ResultCodes.Tenant.ChangeMemberRoleParameterError,
+                ResultCodes.TenantCodes.ChangeMemberRoleParameterError,
                 "Membership public id is required.");
         }
 
         if (string.IsNullOrWhiteSpace(operatorUserPublicId))
         {
             return ServiceResult<bool>.Fail(
-                ResultCodes.Tenant.ChangeMemberRoleParameterError,
+                ResultCodes.TenantCodes.ChangeMemberRoleParameterError,
                 "Operator user public id is required.");
         }
 
@@ -298,7 +298,7 @@ public class TenantService(
             (targetRole != TenantRole.Admin && targetRole != TenantRole.Member))
         {
             return ServiceResult<bool>.Fail(
-                ResultCodes.Tenant.ChangeMemberRoleInvalidRole,
+                ResultCodes.TenantCodes.ChangeMemberRoleInvalidRole,
                 "Invalid role.");
         }
 
@@ -309,28 +309,28 @@ public class TenantService(
         if (membership == null)
         {
             return ServiceResult<bool>.Fail(
-                ResultCodes.Tenant.MemberNotFound,
+                ResultCodes.TenantCodes.MemberNotFound,
                 "Membership not found.");
         }
 
         if (membership.Tenant.PublicId.ToString() != tenantPublicId)
         {
             return ServiceResult<bool>.Fail(
-                ResultCodes.Tenant.MemberNotInTenant,
+                ResultCodes.TenantCodes.MemberNotInTenant,
                 "Member does not belong to this tenant.");
         }
 
         if (!membership.IsActive)
         {
             return ServiceResult<bool>.Fail(
-                ResultCodes.Tenant.ChangeMemberRoleInactiveMembership,
+                ResultCodes.TenantCodes.ChangeMemberRoleInactiveMembership,
                 "Cannot change role for an inactive member.");
         }
 
         if (membership.User.PublicId.ToString() == operatorUserPublicId)
         {
             return ServiceResult<bool>.Fail(
-                ResultCodes.Tenant.CannotChangeOwnRole,
+                ResultCodes.TenantCodes.CannotChangeOwnRole,
                 "You cannot change your own role.");
         }
 
@@ -338,7 +338,7 @@ public class TenantService(
         {
             return ServiceResult<bool>.Ok(
                 true,
-                ResultCodes.Tenant.ChangeMemberRoleNoChange,
+                ResultCodes.TenantCodes.ChangeMemberRoleNoChange,
                 "Member role is already set to the requested value.");
         }
 
@@ -351,7 +351,7 @@ public class TenantService(
             if (activeAdminCount <= 1)
             {
                 return ServiceResult<bool>.Fail(
-                    ResultCodes.Tenant.CannotDemoteLastAdmin,
+                    ResultCodes.TenantCodes.CannotDemoteLastAdmin,
                     "You cannot demote the last admin of the tenant.");
             }
         }
@@ -399,7 +399,7 @@ public class TenantService(
         
         return ServiceResult<bool>.Ok(
             true,
-            ResultCodes.Tenant.ChangeMemberRoleSuccess,
+            ResultCodes.TenantCodes.ChangeMemberRoleSuccess,
             "Member role updated successfully.");
     }
 }

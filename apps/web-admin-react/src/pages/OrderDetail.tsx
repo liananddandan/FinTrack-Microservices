@@ -1,7 +1,8 @@
 import { useEffect, useState } from "react"
 import { useNavigate, useParams } from "react-router-dom"
 import { HiOutlineArrowLeft, HiOutlineClipboardDocumentList } from "react-icons/hi2"
-import { getOrderById, type OrderDto } from "../api/order"
+import { orderApi } from "../lib/orderApi"
+import type { OrderDto } from "@fintrack/web-shared"
 
 function Badge({
   children,
@@ -67,7 +68,7 @@ export default function OrderDetail() {
     setErrorMessage("")
 
     try {
-      const result = await getOrderById(orderPublicId)
+      const result = await orderApi.getOrderById(orderPublicId)
       setDetail(result)
     } catch (err: unknown) {
       if (err instanceof Error) {

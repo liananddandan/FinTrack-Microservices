@@ -1,7 +1,8 @@
+using IdentityService.Api.Common.Extensions;
+using IdentityService.Api.Common.Filters.Attributes;
 using IdentityService.Api.Tenants.Contracts;
 using IdentityService.Application.Common.DTOs;
 using IdentityService.Application.Common.Extensions;
-using IdentityService.Application.Common.Filters.Attributes;
 using IdentityService.Application.Tenants.Commands;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;

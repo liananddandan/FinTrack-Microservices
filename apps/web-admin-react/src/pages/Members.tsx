@@ -1,11 +1,6 @@
 import { useEffect, useMemo, useState } from "react"
-import {
-  changeTenantMemberRole,
-  getTenantMembers,
-  removeTenantMember,
-  type TenantMemberDto,
-} from "../api/tenant"
-import { createTenantInvitation } from "../api/invitation"
+import { tenantApi } from "../lib/tenantApi"
+import type { TenantMemberDto, TenantMemberRole } from "@fintrack/web-shared"
 import {
   HiOutlineUsers,
   HiOutlineMagnifyingGlass,
@@ -19,7 +14,7 @@ type InviteForm = {
 }
 
 type RoleForm = {
-  role: string
+  role: TenantMemberRole
 }
 
 function Badge({
@@ -33,10 +28,10 @@ function Badge({
     tone === "success"
       ? "bg-emerald-50 text-emerald-700 border-emerald-200"
       : tone === "warning"
-      ? "bg-amber-50 text-amber-700 border-amber-200"
-      : tone === "danger"
-      ? "bg-rose-50 text-rose-700 border-rose-200"
-      : "bg-slate-100 text-slate-700 border-slate-200"
+        ? "bg-amber-50 text-amber-700 border-amber-200"
+        : tone === "danger"
+          ? "bg-rose-50 text-rose-700 border-rose-200"
+          : "bg-slate-100 text-slate-700 border-slate-200"
 
   return (
     <span
@@ -123,7 +118,7 @@ export default function Members() {
     setPageMessage("")
 
     try {
-      const result = await getTenantMembers()
+      const result = await tenantApi.getTenantMembers()
       setMembers(result)
     } catch (error: unknown) {
       if (error instanceof Error) {
@@ -170,7 +165,7 @@ export default function Members() {
     setInviteSubmitting(true)
 
     try {
-      await createTenantInvitation({
+      await tenantApi.createTenantInvitation({
         email: inviteForm.email.trim(),
         role: inviteForm.role,
       })
@@ -231,7 +226,7 @@ export default function Members() {
     setPageError("")
 
     try {
-      await removeTenantMember(member.membershipPublicId)
+      await tenantApi.removeTenantMember(member.membershipPublicId)
       setPageMessage("Member removed successfully.")
       await loadMembers()
     } catch (error: unknown) {
@@ -274,7 +269,7 @@ export default function Members() {
     setRoleSubmitting(true)
 
     try {
-      await changeTenantMemberRole(
+      await tenantApi.changeTenantMemberRole(
         selectedMember.membershipPublicId,
         roleForm.role
       )
@@ -571,7 +566,7 @@ export default function Members() {
                   value={roleForm.role}
                   onChange={(e) =>
                     setRoleForm({
-                      role: e.target.value,
+                      role: e.target.value as TenantMemberRole,
                     })
                   }
                   className="block h-11 w-full rounded-xl border border-slate-300 bg-white px-3 text-sm text-slate-800 outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100"

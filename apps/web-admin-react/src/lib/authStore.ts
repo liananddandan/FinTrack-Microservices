@@ -1,28 +1,15 @@
-import { getCurrentUser, selectTenant } from "../api/account"
+import type { CurrentUserResult, LoginMembershipDto } from "@fintrack/web-shared"
 
 const ACCOUNT_ACCESS_TOKEN_KEY = "fintrack.accountAccessToken"
 const TENANT_ACCESS_TOKEN_KEY = "fintrack.tenantAccessToken"
 const REFRESH_TOKEN_KEY = "fintrack.refreshToken"
-
-export type LoginMembershipDto = {
-  tenantPublicId: string
-  tenantName: string
-  role: string
-}
-
-export type UserProfile = {
-  userPublicId: string
-  email: string
-  userName?: string
-  memberships?: LoginMembershipDto[]
-}
 
 type AuthState = {
   accountAccessToken: string
   tenantAccessToken: string
   refreshToken: string
   memberships: LoginMembershipDto[]
-  profile: UserProfile | null
+  profile: CurrentUserResult | null
 }
 
 let state: AuthState = {
@@ -42,7 +29,10 @@ function notify() {
 export const authStore = {
   subscribe(listener: () => void) {
     listeners.add(listener)
-    return () => listeners.delete(listener)
+
+    return () => {
+      listeners.delete(listener)
+    }
   },
 
   getState(): AuthState {
@@ -76,33 +66,27 @@ export const authStore = {
   },
 
   get currentMembership(): LoginMembershipDto | null {
-    return this.adminMemberships.length > 0
-      ? this.adminMemberships[0] ?? null
-      : null
+    if (this.adminMemberships.length === 1) {
+      return this.adminMemberships[0]
+    }
+
+    if (this.resolvedMemberships.length === 1) {
+      return this.resolvedMemberships[0]
+    }
+
+    return null
   },
 
-  get currentTenantName(): string {
+  get currentTenantName() {
     return this.currentMembership?.tenantName ?? ""
   },
 
-  get currentTenantPublicId(): string {
+  get currentTenantPublicId() {
     return this.currentMembership?.tenantPublicId ?? ""
   },
 
-  get isAdmin(): boolean {
+  get isAdmin() {
     return this.adminMemberships.length > 0
-  },
-
-  async initialize() {
-    if (!state.accountAccessToken) return
-    if (state.profile) return
-
-    try {
-      const profile = await getCurrentUser()
-      this.setProfile(profile)
-    } catch {
-      this.logout()
-    }
   },
 
   setAccountTokens(accessToken: string, refreshToken: string) {
@@ -145,43 +129,12 @@ export const authStore = {
     notify()
   },
 
-  setProfile(profile: UserProfile | null) {
+  setProfile(profile: CurrentUserResult | null) {
     state = {
       ...state,
       profile,
     }
     notify()
-  },
-
-  clearProfile() {
-    state = {
-      ...state,
-      profile: null,
-    }
-    notify()
-  },
-
-  async activateSingleAdminTenantIfPossible(): Promise<boolean> {
-    const adminMemberships = this.adminMemberships
-
-    if (adminMemberships.length !== 1) {
-      this.clearTenantAccessToken()
-      return false
-    }
-
-    const firstMembership = adminMemberships[0]
-
-    if (!firstMembership) {
-      this.clearTenantAccessToken()
-      return false
-    }
-
-    const tenantToken = await selectTenant({
-      tenantPublicId: firstMembership.tenantPublicId,
-    })
-
-    this.setTenantAccessToken(tenantToken)
-    return true
   },
 
   logout() {
@@ -196,6 +149,15 @@ export const authStore = {
     localStorage.removeItem(ACCOUNT_ACCESS_TOKEN_KEY)
     localStorage.removeItem(TENANT_ACCESS_TOKEN_KEY)
     localStorage.removeItem(REFRESH_TOKEN_KEY)
+    notify()
+  },
+
+  clearProfile() {
+    state = {
+      ...state,
+      profile: null,
+    }
+
     notify()
   },
 }

@@ -1,9 +1,8 @@
 import { useEffect, useMemo, useState } from "react"
 import {
-  getTenantInvitations,
-  resendTenantInvitation,
   type TenantInvitationDto,
-} from "../api/invitation"
+} from "@fintrack/web-shared"
+import { tenantApi } from "../lib/tenantApi"
 import {
   HiOutlineEnvelope,
   HiOutlineMagnifyingGlass,
@@ -91,7 +90,7 @@ export default function Invitations() {
     setPageMessage("")
 
     try {
-      const result = await getTenantInvitations()
+      const result = await tenantApi.getTenantInvitations()
       setInvitations(result)
     } catch (error: unknown) {
       if (error instanceof Error) {
@@ -110,7 +109,7 @@ export default function Invitations() {
     setPageMessage("")
 
     try {
-      await resendTenantInvitation(item.invitationPublicId)
+      await tenantApi.resendTenantInvitation(item.invitationPublicId)
       setPageMessage("Invitation email resent successfully.")
     } catch (error: unknown) {
       if (error instanceof Error) {

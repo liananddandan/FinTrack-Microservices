@@ -1,27 +1,28 @@
-version: '3.8'
-
 services:
   mysql:
     image: mysql:8.0
-    container_name: mysql-test
+    container_name: mysql-dev
     ports:
       - "3307:3306"
     environment:
       MYSQL_ROOT_PASSWORD: 123456
-      MYSQL_DATABASE: identity_test
+      MYSQL_DATABASE: fintrack_identity
+    volumes:
+      - mysql_data:/var/lib/mysql
+      - ./docker/mysql/init:/docker-entrypoint-initdb.d
     healthcheck:
-      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-p123456"]
       interval: 10s
       timeout: 5s
-      retries: 5
-      
+      retries: 10
+
   redis:
     image: redis:latest
     container_name: redis-dev
     ports:
       - "6379:6379"
     restart: unless-stopped
-  
+
   rabbitmq:
     image: rabbitmq:3-management
     container_name: rabbitmq-dev
@@ -29,17 +30,225 @@ services:
       - "5672:5672"
       - "15672:15672"
     environment:
-      RABBITMQ_DEFAULT_USER: guest
-      RABBITMQ_DEFAULT_PASS: guest
+      RABBITMQ_DEFAULT_USER: fintrack
+      RABBITMQ_DEFAULT_PASS: fintrack123
     healthcheck:
-      test: [ "CMD", "rabbitmq-diagnostics", "ping" ]
+      test: ["CMD", "rabbitmq-diagnostics", "ping"]
       interval: 10s
       timeout: 5s
-      retries: 5
-  
+      retries: 10
+
   mailhog:
     image: mailhog/mailhog
-    container_name: mailhog
+    container_name: mailhog-dev
     ports:
-      - "1025:1025"   # SMTP port
-      - "8025:8025"   # Web UI port
+      - "1025:1025"
+      - "8025:8025"
+
+  lgtm:
+    image: grafana/otel-lgtm:latest
+    container_name: fintrack-lgtm
+    ports:
+      - "3002:3000"
+      - "4317:4317"
+      - "4318:4318"
+    volumes:
+      - lgtm_data:/data
+
+  identity-service:
+    build:
+      context: .
+      dockerfile: src/Services/IdentityService/Dockerfile
+    container_name: fintrack-identity-dev
+    depends_on:
+      mysql:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+      redis:
+        condition: service_started
+      mailhog:
+        condition: service_started
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      ASPNETCORE_URLS: http://+:8080
+      Frontend__PortalBaseUrl: http://fintrack.chenlis.local
+      ConnectionStrings__DefaultConnection: server=mysql;port=3306;database=fintrack_identity;user=root;password=123456
+      ConnectionStrings__Redis: redis:6379
+      CAP__RabbitMQ__HostName: rabbitmq
+      CAP__RabbitMQ__UserName: fintrack
+      CAP__RabbitMQ__Password: fintrack123
+      CAP__DefaultGroup: identity.service
+      SMTP__Host: mailhog
+      SMTP__Port: 1025
+    ports:
+      - "5100:8080"
+
+  transaction-service:
+    build:
+      context: .
+      dockerfile: src/Services/TransactionService/Dockerfile
+    container_name: fintrack-transaction-dev
+    depends_on:
+      mysql:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      ASPNETCORE_URLS: http://+:8080
+      ConnectionStrings__DefaultConnection: server=mysql;port=3306;database=fintrack_transaction;user=root;password=123456
+      CAP__RabbitMQ__HostName: rabbitmq
+      CAP__RabbitMQ__UserName: fintrack
+      CAP__RabbitMQ__Password: fintrack123
+      CAP__DefaultGroup: transaction.service
+    ports:
+      - "5101:8080"
+
+  auditlog-service:
+    build:
+      context: .
+      dockerfile: src/Services/AuditLogService/Dockerfile
+    container_name: fintrack-auditlog-dev
+    depends_on:
+      mysql:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      ASPNETCORE_URLS: http://+:8080
+      ConnectionStrings__DefaultConnection: server=mysql;port=3306;database=fintrack_audit;user=root;password=123456
+      CAP__RabbitMQ__HostName: rabbitmq
+      CAP__RabbitMQ__UserName: fintrack
+      CAP__RabbitMQ__Password: fintrack123
+      CAP__DefaultGroup: audit-log.service
+    ports:
+      - "5102:8080"
+
+  notification-service:
+    build:
+      context: .
+      dockerfile: src/Services/NotificationService/Dockerfile
+    container_name: fintrack-notification-dev
+    depends_on:
+      mysql:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+      mailhog:
+        condition: service_started
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      ASPNETCORE_URLS: http://+:8080
+      CAP__RabbitMQ__HostName: rabbitmq
+      CAP__RabbitMQ__UserName: fintrack
+      CAP__RabbitMQ__Password: fintrack123
+      CAP__DefaultGroup: notification.service
+      SMTP__Host: mailhog
+      SMTP__Port: 1025
+      ConnectionStrings__DefaultConnection: server=mysql;port=3306;database=fintrack_notification;user=root;password=123456
+    ports:
+      - "5103:8080"
+
+  platform-service:
+    build:
+      context: .
+      dockerfile: src/Services/PlatformService/Dockerfile
+    container_name: fintrack-platform-dev
+    depends_on:
+      mysql:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      ASPNETCORE_URLS: http://+:8080
+      ConnectionStrings__DefaultConnection: server=mysql;port=3306;database=fintrack_platform;user=root;password=123456
+      CAP__RabbitMQ__HostName: rabbitmq
+      CAP__RabbitMQ__UserName: fintrack
+      CAP__RabbitMQ__Password: fintrack123
+      CAP__DefaultGroup: platform.service
+    ports:
+      - "5104:8080"
+
+  gateway:
+    build:
+      context: .
+      dockerfile: src/Services/GatewayService/Dockerfile
+    container_name: fintrack-gateway-dev
+    depends_on:
+      identity-service:
+        condition: service_started
+      transaction-service:
+        condition: service_started
+      auditlog-service:
+        condition: service_started
+      notification-service:
+        condition: service_started
+      platform-service:
+        condition: service_started
+      redis:
+        condition: service_started
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      ASPNETCORE_URLS: http://+:8080
+      ConnectionStrings__Redis: redis:6379
+      ReverseProxy__Clusters__identityCluster__Destinations__identity__Address: http://identity-service:8080/
+      ReverseProxy__Clusters__transactionCluster__Destinations__transaction__Address: http://transaction-service:8080/
+      ReverseProxy__Clusters__auditlogCluster__Destinations__destination1__Address: http://auditlog-service:8080/
+      ReverseProxy__Clusters__platformCluster__Destinations__platform__Address: http://platform-service:8080/
+      OpenApiServices__Identity: http://identity-service:8080
+      OpenApiServices__Transaction: http://transaction-service:8080
+      OpenApiServices__AuditLog: http://auditlog-service:8080
+      OpenApiServices__Platform: http://platform-service:8080
+    ports:
+      - "5193:8080"
+
+  web-account-react:
+    build:
+      context: .
+      dockerfile: apps/web-account-react/Dockerfile
+    container_name: fintrack-web-account-dev
+    depends_on:
+      gateway:
+        condition: service_started
+    ports:
+      - "3010:80"
+
+  web-portal-react:
+    build:
+      context: .
+      dockerfile: apps/web-portal-react/Dockerfile
+    container_name: fintrack-web-portal-dev
+    depends_on:
+      gateway:
+        condition: service_started
+    ports:
+      - "3011:80"
+
+  web-admin-react:
+    build:
+      context: .
+      dockerfile: ./apps/web-admin-react/Dockerfile
+    container_name: fintrack-web-admin-dev
+    depends_on:
+      gateway:
+        condition: service_started
+    ports:
+      - "3012:80"
+
+  platform-admin-web:
+    build:
+      context: .
+      dockerfile: ./apps/platform-admin-web/Dockerfile
+    container_name: fintrack-web-platform-admin-dev
+    depends_on:
+      gateway:
+        condition: service_started
+    ports:
+      - "3013:80"
+
+volumes:
+  mysql_data:
+  lgtm_data:

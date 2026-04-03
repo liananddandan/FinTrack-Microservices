@@ -14,7 +14,7 @@ using SharedKernel.Topics;
 namespace IdentityService.Application.Tenants.Services;
 
 public class TenantInvitationService(
-    ITenantRepo tenantRepo,
+    ITenantRepository tenantRepository,
     IApplicationUserRepo userRepo,
     ITenantMembershipRepo membershipRepo,
     ITenantInvitationRepo invitationRepo,
@@ -30,7 +30,7 @@ public class TenantInvitationService(
         if (!Guid.TryParse(publicId, out var parsedPublicId))
         {
             return ServiceResult<TenantInvitation>.Fail(
-                ResultCodes.Tenant.InvitationInvalidPublicId,
+                ResultCodes.TenantCodes.InvitationInvalidPublicId,
                 "Invalid invitation public id.");
         }
 
@@ -41,13 +41,13 @@ public class TenantInvitationService(
         if (invitation == null)
         {
             return ServiceResult<TenantInvitation>.Fail(
-                ResultCodes.Tenant.InvitationNotFound,
+                ResultCodes.TenantCodes.InvitationNotFound,
                 "Invitation not found.");
         }
 
         return ServiceResult<TenantInvitation>.Ok(
             invitation,
-            ResultCodes.Tenant.InvitationSuccess,
+            ResultCodes.TenantCodes.InvitationSuccess,
             "Invitation retrieved.");
     }
 
@@ -73,46 +73,74 @@ public class TenantInvitationService(
         if (string.IsNullOrWhiteSpace(tenantPublicId))
         {
             return ServiceResult<bool>.Fail(
-                ResultCodes.Tenant.CreateInvitationParameterError,
+                ResultCodes.TenantCodes.CreateInvitationParameterError,
                 "Tenant public id is required.");
         }
 
         if (string.IsNullOrWhiteSpace(email))
         {
             return ServiceResult<bool>.Fail(
-                ResultCodes.Tenant.CreateInvitationParameterError,
+                ResultCodes.TenantCodes.CreateInvitationParameterError,
                 "Email is required.");
         }
 
         if (string.IsNullOrWhiteSpace(role))
         {
             return ServiceResult<bool>.Fail(
-                ResultCodes.Tenant.CreateInvitationParameterError,
+                ResultCodes.TenantCodes.CreateInvitationParameterError,
                 "Role is required.");
         }
 
         email = email.Trim().ToLowerInvariant();
 
+        logger.LogInformation(
+            "CreateInvitationAsync started. TenantPublicId={TenantPublicId}, Email={Email}, Role={Role}, InvitedByUserPublicId={InvitedByUserPublicId}",
+            tenantPublicId,
+            email,
+            role,
+            invitedByUserPublicId);
+
         try
         {
-            var tenant = await tenantRepo.GetTenantByPublicIdAsync(
+            var tenant = await tenantRepository.GetTenantByPublicIdAsync(
                 tenantPublicId,
                 cancellationToken);
 
             if (tenant == null)
             {
+                logger.LogWarning(
+                    "CreateInvitationAsync failed because tenant was not found. TenantPublicId={TenantPublicId}",
+                    tenantPublicId);
+
                 return ServiceResult<bool>.Fail(
-                    ResultCodes.Tenant.CreateInvitationTenantNotFound,
+                    ResultCodes.TenantCodes.CreateInvitationTenantNotFound,
                     "Tenant not found.");
             }
+
+            logger.LogInformation(
+                "Tenant found for invitation. TenantId={TenantId}, TenantPublicId={TenantPublicId}, TenantName={TenantName}",
+                tenant.Id,
+                tenant.PublicId,
+                tenant.Name);
 
             var user = await userRepo.GetUserByEmailAsync(email, cancellationToken);
             if (user == null)
             {
+                logger.LogWarning(
+                    "CreateInvitationAsync failed because invited user was not found. TenantPublicId={TenantPublicId}, Email={Email}",
+                    tenantPublicId,
+                    email);
+
                 return ServiceResult<bool>.Fail(
-                    ResultCodes.Tenant.CreateInvitationUserNotFound,
+                    ResultCodes.TenantCodes.CreateInvitationUserNotFound,
                     "User not found.");
             }
+
+            logger.LogInformation(
+                "Invited user found. UserId={UserId}, UserPublicId={UserPublicId}, Email={Email}",
+                user.Id,
+                user.PublicId,
+                user.Email);
 
             var existingMembership = await membershipRepo.GetMembershipAsync(
                 tenant.Id,
@@ -121,15 +149,26 @@ public class TenantInvitationService(
 
             if (existingMembership != null)
             {
+                logger.LogWarning(
+                    "CreateInvitationAsync blocked because user already belongs to tenant. TenantPublicId={TenantPublicId}, Email={Email}, MembershipPublicId={MembershipPublicId}, IsActive={IsActive}",
+                    tenantPublicId,
+                    email,
+                    existingMembership.PublicId,
+                    existingMembership.IsActive);
+
                 return ServiceResult<bool>.Fail(
-                    ResultCodes.Tenant.CreateInvitationUserAlreadyExists,
+                    ResultCodes.TenantCodes.CreateInvitationUserAlreadyExists,
                     "User already belongs to this tenant.");
             }
 
-            if (!Guid.TryParse(invitedByUserPublicId, out var inviterPublicId))
+            if (!Guid.TryParse(invitedByUserPublicId, out _))
             {
+                logger.LogWarning(
+                    "CreateInvitationAsync failed because inviter public id is invalid. InvitedByUserPublicId={InvitedByUserPublicId}",
+                    invitedByUserPublicId);
+
                 return ServiceResult<bool>.Fail(
-                    ResultCodes.Tenant.CreateInvitationParameterError,
+                    ResultCodes.TenantCodes.CreateInvitationParameterError,
                     "Invalid inviter.");
             }
 
@@ -139,16 +178,47 @@ public class TenantInvitationService(
 
             if (inviter == null)
             {
+                logger.LogWarning(
+                    "CreateInvitationAsync failed because inviter was not found. InvitedByUserPublicId={InvitedByUserPublicId}",
+                    invitedByUserPublicId);
+
                 return ServiceResult<bool>.Fail(
-                    ResultCodes.Tenant.CreateInvitationInviterNotFound,
+                    ResultCodes.TenantCodes.CreateInvitationInviterNotFound,
                     "Inviter not found.");
             }
 
             if (!Enum.TryParse<TenantRole>(role, true, out var parsedRole))
             {
+                logger.LogWarning(
+                    "CreateInvitationAsync failed because role is invalid. Role={Role}",
+                    role);
+
                 return ServiceResult<bool>.Fail(
-                    ResultCodes.Tenant.CreateInvitationParameterError,
+                    ResultCodes.TenantCodes.CreateInvitationParameterError,
                     "Invalid role.");
+            }
+
+            var existingPendingInvitations = await invitationRepo.GetByTenantPublicIdAsync(
+                tenantPublicId,
+                cancellationToken);
+
+            var duplicatedPendingInvitation = existingPendingInvitations.FirstOrDefault(x =>
+                x.Email.ToLower() == email &&
+                x.Status == InvitationStatus.Pending &&
+                x.ExpiredAt > DateTime.UtcNow);
+
+            if (duplicatedPendingInvitation != null)
+            {
+                logger.LogWarning(
+                    "CreateInvitationAsync blocked because a pending invitation already exists. TenantPublicId={TenantPublicId}, Email={Email}, InvitationPublicId={InvitationPublicId}, ExpiredAt={ExpiredAt}",
+                    tenantPublicId,
+                    email,
+                    duplicatedPendingInvitation.PublicId,
+                    duplicatedPendingInvitation.ExpiredAt);
+
+                return ServiceResult<bool>.Fail(
+                    ResultCodes.TenantCodes.CreateInvitationAlreadyPending,
+                    "A pending invitation already exists for this user.");
             }
 
             var invitation = new TenantInvitation
@@ -162,13 +232,45 @@ public class TenantInvitationService(
                 CreatedByUserId = inviter.Id
             };
 
+            logger.LogInformation(
+                "Creating tenant invitation entity. TenantPublicId={TenantPublicId}, Email={Email}, Role={Role}, InviterPublicId={InviterPublicId}",
+                tenantPublicId,
+                email,
+                parsedRole,
+                inviter.PublicId);
+
             await invitationRepo.AddAsync(invitation, cancellationToken);
             await unitOfWork.SaveChangesAsync(cancellationToken);
-            await mediator.Publish(new TenantInvitationCreatedEvent(
-                invitation.PublicId.ToString(),
+
+            logger.LogInformation(
+                "Tenant invitation saved successfully. InvitationPublicId={InvitationPublicId}, TenantPublicId={TenantPublicId}, Email={Email}",
+                invitation.PublicId,
+                tenantPublicId,
+                email);
+
+            logger.LogInformation(
+                "Publishing TenantInvitationCreatedEvent. InvitationPublicId={InvitationPublicId}, TenantName={TenantName}, Email={Email}",
+                invitation.PublicId,
                 tenant.Name,
-                email
-            ), cancellationToken);
+                email);
+
+            await mediator.Publish(
+                new TenantInvitationCreatedEvent(
+                    invitation.PublicId.ToString(),
+                    tenant.Name,
+                    email
+                ),
+                cancellationToken);
+
+            logger.LogInformation(
+                "TenantInvitationCreatedEvent published successfully. InvitationPublicId={InvitationPublicId}, Email={Email}",
+                invitation.PublicId,
+                email);
+
+            logger.LogInformation(
+                "Publishing audit log for invitation creation. InvitationPublicId={InvitationPublicId}, Email={Email}",
+                invitation.PublicId,
+                invitation.Email);
 
             await auditLogPublisher.PublishAsync(
                 AuditLogTopics.MembershipInvited,
@@ -192,9 +294,14 @@ public class TenantInvitationService(
                 },
                 cancellationToken);
 
+            logger.LogInformation(
+                "Invitation audit log published successfully. InvitationPublicId={InvitationPublicId}, Email={Email}",
+                invitation.PublicId,
+                invitation.Email);
+
             return ServiceResult<bool>.Ok(
                 true,
-                ResultCodes.Tenant.CreateInvitationSuccess,
+                ResultCodes.TenantCodes.CreateInvitationSuccess,
                 "Invitation created successfully.");
         }
         catch (Exception ex)
@@ -206,7 +313,7 @@ public class TenantInvitationService(
                 tenantPublicId);
 
             return ServiceResult<bool>.Fail(
-                ResultCodes.Tenant.CreateInvitationException,
+                ResultCodes.TenantCodes.CreateInvitationException,
                 "Failed to create invitation.");
         }
     }
@@ -223,7 +330,7 @@ public class TenantInvitationService(
         if (!invitationResult.Success || invitationResult.Data == null)
         {
             return ServiceResult<ResolveTenantInvitationDto>.Fail(
-                ResultCodes.Tenant.ResolveInvitationNotFound,
+                ResultCodes.TenantCodes.ResolveInvitationNotFound,
                 "Invitation not found.");
         }
 
@@ -233,21 +340,21 @@ public class TenantInvitationService(
             parsedVersion != invitation.Version)
         {
             return ServiceResult<ResolveTenantInvitationDto>.Fail(
-                ResultCodes.Tenant.ResolveInvitationVersionInvalid,
+                ResultCodes.TenantCodes.ResolveInvitationVersionInvalid,
                 "Invitation version is invalid.");
         }
 
         if (invitation.Status != InvitationStatus.Pending)
         {
             return ServiceResult<ResolveTenantInvitationDto>.Fail(
-                ResultCodes.Tenant.ResolveInvitationStatusInvalid,
+                ResultCodes.TenantCodes.ResolveInvitationStatusInvalid,
                 "Invitation is no longer available.");
         }
 
         if (invitation.ExpiredAt <= DateTime.UtcNow)
         {
             return ServiceResult<ResolveTenantInvitationDto>.Fail(
-                ResultCodes.Tenant.ResolveInvitationExpired,
+                ResultCodes.TenantCodes.ResolveInvitationExpired,
                 "Invitation has expired.");
         }
 
@@ -261,7 +368,7 @@ public class TenantInvitationService(
 
         return ServiceResult<ResolveTenantInvitationDto>.Ok(
             result,
-            ResultCodes.Tenant.ResolveInvitationSuccess,
+            ResultCodes.TenantCodes.ResolveInvitationSuccess,
             "Invitation resolved successfully.");
     }
 
@@ -277,7 +384,7 @@ public class TenantInvitationService(
         if (!invitationResult.Success || invitationResult.Data == null)
         {
             return ServiceResult<bool>.Fail(
-                ResultCodes.Tenant.AcceptInvitationNotFound,
+                ResultCodes.TenantCodes.AcceptInvitationNotFound,
                 "Invitation not found.");
         }
 
@@ -287,21 +394,21 @@ public class TenantInvitationService(
             parsedVersion != invitation.Version)
         {
             return ServiceResult<bool>.Fail(
-                ResultCodes.Tenant.AcceptInvitationVersionInvalid,
+                ResultCodes.TenantCodes.AcceptInvitationVersionInvalid,
                 "Invitation version is invalid.");
         }
 
         if (invitation.Status != InvitationStatus.Pending)
         {
             return ServiceResult<bool>.Fail(
-                ResultCodes.Tenant.AcceptInvitationStatusInvalid,
+                ResultCodes.TenantCodes.AcceptInvitationStatusInvalid,
                 "Invitation is no longer available.");
         }
 
         if (invitation.ExpiredAt <= DateTime.UtcNow)
         {
             return ServiceResult<bool>.Fail(
-                ResultCodes.Tenant.AcceptInvitationExpired,
+                ResultCodes.TenantCodes.AcceptInvitationExpired,
                 "Invitation has expired.");
         }
 
@@ -309,7 +416,7 @@ public class TenantInvitationService(
         if (user == null)
         {
             return ServiceResult<bool>.Fail(
-                ResultCodes.Tenant.AcceptInvitationUserNotFound,
+                ResultCodes.TenantCodes.AcceptInvitationUserNotFound,
                 "Invited user not found.");
         }
 
@@ -323,7 +430,7 @@ public class TenantInvitationService(
             if (existingMembership.IsActive)
             {
                 return ServiceResult<bool>.Fail(
-                    ResultCodes.Tenant.AcceptInvitationMembershipExists,
+                    ResultCodes.TenantCodes.AcceptInvitationMembershipExists,
                     "User already belongs to this tenant.");
             }
 
@@ -371,7 +478,7 @@ public class TenantInvitationService(
             cancellationToken);
         return ServiceResult<bool>.Ok(
             true,
-            ResultCodes.Tenant.AcceptInvitationSuccess,
+            ResultCodes.TenantCodes.AcceptInvitationSuccess,
             "Invitation accepted successfully.");
     }
 
@@ -382,7 +489,7 @@ public class TenantInvitationService(
         if (string.IsNullOrWhiteSpace(tenantPublicId))
         {
             return ServiceResult<List<TenantInvitationDto>>.Fail(
-                ResultCodes.Tenant.GetTenantInvitationsParameterError,
+                ResultCodes.TenantCodes.GetTenantInvitationsParameterError,
                 "Tenant public id is required.");
         }
 
@@ -407,7 +514,7 @@ public class TenantInvitationService(
 
             return ServiceResult<List<TenantInvitationDto>>.Ok(
                 result,
-                ResultCodes.Tenant.GetTenantInvitationsSuccess,
+                ResultCodes.TenantCodes.GetTenantInvitationsSuccess,
                 "Tenant invitations fetched successfully.");
         }
         catch (Exception ex)
@@ -418,7 +525,7 @@ public class TenantInvitationService(
                 tenantPublicId);
 
             return ServiceResult<List<TenantInvitationDto>>.Fail(
-                ResultCodes.Tenant.GetTenantInvitationsException,
+                ResultCodes.TenantCodes.GetTenantInvitationsException,
                 "Failed to get tenant invitations.");
         }
     }
@@ -431,14 +538,14 @@ public class TenantInvitationService(
         if (string.IsNullOrWhiteSpace(tenantPublicId))
         {
             return ServiceResult<bool>.Fail(
-                ResultCodes.Tenant.ResendInvitationParameterError,
+                ResultCodes.TenantCodes.ResendInvitationParameterError,
                 "Tenant public id is required.");
         }
 
         if (string.IsNullOrWhiteSpace(invitationPublicId))
         {
             return ServiceResult<bool>.Fail(
-                ResultCodes.Tenant.ResendInvitationParameterError,
+                ResultCodes.TenantCodes.ResendInvitationParameterError,
                 "Invitation public id is required.");
         }
 
@@ -451,7 +558,7 @@ public class TenantInvitationService(
             if (!invitationResult.Success || invitationResult.Data == null)
             {
                 return ServiceResult<bool>.Fail(
-                    ResultCodes.Tenant.ResendInvitationNotFound,
+                    ResultCodes.TenantCodes.ResendInvitationNotFound,
                     "Invitation not found.");
             }
 
@@ -463,21 +570,21 @@ public class TenantInvitationService(
                     StringComparison.OrdinalIgnoreCase))
             {
                 return ServiceResult<bool>.Fail(
-                    ResultCodes.Tenant.ResendInvitationNotFound,
+                    ResultCodes.TenantCodes.ResendInvitationNotFound,
                     "Invitation not found.");
             }
 
             if (invitation.Status != InvitationStatus.Pending)
             {
                 return ServiceResult<bool>.Fail(
-                    ResultCodes.Tenant.ResendInvitationStatusInvalid,
+                    ResultCodes.TenantCodes.ResendInvitationStatusInvalid,
                     "Only pending invitations can be resent.");
             }
 
             if (invitation.ExpiredAt <= DateTime.UtcNow)
             {
                 return ServiceResult<bool>.Fail(
-                    ResultCodes.Tenant.ResendInvitationExpired,
+                    ResultCodes.TenantCodes.ResendInvitationExpired,
                     "Invitation has expired.");
             }
 
@@ -495,7 +602,7 @@ public class TenantInvitationService(
                 if (existingMembership != null)
                 {
                     return ServiceResult<bool>.Fail(
-                        ResultCodes.Tenant.ResendInvitationMembershipExists,
+                        ResultCodes.TenantCodes.ResendInvitationMembershipExists,
                         "User already belongs to this tenant.");
                 }
             }
@@ -537,7 +644,7 @@ public class TenantInvitationService(
                 cancellationToken);
             return ServiceResult<bool>.Ok(
                 true,
-                ResultCodes.Tenant.ResendInvitationSuccess,
+                ResultCodes.TenantCodes.ResendInvitationSuccess,
                 "Invitation email resent successfully.");
         }
         catch (Exception ex)
@@ -549,7 +656,7 @@ public class TenantInvitationService(
                 tenantPublicId);
 
             return ServiceResult<bool>.Fail(
-                ResultCodes.Tenant.ResendInvitationException,
+                ResultCodes.TenantCodes.ResendInvitationException,
                 "Failed to resend invitation.");
         }
     }

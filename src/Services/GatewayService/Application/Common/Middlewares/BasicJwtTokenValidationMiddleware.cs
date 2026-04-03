@@ -6,24 +6,13 @@ using StackExchange.Redis;
 
 namespace GatewayService.Application.Common.Middlewares;
 
-public class BasicJwtTokenValidationMiddleware
+public class BasicJwtTokenValidationMiddleware(
+    RequestDelegate next,
+    IOptions<AuthenticationOptions> authOptions,
+    IConnectionMultiplexer redis,
+    ILogger<BasicJwtTokenValidationMiddleware> logger)
 {
-    private readonly RequestDelegate _next;
-    private readonly List<string> _authWhiteList;
-    private readonly IConnectionMultiplexer _redis;
-    private readonly ILogger<BasicJwtTokenValidationMiddleware> _logger;
-
-    public BasicJwtTokenValidationMiddleware(
-        RequestDelegate next,
-        IOptions<AuthenticationOptions> authOptions,
-        IConnectionMultiplexer redis,
-        ILogger<BasicJwtTokenValidationMiddleware> logger)
-    {
-        _next = next;
-        _authWhiteList = authOptions.Value.AuthWhiteList;
-        _redis = redis;
-        _logger = logger;
-    }
+    private readonly List<string> _authWhiteList = authOptions.Value.AuthWhiteList;
 
     public async Task Invoke(HttpContext context)
     {
@@ -33,7 +22,7 @@ public class BasicJwtTokenValidationMiddleware
             requestPath.StartsWithSegments("/api/openapi") ||
             requestPath == "/favicon.ico")
         {
-            await _next(context);
+            await next(context);
             return;
         }
         
@@ -41,8 +30,8 @@ public class BasicJwtTokenValidationMiddleware
 
         if (_authWhiteList.Any(p => MatchPath(p, path)))
         {
-            _logger.LogDebug("Gateway auth skipped for whitelisted path: {Path}", path);
-            await _next(context);
+            logger.LogDebug("Gateway auth skipped for whitelisted path: {Path}", path);
+            await next(context);
             return;
         }
 
@@ -50,7 +39,7 @@ public class BasicJwtTokenValidationMiddleware
 
         if (string.IsNullOrWhiteSpace(token))
         {
-            _logger.LogWarning("Gateway rejected request: missing Authorization header. Path={Path}", path);
+            logger.LogWarning("Gateway rejected request: missing Authorization header. Path={Path}", path);
             context.Response.Headers["X-Auth-Source"] = "Gateway";
             context.Response.StatusCode = StatusCodes.Status401Unauthorized;
             await context.Response.WriteAsync("Unauthorized, Invalid or expired token");
@@ -59,8 +48,8 @@ public class BasicJwtTokenValidationMiddleware
 
         if (token.StartsWith("Invite ", StringComparison.OrdinalIgnoreCase))
         {
-            _logger.LogDebug("Gateway passing invitation token downstream. Path={Path}", path);
-            await _next(context);
+            logger.LogDebug("Gateway passing invitation token downstream. Path={Path}", path);
+            await next(context);
             return;
         }
 
@@ -68,7 +57,7 @@ public class BasicJwtTokenValidationMiddleware
         {
             if (!context.User.Identity?.IsAuthenticated ?? true)
             {
-                _logger.LogWarning("Gateway rejected request: unauthenticated principal. Path={Path}", path);
+                logger.LogWarning("Gateway rejected request: unauthenticated principal. Path={Path}", path);
                 context.Response.Headers["X-Auth-Source"] = "Gateway";
                 context.Response.StatusCode = StatusCodes.Status401Unauthorized;
                 await context.Response.WriteAsync("Unauthorized, Invalid or expired token");
@@ -82,7 +71,7 @@ public class BasicJwtTokenValidationMiddleware
             var tenantPublicId = context.User.FindFirst(JwtClaimNames.Tenant)?.Value;
             var userRoleInTenant = context.User.FindFirst(JwtClaimNames.Role)?.Value;
 
-            _logger.LogInformation(
+            logger.LogInformation(
                 "Gateway token claims. Path={Path}, UserPublicId={UserPublicId}, TokenType={TokenType}, TenantPublicId={TenantPublicId}, Role={Role}, JwtVersion={JwtVersion}",
                 path, userPublicId, tokenType, tenantPublicId, userRoleInTenant, jwtVersion);
 
@@ -90,7 +79,7 @@ public class BasicJwtTokenValidationMiddleware
                 || string.IsNullOrEmpty(jwtVersion)
                 || string.IsNullOrEmpty(tokenType))
             {
-                _logger.LogWarning(
+                logger.LogWarning(
                     "Gateway rejected request: missing required claims. Path={Path}, UserPublicId={UserPublicId}, TokenType={TokenType}, JwtVersion={JwtVersion}",
                     path, userPublicId, tokenType, jwtVersion);
 
@@ -105,7 +94,7 @@ public class BasicJwtTokenValidationMiddleware
                 if (string.IsNullOrWhiteSpace(tenantPublicId) ||
                     string.IsNullOrWhiteSpace(userRoleInTenant))
                 {
-                    _logger.LogWarning(
+                    logger.LogWarning(
                         "Gateway rejected request: missing required claims. Path={Path}, UserPublicId={UserPublicId}, TokenType={TokenType}, " +
                         "JwtVersion={JwtVersion}, TenantPublicId={TenantPublicId}, UserRoleInTenant={UserRoleInTenant}",
                         path, userPublicId, tokenType, jwtVersion, tenantPublicId, userRoleInTenant);
@@ -118,15 +107,15 @@ public class BasicJwtTokenValidationMiddleware
             }
 
             var redisKey = $"{Constant.Redis.JwtVersionPrefix}{userPublicId}";
-            var redisVersion = await _redis.GetDatabase().StringGetAsync(redisKey);
+            var redisVersion = await redis.GetDatabase().StringGetAsync(redisKey);
 
-            _logger.LogInformation(
+            logger.LogInformation(
                 "Gateway jwtVersion check. Path={Path}, UserPublicId={UserPublicId}, TokenJwtVersion={TokenJwtVersion}, RedisJwtVersion={RedisJwtVersion}",
                 path, userPublicId, jwtVersion, redisVersion.ToString());
 
             if (!jwtVersion.Equals(redisVersion))
             {
-                _logger.LogWarning(
+                logger.LogWarning(
                     "Gateway rejected request: token version mismatch. Path={Path}, UserPublicId={UserPublicId}, TokenJwtVersion={TokenJwtVersion}, RedisJwtVersion={RedisJwtVersion}",
                     path, userPublicId, jwtVersion, redisVersion.ToString());
 
@@ -136,15 +125,15 @@ public class BasicJwtTokenValidationMiddleware
                 return;
             }
 
-            _logger.LogDebug(
+            logger.LogDebug(
                 "Gateway auth passed. Path={Path}, UserPublicId={UserPublicId}, TokenType={TokenType}",
                 path, userPublicId, tokenType);
 
-            await _next(context);
+            await next(context);
             return;
         }
 
-        _logger.LogWarning(
+        logger.LogWarning(
             "Gateway rejected request: unsupported Authorization header format. Path={Path}, RawHeader={Header}",
             path, token);
 

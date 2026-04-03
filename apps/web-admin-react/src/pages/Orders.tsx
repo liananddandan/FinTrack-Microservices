@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react"
 import { useNavigate } from "react-router-dom"
-import { getOrders, type OrderListItemDto } from "../api/order-admin"
+import { orderApi } from "../lib/orderApi"
+import type {OrderListItemDto} from "@fintrack/web-shared"
 import {
   HiOutlineArrowPath,
   HiOutlineArrowRight,
@@ -64,7 +65,7 @@ export default function Orders() {
     setErrorMessage("")
 
     try {
-      const result = await getOrders({
+      const result = await orderApi.getOrders({
         status: currentQuery.status || undefined,
         paymentStatus: currentQuery.paymentStatus || undefined,
         pageNumber: currentQuery.pageNumber,

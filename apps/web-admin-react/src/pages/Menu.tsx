@@ -7,20 +7,9 @@ import {
   HiOutlineXMark,
   HiOutlinePencilSquare,
 } from "react-icons/hi2"
-import {
-  createProductCategory,
-  deleteProductCategory,
-  getProductCategories,
-  updateProductCategory,
-  type ProductCategoryItem,
-} from "../api/product-category"
-import {
-  createProduct,
-  deleteProduct,
-  getProductsByCategory,
-  updateProduct,
-  type ProductItem,
-} from "../api/product"
+import { productCategoryApi } from "../lib/productCategoryApi"
+import type {ProductCategoryItem, ProductItem} from "@fintrack/web-shared"
+import { productApi } from "../lib/productApi"
 
 type CategoryFormState = {
   name: string
@@ -134,7 +123,7 @@ export default function Menu() {
     setErrorMessage("")
 
     try {
-      const result = await getProductCategories()
+      const result = await productCategoryApi.getProductCategories()
       const sorted = [...result].sort((a, b) => a.displayOrder - b.displayOrder)
 
       setCategories(sorted)
@@ -164,7 +153,7 @@ export default function Menu() {
     setErrorMessage("")
 
     try {
-      const result = await getProductsByCategory(categoryPublicId)
+      const result = await productApi.getProductsByCategory(categoryPublicId)
       const sorted = [...result].sort((a, b) => a.displayOrder - b.displayOrder)
       setProducts(sorted)
     } catch (error: unknown) {
@@ -248,10 +237,10 @@ export default function Menu() {
       }
 
       if (editingCategory) {
-        await updateProductCategory(editingCategory.publicId, payload)
+        await productCategoryApi.updateProductCategory(editingCategory.publicId, payload)
         setSuccessMessage("Category updated successfully.")
       } else {
-        await createProductCategory({
+        await productCategoryApi.createProductCategory({
           name: payload.name,
           displayOrder: payload.displayOrder,
         })
@@ -285,7 +274,7 @@ export default function Menu() {
     setSuccessMessage("")
 
     try {
-      await deleteProductCategory(publicId)
+      await productCategoryApi.deleteProductCategory(publicId)
       setSuccessMessage("Category deleted successfully.")
 
       if (selectedCategoryId === publicId) {
@@ -328,10 +317,10 @@ export default function Menu() {
       }
 
       if (editingProduct) {
-        await updateProduct(editingProduct.publicId, payload)
+        await productApi.updateProduct(editingProduct.publicId, payload)
         setSuccessMessage("Product updated successfully.")
       } else {
-        await createProduct({
+        await productApi.createProduct({
           categoryPublicId: payload.categoryPublicId,
           name: payload.name,
           description: payload.description,
@@ -369,7 +358,7 @@ export default function Menu() {
     setSuccessMessage("")
 
     try {
-      await deleteProduct(publicId)
+      await productApi.deleteProduct(publicId)
       setSuccessMessage("Product deleted successfully.")
 
       if (selectedCategoryId) {

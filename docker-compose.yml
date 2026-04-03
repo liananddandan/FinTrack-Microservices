@@ -63,13 +63,15 @@ services:
     environment:
       ASPNETCORE_ENVIRONMENT: Development
       ASPNETCORE_URLS: http://+:8080
-      Frontend__PortalBaseUrl: https://fintrack.chenlis.com/portal
+      Frontend__PortalBaseUrl: https://fintrack.chenlis.com/
       ConnectionStrings__DefaultConnection: server=mysql;port=3306;database=fintrack_identity;user=root;password=123456
       ConnectionStrings__Redis: redis:6379
       CAP__RabbitMQ__HostName: rabbitmq
       CAP__RabbitMQ__UserName: fintrack
       CAP__RabbitMQ__Password: fintrack123
       CAP__DefaultGroup: identity.service
+      SMTP__Host: mailhog
+      SMTP__Port: 1025
     ports:
       - "5100:8080"
 
@@ -103,7 +105,7 @@ services:
     environment:
       ASPNETCORE_ENVIRONMENT: Development
       ASPNETCORE_URLS: http://+:8080
-      ConnectionStrings__DefaultConnection: server=mysql;port=3306;database=fintrack_auditlog;user=root;password=123456
+      ConnectionStrings__DefaultConnection: server=mysql;port=3306;database=fintrack_audit;user=root;password=123456
       CAP__RabbitMQ__HostName: rabbitmq
       CAP__RabbitMQ__UserName: fintrack
       CAP__RabbitMQ__Password: fintrack123
@@ -133,6 +135,29 @@ services:
       ConnectionStrings__DefaultConnection: server=mysql;port=3306;database=fintrack_notification;user=root;password=123456
     ports:
       - "5103:8080"
+      
+  platform-service:
+    image: ghcr.io/liananddandan/platform-service:${PLATFORM_SERVICE_VERSION}
+    container_name: fintrack-platform
+    depends_on:
+      mysql:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      ASPNETCORE_URLS: http://+:8080
+      ConnectionStrings__DefaultConnection: server=mysql;port=3306;database=fintrack_platform;user=root;password=123456
+      CAP__RabbitMQ__HostName: rabbitmq
+      CAP__RabbitMQ__UserName: fintrack
+      CAP__RabbitMQ__Password: fintrack123
+      CAP__RabbitMQ__VirtualHost: /
+      CAP__DefaultGroup: platform.service
+      IdentityService__BaseUrl: http://identity-service:8080
+      IdentityService__InternalApiKey: fintrack-internal-dev-key
+    ports:
+      - "5104:8080"    
+    
   
   # ========================
   # API Gateway
@@ -186,6 +211,24 @@ services:
     ports:
       - "3001:80"
 
+  web-account-react:
+    image: ghcr.io/liananddandan/web-account-react:${WEB_ACCOUNT_REACT_VERSION}
+    container_name: fintrack-web-account-react
+    depends_on:
+      gateway:
+        condition: service_started
+    ports:
+      - "3010:80"
 
+
+  platform-admin-web:
+    image: ghcr.io/liananddandan/platform-admin-web:${PLATFORM_ADMIN_WEB_VERSION}
+    container_name: fintrack-platform-admin-web
+    depends_on:
+      gateway:
+        condition: service_started
+    ports:
+      - "3013:80"
+      
 volumes:
   mysql_data:

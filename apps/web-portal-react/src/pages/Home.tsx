@@ -1,14 +1,15 @@
 import { useEffect, useMemo, useState } from "react"
 import { useNavigate } from "react-router-dom"
 import { useAuth } from "../hooks/useAuth"
-import { getProductCategories, type ProductCategoryItem } from "../api/product-category"
-import { getProductsByCategory, type ProductItem } from "../api/product"
-import { createOrder } from "../api/order"
+import { tenantContextStore } from "../lib/tenantContextStore"
+import { productCategoryApi } from "../lib/productCategoryApi"
+import type { ProductCategoryItem, ProductItem } from "@fintrack/web-shared"
+import { productApi } from "../lib/productApi"
+import { orderApi } from "../lib/orderApi"
 import {
   HiOutlineArrowLeftOnRectangle,
   HiOutlineQueueList,
   HiOutlineClipboardDocumentList,
-  HiOutlineUserCircle,
   HiOutlinePlus,
   HiOutlineMinus,
   HiOutlineTrash,
@@ -55,6 +56,10 @@ export default function Home() {
   const navigate = useNavigate()
   const auth = useAuth()
 
+  const [tenantContext, setTenantContext] = useState(
+    tenantContextStore.tenantContext
+  )
+
   const [initializing, setInitializing] = useState(true)
   const [loadingCategories, setLoadingCategories] = useState(false)
   const [loadingProducts, setLoadingProducts] = useState(false)
@@ -70,9 +75,18 @@ export default function Home() {
   const [customerName, setCustomerName] = useState("")
 
   useEffect(() => {
+    const unsubscribe = tenantContextStore.subscribe(() => {
+      setTenantContext(tenantContextStore.tenantContext)
+    })
+
+    setTenantContext(tenantContextStore.tenantContext)
+
+    return unsubscribe
+  }, [])
+
+  useEffect(() => {
     async function init() {
       try {
-        await auth.initialize()
         await loadCategories()
       } finally {
         setInitializing(false)
@@ -90,6 +104,20 @@ export default function Home() {
     }
   }, [selectedCategoryId])
 
+  const currentMembership = useMemo(() => {
+    const tenantPublicId = tenantContext?.tenantPublicId
+
+    if (!tenantPublicId) {
+      return null
+    }
+
+    return (
+      auth.resolvedMemberships.find(
+        (membership) => membership.tenantPublicId === tenantPublicId
+      ) ?? null
+    )
+  }, [auth.resolvedMemberships, tenantContext?.tenantPublicId])
+
   async function handleCheckout() {
     if (cartItems.length === 0) {
       return
@@ -100,7 +128,7 @@ export default function Home() {
     setCheckoutSuccessMessage("")
 
     try {
-      const order = await createOrder({
+      const order = await orderApi.createOrder({
         customerName: customerName.trim() || null,
         customerPhone: null,
         paymentMethod: "Cash",
@@ -130,7 +158,7 @@ export default function Home() {
     setErrorMessage("")
 
     try {
-      const result = await getProductCategories()
+      const result = await productCategoryApi.getProductCategories()
       const activeCategories = result
         .filter((x) => x.isActive)
         .sort((a, b) => a.displayOrder - b.displayOrder)
@@ -158,7 +186,7 @@ export default function Home() {
     setErrorMessage("")
 
     try {
-      const result = await getProductsByCategory(categoryPublicId)
+      const result = await productApi.getProductsByCategory(categoryPublicId)
       const availableProducts = result
         .filter((x) => x.isAvailable)
         .sort((a, b) => a.displayOrder - b.displayOrder)
@@ -177,10 +205,6 @@ export default function Home() {
 
   function goOrders() {
     navigate("/portal/orders")
-  }
-
-  function goProfile() {
-    navigate("/portal/profile")
   }
 
   function logout() {
@@ -273,12 +297,12 @@ export default function Home() {
               </div>
 
               <h1 className="mt-2 truncate text-3xl font-semibold tracking-tight text-slate-800">
-                {auth.currentTenantName || "Workspace"}
+                {tenantContext?.tenantName || "Workspace"}
               </h1>
 
               <div className="mt-4 flex flex-wrap items-center gap-3">
                 <span className="inline-flex items-center rounded-full bg-slate-100 px-3 py-1 text-sm text-slate-700">
-                  Role: {auth.currentMembership?.role || "Unknown"}
+                  Role: {currentMembership?.role || "Unknown"}
                 </span>
 
                 <span className="inline-flex items-center rounded-full bg-slate-100 px-3 py-1 text-sm text-slate-700">
@@ -292,12 +316,6 @@ export default function Home() {
                 label="Orders"
                 icon={<HiOutlineClipboardDocumentList className="h-5 w-5" />}
                 onClick={goOrders}
-              />
-
-              <TopActionButton
-                label="Profile"
-                icon={<HiOutlineUserCircle className="h-5 w-5" />}
-                onClick={goProfile}
               />
 
               <TopActionButton
