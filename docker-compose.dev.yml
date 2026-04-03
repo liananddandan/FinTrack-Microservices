@@ -169,6 +169,8 @@ services:
       CAP__RabbitMQ__UserName: fintrack
       CAP__RabbitMQ__Password: fintrack123
       CAP__DefaultGroup: platform.service
+      IdentityService__BaseUrl: http://identity-service:8080
+      IdentityService__InternalApiKey: fintrack-internal-dev-key
     ports:
       - "5104:8080"
 

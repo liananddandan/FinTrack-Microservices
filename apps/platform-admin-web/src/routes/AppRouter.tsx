@@ -5,6 +5,7 @@ import Tenants from "../pages/Tenants"
 import TenantConfig from "../pages/TenantConfig"
 import RequireAuth from "./RequireAuth"
 import AppShell from "../components/AppShell"
+import AppInitializer from "./AppInitializer"
 
 export default function AppRouter() {
   return (
@@ -13,16 +14,18 @@ export default function AppRouter() {
         <Route path="/login" element={<Login />} />
 
         <Route element={<RequireAuth />}>
+          <Route element={<AppInitializer />}>
           <Route element={<AppShell />}>
             <Route path="/overview" element={<Overview />} />
             <Route path="/tenants" element={<Tenants />} />
             <Route path="/tenants/:tenantPublicId" element={<TenantConfig />} />
           </Route>
         </Route>
+      </Route>
 
-        <Route path="/" element={<Navigate to="/overview" replace />} />
-        <Route path="*" element={<Navigate to="/overview" replace />} />
-      </Routes>
-    </BrowserRouter>
+      <Route path="/" element={<Navigate to="/overview" replace />} />
+      <Route path="*" element={<Navigate to="/overview" replace />} />
+    </Routes>
+    </BrowserRouter >
   )
 }
