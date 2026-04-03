@@ -94,18 +94,24 @@ app.MapGet("/api/openapi/all.json", async (
     var identityUrl = $"{config.Identity}/openapi/v1.json";
     var transactionUrl = $"{config.Transaction}/openapi/v1.json";
     var auditLogUrl = $"{config.AuditLog}/openapi/v1.json";
+    var platformUrl = $"{config.Platform}/openapi/v1.json";
+
 
     Console.WriteLine($"[OpenAPI] Identity URL: {identityUrl}");
     Console.WriteLine($"[OpenAPI] Transaction URL: {transactionUrl}");
     Console.WriteLine($"[OpenAPI] AuditLog URL: {auditLogUrl}");
+    Console.WriteLine($"[OpenAPI] Platform URL: {platformUrl}");
 
     var identityJson = await client.GetStringAsync(identityUrl);
     var transactionJson = await client.GetStringAsync(transactionUrl);
     var auditLogJson = await client.GetStringAsync(auditLogUrl);
+    var platformJson = await client.GetStringAsync(platformUrl);
+
     var merged = merger.Merge(
         ("Identity API", identityJson),
         ("Transaction API", transactionJson),
-        ("AuditLog API", auditLogJson));
+        ("AuditLog API", auditLogJson),
+        ("Platform API", platformJson));
 
     return Results.Content(merged, "application/json");
 });

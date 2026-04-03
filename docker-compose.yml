@@ -184,9 +184,11 @@ services:
       ReverseProxy__Clusters__identityCluster__Destinations__identity__Address: http://identity-service:8080/
       ReverseProxy__Clusters__transactionCluster__Destinations__transaction__Address: http://transaction-service:8080/
       ReverseProxy__Clusters__auditlogCluster__Destinations__destination1__Address: http://auditlog-service:8080/
+      ReverseProxy__Clusters__platformCluster__Destinations__platform__Address: http://platform-service:8080/
       OpenApiServices__Identity: http://identity-service:8080
       OpenApiServices__Transaction: http://transaction-service:8080
       OpenApiServices__AuditLog: http://auditlog-service:8080
+      OpenApiServices__Platform: http://platform-service:8080
     ports:
       - "5193:8080"
   
