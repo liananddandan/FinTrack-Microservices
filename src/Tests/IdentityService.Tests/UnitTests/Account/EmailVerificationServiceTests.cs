@@ -1,3 +1,4 @@
+using FluentAssertions;
 using IdentityService.Application.Accounts.Abstractions;
 using IdentityService.Application.Accounts.Services;
 using IdentityService.Application.Common.Abstractions;
@@ -233,6 +234,194 @@ public class EmailVerificationServiceTests
 
         _tokenRepoMock.Verify(
             x => x.AddAsync(It.IsAny<EmailVerificationToken>(), It.IsAny<CancellationToken>()),
+            Times.Once);
+
+        _unitOfWorkMock.Verify(
+            x => x.SaveChangesAsync(It.IsAny<CancellationToken>()),
+            Times.Once);
+    }
+    
+    [Fact]
+    public async Task VerifyTokenAsync_Should_Return_Fail_When_Token_Is_Empty()
+    {
+        var result = await _service.VerifyTokenAsync("");
+
+        result.Success.Should().BeFalse();
+        result.Code.Should().Be("EMAIL_VERIFICATION_TOKEN_REQUIRED");
+    }
+
+    [Fact]
+    public async Task VerifyTokenAsync_Should_Return_Fail_When_Token_Not_Found()
+    {
+        _tokenRepoMock
+            .Setup(x => x.GetByTokenHashWithUserAsync(
+                It.IsAny<string>(),
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync((EmailVerificationToken?)null);
+
+        var result = await _service.VerifyTokenAsync("raw-token");
+
+        result.Success.Should().BeFalse();
+        result.Code.Should().Be("EMAIL_VERIFICATION_TOKEN_INVALID");
+    }
+
+    [Fact]
+    public async Task VerifyTokenAsync_Should_Return_Fail_When_Token_Already_Used()
+    {
+        var token = new EmailVerificationToken
+        {
+            UsedAt = DateTime.UtcNow,
+            User = new ApplicationUser()
+        };
+
+        _tokenRepoMock
+            .Setup(x => x.GetByTokenHashWithUserAsync(
+                It.IsAny<string>(),
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(token);
+
+        var result = await _service.VerifyTokenAsync("raw-token");
+
+        result.Success.Should().BeFalse();
+        result.Code.Should().Be("EMAIL_VERIFICATION_TOKEN_ALREADY_USED");
+    }
+
+    [Fact]
+    public async Task VerifyTokenAsync_Should_Return_Fail_When_Token_Is_Revoked()
+    {
+        var token = new EmailVerificationToken
+        {
+            RevokedAt = DateTime.UtcNow,
+            User = new ApplicationUser()
+        };
+
+        _tokenRepoMock
+            .Setup(x => x.GetByTokenHashWithUserAsync(
+                It.IsAny<string>(),
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(token);
+
+        var result = await _service.VerifyTokenAsync("raw-token");
+
+        result.Success.Should().BeFalse();
+        result.Code.Should().Be("EMAIL_VERIFICATION_TOKEN_REVOKED");
+    }
+
+    [Fact]
+    public async Task VerifyTokenAsync_Should_Return_Fail_When_Token_Is_Expired()
+    {
+        var token = new EmailVerificationToken
+        {
+            ExpiresAt = DateTime.UtcNow.AddMinutes(-1),
+            User = new ApplicationUser()
+        };
+
+        _tokenRepoMock
+            .Setup(x => x.GetByTokenHashWithUserAsync(
+                It.IsAny<string>(),
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(token);
+
+        var result = await _service.VerifyTokenAsync("raw-token");
+
+        result.Success.Should().BeFalse();
+        result.Code.Should().Be("EMAIL_VERIFICATION_TOKEN_EXPIRED");
+    }
+
+    [Fact]
+    public async Task VerifyTokenAsync_Should_Return_Fail_When_User_Not_Found()
+    {
+        var token = new EmailVerificationToken
+        {
+            ExpiresAt = DateTime.UtcNow.AddHours(1),
+            User = null
+        };
+
+        _tokenRepoMock
+            .Setup(x => x.GetByTokenHashWithUserAsync(
+                It.IsAny<string>(),
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(token);
+
+        var result = await _service.VerifyTokenAsync("raw-token");
+
+        result.Success.Should().BeFalse();
+        result.Code.Should().Be("EMAIL_VERIFICATION_USER_NOT_FOUND");
+    }
+
+    [Fact]
+    public async Task VerifyTokenAsync_Should_Return_Success_When_User_Already_Verified()
+    {
+        var user = new ApplicationUser
+        {
+            EmailConfirmed = true
+        };
+
+        var token = new EmailVerificationToken
+        {
+            ExpiresAt = DateTime.UtcNow.AddHours(1),
+            User = user
+        };
+
+        _tokenRepoMock
+            .Setup(x => x.GetByTokenHashWithUserAsync(
+                It.IsAny<string>(),
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(token);
+
+        _unitOfWorkMock
+            .Setup(x => x.SaveChangesAsync(It.IsAny<CancellationToken>()))
+            .Returns(Task.CompletedTask);
+
+        var result = await _service.VerifyTokenAsync("raw-token");
+
+        result.Success.Should().BeTrue();
+        result.Code.Should().Be("EMAIL_ALREADY_VERIFIED");
+        token.UsedAt.Should().NotBeNull();
+
+        _unitOfWorkMock.Verify(
+            x => x.SaveChangesAsync(It.IsAny<CancellationToken>()),
+            Times.Once);
+    }
+
+    [Fact]
+    public async Task VerifyTokenAsync_Should_Verify_User_And_Save_When_Token_Is_Valid()
+    {
+        var user = new ApplicationUser
+        {
+            EmailConfirmed = false
+        };
+
+        var token = new EmailVerificationToken
+        {
+            ExpiresAt = DateTime.UtcNow.AddHours(1),
+            User = user
+        };
+
+        _tokenRepoMock
+            .Setup(x => x.GetByTokenHashWithUserAsync(
+                It.IsAny<string>(),
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(token);
+
+        _userManagerMock
+            .Setup(x => x.UpdateAsync(It.IsAny<ApplicationUser>()))
+            .ReturnsAsync(IdentityResult.Success);
+
+        _unitOfWorkMock
+            .Setup(x => x.SaveChangesAsync(It.IsAny<CancellationToken>()))
+            .Returns(Task.CompletedTask);
+
+        var result = await _service.VerifyTokenAsync("raw-token");
+
+        result.Success.Should().BeTrue();
+        result.Code.Should().Be("EMAIL_VERIFICATION_SUCCESS");
+
+        user.EmailConfirmed.Should().BeTrue();
+        token.UsedAt.Should().NotBeNull();
+
+        _userManagerMock.Verify(
+            x => x.UpdateAsync(It.Is<ApplicationUser>(u => u.EmailConfirmed)),
             Times.Once);
 
         _unitOfWorkMock.Verify(

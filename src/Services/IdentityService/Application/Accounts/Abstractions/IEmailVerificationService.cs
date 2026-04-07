@@ -9,4 +9,8 @@ public interface IEmailVerificationService
         long userId,
         string? createdByIp = null,
         CancellationToken cancellationToken = default);
+    
+    Task<ServiceResult<bool>> VerifyTokenAsync(
+        string rawToken,
+        CancellationToken cancellationToken = default);
 }

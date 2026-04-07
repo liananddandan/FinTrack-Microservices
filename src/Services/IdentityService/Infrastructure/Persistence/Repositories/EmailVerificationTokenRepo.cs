@@ -54,4 +54,13 @@ public class EmailVerificationTokenRepo(ApplicationIdentityDbContext dbContext) 
             .OrderByDescending(x => x.CreatedAt)
             .FirstOrDefaultAsync(cancellationToken);
     }
+    
+    public async Task<EmailVerificationToken?> GetByTokenHashWithUserAsync(
+        string tokenHash,
+        CancellationToken cancellationToken = default)
+    {
+        return await dbContext.EmailVerificationTokens
+            .Include(x => x.User)
+            .FirstOrDefaultAsync(x => x.TokenHash == tokenHash, cancellationToken);
+    }
 }

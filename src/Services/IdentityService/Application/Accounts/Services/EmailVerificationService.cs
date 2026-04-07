@@ -71,6 +71,88 @@ public class EmailVerificationService(
             "EMAIL_VERIFICATION_TOKEN_CREATED",
             "Email verification token created successfully.");
     }
+    
+    public async Task<ServiceResult<bool>> VerifyTokenAsync(
+        string rawToken,
+        CancellationToken cancellationToken = default)
+    {
+        if (string.IsNullOrWhiteSpace(rawToken))
+        {
+            return ServiceResult<bool>.Fail(
+                "EMAIL_VERIFICATION_TOKEN_REQUIRED",
+                "Verification token is required.");
+        }
+
+        var tokenHash = ComputeSha256(rawToken);
+        var tokenEntity = await emailVerificationTokenRepo.GetByTokenHashWithUserAsync(
+            tokenHash,
+            cancellationToken);
+
+        if (tokenEntity is null)
+        {
+            return ServiceResult<bool>.Fail(
+                "EMAIL_VERIFICATION_TOKEN_INVALID",
+                "Verification token is invalid.");
+        }
+
+        if (tokenEntity.UsedAt.HasValue)
+        {
+            return ServiceResult<bool>.Fail(
+                "EMAIL_VERIFICATION_TOKEN_ALREADY_USED",
+                "Verification token has already been used.");
+        }
+
+        if (tokenEntity.RevokedAt.HasValue)
+        {
+            return ServiceResult<bool>.Fail(
+                "EMAIL_VERIFICATION_TOKEN_REVOKED",
+                "Verification token has been revoked.");
+        }
+
+        if (tokenEntity.ExpiresAt <= DateTime.UtcNow)
+        {
+            return ServiceResult<bool>.Fail(
+                "EMAIL_VERIFICATION_TOKEN_EXPIRED",
+                "Verification token has expired.");
+        }
+
+        var user = tokenEntity.User;
+        if (user is null)
+        {
+            return ServiceResult<bool>.Fail(
+                "EMAIL_VERIFICATION_USER_NOT_FOUND",
+                "User not found.");
+        }
+
+        if (user.EmailConfirmed)
+        {
+            tokenEntity.UsedAt = DateTime.UtcNow;
+            await unitOfWork.SaveChangesAsync(cancellationToken);
+
+            return ServiceResult<bool>.Ok(true,
+                "EMAIL_ALREADY_VERIFIED",
+                "Email is already verified.");
+        }
+
+        user.EmailConfirmed = true;
+        tokenEntity.UsedAt = DateTime.UtcNow;
+
+        var updateResult = await userManager.UpdateAsync(user);
+        if (!updateResult.Succeeded)
+        {
+            var error = string.Join(", ", updateResult.Errors.Select(e => e.Description));
+
+            return ServiceResult<bool>.Fail(
+                "EMAIL_VERIFICATION_USER_UPDATE_FAILED",
+                error);
+        }
+
+        await unitOfWork.SaveChangesAsync(cancellationToken);
+
+        return ServiceResult<bool>.Ok(true,
+            "EMAIL_VERIFICATION_SUCCESS",
+            "Email verified successfully.");
+    }
 
     private static string GenerateSecureToken()
     {

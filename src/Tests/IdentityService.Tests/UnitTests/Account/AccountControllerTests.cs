@@ -1,4 +1,7 @@
+using FluentAssertions;
 using IdentityService.Api.Accounts.Controllers;
+using IdentityService.Application.Accounts.Commands;
+using IdentityService.Application.Accounts.Dtos;
 using IdentityService.Application.Common.DTOs;
 using IdentityService.Application.Platforms.Commands;
 using IdentityService.Application.Platforms.Dtos;
@@ -7,8 +10,8 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Moq;
 using SharedKernel.Common.Constants;
+using SharedKernel.Common.DTOs;
 using SharedKernel.Common.Results;
-using Xunit;
 
 namespace IdentityService.Tests.UnitTests.Account;
 
@@ -82,4 +85,31 @@ public class AccountControllerTests
             It.Is<SelectPlatformCommand>(c => c.UserPublicId == userPublicId),
             It.IsAny<CancellationToken>()), Times.Once);
     }
+    [Fact]
+    public async Task VerifyEmail_Should_Return_BadRequest_When_Verification_Fails()
+    {
+        var serviceResult = ServiceResult<bool>.Fail(
+            "EMAIL_VERIFICATION_TOKEN_INVALID",
+            "Verification token is invalid.");
+
+        _mediator
+            .Setup(x => x.Send(
+                It.IsAny<VerifyEmailCommand>(),
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(serviceResult);
+
+        var request = new VerifyEmailRequest("invalid-token");
+        var controller = CreateControllerWithHttpContext(new DefaultHttpContext());
+
+        var result = await controller.VerifyEmail(request, CancellationToken.None);
+
+        var badRequestResult = result.Should().BeOfType<BadRequestObjectResult>().Subject;
+        var value = badRequestResult.Value.Should().BeAssignableTo<ApiResponse<bool>>().Subject;
+
+        value.Data.Should().BeFalse();
+        value.Code.Should().Be("EMAIL_VERIFICATION_TOKEN_INVALID");
+        value.Message.Should().Be("Verification token is invalid.");
+        value.Data.Should().BeFalse();
+    }
+    
 }

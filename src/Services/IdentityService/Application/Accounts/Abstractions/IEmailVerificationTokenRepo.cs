@@ -25,4 +25,8 @@ public interface IEmailVerificationTokenRepo
     Task<EmailVerificationToken?> GetLatestByUserIdAsync(
         long userId,
         CancellationToken cancellationToken = default);
+    
+    Task<EmailVerificationToken?> GetByTokenHashWithUserAsync(
+        string tokenHash,
+        CancellationToken cancellationToken = default);
 }
