@@ -116,4 +116,22 @@ public class AccountController(IMediator mediator) : ControllerBase
             cancellationToken);
         return result.ToActionResult();
     }
+    
+    [HttpPost("resend-verification-email")]
+    [RequireTokenType(JwtTokenType.AccountAccessToken)]
+    public async Task<IActionResult> ResendVerificationEmail(
+        CancellationToken cancellationToken)
+    {
+        var jwtParseResult = HttpContext.GetHttpHeaderJwtParseResult();
+        if (jwtParseResult == null)
+        {
+            return Unauthorized("Request without valid token");
+        }
+
+        var result = await mediator.Send(
+            new ResendVerificationEmailCommand(jwtParseResult.UserPublicId),
+            cancellationToken);
+
+        return result.ToActionResult();
+    }
 }

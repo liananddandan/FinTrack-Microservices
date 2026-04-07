@@ -7,6 +7,7 @@ import type {
   RegisterUserRequest,
   RegisterTenantRequest,
   PlatformTokenDto,
+  VerifyEmailRequest,
 } from "./types"
 
 export function createAccountApi(params: {
@@ -100,5 +101,23 @@ export function createAccountApi(params: {
       return unwrapApiResponse(response, "Failed to fetch platform overview")
     },
 
+
+    async verifyEmail(request: VerifyEmailRequest): Promise<boolean> {
+      const response = await publicHttp.post<ApiResponse<boolean>>(
+        "/api/account/verify-email",
+        request
+      )
+
+      return unwrapApiResponse(response, "Failed to verify email")
+    },
+
+    async resendVerificationEmail(): Promise<boolean> {
+      const response = await accountHttp.post<ApiResponse<boolean>>(
+        "/api/account/resend-verification-email",
+        {}
+      )
+
+      return unwrapApiResponse(response, "Failed to resend verification email")
+    },
   }
 }

@@ -2,7 +2,7 @@ using MediatR;
 
 namespace IdentityService.Application.Accounts.Events;
 
-public sealed record UserRegisteredEvent(
+public sealed record SendEmailVerificationRequestedEvent(
     long UserId,
     string Email,
     string UserName,

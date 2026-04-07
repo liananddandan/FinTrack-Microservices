@@ -225,7 +225,7 @@ public class AccountService(
             else
             {
                 await mediator.Publish(
-                    new UserRegisteredEvent(
+                    new SendEmailVerificationRequestedEvent(
                         user.Id,
                         user.Email!,
                         user.UserName!,

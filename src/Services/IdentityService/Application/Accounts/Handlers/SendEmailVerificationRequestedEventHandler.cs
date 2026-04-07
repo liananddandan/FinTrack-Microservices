@@ -8,20 +8,20 @@ using SharedKernel.Topics;
 
 namespace IdentityService.Application.Accounts.Handlers;
 
-public class UserRegisteredEventHandler(
+public class SendEmailVerificationRequestedEventHandler(
     ICapPublisher capPublisher,
     IOptions<FrontendOptions> frontendOptions,
-    ILogger<UserRegisteredEventHandler> logger)
-    : INotificationHandler<UserRegisteredEvent>
+    ILogger<SendEmailVerificationRequestedEventHandler> logger)
+    : INotificationHandler<SendEmailVerificationRequestedEvent>
 {
     public async Task Handle(
-        UserRegisteredEvent notification,
+        SendEmailVerificationRequestedEvent notification,
         CancellationToken cancellationToken)
     {
         var portalBaseUrl = frontendOptions.Value.PortalBaseUrl.TrimEnd('/');
 
         var verifyUrl =
-            $"{portalBaseUrl}/verify-email?token={Uri.EscapeDataString(notification.EmailVerificationRawToken)}";
+            $"{portalBaseUrl}/account/verify-email?token={Uri.EscapeDataString(notification.EmailVerificationRawToken)}";
 
         var integrationEvent = new EmailVerificationEmailRequestedEvent
         {

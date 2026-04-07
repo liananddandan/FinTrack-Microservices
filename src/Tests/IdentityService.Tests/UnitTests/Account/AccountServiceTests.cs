@@ -368,7 +368,7 @@ public class AccountServiceTests
                 "Token created successfully."));
 
         _mediatorMock
-            .Setup(x => x.Publish(It.IsAny<UserRegisteredEvent>(), It.IsAny<CancellationToken>()))
+            .Setup(x => x.Publish(It.IsAny<SendEmailVerificationRequestedEvent>(), It.IsAny<CancellationToken>()))
             .Returns(Task.CompletedTask);
 
         var result = await _sut.RegisterUserAsync(
@@ -407,7 +407,7 @@ public class AccountServiceTests
                 "Token created successfully."));
 
         _mediatorMock
-            .Setup(x => x.Publish(It.IsAny<UserRegisteredEvent>(), It.IsAny<CancellationToken>()))
+            .Setup(x => x.Publish(It.IsAny<SendEmailVerificationRequestedEvent>(), It.IsAny<CancellationToken>()))
             .Returns(Task.CompletedTask);
 
         var result = await _sut.RegisterUserAsync(

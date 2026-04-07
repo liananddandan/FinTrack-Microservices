@@ -45,3 +45,7 @@ export type PlatformTokenDto = {
   platformAccessToken: string
   platformRole: string
 }
+
+export type VerifyEmailRequest = {
+  token: string
+}
