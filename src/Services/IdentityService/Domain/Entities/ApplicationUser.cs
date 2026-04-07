@@ -12,4 +12,5 @@ public class ApplicationUser : IdentityUser<long>
 
     public ICollection<TenantMembership> Memberships { get; set; } = new List<TenantMembership>();
     public ICollection<TenantInvitation> CreatedInvitations { get; set; } = new List<TenantInvitation>();
+    public ICollection<EmailVerificationToken> EmailVerificationTokens { get; set; } = new List<EmailVerificationToken>();
 }

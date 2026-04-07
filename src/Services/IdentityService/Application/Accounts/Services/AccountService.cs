@@ -1,7 +1,9 @@
 using IdentityService.Application.Accounts.Abstractions;
+using IdentityService.Application.Accounts.Events;
 using IdentityService.Application.Common.Abstractions;
 using IdentityService.Application.Common.DTOs;
 using IdentityService.Domain.Entities;
+using MediatR;
 using Microsoft.AspNetCore.Identity;
 using SharedKernel.Common.DTOs.Auth;
 using SharedKernel.Common.Results;
@@ -13,7 +15,9 @@ public class AccountService(
     IApplicationUserRepo applicationUserRepo,
     UserManager<ApplicationUser> userManager,
     IJwtTokenService jwtTokenService,
-    IUserDomainService userDomainService)
+    IUserDomainService userDomainService,
+    IEmailVerificationService emailVerificationService,
+    IMediator mediator)
     : IAccountService
 {
     public async Task<ServiceResult<UserLoginDto>> LoginAsync(
@@ -195,7 +199,7 @@ public class AccountService(
             {
                 UserName = userName,
                 Email = email,
-                EmailConfirmed = true
+                EmailConfirmed = false
             };
 
             var createResult = await userManager.CreateAsync(user, password);
@@ -205,6 +209,29 @@ public class AccountService(
                 return ServiceResult<RegisterUserDto>.Fail(
                     ResultCodes.Account.RegisterUserCreateFailed,
                     error);
+            }
+            
+            var verificationResult = await emailVerificationService.CreateTokenAsync(
+                user.Id,
+                createdByIp: null,
+                cancellationToken: cancellationToken);
+
+            if (!verificationResult.Success || verificationResult.Data is null)
+            {
+                logger.LogWarning(
+                    "User {UserId} registered successfully, but failed to create email verification token.",
+                    user.Id);
+            }
+            else
+            {
+                await mediator.Publish(
+                    new UserRegisteredEvent(
+                        user.Id,
+                        user.Email!,
+                        user.UserName!,
+                        verificationResult.Data.RawToken,
+                        verificationResult.Data.ExpiresAtUtc),
+                    cancellationToken);
             }
 
             return ServiceResult<RegisterUserDto>.Ok(

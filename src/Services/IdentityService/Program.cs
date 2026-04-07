@@ -21,6 +21,9 @@ using SharedKernel.Common.Options;
 using StackExchange.Redis;
 
 var builder = WebApplication.CreateBuilder(args);
+builder.Logging.ClearProviders();
+builder.Logging.AddConsole();
+builder.Logging.AddDebug();
 
 builder.Services.Configure<JwtOptions>(
     builder.Configuration.GetSection("JwtSettings"));
@@ -28,6 +31,8 @@ builder.Services.Configure<BootstrapAdminOptions>(
     builder.Configuration.GetSection("BootstrapAdmin"));
 builder.Services.Configure<InternalApiOptions>(
     builder.Configuration.GetSection("InternalApi"));
+builder.Services.Configure<FrontendOptions>(
+    builder.Configuration.GetSection("Frontend"));
 
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>

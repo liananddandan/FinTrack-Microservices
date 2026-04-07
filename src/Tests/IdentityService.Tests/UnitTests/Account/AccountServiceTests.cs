@@ -1,10 +1,13 @@
 using AutoFixture;
 using FluentAssertions;
 using IdentityService.Application.Accounts.Abstractions;
+using IdentityService.Application.Accounts.Dtos;
+using IdentityService.Application.Accounts.Events;
 using IdentityService.Application.Accounts.Services;
 using IdentityService.Application.Common.Abstractions;
 using IdentityService.Domain.Entities;
 using IdentityService.Domain.Enums;
+using MediatR;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.Logging;
 using Moq;
@@ -22,6 +25,8 @@ public class AccountServiceTests
     private readonly Mock<IUserDomainService> _userDomainServiceMock = new();
 
     private readonly Mock<UserManager<ApplicationUser>> _userManagerMock;
+    private readonly Mock<IEmailVerificationService> _emailVerificationServiceMock = new();
+    private readonly Mock<IMediator> _mediatorMock = new();
 
     private readonly AccountService _sut;
 
@@ -45,7 +50,9 @@ public class AccountServiceTests
             _applicationUserRepoMock.Object,
             _userManagerMock.Object,
             _jwtTokenServiceMock.Object,
-            _userDomainServiceMock.Object);
+            _userDomainServiceMock.Object,
+            _emailVerificationServiceMock.Object,
+            _mediatorMock.Object);
     }
 
     [Theory]
@@ -353,6 +360,17 @@ public class AccountServiceTests
             .Setup(x => x.CreateAsync(It.IsAny<ApplicationUser>(), "Password123!"))
             .ReturnsAsync(IdentityResult.Success);
 
+        _emailVerificationServiceMock
+            .Setup(x => x.CreateTokenAsync(It.IsAny<long>(), null, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(ServiceResult<CreateEmailVerificationTokenResult>.Ok(
+                new CreateEmailVerificationTokenResult("raw-token", DateTime.UtcNow.AddHours(24)),
+                "EMAIL_VERIFICATION_TOKEN_CREATED",
+                "Token created successfully."));
+
+        _mediatorMock
+            .Setup(x => x.Publish(It.IsAny<UserRegisteredEvent>(), It.IsAny<CancellationToken>()))
+            .Returns(Task.CompletedTask);
+
         var result = await _sut.RegisterUserAsync(
             "Emily",
             "test@example.com",
@@ -380,6 +398,17 @@ public class AccountServiceTests
             .Setup(x => x.CreateAsync(It.IsAny<ApplicationUser>(), "Password123!"))
             .Callback<ApplicationUser, string>((user, _) => createdUser = user)
             .ReturnsAsync(IdentityResult.Success);
+
+        _emailVerificationServiceMock
+            .Setup(x => x.CreateTokenAsync(It.IsAny<long>(), null, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(ServiceResult<CreateEmailVerificationTokenResult>.Ok(
+                new CreateEmailVerificationTokenResult("raw-token", DateTime.UtcNow.AddHours(24)),
+                "EMAIL_VERIFICATION_TOKEN_CREATED",
+                "Token created successfully."));
+
+        _mediatorMock
+            .Setup(x => x.Publish(It.IsAny<UserRegisteredEvent>(), It.IsAny<CancellationToken>()))
+            .Returns(Task.CompletedTask);
 
         var result = await _sut.RegisterUserAsync(
             "ChenLi",

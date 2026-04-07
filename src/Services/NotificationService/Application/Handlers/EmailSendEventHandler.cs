@@ -1,9 +1,10 @@
 using DotNetCore.CAP;
-using NotificationService.Services;
+using NotificationService.Application.Abstractions;
+using NotificationService.Application.Services;
 using SharedKernel.Events;
 using SharedKernel.Topics;
 
-namespace NotificationService.Handlers;
+namespace NotificationService.Application.Handlers;
 
 public class EmailSendEventHandler(IEmailService emailService) : ICapSubscribe
 {
