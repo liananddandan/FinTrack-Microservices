@@ -266,12 +266,16 @@ public class EmailVerificationServiceTests
     }
 
     [Fact]
-    public async Task VerifyTokenAsync_Should_Return_Fail_When_Token_Already_Used()
+    public async Task VerifyTokenAsync_Should_Return_Success_When_Token_Already_Used()
     {
         var token = new EmailVerificationToken
         {
             UsedAt = DateTime.UtcNow,
-            User = new ApplicationUser()
+            ExpiresAt = DateTime.UtcNow.AddHours(1),
+            User = new ApplicationUser
+            {
+                EmailConfirmed = true
+            }
         };
 
         _tokenRepoMock
@@ -282,8 +286,9 @@ public class EmailVerificationServiceTests
 
         var result = await _service.VerifyTokenAsync("raw-token");
 
-        result.Success.Should().BeFalse();
-        result.Code.Should().Be("EMAIL_VERIFICATION_TOKEN_ALREADY_USED");
+        result.Success.Should().BeTrue();
+        result.Code.Should().Be("EMAIL_ALREADY_VERIFIED");
+        result.Message.Should().Be("Email is already verified.");
     }
 
     [Fact]
