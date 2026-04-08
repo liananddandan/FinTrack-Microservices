@@ -9,6 +9,7 @@ namespace IdentityService.Application.Accounts.Handlers;
 public class ResendVerificationEmailCommandHandler(
     IApplicationUserRepo applicationUserRepo,
     IEmailVerificationService emailVerificationService,
+    IEmailThrottleService emailThrottleService,
     IMediator mediator)
     : IRequestHandler<ResendVerificationEmailCommand, ServiceResult<bool>>
 {
@@ -34,6 +35,17 @@ public class ResendVerificationEmailCommandHandler(
                 "Email is already verified.");
         }
 
+        var throttleResult = await emailThrottleService.CheckVerificationResendAllowedAsync(
+            user.Id,
+            user.Email!,
+            cancellationToken);
+        if (!throttleResult.Success)
+        {
+            return ServiceResult<bool>.Fail(
+                throttleResult.Code!,
+                throttleResult.Message!);
+        }
+
         var verificationResult = await emailVerificationService.CreateTokenAsync(
             user.Id,
             createdByIp: null,
@@ -54,7 +66,10 @@ public class ResendVerificationEmailCommandHandler(
                 verificationResult.Data.RawToken,
                 verificationResult.Data.ExpiresAtUtc),
             cancellationToken);
-
+        await emailThrottleService.MarkVerificationResendSentAsync(
+            user.Id,
+            user.Email!,
+            cancellationToken);
         return ServiceResult<bool>.Ok(
             true,
             "EMAIL_VERIFICATION_RESENT",

@@ -374,19 +374,17 @@ public class EmailVerificationServiceTests
                 It.IsAny<CancellationToken>()))
             .ReturnsAsync(token);
 
-        _unitOfWorkMock
-            .Setup(x => x.SaveChangesAsync(It.IsAny<CancellationToken>()))
-            .Returns(Task.CompletedTask);
-
         var result = await _service.VerifyTokenAsync("raw-token");
 
         result.Success.Should().BeTrue();
         result.Code.Should().Be("EMAIL_ALREADY_VERIFIED");
-        token.UsedAt.Should().NotBeNull();
+        result.Message.Should().Be("Email is already verified.");
+
+        token.UsedAt.Should().BeNull();
 
         _unitOfWorkMock.Verify(
             x => x.SaveChangesAsync(It.IsAny<CancellationToken>()),
-            Times.Once);
+            Times.Never);
     }
 
     [Fact]

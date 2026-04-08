@@ -17,6 +17,7 @@ public class RegisterUserCommandHandler(IAccountService accountService)
             request.UserName,
             request.Email,
             request.Password,
+            request.TurnstileToken,
             cancellationToken);
     }
 }

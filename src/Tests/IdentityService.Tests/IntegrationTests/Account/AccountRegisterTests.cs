@@ -11,6 +11,7 @@ public class AccountRegisterTests(IdentityWebApplicationFactory<Program> factory
     : IClassFixture<IdentityWebApplicationFactory<Program>>
 {
     private readonly HttpClient _client = factory.CreateClient();
+    private const string TestTurnstileToken = "test-turnstile-token";
 
     [Fact]
     public async Task RegisterUser_Should_Return_BadRequest_When_UserName_Is_Empty()
@@ -21,7 +22,8 @@ public class AccountRegisterTests(IdentityWebApplicationFactory<Program> factory
         {
             userName = "",
             email = $"user-{unique}@test.com",
-            password = "Password123!"
+            password = "Password123!",
+            turnstileToken = TestTurnstileToken
         };
 
         var response = await _client.PostAsJsonAsync("/api/account/register", request);
@@ -40,7 +42,8 @@ public class AccountRegisterTests(IdentityWebApplicationFactory<Program> factory
         {
             userName = "Emily",
             email = $"user-{unique}@test.com",
-            password = "Password123!"
+            password = "Password123!",
+            turnstileToken = TestTurnstileToken
         };
 
         var response = await _client.PostAsJsonAsync("/api/account/register", request);
@@ -74,14 +77,16 @@ public class AccountRegisterTests(IdentityWebApplicationFactory<Program> factory
         {
             userName = $"Emily-{unique}",
             email,
-            password = "Password123!"
+            password = "Password123!",
+            turnstileToken = TestTurnstileToken
         };
 
         var secondRequest = new
         {
             userName = $"AnotherUser-{unique}",
             email,
-            password = "Password123!"
+            password = "Password123!",
+            turnstileToken = TestTurnstileToken
         };
 
         var firstResponse = await _client.PostAsJsonAsync("/api/account/register", firstRequest);
@@ -104,7 +109,8 @@ public class AccountRegisterTests(IdentityWebApplicationFactory<Program> factory
         {
             userName = "ChenLi",
             email = $"ChenLi-{unique}@Example.com",
-            password = "Password123!"
+            password = "Password123!",
+            turnstileToken = TestTurnstileToken
         };
 
         var response = await _client.PostAsJsonAsync("/api/account/register", request);

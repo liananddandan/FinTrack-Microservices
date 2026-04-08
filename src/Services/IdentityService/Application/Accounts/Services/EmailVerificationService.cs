@@ -94,7 +94,19 @@ public class EmailVerificationService(
                 "EMAIL_VERIFICATION_TOKEN_INVALID",
                 "Verification token is invalid.");
         }
-
+        var user = tokenEntity.User;
+        if (user is null)
+        {
+            return ServiceResult<bool>.Fail(
+                "EMAIL_VERIFICATION_USER_NOT_FOUND",
+                "User not found.");
+        }
+        if (user.EmailConfirmed)
+        {
+            return ServiceResult<bool>.Ok(true,
+                "EMAIL_ALREADY_VERIFIED",
+                "Email is already verified.");
+        }
         if (tokenEntity.RevokedAt.HasValue)
         {
             return ServiceResult<bool>.Fail(
@@ -108,27 +120,11 @@ public class EmailVerificationService(
                 "EMAIL_VERIFICATION_TOKEN_EXPIRED",
                 "Verification token has expired.");
         }
-
-        var user = tokenEntity.User;
-        if (user is null)
-        {
-            return ServiceResult<bool>.Fail(
-                "EMAIL_VERIFICATION_USER_NOT_FOUND",
-                "User not found.");
-        }
+        
         if (tokenEntity.UsedAt.HasValue)
         {
             return ServiceResult<bool>.Ok(
                 true,
-                "EMAIL_ALREADY_VERIFIED",
-                "Email is already verified.");
-        }
-        if (user.EmailConfirmed)
-        {
-            tokenEntity.UsedAt = DateTime.UtcNow;
-            await unitOfWork.SaveChangesAsync(cancellationToken);
-
-            return ServiceResult<bool>.Ok(true,
                 "EMAIL_ALREADY_VERIFIED",
                 "Email is already verified.");
         }

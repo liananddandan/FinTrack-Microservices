@@ -31,7 +31,7 @@ export type RegisterUserRequest = {
   userName: string
   email: string
   password: string
-  fullName: string
+  turnstileToken: string
 }
 
 export type RegisterTenantRequest = {

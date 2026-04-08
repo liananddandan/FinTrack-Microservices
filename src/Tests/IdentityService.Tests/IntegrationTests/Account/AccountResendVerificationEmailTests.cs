@@ -6,6 +6,7 @@ using IdentityService.Domain.Entities;
 using IdentityService.Infrastructure.Persistence;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.DependencyInjection;
+using StackExchange.Redis;
 
 namespace IdentityService.Tests.IntegrationTests.Account;
 
@@ -32,6 +33,8 @@ public class AccountResendVerificationEmailTests(IdentityWebApplicationFactory<P
         const string password = "Password123!";
 
         var seeded = await SeedUserAsync(email, password, emailConfirmed: true);
+        await ClearResendThrottleAsync(seeded.UserId, email);
+
         _client.DefaultRequestHeaders.Authorization =
             new AuthenticationHeaderValue("Bearer", seeded.AccessToken);
 
@@ -50,6 +53,8 @@ public class AccountResendVerificationEmailTests(IdentityWebApplicationFactory<P
         const string password = "Password123!";
 
         var seeded = await SeedUserAsync(email, password, emailConfirmed: false);
+        await ClearResendThrottleAsync(seeded.UserId, email);
+
         _client.DefaultRequestHeaders.Authorization =
             new AuthenticationHeaderValue("Bearer", seeded.AccessToken);
 
@@ -109,6 +114,21 @@ public class AccountResendVerificationEmailTests(IdentityWebApplicationFactory<P
             user.Id,
             user.PublicId.ToString(),
             accessToken);
+    }
+
+    private async Task ClearResendThrottleAsync(long userId, string email)
+    {
+        using var scope = factory.Services.CreateScope();
+        var redis = scope.ServiceProvider.GetRequiredService<IConnectionMultiplexer>();
+        var db = redis.GetDatabase();
+
+        var normalizedEmail = email.Trim().ToLowerInvariant();
+
+        var cooldownKey = $"email-throttle:verification:resend:user:{userId}:cooldown";
+        var dailyKey = $"email-throttle:verification:resend:email:{normalizedEmail}:daily";
+
+        await db.KeyDeleteAsync(cooldownKey);
+        await db.KeyDeleteAsync(dailyKey);
     }
 
     private sealed record SeedResult(

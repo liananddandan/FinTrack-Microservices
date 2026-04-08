@@ -33,6 +33,9 @@ builder.Services.Configure<InternalApiOptions>(
     builder.Configuration.GetSection("InternalApi"));
 builder.Services.Configure<FrontendOptions>(
     builder.Configuration.GetSection("Frontend"));
+builder.Services.Configure<TurnstileOptions>(
+    builder.Configuration.GetSection("Turnstile"));
+builder.Services.AddHttpClient<ITurnstileValidationService, TurnstileValidationService>();
 
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>

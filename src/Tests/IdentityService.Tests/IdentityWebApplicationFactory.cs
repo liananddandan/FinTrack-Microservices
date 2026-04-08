@@ -1,11 +1,13 @@
-using IdentityService.Domain.Entities;
+using DotNetCore.CAP;
+using IdentityService.Application.Common.Abstractions;
 using IdentityService.Infrastructure.Persistence;
+using IdentityService.Tests.Common;
 using Microsoft.AspNetCore.Hosting;
-using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
 
 namespace IdentityService.Tests;
 
@@ -24,6 +26,11 @@ public class IdentityWebApplicationFactory<TProgram> : WebApplicationFactory<TPr
         });
         builder.ConfigureServices(services =>
         {
+            services.RemoveAll<ICapPublisher>();
+            services.AddSingleton<ICapPublisher>(new FakeCapPublisher());
+            services.RemoveAll<ITurnstileValidationService>();
+            services.AddSingleton<ITurnstileValidationService, FakeTurnstileValidationService>();
+            
             lock (_lock)
             {
                 if (!_dbInitialized)
