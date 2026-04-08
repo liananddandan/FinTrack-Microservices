@@ -69,52 +69,62 @@ jobs:
     needs: changes
     if: ${{ needs.changes.outputs.web_account == 'true' || github.event.inputs.force_deploy_all == 'true' }}
     uses: ./.github/workflows/web-account-react-image.yml
+    secrets: inherit
 
   build-web-portal:
     needs: changes
     if: ${{ needs.changes.outputs.web_portal == 'true' || github.event.inputs.force_deploy_all == 'true' }}
     uses: ./.github/workflows/web-portal-react-image.yml
-      
+    secrets: inherit
+    
   build-web-admin:
     needs: changes
     if: ${{ needs.changes.outputs.web_admin == 'true' || github.event.inputs.force_deploy_all == 'true' }}
     uses: ./.github/workflows/web-admin-react-image.yml
-
+    secrets: inherit
+    
   build-platform-admin-web:
     needs: changes
     if: ${{ needs.changes.outputs.platform_admin_web == 'true' || github.event.inputs.force_deploy_all == 'true' }}
     uses: ./.github/workflows/platform-admin-web-image.yml
+    secrets: inherit
     
   build-gateway:
     needs: changes
     if: ${{ needs.changes.outputs.gateway == 'true' || github.event.inputs.force_deploy_all == 'true' }}
     uses: ./.github/workflows/gateway-image.yml
-
+    secrets: inherit
+    
   build-platform-service:
     needs: changes
     if: ${{ needs.changes.outputs.platform_service == 'true' || github.event.inputs.force_deploy_all == 'true' }}
     uses: ./.github/workflows/platform-service-image.yml
-
+    secrets: inherit
+    
   build-notification-service:
     needs: changes
     if: ${{ needs.changes.outputs.notification_service == 'true' || github.event.inputs.force_deploy_all == 'true' }}
     uses: ./.github/workflows/notification-service-image.yml
-  
+    secrets: inherit
+    
   build-auditlog-service:
     needs: changes
     if: ${{ needs.changes.outputs.auditlog_service == 'true' || github.event.inputs.force_deploy_all == 'true' }}
     uses: ./.github/workflows/auditlog-service-image.yml
+    secrets: inherit
     
   build-identity-service:
     needs: changes
     if: ${{ needs.changes.outputs.identity_service == 'true' || github.event.inputs.force_deploy_all == 'true' }}
     uses: ./.github/workflows/identity-service-image.yml
-
+    secrets: inherit
+    
   build-transaction-service:
     needs: changes
     if: ${{ needs.changes.outputs.transaction_service == 'true' || github.event.inputs.force_deploy_all == 'true' }}
     uses: ./.github/workflows/transaction-service-image.yml
-      
+    secrets: inherit
+    
   deploy:
     needs:
       - ci
