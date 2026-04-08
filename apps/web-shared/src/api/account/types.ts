@@ -22,6 +22,7 @@ export type UserLoginResult = {
 export type CurrentUserResult = {
   userPublicId: string
   email: string
+  emailConfirmed: boolean
   userName?: string
   memberships?: LoginMembershipDto[]
 }

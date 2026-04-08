@@ -64,6 +64,7 @@ public class UserAppService(
             var result = new CurrentUserInfoDto(
                 user.PublicId.ToString(),
                 user.Email ?? string.Empty,
+                user.EmailConfirmed,
                 user.UserName,
                 memberships);
 

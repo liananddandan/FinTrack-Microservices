@@ -95,13 +95,6 @@ public class EmailVerificationService(
                 "Verification token is invalid.");
         }
 
-        if (tokenEntity.UsedAt.HasValue)
-        {
-            return ServiceResult<bool>.Fail(
-                "EMAIL_VERIFICATION_TOKEN_ALREADY_USED",
-                "Verification token has already been used.");
-        }
-
         if (tokenEntity.RevokedAt.HasValue)
         {
             return ServiceResult<bool>.Fail(
@@ -123,7 +116,13 @@ public class EmailVerificationService(
                 "EMAIL_VERIFICATION_USER_NOT_FOUND",
                 "User not found.");
         }
-
+        if (tokenEntity.UsedAt.HasValue)
+        {
+            return ServiceResult<bool>.Ok(
+                true,
+                "EMAIL_ALREADY_VERIFIED",
+                "Email is already verified.");
+        }
         if (user.EmailConfirmed)
         {
             tokenEntity.UsedAt = DateTime.UtcNow;
