@@ -1,10 +1,12 @@
 using DotNetCore.CAP;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Options;
 using NotificationService.Application.Abstractions;
 using NotificationService.Application.Handlers;
 using NotificationService.Application.Options;
 using NotificationService.Application.Services;
 using NotificationService.Infrastructure.Persistence;
+using Resend;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -34,8 +36,11 @@ builder.Services.Configure<EmailOptions>(
     builder.Configuration.GetSection("Email"));
 builder.Services.Configure<SmtpOptions>(
     builder.Configuration.GetSection("Smtp"));
-builder.Services.Configure<ResendOptions>(
-    builder.Configuration.GetSection("Resend"));
+builder.Services.Configure<ResendClientOptions>(options =>
+{
+    options.ApiToken = builder.Configuration["Resend:ApiKey"] 
+                       ?? throw new InvalidOperationException("Resend API key is missing.");
+});
 
 builder.Services.Scan(scan => scan
     .FromAssemblyOf<EmailSendEventHandler>()
@@ -47,8 +52,8 @@ var emailProvider = builder.Configuration.GetValue<string>("Email:Provider");
 
 if (string.Equals(emailProvider, "Resend", StringComparison.OrdinalIgnoreCase))
 {
-    builder.Services.AddScoped<IEmailService, ResendEmailService>();
-}
+    builder.Services.AddHttpClient<ResendClient>();
+    builder.Services.AddScoped<IEmailService, ResendEmailService>();}
 else
 {
     builder.Services.AddScoped<IEmailService, SmtpEmailService>();

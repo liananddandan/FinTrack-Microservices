@@ -1,51 +1,39 @@
-using System.Net.Http.Headers;
 using Microsoft.Extensions.Options;
 using NotificationService.Application.Abstractions;
 using NotificationService.Application.Options;
+using Resend;
 using SharedKernel.Events;
 
 namespace NotificationService.Application.Services;
 
 public class ResendEmailService(
-    HttpClient httpClient,
-    IOptions<ResendOptions> resendOptions,
+    ResendClient resendClient,
     IOptions<EmailOptions> emailOptions,
     ILogger<ResendEmailService> logger)
     : IEmailService
 {
-    private readonly ResendOptions _resendOptions = resendOptions.Value;
     private readonly EmailOptions _emailOptions = emailOptions.Value;
 
     public async Task SendEmailAsync(EmailSendRequestedEvent emailEvent)
     {
-        var payload = new
-        {
-            from = $"{_emailOptions.FromName} <{_emailOptions.FromEmail}>",
-            to = new[] { emailEvent.To },
-            subject = emailEvent.Subject,
-            text = emailEvent.IsHtml ? null : emailEvent.Body,
-            html = emailEvent.IsHtml ? emailEvent.Body : null
-        };
-
-        using var request = new HttpRequestMessage(HttpMethod.Post, "/emails");
-        request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", _resendOptions.ApiKey);
-        request.Content = JsonContent.Create(payload);
-
         try
         {
-            var response = await httpClient.SendAsync(request);
-            var content = await response.Content.ReadAsStringAsync();
-
-            if (!response.IsSuccessStatusCode)
+            var message = new EmailMessage
             {
-                logger.LogError(
-                    "Failed to send email via Resend to {To}. StatusCode: {StatusCode}, Response: {Response}",
-                    emailEvent.To,
-                    response.StatusCode,
-                    content);
+                From = $"{_emailOptions.FromName} <{_emailOptions.FromEmail}>",
+                Subject = emailEvent.Subject,
+                TextBody = emailEvent.IsHtml ? null : emailEvent.Body,
+                HtmlBody = emailEvent.IsHtml ? emailEvent.Body : null
+            };
 
-                response.EnsureSuccessStatusCode();
-            }
+            message.To.Add(emailEvent.To);
+
+            var response = await resendClient.EmailSendAsync(message);
+
+            logger.LogInformation(
+                "Email sent successfully via Resend. To: {To}, EmailId: {EmailId}",
+                emailEvent.To,
+                response.Content);
         }
         catch (Exception ex)
         {
