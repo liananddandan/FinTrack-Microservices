@@ -1,10 +1,9 @@
 services:
-
   mysql:
     image: mysql:8.0
     container_name: fintrack-mysql
     environment:
-      MYSQL_ROOT_PASSWORD: 123456
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
       MYSQL_DATABASE: fintrack_identity
     ports:
       - "3307:3306"
@@ -31,20 +30,13 @@ services:
       - "5672:5672"
       - "15672:15672"
     environment:
-      RABBITMQ_DEFAULT_USER: fintrack
-      RABBITMQ_DEFAULT_PASS: fintrack123
+      RABBITMQ_DEFAULT_USER: ${RABBITMQ_USERNAME}
+      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_PASSWORD}
     healthcheck:
       test: ["CMD","rabbitmq-diagnostics","ping"]
       interval: 10s
       timeout: 5s
       retries: 10
-
-  mailhog:
-    image: mailhog/mailhog
-    container_name: fintrack-mailhog
-    ports:
-      - "1025:1025"
-      - "8025:8025"
   
   # ========================
   # Backend services
@@ -61,17 +53,17 @@ services:
       redis:
         condition: service_started
     environment:
-      ASPNETCORE_ENVIRONMENT: Development
+      ASPNETCORE_ENVIRONMENT: Production
       ASPNETCORE_URLS: http://+:8080
-      Frontend__PortalBaseUrl: https://fintrack.chenlis.com/
-      ConnectionStrings__DefaultConnection: server=mysql;port=3306;database=fintrack_identity;user=root;password=123456
+      Frontend__PortalBaseUrl: ${ACCOUNT_FRONTEND_BASE_URL}
+      ConnectionStrings__DefaultConnection: server=mysql;port=3306;database=fintrack_identity;user=root;password=${MYSQL_ROOT_PASSWORD}
       ConnectionStrings__Redis: redis:6379
       CAP__RabbitMQ__HostName: rabbitmq
-      CAP__RabbitMQ__UserName: fintrack
-      CAP__RabbitMQ__Password: fintrack123
+      CAP__RabbitMQ__UserName: ${RABBITMQ_USERNAME}
+      CAP__RabbitMQ__Password: ${RABBITMQ_PASSWORD}
       CAP__DefaultGroup: identity.service
-      SMTP__Host: mailhog
-      SMTP__Port: 1025
+      Turnstile__SecretKey: ${TURNSTILE_SECRET_KEY}
+      InternalApi__ApiKey: ${IDENTITY_INTERNAL_API_KEY}
     ports:
       - "5100:8080"
 
@@ -84,12 +76,12 @@ services:
       rabbitmq:
         condition: service_healthy
     environment:
-      ASPNETCORE_ENVIRONMENT: Development
+      ASPNETCORE_ENVIRONMENT: Production
       ASPNETCORE_URLS: http://+:8080
-      ConnectionStrings__DefaultConnection: server=mysql;port=3306;database=fintrack_transaction;user=root;password=123456
+      ConnectionStrings__DefaultConnection: server=mysql;port=3306;database=fintrack_transaction;user=root;password=${MYSQL_ROOT_PASSWORD}
       CAP__RabbitMQ__HostName: rabbitmq
-      CAP__RabbitMQ__UserName: fintrack
-      CAP__RabbitMQ__Password: fintrack123
+      CAP__RabbitMQ__UserName: ${RABBITMQ_USERNAME}
+      CAP__RabbitMQ__Password: ${RABBITMQ_PASSWORD}
       CAP__DefaultGroup: transaction.service
     ports:
       - "5101:8080"
@@ -103,12 +95,12 @@ services:
       rabbitmq:
         condition: service_healthy
     environment:
-      ASPNETCORE_ENVIRONMENT: Development
+      ASPNETCORE_ENVIRONMENT: Production
       ASPNETCORE_URLS: http://+:8080
-      ConnectionStrings__DefaultConnection: server=mysql;port=3306;database=fintrack_audit;user=root;password=123456
+      ConnectionStrings__DefaultConnection: server=mysql;port=3306;database=fintrack_audit;user=root;password=${MYSQL_ROOT_PASSWORD}
       CAP__RabbitMQ__HostName: rabbitmq
-      CAP__RabbitMQ__UserName: fintrack
-      CAP__RabbitMQ__Password: fintrack123
+      CAP__RabbitMQ__UserName: ${RABBITMQ_USERNAME}
+      CAP__RabbitMQ__Password: ${RABBITMQ_PASSWORD}
       CAP__DefaultGroup: audit-log.service
     ports:
       - "5102:8080"
@@ -121,18 +113,18 @@ services:
         condition: service_healthy
       rabbitmq:
         condition: service_healthy
-      mailhog:
-        condition: service_started
     environment:
-      ASPNETCORE_ENVIRONMENT: Development
+      ASPNETCORE_ENVIRONMENT: Production
       ASPNETCORE_URLS: http://+:8080
       CAP__RabbitMQ__HostName: rabbitmq
-      CAP__RabbitMQ__UserName: fintrack
-      CAP__RabbitMQ__Password: fintrack123
+      CAP__RabbitMQ__UserName: ${RABBITMQ_USERNAME}
+      CAP__RabbitMQ__Password: ${RABBITMQ_PASSWORD}
       CAP__DefaultGroup: notification.service
-      SMTP__Host: mailhog
-      SMTP__Port: 1025
-      ConnectionStrings__DefaultConnection: server=mysql;port=3306;database=fintrack_notification;user=root;password=123456
+      Resend__ApiKey: ${RESEND_API_KEY}
+      Email__Provider: Resend
+      Email__FromEmail: ${EMAIL_FROM_ADDRESS}
+      Email__FromName: ${EMAIL_FROM_NAME}
+      ConnectionStrings__DefaultConnection: server=mysql;port=3306;database=fintrack_notification;user=root;password=${MYSQL_ROOT_PASSWORD}
     ports:
       - "5103:8080"
       
@@ -145,16 +137,16 @@ services:
       rabbitmq:
         condition: service_healthy
     environment:
-      ASPNETCORE_ENVIRONMENT: Development
+      ASPNETCORE_ENVIRONMENT: Production
       ASPNETCORE_URLS: http://+:8080
-      ConnectionStrings__DefaultConnection: server=mysql;port=3306;database=fintrack_platform;user=root;password=123456
+      ConnectionStrings__DefaultConnection: server=mysql;port=3306;database=fintrack_platform;user=root;password=${MYSQL_ROOT_PASSWORD}
       CAP__RabbitMQ__HostName: rabbitmq
-      CAP__RabbitMQ__UserName: fintrack
-      CAP__RabbitMQ__Password: fintrack123
+      CAP__RabbitMQ__UserName: ${RABBITMQ_USERNAME}
+      CAP__RabbitMQ__Password: ${RABBITMQ_PASSWORD}
       CAP__RabbitMQ__VirtualHost: /
       CAP__DefaultGroup: platform.service
       IdentityService__BaseUrl: http://identity-service:8080
-      IdentityService__InternalApiKey: fintrack-internal-dev-key
+      IdentityService__InternalApiKey: ${IDENTITY_INTERNAL_API_KEY}
     ports:
       - "5104:8080"    
     
@@ -178,7 +170,7 @@ services:
       redis:
         condition: service_started
     environment:
-      ASPNETCORE_ENVIRONMENT: Development
+      ASPNETCORE_ENVIRONMENT: Production
       ASPNETCORE_URLS: http://+:8080
       ConnectionStrings__Redis: redis:6379
       ReverseProxy__Clusters__identityCluster__Destinations__identity__Address: http://identity-service:8080/
