@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react"
 import { HiOutlineBuildingOffice2, HiOutlineCheckCircle } from "react-icons/hi2"
-import { platformAuthStore } from "../lib/platformAuthStore"
 import { tenantApi } from "../lib/tenantApi"
+import { usePlatformAuthStore } from "../lib/usePlatformAuthStore.ts"
 import type { TenantSummaryDto } from "@fintrack/web-shared"
 
 function StatCard({
@@ -25,11 +25,22 @@ function StatCard({
 }
 
 export default function Overview() {
+  const authState = usePlatformAuthStore()
+
   const [tenants, setTenants] = useState<TenantSummaryDto[]>([])
   const [loading, setLoading] = useState(true)
   const [errorMessage, setErrorMessage] = useState("")
 
   useEffect(() => {
+    console.log("[Overview] render/auth snapshot", {
+      platformRole: authState.platformRole,
+      profile: authState.profile,
+      userEmail: authState.profile?.email ?? "",
+    })
+  }, [authState])
+
+  useEffect(() => {
+
     async function load() {
       setLoading(true)
       setErrorMessage("")
@@ -91,7 +102,7 @@ export default function Overview() {
               Platform role
             </div>
             <div className="mt-1 text-sm font-semibold text-slate-800">
-              {platformAuthStore.platformRole || "Unknown"}
+              {authState.platformRole || "Unknown"}
             </div>
           </div>
         </div>
@@ -121,7 +132,7 @@ export default function Overview() {
 
         <StatCard
           title="Current platform user"
-          value={platformAuthStore.userEmail || "Unknown"}
+          value={authState.profile?.email || "Unknown"}
           hint="Signed-in platform administrator account."
         />
       </section>

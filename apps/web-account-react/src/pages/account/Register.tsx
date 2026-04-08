@@ -2,6 +2,7 @@ import { useState } from "react"
 import { useNavigate, Link } from "react-router-dom"
 import { HiOutlineUserPlus, HiOutlineArrowUpRight } from "react-icons/hi2"
 import { accountApi } from "../../lib/accountApi"
+import { Turnstile } from "@marsidev/react-turnstile"
 
 export default function RegisterUser() {
   const navigate = useNavigate()
@@ -9,6 +10,7 @@ export default function RegisterUser() {
   const [loading, setLoading] = useState(false)
   const [errorMessage, setErrorMessage] = useState("")
   const [successMessage, setSuccessMessage] = useState("")
+  const [turnstileToken, setTurnstileToken] = useState("")
 
   const [form, setForm] = useState({
     userName: "",
@@ -56,6 +58,11 @@ export default function RegisterUser() {
       return
     }
 
+    if (!turnstileToken) {
+      setErrorMessage("Please complete the verification challenge.")
+      return
+    }
+
     setLoading(true)
 
     try {
@@ -63,7 +70,7 @@ export default function RegisterUser() {
         userName: form.userName.trim(),
         email: form.email.trim(),
         password: form.password,
-        fullName: form.userName.trim(),
+        turnstileToken,
       })
 
       setSuccessMessage("User registered successfully. Redirecting to sign in...")
@@ -83,6 +90,7 @@ export default function RegisterUser() {
             : "User registration failed."
 
       setErrorMessage(msg)
+      setTurnstileToken("")
     } finally {
       setLoading(false)
     }
@@ -98,12 +106,8 @@ export default function RegisterUser() {
             </div>
 
             <div>
-              <p className="text-lg font-semibold text-slate-800">
-                FinTrack
-              </p>
-              <p className="mt-1 text-sm text-slate-500">
-                Account registration
-              </p>
+              <p className="text-lg font-semibold text-slate-800">FinTrack</p>
+              <p className="mt-1 text-sm text-slate-500">Account registration</p>
             </div>
           </div>
 
@@ -179,10 +183,27 @@ export default function RegisterUser() {
               />
             </div>
 
+            <div className="pt-2">
+              <Turnstile
+                siteKey={import.meta.env.VITE_TURNSTILE_SITE_KEY}
+                onSuccess={(token) => {
+                  setTurnstileToken(token)
+                  setErrorMessage("")
+                }}
+                onExpire={() => {
+                  setTurnstileToken("")
+                }}
+                onError={() => {
+                  setTurnstileToken("")
+                  setErrorMessage("Verification failed. Please try again.")
+                }}
+              />
+            </div>
+
             <button
               type="button"
               onClick={onRegister}
-              disabled={loading}
+              disabled={loading || !turnstileToken}
               className="inline-flex h-11 w-full items-center justify-center rounded-xl bg-indigo-600 text-sm font-semibold text-white transition hover:bg-indigo-500 disabled:cursor-not-allowed disabled:opacity-60"
             >
               {loading ? "Creating..." : "Create account"}

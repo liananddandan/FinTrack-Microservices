@@ -20,6 +20,7 @@ public interface IAccountService
         string userName,
         string email,
         string password,
+        string trunstileToken,
         CancellationToken cancellationToken = default);
     
     Task<ServiceResult<string>> SelectTenantAsync(

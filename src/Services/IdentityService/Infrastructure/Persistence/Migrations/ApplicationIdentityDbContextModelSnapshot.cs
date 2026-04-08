@@ -115,6 +115,50 @@ namespace IdentityService.Infrastructure.Persistence.Migrations
                     b.ToTable("AspNetUsers", (string)null);
                 });
 
+            modelBuilder.Entity("IdentityService.Domain.Entities.EmailVerificationToken", b =>
+                {
+                    b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint");
+
+                    MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<long>("Id"));
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<string>("CreatedByIp")
+                        .HasMaxLength(64)
+                        .HasColumnType("varchar(64)");
+
+                    b.Property<DateTime>("ExpiresAt")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<DateTime?>("RevokedAt")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<string>("TokenHash")
+                        .IsRequired()
+                        .HasMaxLength(128)
+                        .HasColumnType("varchar(128)");
+
+                    b.Property<DateTime?>("UsedAt")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<long>("UserId")
+                        .HasColumnType("bigint");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ExpiresAt");
+
+                    b.HasIndex("TokenHash")
+                        .IsUnique();
+
+                    b.HasIndex("UserId");
+
+                    b.ToTable("EmailVerificationTokens", (string)null);
+                });
+
             modelBuilder.Entity("IdentityService.Domain.Entities.PlatformAccess", b =>
                 {
                     b.Property<long>("Id")
@@ -509,6 +553,17 @@ namespace IdentityService.Infrastructure.Persistence.Migrations
                     b.ToTable("AspNetUserTokens", (string)null);
                 });
 
+            modelBuilder.Entity("IdentityService.Domain.Entities.EmailVerificationToken", b =>
+                {
+                    b.HasOne("IdentityService.Domain.Entities.ApplicationUser", "User")
+                        .WithMany("EmailVerificationTokens")
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("User");
+                });
+
             modelBuilder.Entity("IdentityService.Domain.Entities.TenantInvitation", b =>
                 {
                     b.HasOne("IdentityService.Domain.Entities.ApplicationUser", "CreatedByUser")
@@ -601,6 +656,8 @@ namespace IdentityService.Infrastructure.Persistence.Migrations
             modelBuilder.Entity("IdentityService.Domain.Entities.ApplicationUser", b =>
                 {
                     b.Navigation("CreatedInvitations");
+
+                    b.Navigation("EmailVerificationTokens");
 
                     b.Navigation("Memberships");
                 });

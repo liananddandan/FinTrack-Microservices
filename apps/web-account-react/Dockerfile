@@ -3,7 +3,8 @@ WORKDIR /app
 
 COPY package*.json ./
 COPY apps ./apps
-
+ARG VITE_TURNSTILE_SITE_KEY
+ENV VITE_TURNSTILE_SITE_KEY=$VITE_TURNSTILE_SITE_KEY
 RUN npm install
 RUN npm run build -w apps/web-account-react
 

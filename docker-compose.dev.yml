@@ -81,6 +81,7 @@ services:
       CAP__DefaultGroup: identity.service
       SMTP__Host: mailhog
       SMTP__Port: 1025
+      Turnstile__SecretKey: ${TURNSTILE_SECRET_KEY}
     ports:
       - "5100:8080"
 
@@ -147,6 +148,7 @@ services:
       CAP__DefaultGroup: notification.service
       SMTP__Host: mailhog
       SMTP__Port: 1025
+      Resend__ApiKey: ${RESEND_API_KEY}
       ConnectionStrings__DefaultConnection: server=mysql;port=3306;database=fintrack_notification;user=root;password=123456
     ports:
       - "5103:8080"
@@ -169,6 +171,8 @@ services:
       CAP__RabbitMQ__UserName: fintrack
       CAP__RabbitMQ__Password: fintrack123
       CAP__DefaultGroup: platform.service
+      IdentityService__BaseUrl: http://identity-service:8080
+      IdentityService__InternalApiKey: fintrack-internal-dev-key
     ports:
       - "5104:8080"
 
@@ -209,6 +213,8 @@ services:
     build:
       context: .
       dockerfile: apps/web-account-react/Dockerfile
+      args:
+        VITE_TURNSTILE_SITE_KEY: ${VITE_TURNSTILE_SITE_KEY}
     container_name: fintrack-web-account-dev
     depends_on:
       gateway:

@@ -1,7 +1,9 @@
 using IdentityService.Application.Accounts.Abstractions;
+using IdentityService.Application.Accounts.Events;
 using IdentityService.Application.Common.Abstractions;
 using IdentityService.Application.Common.DTOs;
 using IdentityService.Domain.Entities;
+using MediatR;
 using Microsoft.AspNetCore.Identity;
 using SharedKernel.Common.DTOs.Auth;
 using SharedKernel.Common.Results;
@@ -13,7 +15,11 @@ public class AccountService(
     IApplicationUserRepo applicationUserRepo,
     UserManager<ApplicationUser> userManager,
     IJwtTokenService jwtTokenService,
-    IUserDomainService userDomainService)
+    IUserDomainService userDomainService,
+    IEmailVerificationService emailVerificationService,
+    IEmailThrottleService emailThrottleService,
+    ITurnstileValidationService turnstileValidationService,
+    IMediator mediator)
     : IAccountService
 {
     public async Task<ServiceResult<UserLoginDto>> LoginAsync(
@@ -155,11 +161,9 @@ public class AccountService(
         string userName,
         string email,
         string password,
+        string turnstileToken,
         CancellationToken cancellationToken = default)
     {
-        userName = userName.Trim();
-        email = email.Trim().ToLowerInvariant();
-
         if (string.IsNullOrWhiteSpace(userName))
         {
             return ServiceResult<RegisterUserDto>.Fail(
@@ -181,6 +185,28 @@ public class AccountService(
                 "Password is required.");
         }
 
+        if (string.IsNullOrWhiteSpace(turnstileToken))
+        {
+            return ServiceResult<RegisterUserDto>.Fail(
+                "TURNSTILE_TOKEN_REQUIRED",
+                "Verification challenge is required.");
+        }
+
+        userName = userName.Trim();
+        email = email.Trim().ToLowerInvariant();
+        turnstileToken = turnstileToken.Trim();
+
+        var turnstileResult = await turnstileValidationService.ValidateAsync(
+            turnstileToken,
+            cancellationToken);
+
+        if (!turnstileResult.Success)
+        {
+            return ServiceResult<RegisterUserDto>.Fail(
+                turnstileResult.Code ?? "TURNSTILE_VERIFY_FAILED",
+                turnstileResult.Message ?? "Verification failed.");
+        }
+
         try
         {
             var emailExists = await applicationUserRepo.IsEmailExistsAsync(email, cancellationToken);
@@ -195,7 +221,7 @@ public class AccountService(
             {
                 UserName = userName,
                 Email = email,
-                EmailConfirmed = true
+                EmailConfirmed = false
             };
 
             var createResult = await userManager.CreateAsync(user, password);
@@ -205,6 +231,45 @@ public class AccountService(
                 return ServiceResult<RegisterUserDto>.Fail(
                     ResultCodes.Account.RegisterUserCreateFailed,
                     error);
+            }
+
+            var sendAllowedResult = await emailThrottleService
+                .CheckRegistrationEmailSendAllowedAsync(cancellationToken);
+
+            if (!sendAllowedResult.Success)
+            {
+                logger.LogWarning(
+                    "User {UserId} registered successfully, but registration verification email was throttled. Code: {Code}, Message: {Message}",
+                    user.Id,
+                    sendAllowedResult.Code,
+                    sendAllowedResult.Message);
+            }
+            else
+            {
+                var verificationResult = await emailVerificationService.CreateTokenAsync(
+                    user.Id,
+                    createdByIp: null,
+                    cancellationToken: cancellationToken);
+
+                if (!verificationResult.Success || verificationResult.Data is null)
+                {
+                    logger.LogWarning(
+                        "User {UserId} registered successfully, but failed to create email verification token.",
+                        user.Id);
+                }
+                else
+                {
+                    await mediator.Publish(
+                        new SendEmailVerificationRequestedEvent(
+                            user.Id,
+                            user.Email!,
+                            user.UserName!,
+                            verificationResult.Data.RawToken,
+                            verificationResult.Data.ExpiresAtUtc),
+                        cancellationToken);
+
+                    await emailThrottleService.MarkRegistrationEmailSentAsync(cancellationToken);
+                }
             }
 
             return ServiceResult<RegisterUserDto>.Ok(
@@ -224,7 +289,7 @@ public class AccountService(
                 "User registration failed.");
         }
     }
-    
+
     public async Task<ServiceResult<string>> SelectTenantAsync(
         string userPublicId,
         string tenantPublicId,

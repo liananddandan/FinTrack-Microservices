@@ -1,10 +1,13 @@
 using AutoFixture;
 using FluentAssertions;
 using IdentityService.Application.Accounts.Abstractions;
+using IdentityService.Application.Accounts.Dtos;
+using IdentityService.Application.Accounts.Events;
 using IdentityService.Application.Accounts.Services;
 using IdentityService.Application.Common.Abstractions;
 using IdentityService.Domain.Entities;
 using IdentityService.Domain.Enums;
+using MediatR;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.Logging;
 using Moq;
@@ -22,8 +25,12 @@ public class AccountServiceTests
     private readonly Mock<IUserDomainService> _userDomainServiceMock = new();
 
     private readonly Mock<UserManager<ApplicationUser>> _userManagerMock;
-
+    private readonly Mock<IEmailVerificationService> _emailVerificationServiceMock = new();
+    private readonly Mock<IMediator> _mediatorMock = new();
+    private readonly Mock<IEmailThrottleService> _registerationEmailThrottleService = new();
+    private readonly Mock<ITurnstileValidationService> _turnstileValidationService = new();
     private readonly AccountService _sut;
+    private const string ValidTurnstileToken = "valid-turnstile-token";
 
     public AccountServiceTests()
     {
@@ -45,7 +52,12 @@ public class AccountServiceTests
             _applicationUserRepoMock.Object,
             _userManagerMock.Object,
             _jwtTokenServiceMock.Object,
-            _userDomainServiceMock.Object);
+            _userDomainServiceMock.Object,
+            _emailVerificationServiceMock.Object,
+            _registerationEmailThrottleService.Object,
+            _turnstileValidationService.Object,
+            _mediatorMock.Object
+        );
     }
 
     [Theory]
@@ -294,7 +306,12 @@ public class AccountServiceTests
         string password,
         string expectedMessage)
     {
-        var result = await _sut.RegisterUserAsync(userName, email, password, CancellationToken.None);
+        var result = await _sut.RegisterUserAsync(
+            userName,
+            email,
+            password,
+            ValidTurnstileToken,
+            CancellationToken.None);
 
         result.Success.Should().BeFalse();
         result.Message.Should().Be(expectedMessage);
@@ -302,8 +319,49 @@ public class AccountServiceTests
     }
 
     [Fact]
+    public async Task RegisterUserAsync_Should_Return_Fail_When_Turnstile_Validation_Fails()
+    {
+        _turnstileValidationService
+            .Setup(x => x.ValidateAsync(
+                ValidTurnstileToken,
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(ServiceResult<bool>.Fail(
+                "TURNSTILE_VERIFY_FAILED",
+                "Verification failed. Please try again."));
+
+        var result = await _sut.RegisterUserAsync(
+            "Emily",
+            "test@example.com",
+            "Password123!",
+            ValidTurnstileToken,
+            CancellationToken.None);
+
+        result.Success.Should().BeFalse();
+        result.Code.Should().Be("TURNSTILE_VERIFY_FAILED");
+        result.Message.Should().Be("Verification failed. Please try again.");
+        result.Data.Should().BeNull();
+
+        _applicationUserRepoMock.Verify(
+            x => x.IsEmailExistsAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()),
+            Times.Never);
+
+        _userManagerMock.Verify(
+            x => x.CreateAsync(It.IsAny<ApplicationUser>(), It.IsAny<string>()),
+            Times.Never);
+    }
+
+    [Fact]
     public async Task RegisterUserAsync_Should_Return_Fail_When_Email_Already_Exists()
     {
+        _turnstileValidationService
+            .Setup(x => x.ValidateAsync(
+                ValidTurnstileToken,
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(ServiceResult<bool>.Ok(
+                true,
+                "TURNSTILE_VERIFY_SUCCESS",
+                "Verification passed."));
+
         _applicationUserRepoMock
             .Setup(x => x.IsEmailExistsAsync("test@example.com", It.IsAny<CancellationToken>()))
             .ReturnsAsync(true);
@@ -312,6 +370,7 @@ public class AccountServiceTests
             "Emily",
             "test@example.com",
             "Password123!",
+            ValidTurnstileToken,
             CancellationToken.None);
 
         result.Success.Should().BeFalse();
@@ -321,6 +380,15 @@ public class AccountServiceTests
     [Fact]
     public async Task RegisterUserAsync_Should_Return_Fail_When_CreateUser_Fails()
     {
+        _turnstileValidationService
+            .Setup(x => x.ValidateAsync(
+                ValidTurnstileToken,
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(ServiceResult<bool>.Ok(
+                true,
+                "TURNSTILE_VERIFY_SUCCESS",
+                "Verification passed."));
+
         _applicationUserRepoMock
             .Setup(x => x.IsEmailExistsAsync("test@example.com", It.IsAny<CancellationToken>()))
             .ReturnsAsync(false);
@@ -336,6 +404,7 @@ public class AccountServiceTests
             "Emily",
             "test@example.com",
             "Password123!",
+            ValidTurnstileToken,
             CancellationToken.None);
 
         result.Success.Should().BeFalse();
@@ -345,6 +414,15 @@ public class AccountServiceTests
     [Fact]
     public async Task RegisterUserAsync_Should_Return_Success_When_Request_Is_Valid()
     {
+        _turnstileValidationService
+            .Setup(x => x.ValidateAsync(
+                ValidTurnstileToken,
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(ServiceResult<bool>.Ok(
+                true,
+                "TURNSTILE_VERIFY_SUCCESS",
+                "Verification passed."));
+
         _applicationUserRepoMock
             .Setup(x => x.IsEmailExistsAsync("test@example.com", It.IsAny<CancellationToken>()))
             .ReturnsAsync(false);
@@ -353,10 +431,33 @@ public class AccountServiceTests
             .Setup(x => x.CreateAsync(It.IsAny<ApplicationUser>(), "Password123!"))
             .ReturnsAsync(IdentityResult.Success);
 
+        _registerationEmailThrottleService
+            .Setup(x => x.CheckRegistrationEmailSendAllowedAsync(It.IsAny<CancellationToken>()))
+            .ReturnsAsync(ServiceResult<bool>.Ok(
+                true,
+                "REGISTRATION_EMAIL_ALLOWED",
+                "Registration verification email can be sent."));
+
+        _registerationEmailThrottleService
+            .Setup(x => x.MarkRegistrationEmailSentAsync(It.IsAny<CancellationToken>()))
+            .Returns(Task.CompletedTask);
+
+        _emailVerificationServiceMock
+            .Setup(x => x.CreateTokenAsync(It.IsAny<long>(), null, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(ServiceResult<CreateEmailVerificationTokenResult>.Ok(
+                new CreateEmailVerificationTokenResult("raw-token", DateTime.UtcNow.AddHours(24)),
+                "EMAIL_VERIFICATION_TOKEN_CREATED",
+                "Token created successfully."));
+
+        _mediatorMock
+            .Setup(x => x.Publish(It.IsAny<SendEmailVerificationRequestedEvent>(), It.IsAny<CancellationToken>()))
+            .Returns(Task.CompletedTask);
+
         var result = await _sut.RegisterUserAsync(
             "Emily",
             "test@example.com",
             "Password123!",
+            ValidTurnstileToken,
             CancellationToken.None);
 
         result.Success.Should().BeTrue();
@@ -368,8 +469,68 @@ public class AccountServiceTests
     }
 
     [Fact]
+    public async Task RegisterUserAsync_Should_Return_Success_But_Skip_Email_When_Registration_Email_Is_Throttled()
+    {
+        _turnstileValidationService
+            .Setup(x => x.ValidateAsync(
+                ValidTurnstileToken,
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(ServiceResult<bool>.Ok(
+                true,
+                "TURNSTILE_VERIFY_SUCCESS",
+                "Verification passed."));
+
+        _applicationUserRepoMock
+            .Setup(x => x.IsEmailExistsAsync("test@example.com", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(false);
+
+        _userManagerMock
+            .Setup(x => x.CreateAsync(It.IsAny<ApplicationUser>(), "Password123!"))
+            .ReturnsAsync(IdentityResult.Success);
+
+        _registerationEmailThrottleService
+            .Setup(x => x.CheckRegistrationEmailSendAllowedAsync(It.IsAny<CancellationToken>()))
+            .ReturnsAsync(ServiceResult<bool>.Fail(
+                "REGISTRATION_EMAIL_THROTTLED",
+                "Registration succeeded, but verification email was temporarily delayed due to high traffic."));
+
+        var result = await _sut.RegisterUserAsync(
+            "Emily",
+            "test@example.com",
+            "Password123!",
+            ValidTurnstileToken,
+            CancellationToken.None);
+
+        result.Success.Should().BeTrue();
+        result.Data.Should().NotBeNull();
+        result.Data!.Email.Should().Be("test@example.com");
+        result.Data.UserName.Should().Be("Emily");
+
+        _emailVerificationServiceMock.Verify(
+            x => x.CreateTokenAsync(It.IsAny<long>(), It.IsAny<string?>(), It.IsAny<CancellationToken>()),
+            Times.Never);
+
+        _mediatorMock.Verify(
+            x => x.Publish(It.IsAny<SendEmailVerificationRequestedEvent>(), It.IsAny<CancellationToken>()),
+            Times.Never);
+
+        _registerationEmailThrottleService.Verify(
+            x => x.MarkRegistrationEmailSentAsync(It.IsAny<CancellationToken>()),
+            Times.Never);
+    }
+
+    [Fact]
     public async Task RegisterUserAsync_Should_Normalize_Email_To_Lowercase()
     {
+        _turnstileValidationService
+            .Setup(x => x.ValidateAsync(
+                ValidTurnstileToken,
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(ServiceResult<bool>.Ok(
+                true,
+                "TURNSTILE_VERIFY_SUCCESS",
+                "Verification passed."));
+
         _applicationUserRepoMock
             .Setup(x => x.IsEmailExistsAsync("chenli@example.com", It.IsAny<CancellationToken>()))
             .ReturnsAsync(false);
@@ -381,10 +542,33 @@ public class AccountServiceTests
             .Callback<ApplicationUser, string>((user, _) => createdUser = user)
             .ReturnsAsync(IdentityResult.Success);
 
+        _registerationEmailThrottleService
+            .Setup(x => x.CheckRegistrationEmailSendAllowedAsync(It.IsAny<CancellationToken>()))
+            .ReturnsAsync(ServiceResult<bool>.Ok(
+                true,
+                "REGISTRATION_EMAIL_ALLOWED",
+                "Registration verification email can be sent."));
+
+        _registerationEmailThrottleService
+            .Setup(x => x.MarkRegistrationEmailSentAsync(It.IsAny<CancellationToken>()))
+            .Returns(Task.CompletedTask);
+
+        _emailVerificationServiceMock
+            .Setup(x => x.CreateTokenAsync(It.IsAny<long>(), null, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(ServiceResult<CreateEmailVerificationTokenResult>.Ok(
+                new CreateEmailVerificationTokenResult("raw-token", DateTime.UtcNow.AddHours(24)),
+                "EMAIL_VERIFICATION_TOKEN_CREATED",
+                "Token created successfully."));
+
+        _mediatorMock
+            .Setup(x => x.Publish(It.IsAny<SendEmailVerificationRequestedEvent>(), It.IsAny<CancellationToken>()))
+            .Returns(Task.CompletedTask);
+
         var result = await _sut.RegisterUserAsync(
             "ChenLi",
             "ChenLi@Example.com",
             "Password123!",
+            ValidTurnstileToken,
             CancellationToken.None);
 
         result.Success.Should().BeTrue();
@@ -395,6 +579,15 @@ public class AccountServiceTests
     [Fact]
     public async Task RegisterUserAsync_Should_Return_Fail_When_Exception_Is_Thrown()
     {
+        _turnstileValidationService
+            .Setup(x => x.ValidateAsync(
+                ValidTurnstileToken,
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(ServiceResult<bool>.Ok(
+                true,
+                "TURNSTILE_VERIFY_SUCCESS",
+                "Verification passed."));
+
         _applicationUserRepoMock
             .Setup(x => x.IsEmailExistsAsync("test@example.com", It.IsAny<CancellationToken>()))
             .ThrowsAsync(new Exception("db error"));
@@ -403,12 +596,14 @@ public class AccountServiceTests
             "Emily",
             "test@example.com",
             "Password123!",
+            ValidTurnstileToken,
             CancellationToken.None);
 
         result.Success.Should().BeFalse();
         result.Message.Should().Be("User registration failed.");
     }
-[Fact]
+
+    [Fact]
     public async Task SelectTenantAsync_Should_Return_Fail_When_UserPublicId_Is_Empty()
     {
         var result = await _sut.SelectTenantAsync(

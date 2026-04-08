@@ -7,6 +7,7 @@ import AcceptInvitation from "../pages/account/AcceptInvitation"
 import RegisterTenant from "../pages/account/RegisterTenant"
 import Home from "../pages/account/Home"
 import AccountProfile from "../pages/account/AccountProfile"
+import EmailVerificationRequired from "../pages/account/EmailVerificationRequire"
 
 export default function AppRouter() {
     return (
@@ -21,6 +22,10 @@ export default function AppRouter() {
                 <Route path="/account/accept-invitation" element={<AcceptInvitation />} />
                 <Route path="/account/register-tenant" element={<RegisterTenant />} />
                 <Route path="/account/profile" element={<AccountProfile />} />
+                <Route
+                    path="/account/email-verification-required"
+                    element={<EmailVerificationRequired />}
+                />
                 <Route path="*" element={<Navigate to="/" replace />} />
             </Routes>
         </BrowserRouter>

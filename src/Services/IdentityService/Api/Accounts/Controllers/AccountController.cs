@@ -2,6 +2,7 @@ using IdentityService.Api.Common.Extensions;
 using IdentityService.Api.Common.Filters.Attributes;
 using IdentityService.Api.Tenants.Contracts;
 using IdentityService.Application.Accounts.Commands;
+using IdentityService.Application.Accounts.Dtos;
 using IdentityService.Application.Common.DTOs;
 using IdentityService.Application.Common.Extensions;
 using IdentityService.Application.Platforms.Commands;
@@ -104,14 +105,33 @@ public class AccountController(IMediator mediator) : ControllerBase
         return result.ToActionResult();
     }
     
-    [HttpGet("confirm-email")]
+    [HttpPost("verify-email")]
     [AllowAnonymousToken]
-    public async Task<IActionResult> ConfirmAccountEmailAsync(string userId, string token)
+    public async Task<IActionResult> VerifyEmail(
+        [FromBody] VerifyEmailRequest request,
+        CancellationToken cancellationToken)
     {
-        var decodedToken = Uri.UnescapeDataString(token);
-        var decodeUserId = Uri.UnescapeDataString(userId);
-        ConfirmAccountEmailCommand request = new(decodeUserId, decodedToken);
-        var result = await mediator.Send(request);
+        var result = await mediator.Send(
+            new VerifyEmailCommand(request.Token),
+            cancellationToken);
+        return result.ToActionResult();
+    }
+    
+    [HttpPost("resend-verification-email")]
+    [RequireTokenType(JwtTokenType.AccountAccessToken)]
+    public async Task<IActionResult> ResendVerificationEmail(
+        CancellationToken cancellationToken)
+    {
+        var jwtParseResult = HttpContext.GetHttpHeaderJwtParseResult();
+        if (jwtParseResult == null)
+        {
+            return Unauthorized("Request without valid token");
+        }
+
+        var result = await mediator.Send(
+            new ResendVerificationEmailCommand(jwtParseResult.UserPublicId),
+            cancellationToken);
+
         return result.ToActionResult();
     }
 }

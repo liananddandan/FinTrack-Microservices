@@ -5,6 +5,7 @@
         <Nullable>enable</Nullable>
         <ImplicitUsings>enable</ImplicitUsings>
         <RootNamespace>NotificationService</RootNamespace>
+        <UserSecretsId>notification-service-local</UserSecretsId>
     </PropertyGroup>
 
     <ItemGroup>
@@ -18,13 +19,13 @@
           <PrivateAssets>all</PrivateAssets>
           <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
         </PackageReference>
+        <PackageReference Include="Microsoft.Extensions.Logging" Version="9.0.14" />
+        <PackageReference Include="Microsoft.Extensions.Logging.Console" Version="9.0.14" />
+        <PackageReference Include="Microsoft.Extensions.Logging.Debug" Version="9.0.14" />
         <PackageReference Include="Pomelo.EntityFrameworkCore.MySql" Version="9.0.0-preview.3.efcore.9.0.0" />
+        <PackageReference Include="Resend" Version="0.2.2" />
         <PackageReference Include="Scalar.AspNetCore" Version="2.5.3" />
         <PackageReference Include="Scrutor" Version="6.1.0" />
-    </ItemGroup>
-
-    <ItemGroup>
-      <Folder Include="Controllers\" />
     </ItemGroup>
 
     <ItemGroup>

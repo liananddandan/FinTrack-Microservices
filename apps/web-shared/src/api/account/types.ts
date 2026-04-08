@@ -22,6 +22,7 @@ export type UserLoginResult = {
 export type CurrentUserResult = {
   userPublicId: string
   email: string
+  emailConfirmed: boolean
   userName?: string
   memberships?: LoginMembershipDto[]
 }
@@ -30,7 +31,7 @@ export type RegisterUserRequest = {
   userName: string
   email: string
   password: string
-  fullName: string
+  turnstileToken: string
 }
 
 export type RegisterTenantRequest = {
@@ -44,4 +45,8 @@ export type RegisterTenantRequest = {
 export type PlatformTokenDto = {
   platformAccessToken: string
   platformRole: string
+}
+
+export type VerifyEmailRequest = {
+  token: string
 }

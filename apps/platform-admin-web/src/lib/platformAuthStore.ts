@@ -21,9 +21,24 @@ let state: AuthState = {
   profile: null,
 }
 
+console.log("[platformAuthStore] initial state", {
+  accountAccessToken: !!state.accountAccessToken,
+  platformAccessToken: !!state.platformAccessToken,
+  refreshToken: !!state.refreshToken,
+  platformRole: state.platformRole,
+  profile: state.profile,
+})
+
 const listeners = new Set<() => void>()
 
 function notify() {
+    console.log("[platformAuthStore] notify", {
+    accountAccessToken: !!state.accountAccessToken,
+    platformAccessToken: !!state.platformAccessToken,
+    platformRole: state.platformRole,
+    userEmail: state.profile?.email ?? "",
+    userName: state.profile?.userName ?? "",
+  })
   listeners.forEach((listener) => listener())
 }
 
@@ -61,6 +76,10 @@ export const platformAuthStore = {
   },
 
   setAccountTokens(accessToken: string, refreshToken: string) {
+    console.log("[platformAuthStore] setAccountTokens", {
+      hasAccessToken: !!accessToken,
+      hasRefreshToken: !!refreshToken,
+    })
     state = {
       ...state,
       accountAccessToken: accessToken,
@@ -73,6 +92,10 @@ export const platformAuthStore = {
   },
 
   setPlatformAccessToken(token: string, platformRole: string) {
+    console.log("[platformAuthStore] setPlatformAccessToken", {
+      hasPlatformToken: !!token,
+      platformRole,
+    })
     state = {
       ...state,
       platformAccessToken: token,
@@ -97,6 +120,8 @@ export const platformAuthStore = {
   },
 
   setProfile(profile: CurrentUserResult | null) {
+    console.log("[platformAuthStore] setProfile", profile)
+
     state = {
       ...state,
       profile,
@@ -105,6 +130,8 @@ export const platformAuthStore = {
   },
 
   clearProfile() {
+    console.log("[platformAuthStore] clearProfile")
+
     state = {
       ...state,
       profile: null,
@@ -113,6 +140,8 @@ export const platformAuthStore = {
   },
 
   logout() {
+    console.log("[platformAuthStore] logout")
+
     state = {
       accountAccessToken: "",
       platformAccessToken: "",

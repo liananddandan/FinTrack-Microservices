@@ -14,6 +14,7 @@ public class ApplicationIdentityDbContext(DbContextOptions<ApplicationIdentityDb
     
     public DbSet<PlatformAccess> PlatformAccesses => Set<PlatformAccess>();
     public DbSet<TenantDomainProjection> TenantDomainProjections => Set<TenantDomainProjection>();
+    public DbSet<EmailVerificationToken> EmailVerificationTokens => Set<EmailVerificationToken>();
 
     protected override void OnModelCreating(ModelBuilder builder)
     {

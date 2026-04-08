@@ -16,17 +16,27 @@ public class TenantDomainSubscriber(
     {
         var result = await syncService.UpsertAsync(message, cancellationToken);
 
-        if (!result.Success)
+        if (result.Success)
         {
-            logger.LogError(
-                "Failed to upsert tenant domain projection. DomainPublicId: {DomainPublicId}, Host: {Host}, Code: {Code}, Message: {Message}",
-                message.DomainPublicId,
-                message.Host,
-                result.Code,
-                result.Message);
-
-            throw new InvalidOperationException(result.Message ?? "Failed to upsert tenant domain projection.");
+            return;
         }
+
+        logger.LogError(
+            "Failed to upsert tenant domain projection. DomainPublicId: {DomainPublicId}, Host: {Host}, Code: {Code}, Message: {Message}",
+            message.DomainPublicId,
+            message.Host,
+            result.Code,
+            result.Message);
+
+        // Business conflict: log and swallow, no retry
+        if (result.Code == "Identity.TenantDomainProjection.HostConflict")
+        {
+            return;
+        }
+
+        // Transient/unknown failure: let CAP retry
+        throw new InvalidOperationException(
+            result.Message ?? "Failed to upsert tenant domain projection.");
     }
 
     [CapSubscribe(PlatformTopics.TenantDomainRemoved)]

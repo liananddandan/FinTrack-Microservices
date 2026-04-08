@@ -1,8 +1,9 @@
+using FluentAssertions;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Moq;
-using NotificationService.Options;
-using NotificationService.Services;
+using NotificationService.Application.Options;
+using NotificationService.Application.Services;
 using SharedKernel.Events;
 
 namespace NotificationService.Tests.Services;
@@ -10,20 +11,30 @@ namespace NotificationService.Tests.Services;
 public class SmtpEmailServiceTests
 {
     [Fact]
-    public async Task SendAsync_WithValidInput_SendsEmailWithoutException()
+    public async Task SendEmailAsync_WithValidInput_DoesNotThrow()
     {
-        var smtpOptions = new SmtpOptions
+        // Arrange
+        var smtpOptions = Options.Create(new SmtpOptions
         {
-            Host= "localhost",
-            Port= 1025,
-            User= "",
-            Password= ""
-        };
-        var optionsMock = new Mock<IOptions<SmtpOptions>>();
-        optionsMock.Setup(o => o.Value).Returns(smtpOptions);
+            Host = "localhost",
+            Port = 1025,
+            User = "",
+            Password = "",
+            UseSsl = false
+        });
+
+        var emailOptions = Options.Create(new EmailOptions
+        {
+            FromEmail = "noreply@fintrack.local",
+            FromName = "FinTrack"
+        });
+
         var loggerMock = new Mock<ILogger<SmtpEmailService>>();
-        
-        var emailService = new SmtpEmailService(optionsMock.Object, loggerMock.Object);
+
+        var emailService = new SmtpEmailService(
+            smtpOptions,
+            emailOptions,
+            loggerMock.Object);
 
         var emailEvent = new EmailSendRequestedEvent
         {
@@ -33,7 +44,11 @@ public class SmtpEmailServiceTests
             Body = "Test Body",
             IsHtml = false
         };
-        
-        await emailService.SendEmailAsync(emailEvent);
+
+        // Act
+        var act = async () => await emailService.SendEmailAsync(emailEvent);
+
+        // Assert
+        await act.Should().NotThrowAsync();
     }
 }
