@@ -14,10 +14,6 @@ public class DevController(
     [HttpPost("seed")]
     public async Task<IActionResult> SeedAsync(CancellationToken cancellationToken)
     {
-        if (!environment.IsDevelopment())
-        {
-            return NotFound();
-        }
 
         var seedResult = await devSeedOrchestrator.SeedAsync(cancellationToken);
 

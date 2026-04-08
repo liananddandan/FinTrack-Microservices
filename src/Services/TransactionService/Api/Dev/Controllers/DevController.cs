@@ -16,10 +16,6 @@ public class DevController(
         [FromBody] DevTransactionSeedRequest request,
         CancellationToken cancellationToken)
     {
-        if (!environment.IsDevelopment())
-        {
-            return NotFound();
-        }
 
         var seedResult = await devSeedService.SeedMenuAndOrdersAsync(request, cancellationToken);
 
