@@ -19,11 +19,6 @@ public class DevController(
         [FromBody] DevIdentitySeedRequest request,
         CancellationToken cancellationToken)
     {
-        if (!environment.IsDevelopment())
-        {
-            return NotFound();
-        }
-
         var seedResult = await devSeedService.SeedIdentityAsync(request, cancellationToken);
 
         return Ok(new ApiResponse<DevIdentitySeedResult>(
