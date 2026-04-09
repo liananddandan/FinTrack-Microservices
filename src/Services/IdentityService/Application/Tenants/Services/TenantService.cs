@@ -1,9 +1,11 @@
 using IdentityService.Application.Accounts.Abstractions;
+using IdentityService.Application.Accounts.Events;
 using IdentityService.Application.Common.Abstractions;
 using IdentityService.Application.Common.DTOs;
 using IdentityService.Application.Tenants.Abstractions;
 using IdentityService.Domain.Entities;
 using IdentityService.Domain.Enums;
+using MediatR;
 using Microsoft.AspNetCore.Identity;
 using SharedKernel.Common.Constants;
 using SharedKernel.Common.Results;
@@ -21,19 +23,20 @@ public class TenantService(
     UserManager<ApplicationUser> userManager,
     ITenantMembershipRepo tenantMembershipRepo,
     IConnectionMultiplexer redis,
-    IAuditLogPublisher auditLogPublisher) : ITenantService
+    IAuditLogPublisher auditLogPublisher,
+    ITurnstileValidationService turnstileValidationService,
+    IEmailThrottleService emailThrottleService,
+    IMediator mediator,
+    IEmailVerificationService emailVerificationService) : ITenantService
 {
     public async Task<ServiceResult<RegisterTenantDto>> RegisterTenantAsync(
         string tenantName,
         string adminName,
         string adminEmail,
         string adminPassword,
+        string turnstileToken,
         CancellationToken cancellationToken = default)
     {
-        tenantName = tenantName.Trim();
-        adminName = adminName.Trim();
-        adminEmail = adminEmail.Trim().ToLowerInvariant();
-
         if (string.IsNullOrWhiteSpace(tenantName))
         {
             return ServiceResult<RegisterTenantDto>.Fail(
@@ -57,7 +60,28 @@ public class TenantService(
             return ServiceResult<RegisterTenantDto>.Fail(
                 ResultCodes.TenantCodes.RegisterTenantParameterError, "Admin password is required.");
         }
-
+        
+        if (string.IsNullOrWhiteSpace(turnstileToken))
+        {
+            return ServiceResult<RegisterTenantDto>.Fail(
+                "TURNSTILE_TOKEN_REQUIRED",
+                "Verification challenge is required.");
+        }
+        
+        tenantName = tenantName.Trim();
+        adminName = adminName.Trim();
+        adminEmail = adminEmail.Trim().ToLowerInvariant();
+        turnstileToken = turnstileToken.Trim();
+        
+        var turnstileResult = await turnstileValidationService.ValidateAsync(
+            turnstileToken, cancellationToken);
+        if (!turnstileResult.Success)
+        {
+            return ServiceResult<RegisterTenantDto>.Fail(
+                turnstileResult.Code ?? "TURNSTILE_VERIFY_FAILED",
+                turnstileResult.Message ?? "Verification failed.");
+        }
+        
         await unitOfWork.BeginTransactionAsync(cancellationToken);
 
         try
@@ -90,7 +114,7 @@ public class TenantService(
             {
                 UserName = adminEmail,
                 Email = adminEmail,
-                EmailConfirmed = true
+                EmailConfirmed = false
             };
 
             var createUserResult = await userManager.CreateAsync(user, adminPassword);
@@ -116,6 +140,54 @@ public class TenantService(
 
             await unitOfWork.CommitTransactionAsync(cancellationToken);
 
+            var sendAllowedResult = await emailThrottleService.CheckRegistrationEmailSendAllowedAsync(
+                cancellationToken);
+            string message;
+            if (!sendAllowedResult.Success)
+            {
+                logger.LogWarning(
+                    "Tenant {TenantId} created successfully, but admin verification email was throttled. Code: {Code}, Message: {Message}",
+                    tenant.Id,
+                    sendAllowedResult.Code,
+                    sendAllowedResult.Message);
+
+                message =
+                    "Tenant created successfully. Verification email was temporarily delayed. Please log in later to resend verification email.";
+            }
+            else
+            {
+                var verificationResult = await emailVerificationService.CreateTokenAsync(
+                    user.Id,
+                    createdByIp: null,
+                    cancellationToken: cancellationToken);
+
+                if (!verificationResult.Success || verificationResult.Data is null)
+                {
+                    logger.LogWarning(
+                        "Tenant {TenantId} created successfully, but failed to create email verification token for admin user {UserId}.",
+                        tenant.Id,
+                        user.Id);
+
+                    message =
+                        "Tenant created successfully. Verification email could not be sent right now. Please log in later to resend verification email.";
+                }
+                else
+                {
+                    await mediator.Publish(
+                        new SendEmailVerificationRequestedEvent(
+                            user.Id,
+                            user.Email!,
+                            adminName,
+                            verificationResult.Data.RawToken,
+                            verificationResult.Data.ExpiresAtUtc),
+                        cancellationToken);
+
+                    await emailThrottleService.MarkRegistrationEmailSentAsync(cancellationToken);
+
+                    message =
+                        "Tenant created successfully. Please verify the admin email before accessing the workspace.";
+                }
+            }
             return ServiceResult<RegisterTenantDto>.Ok(
                 new RegisterTenantDto(
                     tenant.PublicId.ToString(),
@@ -123,7 +195,7 @@ public class TenantService(
                     user.Email!
                 ),
                 ResultCodes.TenantCodes.RegisterTenantSuccess,
-                "Tenant created successfully.");
+                message);
         }
         catch (Exception ex)
         {

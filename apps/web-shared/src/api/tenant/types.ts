@@ -12,6 +12,7 @@ export type TenantRegistrationRequest = {
   adminName: string
   adminEmail: string
   adminPassword: string
+  turnstileToken: string
 }
 
 export type TenantRegistrationResult = {

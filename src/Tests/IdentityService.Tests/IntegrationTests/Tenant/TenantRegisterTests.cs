@@ -1,6 +1,7 @@
 using System.Net;
 using System.Net.Http.Json;
 using FluentAssertions;
+using IdentityService.Domain.Entities;
 using IdentityService.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
@@ -8,10 +9,11 @@ using Microsoft.Extensions.DependencyInjection;
 namespace IdentityService.Tests.IntegrationTests.Tenant;
 
 [Collection("IntegrationTests")]
-
 public class TenantRegisterTests(IdentityWebApplicationFactory<Program> factory)
     : IClassFixture<IdentityWebApplicationFactory<Program>>
 {
+    private const string TestTurnstileToken = "test-turnstile-token";
+
     private readonly IdentityWebApplicationFactory<Program> _factory = factory;
     private readonly HttpClient _client = factory.CreateClient();
 
@@ -28,26 +30,34 @@ public class TenantRegisterTests(IdentityWebApplicationFactory<Program> factory)
             tenantName,
             adminName = "Emily",
             adminEmail,
-            adminPassword = "Password123!"
+            adminPassword = "Password123!",
+            turnstileToken = TestTurnstileToken
         };
 
         var response = await _client.PostAsJsonAsync("/api/tenant/register", request);
-
-        response.StatusCode.Should().Be(HttpStatusCode.OK);
-
         var body = await response.Content.ReadAsStringAsync();
+
+        response.StatusCode.Should().Be(HttpStatusCode.OK, body);
         body.Should().Contain("Tenant created successfully");
+
+        var apiResponse = await response.Content.ReadFromJsonAsync<ApiResponse<RegisterTenantResultTestDto>>();
+        apiResponse.Should().NotBeNull();
+        apiResponse!.Data.Should().NotBeNull();
+        apiResponse.Data!.TenantPublicId.Should().NotBeNullOrWhiteSpace();
+        apiResponse.Data.UserPublicId.Should().NotBeNull();
+        apiResponse.Data.AdminEmail.Should().Be(adminEmail);
 
         using var scope = _factory.Services.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<ApplicationIdentityDbContext>();
 
-        var tenant = db.Tenants.SingleOrDefault(x => x.Name == tenantName);
+        var tenant = await db.Tenants.SingleOrDefaultAsync(x => x.Name == tenantName);
         tenant.Should().NotBeNull();
 
-        var user = db.Users.SingleOrDefault(x => x.Email == adminEmail);
+        var user = await db.Users.SingleOrDefaultAsync(x => x.Email == adminEmail);
         user.Should().NotBeNull();
+        user!.EmailConfirmed.Should().BeFalse();
 
-        var membership = db.TenantMemberships.SingleOrDefault(x =>
+        var membership = await db.TenantMemberships.SingleOrDefaultAsync(x =>
             x.TenantId == tenant!.Id &&
             x.UserId == user!.Id);
 
@@ -65,15 +75,36 @@ public class TenantRegisterTests(IdentityWebApplicationFactory<Program> factory)
             tenantName = "",
             adminName = "Emily",
             adminEmail = $"emily-{unique}@test.com",
-            adminPassword = "Password123!"
+            adminPassword = "Password123!",
+            turnstileToken = TestTurnstileToken
         };
 
         var response = await _client.PostAsJsonAsync("/api/tenant/register", request);
-
-        response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
-
         var body = await response.Content.ReadAsStringAsync();
+
+        response.StatusCode.Should().Be(HttpStatusCode.BadRequest, body);
         body.Should().Contain("Tenant name is required.");
+    }
+
+    [Fact]
+    public async Task RegisterTenant_Should_Return_BadRequest_When_TurnstileToken_Is_Missing()
+    {
+        var unique = Guid.NewGuid().ToString("N");
+
+        var request = new
+        {
+            tenantName = $"FinTrack-{unique}",
+            adminName = "Emily",
+            adminEmail = $"emily-{unique}@test.com",
+            adminPassword = "Password123!",
+            turnstileToken = ""
+        };
+
+        var response = await _client.PostAsJsonAsync("/api/tenant/register", request);
+        var body = await response.Content.ReadAsStringAsync();
+
+        response.StatusCode.Should().Be(HttpStatusCode.BadRequest, body);
+        body.Should().Contain("Verification challenge is required.");
     }
 
     [Fact]
@@ -86,7 +117,8 @@ public class TenantRegisterTests(IdentityWebApplicationFactory<Program> factory)
             tenantName = $"TenantA-{unique}",
             adminName = "Emily",
             adminEmail = $"emily-{unique}@test.com",
-            adminPassword = "Password123!"
+            adminPassword = "Password123!",
+            turnstileToken = TestTurnstileToken
         };
 
         var second = new
@@ -94,17 +126,19 @@ public class TenantRegisterTests(IdentityWebApplicationFactory<Program> factory)
             tenantName = $"TenantB-{unique}",
             adminName = "Emily",
             adminEmail = $"emily-{unique}@test.com",
-            adminPassword = "Password123!"
+            adminPassword = "Password123!",
+            turnstileToken = TestTurnstileToken
         };
-        
+
         var firstResponse = await _client.PostAsJsonAsync("/api/tenant/register", first);
-        firstResponse.StatusCode.Should().Be(HttpStatusCode.OK);
+        var firstBody = await firstResponse.Content.ReadAsStringAsync();
+        firstResponse.StatusCode.Should().Be(HttpStatusCode.OK, firstBody);
 
         var secondResponse = await _client.PostAsJsonAsync("/api/tenant/register", second);
-        secondResponse.StatusCode.Should().Be(HttpStatusCode.BadRequest);
+        var secondBody = await secondResponse.Content.ReadAsStringAsync();
 
-        var body = await secondResponse.Content.ReadAsStringAsync();
-        body.Should().Contain("Admin email already exists.");
+        secondResponse.StatusCode.Should().Be(HttpStatusCode.BadRequest, secondBody);
+        secondBody.Should().Contain("Admin email already exists.");
     }
 
     [Fact]
@@ -118,7 +152,8 @@ public class TenantRegisterTests(IdentityWebApplicationFactory<Program> factory)
             tenantName = duplicatedTenantName,
             adminName = "Emily",
             adminEmail = $"emily1-{unique}@test.com",
-            adminPassword = "Password123!"
+            adminPassword = "Password123!",
+            turnstileToken = TestTurnstileToken
         };
 
         var second = new
@@ -126,19 +161,21 @@ public class TenantRegisterTests(IdentityWebApplicationFactory<Program> factory)
             tenantName = duplicatedTenantName,
             adminName = "Bob",
             adminEmail = $"bob-{unique}@test.com",
-            adminPassword = "Password123!"
+            adminPassword = "Password123!",
+            turnstileToken = TestTurnstileToken
         };
 
         var firstResponse = await _client.PostAsJsonAsync("/api/tenant/register", first);
-        firstResponse.StatusCode.Should().Be(HttpStatusCode.OK);
+        var firstBody = await firstResponse.Content.ReadAsStringAsync();
+        firstResponse.StatusCode.Should().Be(HttpStatusCode.OK, firstBody);
 
         var secondResponse = await _client.PostAsJsonAsync("/api/tenant/register", second);
-        secondResponse.StatusCode.Should().Be(HttpStatusCode.BadRequest);
+        var secondBody = await secondResponse.Content.ReadAsStringAsync();
 
-        var body = await secondResponse.Content.ReadAsStringAsync();
-        body.Should().Contain("Tenant name already exists.");
+        secondResponse.StatusCode.Should().Be(HttpStatusCode.BadRequest, secondBody);
+        secondBody.Should().Contain("Tenant name already exists.");
     }
-    
+
     [Fact]
     public async Task RegisterTenant_Should_Not_Persist_Tenant_When_UserCreation_Fails()
     {
@@ -149,7 +186,8 @@ public class TenantRegisterTests(IdentityWebApplicationFactory<Program> factory)
             tenantName = $"FinTrack-{unique}",
             adminName = "Emily",
             adminEmail = $"emily-{unique}@test.com",
-            adminPassword = "123"
+            adminPassword = "123",
+            turnstileToken = TestTurnstileToken
         };
 
         var response = await _client.PostAsJsonAsync("/api/tenant/register", request);
@@ -165,5 +203,85 @@ public class TenantRegisterTests(IdentityWebApplicationFactory<Program> factory)
 
         tenant.Should().BeNull();
         user.Should().BeNull();
+    }
+
+    [Fact]
+    public async Task RegisterTenant_Should_Store_AdminEmail_In_Lowercase()
+    {
+        var unique = Guid.NewGuid().ToString("N");
+        var request = new
+        {
+            tenantName = $"FinTrack-{unique}",
+            adminName = "Emily",
+            adminEmail = $"Emily-{unique}@Example.com",
+            adminPassword = "Password123!",
+            turnstileToken = TestTurnstileToken
+        };
+
+        var response = await _client.PostAsJsonAsync("/api/tenant/register", request);
+        var body = await response.Content.ReadAsStringAsync();
+
+        response.StatusCode.Should().Be(HttpStatusCode.OK, body);
+
+        var apiResponse = await response.Content.ReadFromJsonAsync<ApiResponse<RegisterTenantResultTestDto>>();
+        apiResponse.Should().NotBeNull();
+        apiResponse!.Data.Should().NotBeNull();
+        apiResponse.Data!.AdminEmail.Should().Be(request.adminEmail.ToLowerInvariant());
+
+        using var scope = _factory.Services.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<ApplicationIdentityDbContext>();
+
+        var user = await db.Users.SingleOrDefaultAsync(x => x.Email == request.adminEmail.ToLowerInvariant());
+        user.Should().NotBeNull();
+        user!.UserName.Should().Be(request.adminEmail.ToLowerInvariant());
+    }
+
+    [Fact]
+    public async Task RegisterTenant_Should_Create_EmailVerificationToken_For_Admin()
+    {
+        var unique = Guid.NewGuid().ToString("N");
+        var request = new
+        {
+            tenantName = $"FinTrack-{unique}",
+            adminName = "Emily",
+            adminEmail = $"emily-{unique}@test.com",
+            adminPassword = "Password123!",
+            turnstileToken = TestTurnstileToken
+        };
+
+        var response = await _client.PostAsJsonAsync("/api/tenant/register", request);
+        var body = await response.Content.ReadAsStringAsync();
+
+        response.StatusCode.Should().Be(HttpStatusCode.OK, body);
+
+        using var scope = _factory.Services.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<ApplicationIdentityDbContext>();
+
+        var user = await db.Users.SingleAsync(x => x.Email == request.adminEmail);
+
+        var token = await db.EmailVerificationTokens
+            .Where(x => x.UserId == user.Id)
+            .OrderByDescending(x => x.CreatedAt)
+            .FirstOrDefaultAsync();
+
+        token.Should().NotBeNull();
+        token!.TokenHash.Should().NotBeNullOrWhiteSpace();
+        token.UsedAt.Should().BeNull();
+        token.RevokedAt.Should().BeNull();
+        token.ExpiresAt.Should().BeAfter(DateTime.UtcNow);
+    }
+
+    private sealed class ApiResponse<T>
+    {
+        public string Code { get; set; } = string.Empty;
+        public string Message { get; set; } = string.Empty;
+        public T? Data { get; set; }
+    }
+
+    private sealed class RegisterTenantResultTestDto
+    {
+        public string TenantPublicId { get; set; } = string.Empty;
+        public string UserPublicId { get; set; } = string.Empty;
+        public string AdminEmail { get; set; } = string.Empty;
     }
 }

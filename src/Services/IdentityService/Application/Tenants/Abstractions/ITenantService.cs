@@ -10,6 +10,7 @@ public interface ITenantService
         string adminName,
         string adminEmail,
         string adminPassword,
+        string turnstileToken,
         CancellationToken cancellationToken = default);
     
     Task<ServiceResult<List<TenantMemberDto>>> GetTenantMembersAsync(
