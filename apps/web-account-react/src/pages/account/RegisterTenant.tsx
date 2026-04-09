@@ -4,6 +4,7 @@ import {
   HiOutlineBuildingOffice2,
   HiOutlineArrowUpRight,
 } from "react-icons/hi2"
+import { Turnstile } from "@marsidev/react-turnstile"
 import { tenantApi } from "../../lib/tenantApi"
 
 export default function RegisterTenant() {
@@ -12,6 +13,7 @@ export default function RegisterTenant() {
   const [loading, setLoading] = useState(false)
   const [successMessage, setSuccessMessage] = useState("")
   const [errorMessage, setErrorMessage] = useState("")
+  const [turnstileToken, setTurnstileToken] = useState("")
 
   const [form, setForm] = useState({
     tenantName: "",
@@ -65,6 +67,11 @@ export default function RegisterTenant() {
       return
     }
 
+    if (!turnstileToken) {
+      setErrorMessage("Please complete the verification challenge.")
+      return
+    }
+
     setLoading(true)
 
     try {
@@ -73,6 +80,7 @@ export default function RegisterTenant() {
         adminName: form.adminName.trim(),
         adminEmail: form.adminEmail.trim(),
         adminPassword: form.adminPassword,
+        turnstileToken,
       })
 
       setSuccessMessage(
@@ -94,6 +102,7 @@ export default function RegisterTenant() {
             : "Organization registration failed."
 
       setErrorMessage(msg)
+      setTurnstileToken("")
     } finally {
       setLoading(false)
     }
@@ -207,9 +216,26 @@ export default function RegisterTenant() {
               />
             </div>
 
+            <div className="pt-2">
+              <Turnstile
+                siteKey={import.meta.env.VITE_TURNSTILE_SITE_KEY}
+                onSuccess={(token) => {
+                  setTurnstileToken(token)
+                  setErrorMessage("")
+                }}
+                onExpire={() => {
+                  setTurnstileToken("")
+                }}
+                onError={() => {
+                  setTurnstileToken("")
+                  setErrorMessage("Verification failed. Please try again.")
+                }}
+              />
+            </div>
+
             <button
               type="button"
-              disabled={loading}
+              disabled={loading || !turnstileToken}
               onClick={onSubmit}
               className="inline-flex h-11 w-full items-center justify-center rounded-xl bg-indigo-600 text-sm font-semibold text-white transition hover:bg-indigo-500 disabled:cursor-not-allowed disabled:opacity-60"
             >

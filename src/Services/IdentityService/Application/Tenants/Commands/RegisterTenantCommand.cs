@@ -8,5 +8,6 @@ public record RegisterTenantCommand(
     string TenantName,
     string AdminName,
     string AdminEmail,
-    string AdminPassword
+    string AdminPassword,
+    string TurnstileToken
     ) : IRequest<ServiceResult<RegisterTenantDto>>;

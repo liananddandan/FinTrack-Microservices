@@ -1,12 +1,14 @@
 using AutoFixture;
 using FluentAssertions;
 using IdentityService.Application.Accounts.Abstractions;
+using IdentityService.Application.Accounts.Dtos;
+using IdentityService.Application.Accounts.Events;
 using IdentityService.Application.Common.Abstractions;
-using IdentityService.Application.Common.DTOs;
 using IdentityService.Application.Tenants.Abstractions;
 using IdentityService.Application.Tenants.Services;
 using IdentityService.Domain.Entities;
 using IdentityService.Domain.Enums;
+using MediatR;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.Logging;
 using Moq;
@@ -17,6 +19,8 @@ namespace IdentityService.Tests.UnitTests.Tenant;
 
 public class TenantServiceTests
 {
+    private const string ValidTurnstileToken = "valid-turnstile-token";
+
     private readonly Fixture _fixture = new();
 
     private readonly Mock<ILogger<TenantService>> _loggerMock = new();
@@ -25,8 +29,12 @@ public class TenantServiceTests
     private readonly Mock<IApplicationUserRepo> _applicationUserRepoMock = new();
     private readonly Mock<ITenantMembershipRepo> _tenantMembershipRepoMock = new();
     private readonly Mock<UserManager<ApplicationUser>> _userManagerMock;
-    private readonly Mock<IConnectionMultiplexer> _connectionMultiplexerMock = new();
     private readonly Mock<IAuditLogPublisher> _auditLogPublisherMock = new();
+    private readonly Mock<ITurnstileValidationService> _turnstileValidationServiceMock = new();
+    private readonly Mock<IEmailThrottleService> _emailThrottleServiceMock = new();
+    private readonly Mock<IEmailVerificationService> _emailVerificationServiceMock = new();
+    private readonly Mock<IMediator> _mediatorMock = new();
+    private readonly Mock<IConnectionMultiplexer> _connectionMultiplexerMock = new();
 
     private readonly TenantService _sut;
 
@@ -38,7 +46,7 @@ public class TenantServiceTests
             .ForEach(b => _fixture.Behaviors.Remove(b));
 
         _fixture.Behaviors.Add(new OmitOnRecursionBehavior());
-        
+
         var userStoreMock = new Mock<IUserStore<ApplicationUser>>();
 
         _userManagerMock = new Mock<UserManager<ApplicationUser>>(
@@ -60,7 +68,12 @@ public class TenantServiceTests
             _userManagerMock.Object,
             _tenantMembershipRepoMock.Object,
             _connectionMultiplexerMock.Object,
-            _auditLogPublisherMock.Object);
+            _auditLogPublisherMock.Object,
+            _turnstileValidationServiceMock.Object,
+            _emailThrottleServiceMock.Object,
+            _mediatorMock.Object,
+            _emailVerificationServiceMock.Object
+        );
     }
 
     [Theory]
@@ -80,37 +93,100 @@ public class TenantServiceTests
             adminName,
             adminEmail,
             adminPassword,
+            ValidTurnstileToken,
             CancellationToken.None);
 
         result.Success.Should().BeFalse();
         result.Message.Should().Be(expectedMessage);
         result.Code.Should().Be(ResultCodes.TenantCodes.RegisterTenantParameterError);
 
+        _turnstileValidationServiceMock.Verify(
+            x => x.ValidateAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()),
+            Times.Never);
+
         _tenantRepoMock.Verify(
             x => x.IsTenantNameExistsAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()),
             Times.Never);
 
         _unitOfWorkMock.Verify(
-            x => x.WithTransactionAsync(It.IsAny<Func<Task<ServiceResult<RegisterTenantDto>>>>(), It.IsAny<CancellationToken>()),
+            x => x.BeginTransactionAsync(It.IsAny<CancellationToken>()),
             Times.Never);
     }
 
     [Fact]
-    public async Task RegisterTenantAsync_Should_Return_Fail_When_Tenant_Name_Already_Exists()
+    public async Task RegisterTenantAsync_Should_Return_Fail_When_Turnstile_Token_Is_Missing()
     {
-        _tenantRepoMock
-            .Setup(x => x.IsTenantNameExistsAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(true);
+        var result = await _sut.RegisterTenantAsync(
+            "FinTrack",
+            "Emily",
+            "emily@test.com",
+            "Password123!",
+            "",
+            CancellationToken.None);
 
-        _unitOfWorkMock
-            .Setup(x => x.WithTransactionAsync(It.IsAny<Func<Task<ServiceResult<RegisterTenantDto>>>>(), It.IsAny<CancellationToken>()))
-            .Returns<Func<Task<ServiceResult<RegisterTenantDto>>>, CancellationToken>((action, _) => action());
+        result.Success.Should().BeFalse();
+        result.Code.Should().Be("TURNSTILE_TOKEN_REQUIRED");
+        result.Message.Should().Be("Verification challenge is required.");
+
+        _turnstileValidationServiceMock.Verify(
+            x => x.ValidateAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()),
+            Times.Never);
+    }
+
+    [Fact]
+    public async Task RegisterTenantAsync_Should_Return_Fail_When_Turnstile_Validation_Fails()
+    {
+        _turnstileValidationServiceMock
+            .Setup(x => x.ValidateAsync(
+                ValidTurnstileToken,
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(ServiceResult<bool>.Fail(
+                "TURNSTILE_VERIFY_FAILED",
+                "Verification failed. Please try again."));
 
         var result = await _sut.RegisterTenantAsync(
             "FinTrack",
             "Emily",
             "emily@test.com",
             "Password123!",
+            ValidTurnstileToken,
+            CancellationToken.None);
+
+        result.Success.Should().BeFalse();
+        result.Code.Should().Be("TURNSTILE_VERIFY_FAILED");
+        result.Message.Should().Be("Verification failed. Please try again.");
+
+        _tenantRepoMock.Verify(
+            x => x.IsTenantNameExistsAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()),
+            Times.Never);
+
+        _unitOfWorkMock.Verify(
+            x => x.BeginTransactionAsync(It.IsAny<CancellationToken>()),
+            Times.Never);
+    }
+
+    [Fact]
+    public async Task RegisterTenantAsync_Should_Return_Fail_When_Tenant_Name_Already_Exists()
+    {
+        _turnstileValidationServiceMock
+            .Setup(x => x.ValidateAsync(
+                ValidTurnstileToken,
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(ServiceResult<bool>.Ok(
+                true,
+                "TURNSTILE_VERIFY_SUCCESS",
+                "Verification passed."));
+
+        _tenantRepoMock
+            .Setup(x => x.IsTenantNameExistsAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(true);
+
+        var result = await _sut.RegisterTenantAsync(
+            "FinTrack",
+            "Emily",
+            "emily@test.com",
+            "Password123!",
+            ValidTurnstileToken,
             CancellationToken.None);
 
         result.Success.Should().BeFalse();
@@ -124,11 +200,24 @@ public class TenantServiceTests
         _tenantRepoMock.Verify(
             x => x.AddTenantAsync(It.IsAny<Domain.Entities.Tenant>(), It.IsAny<CancellationToken>()),
             Times.Never);
+
+        _unitOfWorkMock.Verify(
+            x => x.RollbackTransactionAsync(It.IsAny<CancellationToken>()),
+            Times.Once);
     }
 
     [Fact]
     public async Task RegisterTenantAsync_Should_Return_Fail_When_Admin_Email_Already_Exists()
     {
+        _turnstileValidationServiceMock
+            .Setup(x => x.ValidateAsync(
+                ValidTurnstileToken,
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(ServiceResult<bool>.Ok(
+                true,
+                "TURNSTILE_VERIFY_SUCCESS",
+                "Verification passed."));
+
         _tenantRepoMock
             .Setup(x => x.IsTenantNameExistsAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(false);
@@ -137,15 +226,12 @@ public class TenantServiceTests
             .Setup(x => x.IsEmailExistsAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(true);
 
-        _unitOfWorkMock
-            .Setup(x => x.WithTransactionAsync(It.IsAny<Func<Task<ServiceResult<RegisterTenantDto>>>>(), It.IsAny<CancellationToken>()))
-            .Returns<Func<Task<ServiceResult<RegisterTenantDto>>>, CancellationToken>((action, _) => action());
-
         var result = await _sut.RegisterTenantAsync(
             "FinTrack",
             "Emily",
             "emily@test.com",
             "Password123!",
+            ValidTurnstileToken,
             CancellationToken.None);
 
         result.Success.Should().BeFalse();
@@ -159,11 +245,24 @@ public class TenantServiceTests
         _userManagerMock.Verify(
             x => x.CreateAsync(It.IsAny<ApplicationUser>(), It.IsAny<string>()),
             Times.Never);
+
+        _unitOfWorkMock.Verify(
+            x => x.RollbackTransactionAsync(It.IsAny<CancellationToken>()),
+            Times.Once);
     }
 
     [Fact]
     public async Task RegisterTenantAsync_Should_Return_Fail_When_UserManager_CreateAsync_Fails()
     {
+        _turnstileValidationServiceMock
+            .Setup(x => x.ValidateAsync(
+                ValidTurnstileToken,
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(ServiceResult<bool>.Ok(
+                true,
+                "TURNSTILE_VERIFY_SUCCESS",
+                "Verification passed."));
+
         _tenantRepoMock
             .Setup(x => x.IsTenantNameExistsAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(false);
@@ -171,10 +270,6 @@ public class TenantServiceTests
         _applicationUserRepoMock
             .Setup(x => x.IsEmailExistsAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(false);
-
-        _unitOfWorkMock
-            .Setup(x => x.WithTransactionAsync(It.IsAny<Func<Task<ServiceResult<RegisterTenantDto>>>>(), It.IsAny<CancellationToken>()))
-            .Returns<Func<Task<ServiceResult<RegisterTenantDto>>>, CancellationToken>((action, _) => action());
 
         _userManagerMock
             .Setup(x => x.CreateAsync(It.IsAny<ApplicationUser>(), It.IsAny<string>()))
@@ -188,6 +283,7 @@ public class TenantServiceTests
             "Emily",
             "emily@test.com",
             "Password123!",
+            ValidTurnstileToken,
             CancellationToken.None);
 
         result.Success.Should().BeFalse();
@@ -197,15 +293,29 @@ public class TenantServiceTests
         _tenantMembershipRepoMock.Verify(
             x => x.AddMembershipAsync(It.IsAny<TenantMembership>(), It.IsAny<CancellationToken>()),
             Times.Never);
+
+        _unitOfWorkMock.Verify(
+            x => x.RollbackTransactionAsync(It.IsAny<CancellationToken>()),
+            Times.Once);
     }
 
     [Fact]
-    public async Task RegisterTenantAsync_Should_Create_Tenant_User_And_Membership_When_Request_Is_Valid()
+    public async Task
+        RegisterTenantAsync_Should_Create_Tenant_User_And_Membership_And_Send_Verification_Email_When_Request_Is_Valid()
     {
-        var tenantName = "FinTrack";
-        var adminName = "Emily";
-        var adminEmail = "Emily@Test.com";
-        var adminPassword = "Password123!";
+        const string tenantName = "FinTrack";
+        const string adminName = "Emily";
+        const string adminEmail = "Emily@Test.com";
+        const string adminPassword = "Password123!";
+
+        _turnstileValidationServiceMock
+            .Setup(x => x.ValidateAsync(
+                ValidTurnstileToken,
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(ServiceResult<bool>.Ok(
+                true,
+                "TURNSTILE_VERIFY_SUCCESS",
+                "Verification passed."));
 
         _tenantRepoMock
             .Setup(x => x.IsTenantNameExistsAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
@@ -215,13 +325,27 @@ public class TenantServiceTests
             .Setup(x => x.IsEmailExistsAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(false);
 
-        _unitOfWorkMock
-            .Setup(x => x.WithTransactionAsync(It.IsAny<Func<Task<ServiceResult<RegisterTenantDto>>>>(), It.IsAny<CancellationToken>()))
-            .Returns<Func<Task<ServiceResult<RegisterTenantDto>>>, CancellationToken>((action, _) => action());
+        _emailThrottleServiceMock
+            .Setup(x => x.CheckRegistrationEmailSendAllowedAsync(It.IsAny<CancellationToken>()))
+            .ReturnsAsync(ServiceResult<bool>.Ok(
+                true,
+                "REGISTRATION_EMAIL_ALLOWED",
+                "Registration verification email can be sent."));
 
-        _userManagerMock
-            .Setup(x => x.CreateAsync(It.IsAny<ApplicationUser>(), It.IsAny<string>()))
-            .ReturnsAsync(IdentityResult.Success);
+        _emailThrottleServiceMock
+            .Setup(x => x.MarkRegistrationEmailSentAsync(It.IsAny<CancellationToken>()))
+            .Returns(Task.CompletedTask);
+
+        _emailVerificationServiceMock
+            .Setup(x => x.CreateTokenAsync(It.IsAny<long>(), null, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(ServiceResult<CreateEmailVerificationTokenResult>.Ok(
+                new CreateEmailVerificationTokenResult("raw-token", DateTime.UtcNow.AddHours(24)),
+                "EMAIL_VERIFICATION_TOKEN_CREATED",
+                "Token created successfully."));
+
+        _mediatorMock
+            .Setup(x => x.Publish(It.IsAny<SendEmailVerificationRequestedEvent>(), It.IsAny<CancellationToken>()))
+            .Returns(Task.CompletedTask);
 
         Domain.Entities.Tenant? addedTenant = null;
         _tenantRepoMock
@@ -256,11 +380,13 @@ public class TenantServiceTests
             adminName,
             adminEmail,
             adminPassword,
+            ValidTurnstileToken,
             CancellationToken.None);
 
         result.Success.Should().BeTrue();
         result.Code.Should().Be(ResultCodes.TenantCodes.RegisterTenantSuccess);
-        result.Message.Should().Be("Tenant created successfully.");
+        result.Message.Should()
+            .Be("Tenant created successfully. Please verify the admin email before accessing the workspace.");
         result.Data.Should().NotBeNull();
 
         addedTenant.Should().NotBeNull();
@@ -269,7 +395,7 @@ public class TenantServiceTests
         createdUser.Should().NotBeNull();
         createdUser!.Email.Should().Be(adminEmail.Trim().ToLowerInvariant());
         createdUser.UserName.Should().Be(adminEmail.Trim().ToLowerInvariant());
-        createdUser.EmailConfirmed.Should().BeTrue();
+        createdUser.EmailConfirmed.Should().BeFalse();
 
         addedMembership.Should().NotBeNull();
         addedMembership!.TenantId.Should().Be(addedTenant.Id);
@@ -277,16 +403,115 @@ public class TenantServiceTests
         addedMembership.Role.Should().Be(TenantRole.Admin);
         addedMembership.IsActive.Should().BeTrue();
 
-        _unitOfWorkMock.Verify(x => x.SaveChangesAsync(It.IsAny<CancellationToken>()), Times.AtLeastOnce);
-        _tenantRepoMock.Verify(x => x.AddTenantAsync(It.IsAny<Domain.Entities.Tenant>(), It.IsAny<CancellationToken>()), Times.Once);
-        _tenantMembershipRepoMock.Verify(x => x.AddMembershipAsync(It.IsAny<TenantMembership>(), It.IsAny<CancellationToken>()), Times.Once);
+        _tenantRepoMock.Verify(
+            x => x.AddTenantAsync(It.IsAny<Domain.Entities.Tenant>(), It.IsAny<CancellationToken>()),
+            Times.Once);
+
+        _tenantMembershipRepoMock.Verify(
+            x => x.AddMembershipAsync(It.IsAny<TenantMembership>(), It.IsAny<CancellationToken>()),
+            Times.Once);
+
+        _emailVerificationServiceMock.Verify(
+            x => x.CreateTokenAsync(createdUser.Id, null, It.IsAny<CancellationToken>()),
+            Times.Once);
+
+        _mediatorMock.Verify(
+            x => x.Publish(It.IsAny<SendEmailVerificationRequestedEvent>(), It.IsAny<CancellationToken>()),
+            Times.Once);
+
+        _emailThrottleServiceMock.Verify(
+            x => x.MarkRegistrationEmailSentAsync(It.IsAny<CancellationToken>()),
+            Times.Once);
+
+        _unitOfWorkMock.Verify(x => x.BeginTransactionAsync(It.IsAny<CancellationToken>()), Times.Once);
+        _unitOfWorkMock.Verify(x => x.CommitTransactionAsync(It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    [Fact]
+    public async Task
+        RegisterTenantAsync_Should_Create_Tenant_User_And_Membership_But_Skip_Email_When_Registration_Email_Is_Throttled()
+    {
+        _turnstileValidationServiceMock
+            .Setup(x => x.ValidateAsync(
+                ValidTurnstileToken,
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(ServiceResult<bool>.Ok(
+                true,
+                "TURNSTILE_VERIFY_SUCCESS",
+                "Verification passed."));
+
+        _tenantRepoMock
+            .Setup(x => x.IsTenantNameExistsAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(false);
+
+        _applicationUserRepoMock
+            .Setup(x => x.IsEmailExistsAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(false);
+
+        _userManagerMock
+            .Setup(x => x.CreateAsync(It.IsAny<ApplicationUser>(), It.IsAny<string>()))
+            .ReturnsAsync(IdentityResult.Success);
+
+        _emailThrottleServiceMock
+            .Setup(x => x.CheckRegistrationEmailSendAllowedAsync(It.IsAny<CancellationToken>()))
+            .ReturnsAsync(ServiceResult<bool>.Fail(
+                "REGISTRATION_EMAIL_THROTTLED",
+                "Registration succeeded, but verification email was temporarily delayed due to high traffic."));
+
+        _tenantRepoMock
+            .Setup(x => x.AddTenantAsync(It.IsAny<Domain.Entities.Tenant>(), It.IsAny<CancellationToken>()))
+            .Callback<Domain.Entities.Tenant, CancellationToken>((tenant, _) =>
+            {
+                tenant.Id = 100;
+                tenant.PublicId = Guid.NewGuid();
+            })
+            .Returns(Task.CompletedTask);
+
+        _tenantMembershipRepoMock
+            .Setup(x => x.AddMembershipAsync(It.IsAny<TenantMembership>(), It.IsAny<CancellationToken>()))
+            .Returns(Task.CompletedTask);
+
+        var result = await _sut.RegisterTenantAsync(
+            "FinTrack",
+            "Emily",
+            "emily@test.com",
+            "Password123!",
+            ValidTurnstileToken,
+            CancellationToken.None);
+
+        result.Success.Should().BeTrue();
+        result.Code.Should().Be(ResultCodes.TenantCodes.RegisterTenantSuccess);
+        result.Message.Should()
+            .Be(
+                "Tenant created successfully. Verification email was temporarily delayed. Please log in later to resend verification email.");
+
+        _emailVerificationServiceMock.Verify(
+            x => x.CreateTokenAsync(It.IsAny<long>(), It.IsAny<string?>(), It.IsAny<CancellationToken>()),
+            Times.Never);
+
+        _mediatorMock.Verify(
+            x => x.Publish(It.IsAny<SendEmailVerificationRequestedEvent>(), It.IsAny<CancellationToken>()),
+            Times.Never);
+
+        _emailThrottleServiceMock.Verify(
+            x => x.MarkRegistrationEmailSentAsync(It.IsAny<CancellationToken>()),
+            Times.Never);
     }
 
     [Fact]
     public async Task RegisterTenantAsync_Should_Return_Fail_When_Exception_Is_Thrown()
     {
-        _unitOfWorkMock
-            .Setup(x => x.WithTransactionAsync(It.IsAny<Func<Task<ServiceResult<RegisterTenantDto>>>>(), It.IsAny<CancellationToken>()))
+        _turnstileValidationServiceMock
+            .Setup(x => x.ValidateAsync(
+                ValidTurnstileToken,
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(ServiceResult<bool>.Ok(
+                true,
+                "TURNSTILE_VERIFY_SUCCESS",
+                "Verification passed."));
+
+        _tenantRepoMock
+            .Setup(x => x.IsTenantNameExistsAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .ThrowsAsync(new Exception("unexpected"));
 
         var result = await _sut.RegisterTenantAsync(
@@ -294,14 +519,18 @@ public class TenantServiceTests
             "Emily",
             "emily@test.com",
             "Password123!",
+            ValidTurnstileToken,
             CancellationToken.None);
 
         result.Success.Should().BeFalse();
         result.Code.Should().Be(ResultCodes.TenantCodes.RegisterTenantException);
         result.Message.Should().Be("Tenant registration failed.");
+
+        _unitOfWorkMock.Verify(x => x.RollbackTransactionAsync(It.IsAny<CancellationToken>()), Times.Once);
     }
-    
-        [Fact]
+
+
+    [Fact]
     public async Task GetTenantMembersAsync_Should_Return_Fail_When_TenantPublicId_Is_Empty()
     {
         var result = await _sut.GetTenantMembersAsync("", CancellationToken.None);
@@ -401,7 +630,7 @@ public class TenantServiceTests
         result.Message.Should().Be("Failed to get tenant members.");
         result.Data.Should().BeNull();
     }
-    
+
     [Fact]
     public async Task RemoveTenantMemberAsync_Should_Return_Fail_When_Membership_NotFound()
     {
@@ -418,7 +647,7 @@ public class TenantServiceTests
         result.Success.Should().BeFalse();
         result.Code.Should().Be(ResultCodes.TenantCodes.MemberNotFound);
     }
-    
+
     [Fact]
     public async Task RemoveTenantMemberAsync_Should_Return_Fail_When_Member_Already_Removed()
     {
@@ -439,7 +668,7 @@ public class TenantServiceTests
         result.Success.Should().BeFalse();
         result.Code.Should().Be(ResultCodes.TenantCodes.MemberAlreadyRemoved);
     }
-    
+
     [Fact]
     public async Task RemoveTenantMemberAsync_Should_Return_Fail_When_Member_Not_In_Tenant()
     {
@@ -460,7 +689,7 @@ public class TenantServiceTests
         result.Success.Should().BeFalse();
         result.Code.Should().Be(ResultCodes.TenantCodes.MemberNotInTenant);
     }
-    
+
     [Fact]
     public async Task RemoveTenantMemberAsync_Should_Return_Fail_When_Remove_Self()
     {
@@ -484,7 +713,7 @@ public class TenantServiceTests
         result.Success.Should().BeFalse();
         result.Code.Should().Be(ResultCodes.TenantCodes.CannotRemoveSelf);
     }
-    
+
     [Fact]
     public async Task RemoveTenantMemberAsync_Should_Succeed_When_Valid()
     {
@@ -521,7 +750,7 @@ public class TenantServiceTests
             x => x.StringIncrementAsync(It.IsAny<RedisKey>(), It.IsAny<long>(), It.IsAny<CommandFlags>()),
             Times.Once);
     }
-    
+
     [Fact]
     public async Task ChangeTenantMemberRoleAsync_Should_Return_Fail_When_Role_Is_Invalid()
     {
@@ -535,7 +764,7 @@ public class TenantServiceTests
         result.Success.Should().BeFalse();
         result.Code.Should().Be(ResultCodes.TenantCodes.ChangeMemberRoleInvalidRole);
     }
-    
+
     [Fact]
     public async Task ChangeTenantMemberRoleAsync_Should_Return_Fail_When_Membership_NotFound()
     {
@@ -553,7 +782,7 @@ public class TenantServiceTests
         result.Success.Should().BeFalse();
         result.Code.Should().Be(ResultCodes.TenantCodes.MemberNotFound);
     }
-    
+
     [Fact]
     public async Task ChangeTenantMemberRoleAsync_Should_Return_Fail_When_Member_Not_In_Tenant()
     {
@@ -585,7 +814,7 @@ public class TenantServiceTests
         result.Success.Should().BeFalse();
         result.Code.Should().Be(ResultCodes.TenantCodes.MemberNotInTenant);
     }
-    
+
     [Fact]
     public async Task ChangeTenantMemberRoleAsync_Should_Return_Fail_When_Membership_Is_Inactive()
     {
@@ -618,7 +847,7 @@ public class TenantServiceTests
         result.Success.Should().BeFalse();
         result.Code.Should().Be(ResultCodes.TenantCodes.ChangeMemberRoleInactiveMembership);
     }
-    
+
     [Fact]
     public async Task ChangeTenantMemberRoleAsync_Should_Return_Fail_When_Changing_Own_Role()
     {
@@ -652,7 +881,7 @@ public class TenantServiceTests
         result.Success.Should().BeFalse();
         result.Code.Should().Be(ResultCodes.TenantCodes.CannotChangeOwnRole);
     }
-    
+
     [Fact]
     public async Task ChangeTenantMemberRoleAsync_Should_Return_Fail_When_Demoting_Last_Admin()
     {
@@ -690,7 +919,7 @@ public class TenantServiceTests
         result.Success.Should().BeFalse();
         result.Code.Should().Be(ResultCodes.TenantCodes.CannotDemoteLastAdmin);
     }
-    
+
     [Fact]
     public async Task ChangeTenantMemberRoleAsync_Should_Return_Ok_When_No_Change_Is_Required()
     {
@@ -728,7 +957,7 @@ public class TenantServiceTests
             x => x.SaveChangesAsync(It.IsAny<CancellationToken>()),
             Times.Never);
     }
-    
+
     [Fact]
     public async Task ChangeTenantMemberRoleAsync_Should_Promote_Member_To_Admin()
     {
@@ -776,7 +1005,7 @@ public class TenantServiceTests
             x => x.StringIncrementAsync(It.IsAny<RedisKey>(), It.IsAny<long>(), It.IsAny<CommandFlags>()),
             Times.Once);
     }
-    
+
     [Fact]
     public async Task ChangeTenantMemberRoleAsync_Should_Demote_Admin_When_Not_Last_Admin()
     {
@@ -828,6 +1057,4 @@ public class TenantServiceTests
             x => x.StringIncrementAsync(It.IsAny<RedisKey>(), It.IsAny<long>(), It.IsAny<CommandFlags>()),
             Times.Once);
     }
-    
-    
 }
