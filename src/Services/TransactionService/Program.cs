@@ -4,16 +4,23 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using SharedKernel.Common.Options;
 using TransactionService.Application.Common.Abstractions;
+using TransactionService.Application.Common.Options;
 using TransactionService.Application.Middlewares;
+using TransactionService.Application.Payments.Abstractions;
+using TransactionService.Application.Payments.Options;
+using TransactionService.Application.Payments.Services;
 using TransactionService.Application.Products.Abstractions;
-using TransactionService.Application.Transactions.Abstractions;
-using TransactionService.Application.Transactions.Services;
 using TransactionService.Infrastructure.Audit;
 using TransactionService.Infrastructure.Authentication;
+using TransactionService.Infrastructure.Identity;
+using TransactionService.Infrastructure.Payments;
 using TransactionService.Infrastructure.Persistence;
 using TransactionService.Infrastructure.Persistence.Repositories;
 
 var builder = WebApplication.CreateBuilder(args);
+builder.Logging.ClearProviders();
+builder.Logging.AddConsole();
+builder.Logging.AddDebug();
 
 // Add services to the container.
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
@@ -21,6 +28,12 @@ builder.Services.AddOpenApi();
 
 builder.Services.Configure<JwtOptions>(
     builder.Configuration.GetSection("JwtSettings"));
+builder.Services.Configure<StripePaymentOptions>(
+    builder.Configuration.GetSection("Stripe"));
+builder.Services.Configure<IdentityServiceOptions>(
+    builder.Configuration.GetSection("IdentityService"));
+builder.Services.Configure<StripeWebhookOptions>(
+    builder.Configuration.GetSection("StripeWebhook"));
 
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>
@@ -53,7 +66,6 @@ builder.Services.AddCap(options =>
 });
 builder.Services.AddAuthorization();
 builder.Services.AddHttpContextAccessor();
-builder.Services.AddScoped<ITransactionRepo, TransactionRepo>();
 builder.Services.AddDbContext<TransactionDbContext>(options =>
 {
     string connectionString = builder.Configuration.GetConnectionString("DefaultConnection")!;
@@ -76,10 +88,13 @@ builder.Services.Scan(scan => scan
     .WithScopedLifetime());
 
 builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
-builder.Services.AddScoped<ITenantInfoClient, MockTenantInfoClient>();
-builder.Services.AddScoped<IPaymentGateway, MockPaymentGateway>();
 builder.Services.AddScoped<ICurrentTenantContext, CurrentTenantContext>();
 builder.Services.AddScoped<IAuditLogPublisher, AuditLogPublisher>();
+builder.Services.AddScoped<IPaymentProviderResolver, PaymentProviderResolver>();
+builder.Services.AddScoped<IPaymentProvider, CashPaymentProvider>();
+builder.Services.AddScoped<IPaymentProvider, StripeCardPaymentProvider>();
+builder.Services.AddScoped<IStripePaymentGateway, StripePaymentGateway>();
+builder.Services.AddHttpClient<ITenantPaymentConfigService, TenantPaymentConfigService>();
 builder.Services.AddControllers();
 
 var app = builder.Build();

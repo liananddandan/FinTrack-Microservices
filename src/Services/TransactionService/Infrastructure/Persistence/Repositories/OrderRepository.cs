@@ -1,5 +1,5 @@
 using Microsoft.EntityFrameworkCore;
-using TransactionService.Api.Transaction.Contracts;
+using TransactionService.Application.Common.Dtos;
 using TransactionService.Application.Orders.Abstractions;
 using TransactionService.Application.Orders.Dtos;
 using TransactionService.Domain.Constants;

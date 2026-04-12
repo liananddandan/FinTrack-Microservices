@@ -18,4 +18,17 @@ public class InternalTenantController(IMediator mediator) : ControllerBase
         var result = await mediator.Send(new GetAllTenantsQuery(), cancellationToken);
         return result.ToActionResult();
     }
+    
+    [HttpGet("{tenantPublicId:guid}/stripe-connect/status")]
+    [RequireInternalApiKey]
+    public async Task<IActionResult> GetStripeConnectStatus(
+        Guid tenantPublicId,
+        CancellationToken cancellationToken)
+    {
+        var result = await mediator.Send(
+            new GetTenantStripeConnectStatusQuery(tenantPublicId),
+            cancellationToken);
+
+        return result.Success ? Ok(result) : BadRequest(result);
+    }
 }

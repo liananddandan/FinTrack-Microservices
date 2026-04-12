@@ -1,6 +1,6 @@
 using MediatR;
 using SharedKernel.Common.Results;
-using TransactionService.Api.Transaction.Contracts;
+using TransactionService.Application.Common.Dtos;
 using TransactionService.Application.Orders.Dtos;
 
 namespace TransactionService.Application.Orders.Queries;

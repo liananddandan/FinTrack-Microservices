@@ -4,6 +4,7 @@
     <TargetFramework>net9.0</TargetFramework>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
+    <UserSecretsId>573b4435-a075-43ef-ae03-8519131754b0</UserSecretsId>
   </PropertyGroup>
 
   <ItemGroup>
@@ -21,6 +22,7 @@
     <PackageReference Include="Pomelo.EntityFrameworkCore.MySql" Version="9.0.0-preview.3.efcore.9.0.0" />
     <PackageReference Include="Scalar.AspNetCore" Version="2.6.4" />
     <PackageReference Include="Scrutor" Version="6.1.0" />
+    <PackageReference Include="Stripe.net" Version="51.1.0-beta.1" />
   </ItemGroup>
 
   <ItemGroup>

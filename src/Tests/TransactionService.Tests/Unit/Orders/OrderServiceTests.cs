@@ -1,8 +1,9 @@
 using FluentAssertions;
 using Moq;
 using SharedKernel.Common.Results;
-using TransactionService.Api.Transaction.Contracts;
+using SharedKernel.Contracts.Payments;
 using TransactionService.Application.Common.Abstractions;
+using TransactionService.Application.Common.Dtos;
 using TransactionService.Application.Orders.Abstractions;
 using TransactionService.Application.Orders.Commands;
 using TransactionService.Application.Orders.Dtos;
@@ -231,7 +232,7 @@ public class OrderServiceTests
             DiscountAmount = 0m,
             TotalAmount = 11.5m,
             Status = OrderStatuses.Completed,
-            PaymentStatus = PaymentStatuses.Paid,
+            PaymentStatus = PaymentStatuses.Succeeded,
             PaymentMethod = PaymentMethods.Cash,
             CreatedAt = DateTime.UtcNow,
             Items = new List<OrderItem>
@@ -278,7 +279,7 @@ public class OrderServiceTests
                     CustomerName = "Emily",
                     TotalAmount = 11.5m,
                     Status = OrderStatuses.Completed,
-                    PaymentStatus = PaymentStatuses.Paid,
+                    PaymentStatus = PaymentStatuses.Succeeded,
                     PaymentMethod = PaymentMethods.Cash,
                     CreatedByUserNameSnapshot = "Test User",
                     CreatedAt = DateTime.UtcNow
@@ -383,7 +384,7 @@ public class OrderServiceTests
             GstAmount = 1.5m,
             TotalAmount = 11.5m,
             Status = OrderStatuses.Cancelled,
-            PaymentStatus = PaymentStatuses.Paid,
+            PaymentStatus = PaymentStatuses.Succeeded,
             PaymentMethod = PaymentMethods.Cash
         };
 
@@ -415,7 +416,7 @@ public class OrderServiceTests
             GstAmount = 1.5m,
             TotalAmount = 11.5m,
             Status = OrderStatuses.Completed,
-            PaymentStatus = PaymentStatuses.Paid,
+            PaymentStatus = PaymentStatuses.Succeeded,
             PaymentMethod = PaymentMethods.Cash,
             PaidAt = DateTime.UtcNow
         };

@@ -5,8 +5,9 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using SharedKernel.Common.DTOs;
 using SharedKernel.Common.Results;
+using SharedKernel.Contracts.Payments;
 using TransactionService.Api.Orders.Contracts;
-using TransactionService.Api.Transaction.Contracts;
+using TransactionService.Application.Common.Dtos;
 using TransactionService.Application.Orders.Dtos;
 using TransactionService.Domain.Constants;
 using TransactionService.Domain.Entities;
@@ -332,7 +333,7 @@ public class OrdersControllerIntegrationTests
             DiscountAmount = 0m,
             TotalAmount = totalAmount,
             Status = status,
-            PaymentStatus = PaymentStatuses.Paid,
+            PaymentStatus = PaymentStatuses.Succeeded,
             PaymentMethod = PaymentMethods.Cash,
             CreatedAt = DateTime.UtcNow,
             PaidAt = status == OrderStatuses.Cancelled ? null : DateTime.UtcNow,

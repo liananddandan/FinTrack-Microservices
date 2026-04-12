@@ -5,6 +5,7 @@ using TransactionService.Api.Orders.Contracts;
 using TransactionService.Application.Common.Extensions;
 using TransactionService.Application.Orders.Commands;
 using TransactionService.Application.Orders.Queries;
+using TransactionService.Application.Payments.Queries;
 
 namespace TransactionService.Api.Orders.Controllers;
 
@@ -86,6 +87,18 @@ public class OrdersController(IMediator mediator) : ControllerBase
             toUtc);
 
         var result = await mediator.Send(query, cancellationToken);
+        return result.ToActionResult();
+    }
+    
+    [HttpGet("{orderPublicId}/payments")]
+    public async Task<IActionResult> GetPaymentsByOrderPublicId(
+        string orderPublicId,
+        CancellationToken cancellationToken)
+    {
+        var result = await mediator.Send(
+            new GetPaymentsByOrderPublicIdQuery(orderPublicId),
+            cancellationToken);
+
         return result.ToActionResult();
     }
 }

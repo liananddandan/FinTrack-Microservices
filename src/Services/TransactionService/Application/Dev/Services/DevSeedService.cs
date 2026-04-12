@@ -1,4 +1,5 @@
 using SharedKernel.Contracts.Dev;
+using SharedKernel.Contracts.Payments;
 using TransactionService.Application.Common.Abstractions;
 using TransactionService.Application.Dev.Abstractions;
 using TransactionService.Application.Orders.Abstractions;
@@ -392,7 +393,7 @@ public class DevSeedService(
             DiscountAmount = discountAmount,
             TotalAmount = totalAmount,
             Status = OrderStatuses.Completed,
-            PaymentStatus = PaymentStatuses.Paid,
+            PaymentStatus = PaymentStatuses.Succeeded,
             PaymentMethod = paymentMethod,
             CreatedAt = createdAt,
             PaidAt = createdAt.AddMinutes(3),

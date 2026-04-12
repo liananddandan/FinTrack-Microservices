@@ -1,3 +1,4 @@
+using SharedKernel.Contracts.Payments;
 using TransactionService.Domain.Constants;
 
 namespace TransactionService.Domain.Entities;
@@ -24,7 +25,7 @@ public class Order
     public decimal TotalAmount { get; set; }
 
     public string Status { get; set; } = OrderStatuses.Completed;
-    public string PaymentStatus { get; set; } = PaymentStatuses.Paid;
+    public string PaymentStatus { get; set; } = PaymentStatuses.NotStarted;
     public string PaymentMethod { get; set; } = PaymentMethods.Cash;
 
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
@@ -34,4 +35,5 @@ public class Order
     public DateTime? DeletedAt { get; set; }
 
     public ICollection<OrderItem> Items { get; set; } = new List<OrderItem>();
+    public ICollection<Payment> Payments { get; set; } = new List<Payment>();
 }

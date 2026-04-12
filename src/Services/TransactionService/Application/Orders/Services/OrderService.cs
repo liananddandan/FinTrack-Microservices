@@ -1,9 +1,9 @@
-using SharedKernel.Common.DTOs;
 using SharedKernel.Common.Results;
 using SharedKernel.Contracts.AuditLogs;
+using SharedKernel.Contracts.Payments;
 using SharedKernel.Topics;
-using TransactionService.Api.Transaction.Contracts;
 using TransactionService.Application.Common.Abstractions;
+using TransactionService.Application.Common.Dtos;
 using TransactionService.Application.Orders.Abstractions;
 using TransactionService.Application.Orders.Commands;
 using TransactionService.Application.Orders.Dtos;
@@ -115,7 +115,7 @@ public class OrderService(
             DiscountAmount = discountAmount,
             TotalAmount = totalAmount,
             Status = OrderStatuses.Completed,
-            PaymentStatus = PaymentStatuses.Paid,
+            PaymentStatus = PaymentStatuses.NotStarted,
             PaymentMethod = request.PaymentMethod,
             CreatedAt = DateTime.UtcNow,
             PaidAt = DateTime.UtcNow,

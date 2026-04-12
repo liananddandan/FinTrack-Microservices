@@ -12,6 +12,18 @@ public class TenantContextResolutionMiddleware(RequestDelegate next)
         ITenantContextResolver tenantContextResolver,
         ILogger<TenantContextResolutionMiddleware> logger)
     {
+        var path = context.Request.Path.Value ?? string.Empty;
+
+        if (ShouldSkip(path))
+        {
+            logger.LogDebug(
+                "Skipping tenant context resolution. Path: {Path}",
+                path);
+
+            await next(context);
+            return;
+        }
+        
         var host = context.Request.Host.Host;
 
         logger.LogInformation(
@@ -95,5 +107,13 @@ public class TenantContextResolutionMiddleware(RequestDelegate next)
         logger.LogInformation(
             "Request completed without tenant context. StatusCode: {StatusCode}",
             context.Response.StatusCode);
+    }
+
+    private static bool ShouldSkip(string path)
+    {
+        return path.StartsWith("/internal", StringComparison.OrdinalIgnoreCase)
+               || path.StartsWith("/openapi", StringComparison.OrdinalIgnoreCase)
+               || path.StartsWith("/swagger", StringComparison.OrdinalIgnoreCase)
+               || path.StartsWith("/health", StringComparison.OrdinalIgnoreCase);
     }
 }

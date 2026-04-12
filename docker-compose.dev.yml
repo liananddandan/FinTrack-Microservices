@@ -54,6 +54,16 @@ services:
       - "4318:4318"
     volumes:
       - lgtm_data:/data
+        
+  stripe-cli:
+    image: stripe/stripe-cli
+    container_name: stripe-cli
+    command: >
+      listen
+      --api-key ${STRIPE_SECRET_KEY}
+      --forward-to http://host.docker.internal:5193/api/payments/stripe/webhook
+    environment:
+      STRIPE_API_KEY: ${STRIPE_SECRET_KEY}
 
   identity-service:
     build:

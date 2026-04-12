@@ -1,8 +1,10 @@
 import type { AxiosInstance } from "axios"
 import type { ApiResponse } from "../types"
 import type {
-  CreateTenantStripeOnboardingLinkDto,
-  TenantStripeConnectStatusDto,
+  CreatePaymentRequest,
+  CreatePaymentResultDto,
+  PaymentDetailDto,
+  PaymentListItemDto,
 } from "./types"
 
 export function createPaymentApi(tenantHttp: AxiosInstance) {
@@ -20,29 +22,33 @@ export function createPaymentApi(tenantHttp: AxiosInstance) {
   }
 
   return {
-    async getStripeConnectStatus(): Promise<TenantStripeConnectStatusDto> {
-      const response =
-        await tenantHttp.get<ApiResponse<TenantStripeConnectStatusDto>>(
-          "/api/tenant/stripe-connect/status"
-        )
-
-      return unwrapApiResponse(
-        response,
-        "Failed to fetch Stripe connect status"
+    async createPayment(
+      request: CreatePaymentRequest
+    ): Promise<CreatePaymentResultDto> {
+      const response = await tenantHttp.post<ApiResponse<CreatePaymentResultDto>>(
+        "/api/payments",
+        request
       )
+
+      return unwrapApiResponse(response, "Failed to create payment")
     },
 
-    async createOrResumeStripeOnboardingLink(): Promise<CreateTenantStripeOnboardingLinkDto> {
-      const response =
-        await tenantHttp.post<ApiResponse<CreateTenantStripeOnboardingLinkDto>>(
-          "/api/tenant/stripe-connect/onboarding-link",
-          {}
-        )
-
-      return unwrapApiResponse(
-        response,
-        "Failed to create Stripe onboarding link"
+    async getPaymentById(paymentPublicId: string): Promise<PaymentDetailDto> {
+      const response = await tenantHttp.get<ApiResponse<PaymentDetailDto>>(
+        `/api/payments/${paymentPublicId}`
       )
+
+      return unwrapApiResponse(response, "Failed to fetch payment")
+    },
+
+    async getPaymentsByOrder(
+      orderPublicId: string
+    ): Promise<PaymentListItemDto[]> {
+      const response = await tenantHttp.get<ApiResponse<PaymentListItemDto[]>>(
+        `/api/orders/${orderPublicId}/payments`
+      )
+
+      return unwrapApiResponse(response, "Failed to fetch order payments")
     },
   }
 }

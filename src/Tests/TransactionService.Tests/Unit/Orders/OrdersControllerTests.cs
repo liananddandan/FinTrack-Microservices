@@ -6,7 +6,7 @@ using SharedKernel.Common.DTOs;
 using SharedKernel.Common.Results;
 using TransactionService.Api.Orders.Contracts;
 using TransactionService.Api.Orders.Controllers;
-using TransactionService.Api.Transaction.Contracts;
+using TransactionService.Application.Common.Dtos;
 using TransactionService.Application.Orders.Commands;
 using TransactionService.Application.Orders.Dtos;
 using TransactionService.Application.Orders.Queries;

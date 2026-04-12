@@ -6,6 +6,9 @@ import { productCategoryApi } from "../lib/productCategoryApi"
 import type { ProductCategoryItem, ProductItem } from "@fintrack/web-shared"
 import { productApi } from "../lib/productApi"
 import { orderApi } from "../lib/orderApi"
+import { paymentApi } from "../lib/paymentApi"
+import { Elements, PaymentElement, useElements, useStripe } from "@stripe/react-stripe-js"
+import { loadStripe, type Stripe } from "@stripe/stripe-js"
 import {
   HiOutlineArrowLeftOnRectangle,
   HiOutlineQueueList,
@@ -14,6 +17,7 @@ import {
   HiOutlineMinus,
   HiOutlineTrash,
   HiOutlineCreditCard,
+  HiOutlineXMark,
 } from "react-icons/hi2"
 
 type CartItem = {
@@ -22,6 +26,13 @@ type CartItem = {
   price: number
   quantity: number
   categoryName: string
+}
+
+type PaymentMethodType = "Cash" | "Card" | "Terminal"
+
+type CreatedOrder = {
+  publicId: string
+  orderNumber: string
 }
 
 function TopActionButton({
@@ -52,6 +63,317 @@ function TopActionButton({
   )
 }
 
+function PaymentModal({
+  open,
+  createdOrder,
+  paymentMethodType,
+  paymentPublicId,
+  clientSecret,
+  stripeConnectedAccountId,
+  onClose,
+  onDone,
+}: {
+  open: boolean
+  createdOrder: CreatedOrder | null
+  paymentMethodType: PaymentMethodType
+  paymentPublicId: string
+  clientSecret: string | null
+  stripeConnectedAccountId: string | null
+  onClose: () => void
+  onDone: () => void
+}) {
+  const [stripeInstance, setStripeInstance] = useState<Stripe | null>(null)
+
+  useEffect(() => {
+    async function initStripe() {
+      if (!open || paymentMethodType !== "Card") {
+        setStripeInstance(null)
+        return
+      }
+
+      const stripe = await loadStripe(
+        import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY,
+        stripeConnectedAccountId
+          ? { stripeAccount: stripeConnectedAccountId }
+          : undefined
+      )
+
+      setStripeInstance(stripe)
+    }
+
+    void initStripe()
+  }, [open, paymentMethodType, stripeConnectedAccountId])
+
+  if (!open) {
+    return null
+  }
+
+  const isCash = paymentMethodType === "Cash"
+  const isCard = paymentMethodType === "Card"
+  const isTerminal = paymentMethodType === "Terminal"
+
+  return (
+    <Modal open={open} onClose={onClose}>
+      <div className="p-6">
+        <h2 className="text-2xl font-semibold text-slate-900">Payment</h2>
+
+        <div className="mt-4 rounded-xl border border-slate-200 bg-slate-50 p-4 text-sm text-slate-700">
+          <div>Order: {createdOrder?.orderNumber}</div>
+          <div className="mt-2">Payment Method: {paymentMethodType}</div>
+          <div className="mt-2">Payment ID: {paymentPublicId}</div>
+        </div>
+
+        {isCash ? (
+          <div className="mt-6 rounded-xl border border-emerald-200 bg-emerald-50 p-4 text-sm text-emerald-700">
+            Cash payment recorded successfully.
+          </div>
+        ) : null}
+
+        {isCard ? (
+          <div className="mt-6">
+            {!clientSecret ? (
+              <div className="rounded-xl border border-rose-200 bg-rose-50 p-4 text-sm text-rose-700">
+                Missing client secret.
+              </div>
+            ) : !stripeInstance ? (
+              <div className="rounded-xl border border-slate-200 bg-slate-50 p-4 text-sm text-slate-500">
+                Loading Stripe...
+              </div>
+            ) : (
+              <Elements
+                stripe={stripeInstance}
+                options={{ clientSecret }}
+              >
+                <CardPaymentSection
+                  paymentPublicId={paymentPublicId}
+                  onDone={onDone} />
+              </Elements>
+            )}
+          </div>
+        ) : null}
+
+        {isTerminal ? (
+          <div className="mt-6 rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-700">
+            Terminal payment is not implemented yet.
+          </div>
+        ) : null}
+
+        {!isCard ? (
+          <button
+            type="button"
+            onClick={onDone}
+            className="mt-6 inline-flex h-12 w-full items-center justify-center rounded-2xl bg-indigo-600 px-4 text-sm font-medium text-white transition hover:bg-indigo-500"
+          >
+            Done
+          </button>
+        ) : null}
+      </div>
+    </Modal>
+  )
+}
+
+function CardPaymentSection({
+  paymentPublicId,
+  onDone,
+}: {
+  paymentPublicId: string
+  onDone: () => void
+}) {
+  const stripe = useStripe()
+  const elements = useElements()
+
+  const [submitting, setSubmitting] = useState(false)
+  const [polling, setPolling] = useState(false)
+  const [errorMessage, setErrorMessage] = useState("")
+  const [successMessage, setSuccessMessage] = useState("")
+
+  async function pollPaymentStatus() {
+    setPolling(true)
+    setErrorMessage("")
+    setSuccessMessage("Waiting for payment confirmation...")
+
+    try {
+      const maxAttempts = 20
+      const intervalMs = 1500
+
+      for (let attempt = 0; attempt < maxAttempts; attempt++) {
+        const payment = await paymentApi.getPaymentById(paymentPublicId)
+
+        if (payment.status === "Succeeded") {
+          setSuccessMessage("Payment completed successfully.")
+          setPolling(false)
+          onDone()
+          return
+        }
+
+        if (payment.status === "Failed") {
+          setErrorMessage(payment.failureReason || "Payment failed.")
+          setSuccessMessage("")
+          setPolling(false)
+          return
+        }
+
+        if (payment.status === "Cancelled") {
+          setErrorMessage("Payment was cancelled.")
+          setSuccessMessage("")
+          setPolling(false)
+          return
+        }
+
+        await new Promise((resolve) => setTimeout(resolve, intervalMs))
+      }
+
+      setErrorMessage(
+        "Payment confirmation timed out. Please refresh payment status manually."
+      )
+      setSuccessMessage("")
+      setPolling(false)
+    } catch (error) {
+      setErrorMessage(
+        error instanceof Error
+          ? error.message
+          : "Failed to check payment status."
+      )
+      setSuccessMessage("")
+      setPolling(false)
+    }
+  }
+
+  async function handleSubmit() {
+    if (!stripe || !elements) {
+      return
+    }
+
+    setSubmitting(true)
+    setErrorMessage("")
+    setSuccessMessage("")
+
+    const { error } = await stripe.confirmPayment({
+      elements,
+      confirmParams: {
+        return_url: window.location.href,
+      },
+      redirect: "if_required",
+    })
+
+    if (error) {
+      setErrorMessage(error.message || "Payment failed.")
+      setSubmitting(false)
+      return
+    }
+
+    setSubmitting(false)
+    await pollPaymentStatus()
+  }
+
+  async function handleRefreshStatus() {
+    await pollPaymentStatus()
+  }
+
+  return (
+    <div className="space-y-4">
+      <div className="rounded-xl border border-slate-200 bg-white p-4">
+        <PaymentElement />
+      </div>
+
+      {errorMessage ? (
+        <div className="rounded-xl border border-rose-200 bg-rose-50 p-4 text-sm text-rose-700">
+          {errorMessage}
+        </div>
+      ) : null}
+
+      {successMessage ? (
+        <div className="rounded-xl border border-emerald-200 bg-emerald-50 p-4 text-sm text-emerald-700">
+          {successMessage}
+        </div>
+      ) : null}
+
+      <div className="flex gap-3">
+        <button
+          type="button"
+          onClick={() => void handleSubmit()}
+          disabled={!stripe || !elements || submitting || polling}
+          className="inline-flex h-12 flex-1 items-center justify-center rounded-2xl bg-indigo-600 px-4 text-sm font-medium text-white transition hover:bg-indigo-500 disabled:cursor-not-allowed disabled:opacity-50"
+        >
+          {submitting
+            ? "Submitting..."
+            : polling
+              ? "Waiting..."
+              : "Pay now"}
+        </button>
+
+        <button
+          type="button"
+          onClick={() => void handleRefreshStatus()}
+          disabled={submitting || polling}
+          className="inline-flex h-12 items-center justify-center rounded-2xl border border-slate-300 bg-white px-4 text-sm font-medium text-slate-700 transition hover:border-slate-400 disabled:cursor-not-allowed disabled:opacity-50"
+        >
+          Refresh
+        </button>
+      </div>
+    </div>
+  )
+
+  return (
+    <div className="space-y-4">
+      <div className="rounded-xl border border-slate-200 bg-white p-4">
+        <PaymentElement />
+      </div>
+
+      {errorMessage ? (
+        <div className="rounded-xl border border-rose-200 bg-rose-50 p-4 text-sm text-rose-700">
+          {errorMessage}
+        </div>
+      ) : null}
+
+      {successMessage ? (
+        <div className="rounded-xl border border-emerald-200 bg-emerald-50 p-4 text-sm text-emerald-700">
+          {successMessage}
+        </div>
+      ) : null}
+
+      <button
+        type="button"
+        onClick={() => void handleSubmit()}
+        disabled={!stripe || !elements || submitting}
+        className="inline-flex h-12 w-full items-center justify-center rounded-2xl bg-indigo-600 px-4 text-sm font-medium text-white transition hover:bg-indigo-500 disabled:cursor-not-allowed disabled:opacity-50"
+      >
+        {submitting ? "Processing..." : "Pay now"}
+      </button>
+    </div>
+  )
+}
+
+function Modal({
+  open,
+  onClose,
+  children,
+}: {
+  open: boolean
+  onClose: () => void
+  children: React.ReactNode
+}) {
+  if (!open) {
+    return null
+  }
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 px-4">
+      <div className="relative max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-3xl bg-white shadow-2xl">
+        <button
+          type="button"
+          onClick={onClose}
+          className="absolute right-4 top-4 rounded-full p-2 text-slate-400 transition hover:bg-slate-100 hover:text-slate-600"
+        >
+          <HiOutlineXMark className="h-5 w-5" />
+        </button>
+
+        {children}
+      </div>
+    </div>
+  )
+}
+
 export default function Home() {
   const navigate = useNavigate()
   const auth = useAuth()
@@ -70,9 +392,22 @@ export default function Home() {
   const [products, setProducts] = useState<ProductItem[]>([])
   const [cartItems, setCartItems] = useState<CartItem[]>([])
 
-  const [checkingOut, setCheckingOut] = useState(false)
-  const [checkoutSuccessMessage, setCheckoutSuccessMessage] = useState("")
   const [customerName, setCustomerName] = useState("")
+  const [checkoutSuccessMessage, setCheckoutSuccessMessage] = useState("")
+
+  const [isReviewOpen, setIsReviewOpen] = useState(false)
+  const [isPaymentOpen, setIsPaymentOpen] = useState(false)
+
+  const [paymentMethodType, setPaymentMethodType] =
+    useState<PaymentMethodType>("Cash")
+
+  const [creatingOrder, setCreatingOrder] = useState(false)
+  const [creatingPayment, setCreatingPayment] = useState(false)
+
+  const [createdOrder, setCreatedOrder] = useState<CreatedOrder | null>(null)
+  const [paymentPublicId, setPaymentPublicId] = useState("")
+  const [clientSecret, setClientSecret] = useState<string | null>(null)
+  const [stripeConnectedAccountId, setStripeConnectedAccountId] = useState<string | null>(null)
 
   useEffect(() => {
     const unsubscribe = tenantContextStore.subscribe(() => {
@@ -118,40 +453,20 @@ export default function Home() {
     )
   }, [auth.resolvedMemberships, tenantContext?.tenantPublicId])
 
-  async function handleCheckout() {
-    if (cartItems.length === 0) {
-      return
-    }
+  const selectedCategory = useMemo(
+    () => categories.find((x) => x.publicId === selectedCategoryId) ?? null,
+    [categories, selectedCategoryId]
+  )
 
-    setCheckingOut(true)
-    setErrorMessage("")
-    setCheckoutSuccessMessage("")
+  const subtotal = useMemo(
+    () => cartItems.reduce((sum, item) => sum + item.price * item.quantity, 0),
+    [cartItems]
+  )
 
-    try {
-      const order = await orderApi.createOrder({
-        customerName: customerName.trim() || null,
-        customerPhone: null,
-        paymentMethod: "Cash",
-        items: cartItems.map((item) => ({
-          productPublicId: item.id,
-          quantity: item.quantity,
-          notes: null,
-        })),
-      })
-
-      setCheckoutSuccessMessage(`Order ${order.orderNumber} created successfully.`)
-      setCartItems([])
-      setCustomerName("")
-    } catch (error: unknown) {
-      if (error instanceof Error) {
-        setErrorMessage(error.message || "Failed to create order.")
-      } else {
-        setErrorMessage("Failed to create order.")
-      }
-    } finally {
-      setCheckingOut(false)
-    }
-  }
+  const totalItems = useMemo(
+    () => cartItems.reduce((sum, item) => sum + item.quantity, 0),
+    [cartItems]
+  )
 
   async function loadCategories() {
     setLoadingCategories(true)
@@ -212,11 +527,6 @@ export default function Home() {
     navigate("/portal/login", { replace: true })
   }
 
-  const selectedCategory = useMemo(
-    () => categories.find((x) => x.publicId === selectedCategoryId) ?? null,
-    [categories, selectedCategoryId]
-  )
-
   function addToCart(product: ProductItem) {
     if (!selectedCategory) {
       return
@@ -266,15 +576,77 @@ export default function Home() {
     setCartItems([])
   }
 
-  const subtotal = useMemo(
-    () => cartItems.reduce((sum, item) => sum + item.price * item.quantity, 0),
-    [cartItems]
-  )
+  function resetCheckoutFlow() {
+    setIsReviewOpen(false)
+    setIsPaymentOpen(false)
+    setCreatedOrder(null)
+    setPaymentPublicId("")
+    setClientSecret(null)
+    setStripeConnectedAccountId(null)
+    setPaymentMethodType("Cash")
+    setCartItems([])
+    setCustomerName("")
+  }
 
-  const totalItems = useMemo(
-    () => cartItems.reduce((sum, item) => sum + item.quantity, 0),
-    [cartItems]
-  )
+  async function handleConfirmAndPay() {
+    if (cartItems.length === 0) {
+      return
+    }
+
+    setCreatingOrder(true)
+    setErrorMessage("")
+    setCheckoutSuccessMessage("")
+
+    try {
+      const order = await orderApi.createOrder({
+        customerName: customerName.trim() || null,
+        customerPhone: null,
+        paymentMethod: paymentMethodType,
+        items: cartItems.map((item) => ({
+          productPublicId: item.id,
+          quantity: item.quantity,
+          notes: null,
+        })),
+      })
+
+      setCreatedOrder({
+        publicId: order.publicId,
+        orderNumber: order.orderNumber,
+      })
+
+      setCreatingPayment(true)
+
+      const payment = await paymentApi.createPayment({
+        orderPublicId: order.publicId,
+        paymentMethodType,
+      })
+
+      setPaymentPublicId(payment.paymentPublicId)
+      setClientSecret(payment.clientSecret)
+      setStripeConnectedAccountId(payment.stripeConnectedAccountId)
+      setIsReviewOpen(false)
+      setIsPaymentOpen(true)
+    } catch (error: unknown) {
+      if (error instanceof Error) {
+        setErrorMessage(error.message || "Failed to create payment.")
+      } else {
+        setErrorMessage("Failed to create payment.")
+      }
+    } finally {
+      setCreatingOrder(false)
+      setCreatingPayment(false)
+    }
+  }
+
+  function handlePaymentDone() {
+    setCheckoutSuccessMessage(
+      createdOrder
+        ? `Order ${createdOrder.orderNumber} completed successfully.`
+        : "Payment completed successfully."
+    )
+
+    resetCheckoutFlow()
+  }
 
   if (initializing) {
     return (
@@ -528,6 +900,7 @@ export default function Home() {
                   </div>
                 )}
               </div>
+
               <div className="mt-4">
                 <label className="mb-2 block text-sm font-medium text-slate-700">
                   Customer name
@@ -540,6 +913,7 @@ export default function Home() {
                   className="h-11 w-full rounded-xl border border-slate-300 bg-white px-3 text-sm text-slate-800 outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100"
                 />
               </div>
+
               <div className="mt-4 shrink-0 rounded-2xl border border-slate-200 bg-slate-50 p-4">
                 <div className="flex items-center justify-between text-sm text-slate-600">
                   <span>Subtotal</span>
@@ -553,17 +927,111 @@ export default function Home() {
 
                 <button
                   type="button"
-                  onClick={() => void handleCheckout()}
-                  disabled={cartItems.length === 0 || checkingOut}
+                  onClick={() => setIsReviewOpen(true)}
+                  disabled={cartItems.length === 0}
                   className="mt-5 inline-flex h-12 w-full items-center justify-center gap-2 rounded-2xl bg-indigo-600 px-4 text-sm font-medium text-white transition hover:bg-indigo-500 disabled:cursor-not-allowed disabled:opacity-50"
                 >
                   <HiOutlineCreditCard className="h-5 w-5" />
-                  {checkingOut ? "Processing..." : "Checkout"}
+                  Checkout
                 </button>
               </div>
             </div>
           </div>
         </section>
+
+        <Modal open={isReviewOpen} onClose={() => setIsReviewOpen(false)}>
+          <div className="p-6">
+            <h2 className="text-2xl font-semibold text-slate-900">
+              Review order
+            </h2>
+            <p className="mt-2 text-sm text-slate-500">
+              Confirm items and choose a payment method.
+            </p>
+
+            <div className="mt-6 space-y-3">
+              {cartItems.map((item) => (
+                <div
+                  key={item.id}
+                  className="flex items-center justify-between rounded-xl border border-slate-200 px-4 py-3"
+                >
+                  <div>
+                    <div className="text-sm font-medium text-slate-800">
+                      {item.name}
+                    </div>
+                    <div className="text-xs text-slate-500">
+                      {item.quantity} × ${item.price.toFixed(2)}
+                    </div>
+                  </div>
+
+                  <div className="text-sm font-semibold text-slate-800">
+                    ${(item.price * item.quantity).toFixed(2)}
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            <div className="mt-6 rounded-xl border border-slate-200 bg-slate-50 p-4">
+              <div className="text-sm text-slate-600">
+                Customer name:{" "}
+                <span className="font-medium text-slate-800">
+                  {customerName.trim() || "N/A"}
+                </span>
+              </div>
+
+              <div className="mt-4">
+                <label className="mb-2 block text-sm font-medium text-slate-700">
+                  Payment method
+                </label>
+
+                <select
+                  value={paymentMethodType}
+                  onChange={(e) =>
+                    setPaymentMethodType(e.target.value as PaymentMethodType)
+                  }
+                  className="h-11 w-full rounded-xl border border-slate-300 bg-white px-3 text-sm text-slate-800 outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100"
+                >
+                  <option value="Cash">Cash</option>
+                  <option value="Card">Card</option>
+                  <option value="Terminal">Terminal</option>
+                </select>
+              </div>
+
+              <div className="mt-4 flex items-center justify-between border-t border-slate-200 pt-4">
+                <span className="text-base font-medium text-slate-700">Total</span>
+                <span className="text-lg font-semibold text-slate-900">
+                  ${subtotal.toFixed(2)}
+                </span>
+              </div>
+            </div>
+
+            <button
+              type="button"
+              onClick={() => void handleConfirmAndPay()}
+              disabled={creatingOrder || creatingPayment}
+              className="mt-6 inline-flex h-12 w-full items-center justify-center rounded-2xl bg-indigo-600 px-4 text-sm font-medium text-white transition hover:bg-indigo-500 disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              {creatingOrder || creatingPayment
+                ? "Processing..."
+                : "Confirm and Pay"}
+            </button>
+          </div>
+        </Modal>
+
+        <PaymentModal
+          open={isPaymentOpen}
+          createdOrder={createdOrder}
+          paymentMethodType={paymentMethodType}
+          paymentPublicId={paymentPublicId}
+          clientSecret={clientSecret}
+          stripeConnectedAccountId={stripeConnectedAccountId}
+          onClose={() => {
+            setIsPaymentOpen(false)
+            setPaymentPublicId("")
+            setClientSecret(null)
+            setStripeConnectedAccountId(null)
+          }}
+          onDone={handlePaymentDone}
+        />
       </div>
     </div>
   )
