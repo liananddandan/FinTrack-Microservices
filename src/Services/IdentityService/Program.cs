@@ -35,9 +35,19 @@ builder.Services.Configure<FrontendOptions>(
     builder.Configuration.GetSection("Frontend"));
 builder.Services.Configure<TurnstileOptions>(
     builder.Configuration.GetSection("Turnstile"));
-builder.Services.AddHttpClient<ITurnstileValidationService, TurnstileValidationService>();
+builder.Services.Configure<StripeConnectOptions>(
+    builder.Configuration.GetSection("Stripe"));
 
-builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+builder.Services.AddHttpClient<ITurnstileValidationService, TurnstileValidationService>();
+builder.Services.AddIdentity<ApplicationUser, IdentityRole<long>>()
+    .AddEntityFrameworkStores<ApplicationIdentityDbContext>()
+    .AddDefaultTokenProviders();
+builder.Services.AddAuthentication(options =>
+    {
+        options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+        options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+        options.DefaultScheme = JwtBearerDefaults.AuthenticationScheme;
+    })
     .AddJwtBearer(options =>
     {
         options.MapInboundClaims = false;
@@ -57,8 +67,6 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
             ClockSkew = TimeSpan.Zero
         };
     });
-
-builder.Services.AddAuthorization();
 
 builder.Services.AddDbContext<ApplicationIdentityDbContext>(options =>
 {
@@ -102,10 +110,6 @@ builder.Services.AddSingleton<IConnectionMultiplexer>(sp =>
     configuration.ResolveDns = true;
     return ConnectionMultiplexer.Connect(configuration);
 });
-
-builder.Services.AddIdentity<ApplicationUser, IdentityRole<long>>()
-    .AddEntityFrameworkStores<ApplicationIdentityDbContext>()
-    .AddDefaultTokenProviders();
 
 // register MediatR
 builder.Services.AddMediatR(configuration =>

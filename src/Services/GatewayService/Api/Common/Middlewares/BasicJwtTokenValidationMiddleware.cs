@@ -4,7 +4,7 @@ using SharedKernel.Common.Constants;
 using SharedKernel.Common.DTOs.Auth;
 using StackExchange.Redis;
 
-namespace GatewayService.Application.Common.Middlewares;
+namespace GatewayService.Api.Common.Middlewares;
 
 public class BasicJwtTokenValidationMiddleware(
     RequestDelegate next,

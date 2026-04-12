@@ -12,6 +12,7 @@ import Orders from "../pages/Orders"
 import AuthGuard from "./guards/AuthGuard"
 import AdminLayout from "../components/AdminLayout"
 import AppInitializer from "../components/AppInitializer"
+import PaymentsPage from "../pages/PaymentsPage"
 
 export default function AppRouter() {
   return (
@@ -36,6 +37,7 @@ export default function AppRouter() {
             <Route path="invitations" element={<Invitations />} />
             <Route path="audit-logs" element={<AuditLogs />} />
             <Route path="menu" element={<Menu />} />
+            <Route path="payments" element={<PaymentsPage />} />
           </Route>
 
           <Route path="*" element={<Navigate to="/login" replace />} />

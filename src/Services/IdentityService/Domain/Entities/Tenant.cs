@@ -21,6 +21,10 @@ public class Tenant
 
     public bool IsDeleted { get; set; } = false;
     public DateTime? DeletedAt { get; set; }
+    
+    public string? StripeConnectedAccountId { get; set; }
+    public bool StripeChargeEnabled { get; set; }
+    public bool StripePayoutsEnabled { get; set; }
     public ICollection<TenantMembership> Memberships { get; set; } = new List<TenantMembership>();
     public ICollection<TenantInvitation> Invitations { get; set; } = new List<TenantInvitation>();
 }

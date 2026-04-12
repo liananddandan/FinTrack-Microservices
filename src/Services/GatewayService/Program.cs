@@ -1,5 +1,5 @@
 using System.Text;
-using GatewayService.Application.Common.Middlewares;
+using GatewayService.Api.Common.Middlewares;
 using GatewayService.Application.Common.Options;
 using GatewayService.Application.Dev.Abstractions;
 using GatewayService.Application.Dev.Services;

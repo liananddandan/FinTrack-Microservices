@@ -8,6 +8,7 @@ import {
   HiOutlineArrowLeftOnRectangle,
   HiOutlineArrowsRightLeft,
   HiOutlineQueueList,
+  HiOutlineCreditCard,
 } from "react-icons/hi2"
 import { authStore } from "../lib/authStore"
 import { useAuth } from "../hooks/useAuth"
@@ -118,6 +119,12 @@ export default function AdminLayout() {
               to="/orders"
               label="Orders"
               icon={<HiOutlineClipboardDocumentList className="h-5 w-5" />}
+            />
+
+            <AdminNavItem
+              to="/payments"
+              label="Payments"
+              icon={<HiOutlineCreditCard className="h-5 w-5" />}
             />
 
             <AdminNavItem
